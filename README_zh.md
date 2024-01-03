@@ -17,7 +17,7 @@
 <div align="center">
 <br />
 
-<a href="https://aitest.youdao.com/saas/qanything/#/home"><img src="https://img.shields.io/badge/%E5%9C%A8%E7%BA%BF%E4%BD%93%E9%AA%8C-QAnything-purple"></a>
+<a href="https://qanything.ai"><img src="https://img.shields.io/badge/%E5%9C%A8%E7%BA%BF%E4%BD%93%E9%AA%8C-QAnything-purple"></a>
 &nbsp;&nbsp;&nbsp;&nbsp;
 <a href="https://read.youdao.com#/home"><img src="https://img.shields.io/badge/%E5%9C%A8%E7%BA%BF%E4%BD%93%E9%AA%8C-有道速读-purple"></a>
 &nbsp;&nbsp;&nbsp;&nbsp;
