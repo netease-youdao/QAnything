@@ -106,7 +106,7 @@
 
 #### LLM
 
-开源版本的大模型基于通义千问，并在大量专业问答数据集上进行微调；在千问的基础上大大加强了问答的能力。
+开源版本QAnything的大模型基于通义千问，并在大量专业问答数据集上进行微调；在千问的基础上大大加强了问答的能力。
 如果需要商用请遵循千问的license，具体请参阅：[通义千问](https://github.com/QwenLM/Qwen)
 
 ## 开始
@@ -170,9 +170,10 @@ docker-compose up -d
 
 ## Acknowledgements
 - [BCEmbedding](https://github.com/netease-youdao/BCEmbedding)
-- [Milvus](https://github.com/milvus-io/milvus) 
+- [Qwen](https://github.com/QwenLM/Qwen)
 - [Triton Inference Server](https://github.com/triton-inference-server/server) 
-- [Langchain](https://github.com/langchain-ai/langchain)  
+- [Langchain](https://github.com/langchain-ai/langchain)
+- [Langchain-Chatchat](https://github.com/chatchat-space/Langchain-Chatchat)
+- [Milvus](https://github.com/milvus-io/milvus)
 - [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) 
-- [Sanic](https://github.com/sanic-org/sanic) 
-- [Langchain-Chatchat](https://github.com/chatchat-space/Langchain-Chatchat) 
+- [Sanic](https://github.com/sanic-org/sanic)
