@@ -171,7 +171,7 @@ Welcome to scan the QR code below and join the WeChat group.
 ## Support
 Reach out to the maintainer at one of the following places:
 
-- [Github issues](https://github.com/netease-youdao/QAnything/-/issues)
+- [Github issues](https://github.com/netease-youdao/QAnything/issues)
 - Contact options listed on [this GitHub profile](https://github.com/netease-youdao)
 
 ## License
