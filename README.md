@@ -148,7 +148,7 @@ docker-compose up -d
 
 
 ## Usage
-[:point_right: try QAnything online](https://aitest.youdao.com/saas/qanything/#/home)
+[:point_right: try QAnything online](https://qanything.ai)
 
 ### Cross-lingual: Multiple English paper Q&A
 [![](docs/videos/multi_paper_qa.mp4)](https://github.com/netease-youdao/QAnything/assets/141105427/8915277f-c136-42b8-9332-78f64bf5df22)
