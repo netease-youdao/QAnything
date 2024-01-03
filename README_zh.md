@@ -140,13 +140,13 @@ docker-compose up -d
 
 ## 使用
 ### 跨语种：多篇英文论文问答
-![](docs/videos/multi_paper_qa.mp4)
+[![](docs/videos/multi_paper_qa.mp4)](https://github.com/netease-youdao/QAnything/assets/141105427/8915277f-c136-42b8-9332-78f64bf5df22)
 ### 信息抽取
-![](docs/videos/information_extraction.mp4)
+[![](docs/videos/information_extraction.mp4)](https://github.com/netease-youdao/QAnything/assets/141105427/b9e3be94-183b-4143-ac49-12fa005a8a9a)
 ### 文件大杂烩
-![](docs/videos/various_files_qa.mp4)
+[![](docs/videos/various_files_qa.mp4)](https://github.com/netease-youdao/QAnything/assets/141105427/7ede63c1-4c7f-4557-bd2c-7c51a44c8e0b)
 ### 网页问答
-![](docs/videos/web_qa.mp4)
+[![](docs/videos/web_qa.mp4)](https://github.com/netease-youdao/QAnything/assets/141105427/d30942f7-6dbd-4013-a4b6-82f7c2a5fbee)
 
 ### 接入API
 如果需要接入API，请参阅[QAnything API 文档](docs/API.md)
