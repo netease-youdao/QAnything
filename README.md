@@ -126,7 +126,7 @@ If you need to use it for commercial purposes, please follow the license of Qwen
 ### Installation
 * step1: pull qanything repository
 ```
-git clone git@github.com:netease-youdao/QAnything.git
+git clone https://github.com/netease-youdao/QAnything.git
 ```
 * step2: download the model and unzip it to the root directory of the current project.
 ```

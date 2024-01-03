@@ -123,7 +123,7 @@
 ### 下载安装
 * step1: 下载本项目
 ```
-git clone git@github.com:netease-youdao/QAnything.git
+git clone https://github.com/netease-youdao/QAnything.git
 ```
 * step2: 下载模型并解压到本项目根目录下
 ```
