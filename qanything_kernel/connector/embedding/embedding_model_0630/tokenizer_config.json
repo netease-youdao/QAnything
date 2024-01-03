@@ -1,0 +1,1 @@
+{"do_lower_case": false, "unk_token": "[UNK]", "sep_token": "[SEP]", "pad_token": "[PAD]", "cls_token": "[CLS]", "mask_token": "[MASK]", "tokenize_chinese_chars": true, "strip_accents": null, "special_tokens_map_file": null, "name_or_path": "/ssd8/exec/shenlei/projects/LLMs/basemodels/bert-base-multilingual-cased"}
