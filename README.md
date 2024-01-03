@@ -184,6 +184,7 @@ Reach out to the maintainer at one of the following places:
 - Thanks to our [BCEmbedding](https://github.com/netease-youdao/BCEmbedding) for the excellent embedding and rerank model. 
 - Thanks to [Qwen](https://github.com/QwenLM/Qwen) for strong base language models.
 - Thanks to [Triton Inference Server](https://github.com/triton-inference-server/server) for providing great open source inference serving.
+- Thanks to [FasterTransformer](https://github.com/NVIDIA/FasterTransformer) for highly optimized LLM inference backend.
 - Thanks to [Langchain](https://github.com/langchain-ai/langchain) for the wonderful llm application framework. 
 - Thanks to [Langchain-Chatchat](https://github.com/chatchat-space/Langchain-Chatchat) for the inspiration provided on local knowledge base Q&A.
 - Thanks to [Milvus](https://github.com/milvus-io/milvus) for the excellent semantic search library.
