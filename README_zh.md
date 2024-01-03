@@ -133,7 +133,12 @@ git clone https://www.modelscope.cn/renrenren/qanything_models.git
 
 unzip models.zip ./   # in root directory of the current project
 ```
-* step3: 启动服务
+* step3：更改配置
+```
+vim front_end/.env  # change 10.55.163.92 to your host
+vim docker-compose.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
+```
+* step4: 启动服务
 ```
 docker-compose up -d
 ```
