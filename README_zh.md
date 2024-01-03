@@ -110,7 +110,7 @@
 如果需要商用请遵循千问的license，具体请参阅：[通义千问](https://github.com/QwenLM/Qwen)
 
 ## 开始
-[:point_right: QAnything在线体验平台](https://aitest.youdao.com/saas/qanything/#/home)
+[:point_right: 在线试用QAnything](https://qanything.ai)
 
 ### 必要条件
 |  **必要项**     | **最低要求**   | **备注** |
