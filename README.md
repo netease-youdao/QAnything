@@ -16,7 +16,7 @@
 
 <div align="center">
 <br />
-<a href="https://aitest.youdao.com/saas/qanything/#/home"><img src="https://img.shields.io/badge/try%20online-QAnything-purple"></a>
+<a href="https://qanything.ai"><img src="https://img.shields.io/badge/try%20online-qanything.ai-purple"></a>
 &nbsp;&nbsp;&nbsp;&nbsp;
 <a href="https://read.youdao.com#/home"><img src="https://img.shields.io/badge/try%20online-read.youdao.com-purple"></a>
 &nbsp;&nbsp;&nbsp;&nbsp;
