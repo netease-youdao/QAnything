@@ -24,7 +24,7 @@
 
 <a href="./LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-yellow"></a>
 &nbsp;&nbsp;&nbsp;&nbsp;
-<a href=""><img src="https://img.shields.io/badge/PRs-welcome-red"></a>
+<a href="https://github.com/netease-youdao/QAnything/pulls"><img src="https://img.shields.io/badge/PRs-welcome-red"></a>
 &nbsp;&nbsp;&nbsp;&nbsp;
 <a href="https://twitter.com/YDopensource"><img src="https://img.shields.io/badge/follow-%40YDOpenSource-1DA1F2?logo=twitter&style={style}"></a>
 &nbsp;&nbsp;&nbsp;&nbsp;
