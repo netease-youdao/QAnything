@@ -78,7 +78,7 @@ services:
 
   qanything_local:
     container_name: qanything-container-local
-    image: freezen/qanything:v1.0.7
+    image: freeren/qanything:v1.0.7
     runtime: nvidia
     command: /workspace/qanything_local/scripts/run_for_local.sh
     privileged: true
