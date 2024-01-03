@@ -67,7 +67,7 @@
 
 ### 架构
 <div align="center">
-<img src="docs/images/qanything_system.png" width = "700" alt="qanything_system" align=center />
+<img src="docs/images/qanything_arch.png" width = "700" alt="qanything_system" align=center />
 </div>
 
 #### 一阶段检索（embedding）
