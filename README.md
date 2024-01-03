@@ -67,7 +67,7 @@ Currently supported formats include: **PDF, Word (doc/docx), PPT, Markdown, Eml,
 
 ### Architecture
 <div align="center">
-<img src="docs/images/qanything_system.png" width = "700" alt="qanything_system" align=center />
+<img src="docs/images/qanything_arch.png" width = "700" alt="qanything_system" align=center />
 </div>
 
 #### 1st Retrieval（embedding）
