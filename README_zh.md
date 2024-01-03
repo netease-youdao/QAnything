@@ -166,7 +166,7 @@ docker-compose up -d
 
 有任何问题，请通过以下方式联系我们:
 
-- [Github issues](https://github.com/netease-youdao/QAnything/-/issues)
+- [Github issues](https://github.com/netease-youdao/QAnything/issues)
 - [Netease Youdao](https://github.com/netease-youdao)
 
 ## 协议
