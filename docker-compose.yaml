@@ -91,7 +91,7 @@ services:
       - "5052:8288"
     environment:
       - NCCL_LAUNCH_MODE=PARALLEL
-      - CUDA_VISIBLE_DEVICES=6
+      - CUDA_VISIBLE_DEVICES=0
     depends_on:
       - "standalone"
       - "mysql"
