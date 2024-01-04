@@ -5,10 +5,7 @@ nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble -
 
 cd /workspace/qanything_local/front_end
 npm install
-npm install -g http-server
 npm run build
-cd dist/
-nohup http-server ./  -p 5002 --cors --name qAnything > http_server.log 2>&1 &
 echo "The front-end service is ready!"
 
 echo "The triton service is starting up, he can be long... you have time to make a coffee :)"
