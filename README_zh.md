@@ -70,6 +70,12 @@
 <img src="docs/images/qanything_arch.png" width = "700" alt="qanything_system" align=center />
 </div>
 
+#### 为什么是两阶段检索?
+知识库数据量大的场景下两阶段优势非常明显，如果只用一阶段embedding检索，随着数据量增大会出现检索退化的问题，如下图中绿线所示，二阶段rerank重排后能实现准确率稳定增长，即**数据越多，效果越好**。
+<div align="center">
+<img src="docs/images/two_stage_retrieval.jpg" width = "500" alt="two stage retrievaal" align=center />
+</div>
+
 #### 一阶段检索（embedding）
 | 模型名称 | Retrieval | STS | PairClassification | Classification | Reranking | Clustering | 平均 |  
 |:-------------------------------|:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|  
