@@ -78,7 +78,7 @@
 </div>
 </br>
 
-我们的[BCEmbedding](https://github.com/netease-youdao/BCEmbedding)以其出色的双语和跨语种能力而著称，在语义检索中消除中英语言之间的差异，从而实现：
+QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BCEmbedding)以其出色的双语和跨语种能力而著称，在语义检索中消除中英语言之间的差异，从而实现：
 - **强大的双语和跨语种语义表征能力【<a href="https://github.com/netease-youdao/BCEmbedding/tree/master?tab=readme-ov-file#semantic-representation-evaluations-in-mteb" target="_Self">基于MTEB的语义表征评测指标</a>】。**
 - **基于LlamaIndex的RAG评测，表现SOTA【<a href="https://github.com/netease-youdao/BCEmbedding/tree/master?tab=readme-ov-file#rag-evaluations-in-llamaindex" target="_Self">基于LlamaIndex的RAG评测指标</a>】。**
 
