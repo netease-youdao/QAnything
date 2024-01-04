@@ -1,0 +1,7 @@
+.venv
+.vscode
+.idea
+venv
+__pycache__
+QANY_DB
+qanything_logs
