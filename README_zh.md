@@ -72,9 +72,16 @@
 
 #### 为什么是两阶段检索?
 知识库数据量大的场景下两阶段优势非常明显，如果只用一阶段embedding检索，随着数据量增大会出现检索退化的问题，如下图中绿线所示，二阶段rerank重排后能实现准确率稳定增长，即**数据越多，效果越好**。
+
 <div align="center">
 <img src="docs/images/two_stage_retrieval.jpg" width = "500" alt="two stage retrievaal" align=center />
 </div>
+</br>
+
+我们的[BCEmbedding](https://github.com/netease-youdao/BCEmbedding)以其出色的双语和跨语种能力而著称，在语义检索中消除中英语言之间的差异，从而实现：
+- **强大的双语和跨语种语义表征能力【<a href="https://github.com/netease-youdao/BCEmbedding/tree/master?tab=readme-ov-file#semantic-representation-evaluations-in-mteb" target="_Self">基于MTEB的语义表征评测指标</a>】。**
+- **基于LlamaIndex的RAG评测，表现SOTA【<a href="https://github.com/netease-youdao/BCEmbedding/tree/master?tab=readme-ov-file#rag-evaluations-in-llamaindex" target="_Self">基于LlamaIndex的RAG评测指标</a>】。**
+
 
 #### 一阶段检索（embedding）
 | 模型名称 | Retrieval | STS | PairClassification | Classification | Reranking | Clustering | 平均 |  
