@@ -127,7 +127,7 @@ git clone https://github.com/netease-youdao/QAnything.git
 ```
 * step2: 下载模型并解压到本项目根目录下
 ```
-cd qanything
+cd QAnything
 
 git clone https://www.modelscope.cn/netease-youdao/qanything_models.git
 
