@@ -155,6 +155,8 @@ vim docker-compose.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
 ```
 docker-compose up -d
 ```
+前端: http://{your_host}:5052/qanything
+api: http://{your_host}:5052/api/
 
 ## 使用
 ### 跨语种：多篇英文论文问答
