@@ -70,6 +70,12 @@ Currently supported formats include: **PDF, Word (doc/docx), PPT, Markdown, Eml,
 <img src="docs/images/qanything_arch.png" width = "700" alt="qanything_system" align=center />
 </div>
 
+#### Why 2 stage retrieval?
+In scenarios with a large volume of knowledge base data, the advantages of a two-stage approach are very clear. If only a first-stage embedding retrieval is used, there will be a problem of retrieval degradation as the data volume increases, as indicated by the green line in the following graph. However, after the second-stage reranking, there can be a stable increase in accuracy.
+<div align="center">
+<img src="docs/images/two_stage_retrieval.jpg" width = "500" alt="two stage retrievaal" align=center />
+</div>
+
 #### 1st Retrieval（embedding）
 | Model | Retrieval | STS | PairClassification | Classification | Reranking | Clustering | Avg |  
 |:-------------------------------|:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|  
