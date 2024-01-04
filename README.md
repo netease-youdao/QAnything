@@ -60,7 +60,7 @@ Currently supported formats include: **PDF, Word (doc/docx), PPT, Markdown, Eml,
 
 - **Data Security**, supports installation and usage with network cable unplugged throughout the process.
 - **Cross-language QA support**, freely switch between Chinese and English QA, regardless of the language of the document.
-- **Supports massive data QA**, two-stage vector sorting, solving the degradation problem of large-scale data retrieval; the more data, the better the performance.
+- **Supports massive data QA**, two-stage retrieval ranking, solving the degradation problem of large-scale data retrieval; the more data, the better the performance.
 - **High-performance production-grade system**, directly deployable for enterprise applications.
 - **User-friendly**, no need for cumbersome configurations, one-click installation and deployment, ready to use.
 - **Multi knowledge base QA** Support selecting multiple knowledge bases for Q&A
