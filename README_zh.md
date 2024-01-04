@@ -34,7 +34,7 @@
 <details open="open">
 <summary>目 录</summary>
 
-- [什么是QAnything？](#什么是QAnything？)
+- [什么是QAnything](#什么是QAnything)
   - [特点](#特点)
   - [架构](#架构)
 - [开始](#开始)

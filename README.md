@@ -33,7 +33,7 @@
 <details open="open">
 <summary>Table of Contents</summary>
 
-- [What is QAnything?](#What-is-QAnything?)
+- [What is QAnything](#What-is-QAnything)
   - [Key features](#Key-features)
   - [Architecture](#Architecture)
 - [Getting Started](#getting-started)
