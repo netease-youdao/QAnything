@@ -134,7 +134,7 @@ cd qanything
 
 git clone https://www.modelscope.cn/renrenren/qanything_models.git
 
-unzip models.zip ./   # in root directory of the current project
+unzip qanything_models/models.zip ./   # in root directory of the current project
 ```
 * step3: change config
 ```
