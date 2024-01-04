@@ -132,7 +132,7 @@ git clone https://github.com/netease-youdao/QAnything.git
 ```
 cd qanything
 
-git clone https://www.modelscope.cn/renrenren/qanything_models.git
+git clone https://www.modelscope.cn/netease-youdao/qanything_models.git
 
 unzip qanything_models/models.zip   # in root directory of the current project
 ```
