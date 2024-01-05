@@ -157,8 +157,14 @@ vim docker-compose.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
 ```
 docker-compose up -d
 ```
-front_end: http://{your_host}:5052/qanything
-api: http://{your_host}:5052/api/
+
+After successful installation, you can experience the application by entering the following addresses in your web browser.
+
+- Frontend address: http://{your_host}:5052/qanything
+
+- API address: http://{your_host}:5052/api/
+
+For detailed API documentation, please refer to [QAnything API 文档](docs/API.md)
 
 
 ## Usage
