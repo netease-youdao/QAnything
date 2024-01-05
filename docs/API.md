@@ -337,7 +337,7 @@ if __name__ == '__main__':
 | user_id         | "public"                              | 是    | String  | 用户id                              |
 | kb_ids          | ["KBb1dd58e8485443ce81166d24f6febda7"]  | 是    | Array  | 知识库id的列表，支持多个知识库联合问答|
 | question          | "保险单号是多少？" | 是    | String  | 知识库id的列表，支持多个知识库联合问答|
-| history          | [["question1","answer1"],["question2","anser2"]]         | 是    | Array | 历史对话                     |
+| history          | [["question1","answer1"],["question2","answer2"]]         | 是    | Array | 历史对话                     |
 
 ### 请求示例
 
