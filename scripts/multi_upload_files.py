@@ -7,7 +7,7 @@ import re
 
 file_folder = sys.argv[1]
 kb_id = sys.argv[2]
-support_end = ('.md', '.txt', '.pdf', '.jpg', '.jpeg', '.png', '.docx', '.xlsx', '.xls', '.eml', '.csv', '.pdf')
+support_end = ('.md', '.txt', '.pptx', '.jpg', '.jpeg', '.png', '.docx', '.xlsx', '.eml', '.csv', '.pdf')
 files = []
 
 
@@ -23,10 +23,6 @@ for root, dirs, file_names in os.walk(file_folder):
         # print(file_name)
         if file_name.endswith(support_end):
             file_path = os.path.join(root, file_name)
-            # if '新高考' in file_name:
-            #     continue
-            # if len(file_path) < 50:
-            # print(file_path)
             files.append(file_path)
 print(len(files))
 response_times = []
@@ -36,13 +32,10 @@ timeout = aiohttp.ClientTimeout(total=300)
 
 
 async def send_request(round_, files):
-    # if round_ != 18:
-    #     return
     print(len(files))
-    # url = 'http://0.0.0.0:8777/api/local_doc_qa/upload_files'
-    url = 'https://qanything-local-test-265.site.youdao.com/api/local_doc_qa/upload_files'
+    url = 'http://0.0.0.0:8777/api/local_doc_qa/upload_files'
     data = aiohttp.FormData()
-    data.add_field('user_id', 'liujx_265')
+    data.add_field('user_id', 'default')
     data.add_field('kb_id', kb_id)
     data.add_field('mode', 'soft')
 
@@ -62,18 +55,14 @@ async def send_request(round_, files):
                     response_times.append(end_time - start_time)
                     print(f"round_:{round_}, 响应状态码: {response.status}, 响应时间: {end_time - start_time}秒")
                     if response.status != 200:
-                        # await asyncio.sleep(60)
                         continue
-                # print(await response.json())
         except Exception as e:
             print(f"请求发送失败: {e}")
 
 
 async def send_request_with_semaphore(semaphore, round_, files):
     async with semaphore:
-        # semaphore.acquire() 已通过上下文管理器 async with 自动调用
         await send_request(round_, files)
-        # semaphore.release() 也会在退出 async with 块时自动调用
 
 
 async def create_tasks_by_size_limit(files, size_limit_mb, max_concurrent_tasks=4):
@@ -107,32 +96,12 @@ async def create_tasks_by_size_limit(files, size_limit_mb, max_concurrent_tasks=
 
 async def main():
     start_time = time.time()
-    await create_tasks_by_size_limit(files, 200)
-    # round_ = 0
-    # r_files = files[:500]
-    # tasks = []
-    # task = asyncio.create_task(send_request(round_, r_files))
-    # tasks.append(task)
-    # await asyncio.gather(*tasks)
+    await create_tasks_by_size_limit(files, 200)  # 一次请求最多发送200M的文件
 
     print(f"请求完成")
     end_time = time.time()
-    # total_requests = len(response_times)
     total_time = end_time - start_time
-    # qps = total_requests / total_time
     print(f"total_time:{total_time}")
-    # print(f"QPS: {qps}")
-
-    # if response_times:
-    #    p90 = statistics.quantiles(response_times, n=100, method='inclusive')[-9]
-    #    p95 = statistics.quantiles(response_times, n=100, method='inclusive')[-4]
-    #    p99 = statistics.quantiles(response_times, n=100, method='inclusive')[-1]
-    #    print(f"P90: {p90}秒")
-    #    print(f"P95: {p95}秒")
-    #    print(f"P99: {p99}秒")
-    # else:
-    #    print("没有足够的数据点来计算分位数")
-
 
 if __name__ == '__main__':
     asyncio.run(main())
