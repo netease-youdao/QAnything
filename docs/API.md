@@ -259,7 +259,7 @@ if __name__ == '__main__':
 	"data": [
 		{
 			"kb_id": "KB973d4aea07f14c60ae1974404a636ad4",  //知识库id
-			"kb_name": "kb_id"  //知识库名称
+			"kb_name": "kb_test"  //知识库名称
 		}
 	]   //知识库列表
 }
