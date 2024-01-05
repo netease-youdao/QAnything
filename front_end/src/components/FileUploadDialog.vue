@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-07 19:32:26
  * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2023-12-29 16:16:16
+ * @LastEditTime: 2024-01-05 14:45:53
  * @FilePath: /qanything-open-source/src/components/FileUploadDialog.vue
  * @Description: 
 -->
@@ -16,7 +16,7 @@
       wrap-class-name="upload-file-modal"
       @ok="handleOk"
     >
-      <div v-show="showUpload" class="file">
+      <div class="file">
         <div class="box">
           <div class="before-upload-box" :class="showUploadList ? 'uploading' : ''">
             <input
@@ -73,9 +73,9 @@
         <a-button
           key="submit"
           type="primary"
-          @click="handleOk"
-          :disabled="!canSubmit"
           class="upload-btn"
+          :disabled="!canSubmit"
+          @click="handleOk"
         >
           确定
         </a-button>
@@ -91,8 +91,8 @@ import SvgIcon from './SvgIcon.vue';
 import UploadList from '@/components/UploadList.vue';
 import { pageStatus } from '@/utils/enum';
 import { IFileListItem } from '@/utils/types';
-import urlResquest from '@/services/urlConfig';
 import { message } from 'ant-design-vue';
+import { userId } from '@/services/urlConfig';
 
 const { setKnowledgeName, setModalVisible, getFileList } = useKnowledgeModal();
 const { setDefault } = useKnowledgeBase();
@@ -107,19 +107,15 @@ const uploadFileList = ref([]); // 本次上传文件列表
 //控制确认按钮 是否能提交
 const canSubmit = computed(() => {
   return (
-    newId.value.length > 0 &&
+    currentId.value.length > 0 &&
     uploadFileList.value.length > 0 &&
     uploadFileList.value.every(item => item.status != 'loading')
   );
 });
 
-//新建完成后的知识库id
-const newId = ref('');
-
 watch(
   () => modalVisible.value,
   () => {
-    newId.value = currentId.value;
     setKnowledgeName(currentKbName.value);
     if (uploadFileList.value.length) {
       showUploadList.value = true;
@@ -132,38 +128,27 @@ watch(
   }
 );
 
-//新建时候 没id不显示上传模块(原因：底层需要先创建知识库 才能长传内容)
-const showUpload = computed(() => {
-  return true;
-  // return newId.value;
-});
-
 //是否显示上传文件列表 默认不显示
 const showUploadList = ref(false);
 
 //允许上传的文件格式
 const acceptList = [
-  '.doc',
-  '.docx',
-  '.ppt',
-  '.pptx',
-  '.xls',
-  '.xlsx',
-  '.pdf',
   '.md',
+  'txt',
+  '.pdf',
   '.jpg',
-  '.jpeg',
   '.png',
-  '.bmp',
-  '.txt',
+  '.jpeg',
+  '.docx',
+  '.xlsx',
+  '.pptx',
   '.eml',
+  '.csv',
 ];
 
 //上传前校验
 const beforeFileUpload = async (file, index) => {
   return new Promise((resolve, reject) => {
-    console.log(file.name.split('.').pop());
-    console.log(acceptList.includes);
     if (acceptList.includes('.' + file.name.split('.').pop().toLowerCase())) {
       uploadFileList.value.push({
         file_name: file.name,
@@ -171,6 +156,7 @@ const beforeFileUpload = async (file, index) => {
         status: 'loading',
         text: '上传中',
         file_id: '',
+        order: uploadFileList.value.length,
       });
       resolve(index);
     } else {
@@ -187,13 +173,13 @@ const fileChange = e => {
       await beforeFileUpload(file, index);
     } catch (e) {
       message.error(`${e}的文件格式不符`);
-      uploadFileList.value.push({
-        file_name: file.name,
-        file: file,
-        status: 'error',
-        text: '文件格式不符',
-        file_id: '',
-      });
+      // uploadFileList.value.push({
+      //   file_name: file.name,
+      //   file: file,
+      //   status: 'error',
+      //   text: '文件格式不符',
+      //   file_id: '',
+      // });
     }
   });
   setTimeout(() => {
@@ -201,40 +187,101 @@ const fileChange = e => {
   });
 };
 
-const uplolad = () => {
+// const uplolad = () => {
+//   showUploadList.value = true;
+//   uploadFileList.value.forEach(async (file: IFileListItem, index) => {
+//     if (file.status == 'loading') {
+//       try {
+//         // 上传模式，soft：文件名重复的文件不再上传，strong：文件名重复的文件强制上传
+//         const param = { files: file.file, kb_id: newId.value, mode: 'strong' };
+//         console.log(param);
+//         const res = await urlResquest.uploadFile(param, {
+//           headers: {
+//             'Content-Type': 'multipart/form-data',
+//           },
+//         });
+//         if (+res.code === 200 && res.data[0].status !== 'red' && res.data[0].status !== 'yellow') {
+//           uploadFileList.value[index].status = 'success';
+//           uploadFileList.value[index].text = '上传成功';
+//           uploadFileList.value[index].file_id = res.data[0].file_id;
+//         } else {
+//           uploadFileList.value[index].status = 'error';
+//           uploadFileList.value[index].text = '上传失败';
+//         }
+//       } catch (e) {
+//         uploadFileList.value[index].status = 'error';
+//         uploadFileList.value[index].text = '上传失败';
+//       }
+//     }
+//   });
+// };
+
+const uplolad = async () => {
+  const list = [];
   showUploadList.value = true;
-  uploadFileList.value.forEach(async (file: IFileListItem, index) => {
+  uploadFileList.value.forEach((file: IFileListItem) => {
     if (file.status == 'loading') {
-      try {
-        // 上传模式，soft：文件名重复的文件不再上传，strong：文件名重复的文件强制上传
-        const param = { files: file.file, kb_id: newId.value, mode: 'strong' };
-        console.log(param);
-        const res = await urlResquest.uploadFile(param, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-        if (+res.code === 200 && res.data[0].status !== 'red' && res.data[0].status !== 'yellow') {
-          uploadFileList.value[index].status = 'success';
-          uploadFileList.value[index].text = '上传成功';
-          uploadFileList.value[index].file_id = res.data[0].file_id;
-        } else {
-          uploadFileList.value[index].status = 'error';
-          uploadFileList.value[index].text = '上传失败';
-        }
-      } catch (e) {
-        uploadFileList.value[index].status = 'error';
-        uploadFileList.value[index].text = '上传失败';
-      }
+      list.push(file);
     }
   });
+  console.log(list);
+  const formData = new FormData();
+  for (let i = 0; i < list.length; i++) {
+    formData.append('files', list[i]?.file);
+  }
+  formData.append('kb_id', currentId.value);
+  formData.append('user_id', userId);
+  // 上传模式，soft：文件名重复的文件不再上传，strong：文件名重复的文件强制上传
+  formData.append('mode', 'strong');
+
+  const base = import.meta.env.VITE_APP_SERVER_URL;
+  fetch(base + '/local_doc_qa/upload_files', {
+    method: 'POST',
+    body: formData,
+  })
+    .then(response => {
+      if (response.ok) {
+        return response.json(); // 将响应解析为 JSON
+      } else {
+        throw new Error('上传失败');
+      }
+    })
+    .then(data => {
+      console.log('接口返回值:', data);
+      // 在此处对接口返回的数据进行处理
+      if (data.code === 200) {
+        console.log(data.data);
+        list.forEach((item, index) => {
+          let status = data.data[index].status;
+          console.log(status);
+          if (status == 'green' || status == 'gray') {
+            status = 'success';
+          } else {
+            status = 'error';
+          }
+          console.log(item.order);
+          uploadFileList.value[item.order].status = status;
+          uploadFileList.value[item.order].text = '上传成功';
+        });
+      } else {
+        message.error(data.msg || '');
+        list.forEach(item => {
+          console.log(item.order);
+          uploadFileList.value[item.order].status = 'error';
+          uploadFileList.value[item.order].errorText = data.msg || '上传失败';
+        });
+      }
+    })
+    .catch(error => {
+      message.error(JSON.stringify(error.message) || '出错了');
+    });
 };
 
 const handleOk = async () => {
   setDefault(pageStatus.optionlist);
   setModalVisible(false);
-  getFileList(newId.value);
-  getDetails(newId.value);
+  getFileList(currentId.value);
+  getDetails(currentId.value);
 };
 
 onBeforeUnmount(() => {

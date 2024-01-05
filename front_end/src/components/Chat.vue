@@ -114,7 +114,7 @@
       </div>
     </div>
   </div>
-  <DefaultModal :content="content" :confirmLoading="confirmLoading" @ok="confirm" />
+  <DefaultModal :content="content" :confirm-loading="confirmLoading" @ok="confirm" />
 </template>
 <script lang="ts" setup>
 import { IChatItem } from '@/utils/types';
@@ -314,6 +314,7 @@ const send = () => {
       nextTick(() => {
         scrollBottom();
       });
+      throw err;
     },
   });
 };
@@ -382,6 +383,7 @@ const confirm = async () => {
   confirmLoading.value = false;
   showModal.value = false;
 };
+scrollBottom();
 </script>
 
 <style lang="scss" scoped>

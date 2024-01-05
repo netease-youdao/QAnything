@@ -2,8 +2,8 @@
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-07 19:32:26
  * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2023-12-11 16:06:52
- * @FilePath: /ai-demo/src/components/NewAddKnowledgeDialog.vue
+ * @LastEditTime: 2024-01-05 16:11:30
+ * @FilePath: /qanything-open-source/src/components/UrlUploadDialog.vue
  * @Description: 
 -->
 <template>
@@ -23,10 +23,10 @@
         <a-button
           key="submit"
           type="primary"
-          @click="handleOk"
+          class="upload-btn"
           :disabled="!canSubmit"
           :loading="confirmLoading"
-          class="upload-btn"
+          @click="handleOk"
         >
           确定
         </a-button>
@@ -82,7 +82,7 @@ const senRequest = async params => {
   let response = await urlResquest.uploadUrl({
     kb_id: newId.value,
     url: params.text,
-    mode: 'soft',
+    mode: 'strong',
   });
   let data = response?.data;
   return data;

@@ -145,9 +145,7 @@ export default defineConfig(({ mode }) => {
           rewrite: path => path.replace(/^\/q_anything/, '/q_anything'),
         },
         '/local_doc_qa': {
-          target: 'http://localhost:8777/api', // 跨域网址
-          //target: 'https://qanything-online-zhiyun.site.youdao.com/api',
-          // target: 'https://qanything-local-test-265.site.youdao.com/api',
+          target: 'https://qanything-online-zhiyun.site.youdao.com/api',
           changeOrigin: true,
           rewrite: path => path.replace(/^\/local_doc_qa/, '/local_doc_qa'),
         },

@@ -2,8 +2,8 @@
   <div class="mt-50px">
     <div class="basic-box">
       <a-input
-        :status="status"
         v-model:value="inputVal"
+        :status="status"
         placeholder="请输入网址"
         @change="setStatus()"
       >
