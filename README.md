@@ -143,7 +143,7 @@ git clone https://github.com/netease-youdao/QAnything.git
 * step2: download the model and unzip it to the root directory of the current project.
 ```
 cd QAnything
-
+git lfs install
 git clone https://www.modelscope.cn/netease-youdao/qanything_models.git
 
 unzip qanything_models/models.zip   # in root directory of the current project
