@@ -42,19 +42,6 @@ body:
       required: false
   - type: textarea
     attributes:
-      label: 复现方法 | Steps To Reproduce
-      description: |
-        复现当前行为的详细步骤。
-        Steps to reproduce the behavior.
-      placeholder: |
-        1. In this environment...
-        2. With this config...
-        3. Run '...'
-        4. See error...
-    validations:
-      required: false
-  - type: textarea
-    attributes:
       label: 运行环境 | Environment
       description: |
         examples:
@@ -81,6 +68,20 @@ body:
       placeholder: |
         把api.log的关键内容贴到这里
         paste api.log key content here.
+    validations:
+      required: false
+  
+  - type: textarea
+    attributes:
+      label: 复现方法 | Steps To Reproduce
+      description: |
+        复现当前行为的详细步骤。
+        Steps to reproduce the behavior.
+      placeholder: |
+        1. In this environment...
+        2. With this config...
+        3. Run '...'
+        4. See error...
     validations:
       required: false
 
