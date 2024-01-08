@@ -139,12 +139,41 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 git clone https://github.com/netease-youdao/QAnything.git
 ```
 #### step2: 下载模型并解压到本项目根目录下
+本项目提供多种模型下载平台，选择其中一个方式下载即可。
+##### 始智AI（推荐👍）
+[👉可以去【始智AI】平台下载](https://wisemodel.cn/models/Netease_Youdao/qanything)
+
+或者通过git下载：
 ```
 cd QAnything
+# Make sure you have git-lfs installed (https://git-lfs.com)
 git lfs install
 git clone https://www.wisemodel.cn/Netease_Youdao/qanything.git
 unzip qanything/models.zip   # in root directory of the current project
 ```
+##### 魔搭社区
+[👉可以去【摩搭社区】平台下载](https://www.modelscope.cn/models/netease-youdao/QAnything)
+
+或者通过git下载：
+```
+cd QAnything
+# Make sure you have git-lfs installed (https://git-lfs.com)
+git lfs install
+git clone https://www.modelscope.cn/netease-youdao/QAnything.git
+unzip QAnything/models.zip   # in root directory of the current project
+```
+##### HuggingFace
+[👉可以去【HuggingFace】平台下载](https://huggingface.co/netease-youdao/QAnything)
+
+或者通过git下载：
+```
+cd QAnything
+# Make sure you have git-lfs installed (https://git-lfs.com)
+git lfs install
+git clone https://huggingface.co/netease-youdao/QAnything
+unzip QAnything/models.zip   # in root directory of the current project
+```
+
 #### step3：更改配置
 在Windows系统下
 ```
