@@ -136,11 +136,11 @@ If you need to use it for commercial purposes, please follow the license of Qwen
 
 
 ### Installation
-* step1: pull qanything repository
+#### step1: pull qanything repository
 ```
 git clone https://github.com/netease-youdao/QAnything.git
 ```
-* step2: download the model and unzip it to the root directory of the current project.
+#### step2: download the model and unzip it to the root directory of the current project.
 ```
 cd QAnything
 git lfs install
@@ -148,7 +148,7 @@ git clone https://www.modelscope.cn/netease-youdao/qanything_models.git
 
 unzip qanything_models/models.zip   # in root directory of the current project
 ```
-* step3: change config
+#### step3: change config
 in the Windows system
 ```
 vim docker-compose-windows.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
@@ -158,7 +158,7 @@ in the Linux system
 ```
 vim docker-compose-linux.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
 ```
-* step4: start server
+#### step4: start server
 in the Windows system
 ```
 docker-compose -f docker-compose-windows.yaml up -d
