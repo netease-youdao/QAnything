@@ -141,12 +141,41 @@ If you need to use it for commercial purposes, please follow the license of Qwen
 git clone https://github.com/netease-youdao/QAnything.git
 ```
 #### step2: download the model and unzip it to the root directory of the current project.
+This project provides multiple model download platforms. Choose one of the methods for downloading.
+##### WiseModel（recommend👍）
+[👉download from WiseModel](https://wisemodel.cn/models/Netease_Youdao/qanything)
+
+or download via git:
 ```
 cd QAnything
+# Make sure you have git-lfs installed (https://git-lfs.com)
 git lfs install
 git clone https://www.wisemodel.cn/Netease_Youdao/qanything.git
 unzip qanything/models.zip   # in root directory of the current project
 ```
+##### ModelScope
+[👉download from ModelScope](https://www.modelscope.cn/models/netease-youdao/QAnything)
+
+or download via git:
+```
+cd QAnything
+# Make sure you have git-lfs installed (https://git-lfs.com)
+git lfs install
+git clone https://www.modelscope.cn/netease-youdao/QAnything.git
+unzip QAnything/models.zip   # in root directory of the current project
+```
+##### HuggingFace
+[👉download from HuggingFace](https://huggingface.co/netease-youdao/QAnything)
+
+or download via git:
+```
+cd QAnything
+# Make sure you have git-lfs installed (https://git-lfs.com)
+git lfs install
+git clone https://huggingface.co/netease-youdao/QAnything
+unzip QAnything/models.zip   # in root directory of the current project
+```
+
 #### step3: change config
 in the Windows system
 ```
