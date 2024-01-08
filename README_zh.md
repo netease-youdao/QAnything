@@ -147,14 +147,24 @@ git clone https://www.modelscope.cn/netease-youdao/qanything_models.git
 unzip qanything_models/models.zip   # in root directory of the current project
 ```
 * step3：更改配置
+在Windows系统下
 ```
-vim front_end/.env  # change 10.55.163.92 to your host
-vim docker-compose.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
+vim docker-compose-windows.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
+```
+在Linux系统下
+```
+vim docker-compose-linux.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
 ```
 * step4: 启动服务
+在Windows系统下
 ```
-docker-compose up -d
+docker-compose -f docker-compose-windows.yaml up -d
 ```
+在Linux系统下
+```
+docker-compose -f docker-compose-linux.yaml up -d
+```
+
 
 安装成功后，即可在浏览器输入以下地址进行体验。
 
