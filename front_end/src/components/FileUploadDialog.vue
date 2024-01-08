@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-07 19:32:26
  * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2024-01-05 14:45:53
+ * @LastEditTime: 2024-01-08 15:09:48
  * @FilePath: /qanything-open-source/src/components/FileUploadDialog.vue
  * @Description: 
 -->
@@ -94,7 +94,7 @@ import { IFileListItem } from '@/utils/types';
 import { message } from 'ant-design-vue';
 import { userId } from '@/services/urlConfig';
 
-const { setKnowledgeName, setModalVisible, getFileList } = useKnowledgeModal();
+const { setKnowledgeName, setModalVisible } = useKnowledgeModal();
 const { setDefault } = useKnowledgeBase();
 const { getDetails } = useOptiionList();
 const { modalVisible, modalTitle } = storeToRefs(useKnowledgeModal());
@@ -224,7 +224,6 @@ const uplolad = async () => {
       list.push(file);
     }
   });
-  console.log(list);
   const formData = new FormData();
   for (let i = 0; i < list.length; i++) {
     formData.append('files', list[i]?.file);
@@ -247,41 +246,39 @@ const uplolad = async () => {
       }
     })
     .then(data => {
-      console.log('接口返回值:', data);
       // 在此处对接口返回的数据进行处理
       if (data.code === 200) {
-        console.log(data.data);
         list.forEach((item, index) => {
           let status = data.data[index].status;
-          console.log(status);
           if (status == 'green' || status == 'gray') {
             status = 'success';
           } else {
             status = 'error';
           }
-          console.log(item.order);
           uploadFileList.value[item.order].status = status;
           uploadFileList.value[item.order].text = '上传成功';
         });
       } else {
-        message.error(data.msg || '');
+        message.error(data.msg || '出错了');
         list.forEach(item => {
-          console.log(item.order);
           uploadFileList.value[item.order].status = 'error';
-          uploadFileList.value[item.order].errorText = data.msg || '上传失败';
+          uploadFileList.value[item.order].errorText = data?.msg || '上传失败';
         });
       }
     })
     .catch(error => {
-      message.error(JSON.stringify(error.message) || '出错了');
+      list.forEach(item => {
+        uploadFileList.value[item.order].status = 'error';
+        uploadFileList.value[item.order].errorText = error?.msg || '上传失败';
+      });
+      message.error(JSON.stringify(error?.msg) || '出错了');
     });
 };
 
 const handleOk = async () => {
   setDefault(pageStatus.optionlist);
   setModalVisible(false);
-  getFileList(currentId.value);
-  getDetails(currentId.value);
+  getDetails();
 };
 
 onBeforeUnmount(() => {

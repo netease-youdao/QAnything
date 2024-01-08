@@ -42,7 +42,10 @@
                   </p>
                   <Transition name="sourceitem">
                     <div class="source-content">
-                      <p v-show="sourceItem.showDetailDataSource" v-html="sourceItem.content"></p>
+                      <p
+                        v-show="sourceItem.showDetailDataSource"
+                        v-html="sourceItem.content.replaceAll('\n', '<br/>')"
+                      ></p>
                       <p class="score"><span class="tips">相关性：</span>{{ sourceItem.score }}</p>
                     </div>
                   </Transition>
@@ -266,13 +269,17 @@ const send = () => {
         // question.value = '';
         addAnswer(q);
         typewriter.start();
-      } else if (e.headers.get('content-type') === 'application/json' && e.status === 200) {
+      } else if (e.headers.get('content-type') === 'application/json') {
         showLoading.value = false;
-        message.error('出错了,请稍后刷新重试。');
-
-        //登录失效了
-        // const url = window.location.href;
-        // window.location.href = `${window.location.origin}/redirect.s?keyfrom=zhiyun&redirectUrl=${url}`;
+        return e
+          .json()
+          .then(data => {
+            message.error(data?.msg || '出错了,请稍后刷新重试。');
+          })
+          .catch(e => {
+            console.log(e);
+            message.error('出错了,请稍后刷新重试。');
+          }); // 将响应解析为 JSON
       }
     },
     onmessage(msg: { data: string }) {
@@ -376,6 +383,7 @@ const confirm = async () => {
     }
   } else if (type.value === 'delete') {
     console.log('delete');
+    history.value = [];
     clearQAList();
   }
   type.value = '';

@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2023-12-26 14:49:41
  * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2023-12-29 16:32:19
+ * @LastEditTime: 2024-01-05 19:08:03
  * @FilePath: /qanything-open-source/src/components/OptionList.vue
  * @Description: 
 -->
@@ -87,9 +87,7 @@ const { currentKbName, currentId } = storeToRefs(useKnowledgeBase());
 const { setModalVisible, setUrlModalVisible, setModalTitle } = useKnowledgeModal();
 import { useOptiionList } from '@/store/useOptiionList';
 const { getDetails } = useOptiionList();
-const { dataSource } = storeToRefs(useOptiionList());
-
-const timer: any = ref('');
+const { dataSource, timer } = storeToRefs(useOptiionList());
 
 const columns = [
   {
@@ -140,21 +138,17 @@ const columns = [
 let optionItem: any = {};
 
 const deleteItem = item => {
-  console.log(item);
   optionItem = item;
 };
 
 const confirm = async () => {
-  console.log(optionItem);
-
   try {
     await resultControl(
       await urlResquest.deleteFile({ file_ids: [optionItem.file_id], kb_id: currentId.value })
     );
     message.success('删除成功');
-    getDetails(currentId.value);
+    getDetails();
   } catch (e) {
-    console.log(e);
     message.error(e.msg || '删除失败');
   }
 };
@@ -172,11 +166,7 @@ const showUrlUpload = () => {
   setModalTitle('添加网址');
 };
 
-console.log('reload optinlist');
-getDetails(currentId.value);
-
 const parseStatus = status => {
-  console.log(status);
   let str = '解析失败';
   switch (status) {
     case 'gray':
@@ -194,12 +184,8 @@ const parseStatus = status => {
 watch(
   currentId,
   () => {
-    clearInterval(timer.value);
-    getDetails(currentId.value);
-    console.log('getlist');
-    timer.value = setInterval(() => {
-      getDetails(currentId.value);
-    }, 10000);
+    console.log('current id changed');
+    getDetails();
   },
   {
     immediate: true,
@@ -207,7 +193,8 @@ watch(
 );
 
 onBeforeUnmount(() => {
-  clearInterval(timer.value);
+  clearTimeout(timer.value);
+  console.log('销毁请求');
 });
 </script>
 

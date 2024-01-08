@@ -139,13 +139,8 @@ export default defineConfig(({ mode }) => {
       },
       cors: true,
       proxy: {
-        '/q_anything': {
-          target: 'https://aitest.youdao.com/saas/api', // 跨域网址
-          changeOrigin: true,
-          rewrite: path => path.replace(/^\/q_anything/, '/q_anything'),
-        },
         '/local_doc_qa': {
-          target: 'http://localhost:8777/api', // 跨域网址
+          target: 'http://localhost:8777/api',
           changeOrigin: true,
           rewrite: path => path.replace(/^\/local_doc_qa/, '/local_doc_qa'),
         },

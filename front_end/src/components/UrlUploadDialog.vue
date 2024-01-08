@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-07 19:32:26
  * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2024-01-05 16:11:30
+ * @LastEditTime: 2024-01-05 18:50:41
  * @FilePath: /qanything-open-source/src/components/UrlUploadDialog.vue
  * @Description: 
 -->
@@ -17,7 +17,7 @@
       @ok="handleOk"
     >
       <div class="line-url">
-        <UploadInput :kb-id="newId"></UploadInput>
+        <UploadInput :kb-id="currentId"></UploadInput>
       </div>
       <template #footer>
         <a-button
@@ -39,10 +39,12 @@ import { useKnowledgeModal } from '@/store/useKnowledgeModal';
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
 import UploadInput from '@/components/UploadInput.vue';
 import urlResquest from '@/services/urlConfig';
+import { useOptiionList } from '@/store/useOptiionList';
 
-const { setKnowledgeName, getFileList } = useKnowledgeModal();
+const { setKnowledgeName } = useKnowledgeModal();
 const { urlModalVisible, modalTitle, urlList } = storeToRefs(useKnowledgeModal());
 const { currentId, currentKbName } = storeToRefs(useKnowledgeBase());
+const { getDetails } = useOptiionList();
 
 const confirmLoading = ref<boolean>(false);
 
@@ -55,13 +57,9 @@ const canSubmit = computed(() => {
   return urlList.value.length && urlList.value.every(item => item.text.length);
 });
 
-//新建完成后的知识库id
-const newId = ref('');
-
 watch(
   () => urlModalVisible.value,
   () => {
-    newId.value = currentId.value;
     setKnowledgeName(currentKbName.value);
     if (!urlModalVisible.value) {
       uploadFileList.value = [];
@@ -75,12 +73,12 @@ const handleOk = async () => {
   console.log(results);
   confirmLoading.value = false;
   urlModalVisible.value = false;
-  getFileList(newId.value);
+  getDetails();
 };
 
 const senRequest = async params => {
   let response = await urlResquest.uploadUrl({
-    kb_id: newId.value,
+    kb_id: currentId.value,
     url: params.text,
     mode: 'strong',
   });
