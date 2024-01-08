@@ -134,11 +134,11 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 | docker compose 版本     |      >=1.27.4             | [docker compose 安装教程](https://docs.docker.com/compose/install/)|
 
 ### 下载安装
-* step1: 下载本项目
+#### step1: 下载本项目
 ```
 git clone https://github.com/netease-youdao/QAnything.git
 ```
-* step2: 下载模型并解压到本项目根目录下
+#### step2: 下载模型并解压到本项目根目录下
 ```
 cd QAnything
 git lfs install
@@ -146,7 +146,7 @@ git clone https://www.modelscope.cn/netease-youdao/qanything_models.git
 
 unzip qanything_models/models.zip   # in root directory of the current project
 ```
-* step3：更改配置
+#### step3：更改配置
 在Windows系统下
 ```
 vim docker-compose-windows.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
@@ -155,7 +155,7 @@ vim docker-compose-windows.yaml # change CUDA_VISIBLE_DEVICES to your gpu device
 ```
 vim docker-compose-linux.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
 ```
-* step4: 启动服务
+#### step4: 启动服务
 在Windows系统下
 ```
 docker-compose -f docker-compose-windows.yaml up -d
