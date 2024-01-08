@@ -144,9 +144,8 @@ git clone https://github.com/netease-youdao/QAnything.git
 ```
 cd QAnything
 git lfs install
-git clone https://www.modelscope.cn/netease-youdao/qanything_models.git
-
-unzip qanything_models/models.zip   # in root directory of the current project
+git clone https://www.wisemodel.cn/Netease_Youdao/qanything.git
+unzip qanything/models.zip   # in root directory of the current project
 ```
 #### step3: change config
 in the Windows system
