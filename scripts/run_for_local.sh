@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 start_time=$(date +%s)  # 记录开始时间
 # 检查模型文件夹是否存在
@@ -96,3 +96,4 @@ echo "已耗时: ${elapsed} 秒."
 while true; do
   sleep 2
 done
+
