@@ -11,3 +11,5 @@ node_modules
 models
 volumes
 *.log
+front_end/yarn.lock
+front_end/package-lock.json
