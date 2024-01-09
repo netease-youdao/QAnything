@@ -42,7 +42,7 @@ LLM_HISTORY_LEN = 3
 # 知识库检索时返回的匹配内容条数
 VECTOR_SEARCH_TOP_K = 100
 
-# 知识检索内容相关度 Score, 数值范围约为0-1100，如果为0，则不生效，经测试设置为小于500时，匹配结果更精准
+# embedding检索的相似度阈值，归一化后的L2距离，设置越大，召回越多，设置越小，召回越少
 VECTOR_SEARCH_SCORE_THRESHOLD = 1.1
 
 # NLTK_DATA_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "nltk_data")
