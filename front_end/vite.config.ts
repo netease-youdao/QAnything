@@ -131,7 +131,7 @@ export default defineConfig(({ mode }) => {
     base: '/qanything/',
     server: {
       usePolling: true,
-      port: 5002,
+      port: 5052,
       host: '0.0.0.0',
       open: false,
       fs: {
