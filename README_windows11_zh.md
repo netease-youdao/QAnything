@@ -1,47 +1,11 @@
 # windows11 下遇到的一些问题
 
-执行`docker-compose -f docker-compose-windows.yaml up qanything_local`后，
-前端服务 `http://localhost:5052/qanything/` 无法访问，可能有以下几个情况：
----
-1. 情况1
-    ```text
-    error during connect: this error may indicate that the docker daemon is not running: 
-    Get "http://%2F%2F.%2Fpipe%2Fdocker_engine/v1.24/containers/json?all=1&filters=%7B%22label%22%3A%7B%22com.docker.compose.config-hash%22%3Atrue%2C%22com.docker.compose.project%3Dqanything%22%3Atrue%7D%7D": 
-    open //./pipe/docker_engine: The system cannot find the file specified.
-    ```
-    
-    原因：docker未启动
-    
-    解决办法：启动自己的docker客户端
+双击`run_in_windows.bat` 即可运行
 
----
-
-2. 情况二：No such file or directory
-```text
-/workspace/qanything_local/scripts/run_for_local.sh^M: bad interpreter: No such file or directory
+或在cmd中执行如下命令，即可运行。
+```shell
+Start-Process -FilePath ".\run_in_windows.bat" -Wait -NoNewWindow
 ```
-原因：在windows上编辑好shell脚本，然后在linux系统中执行时，报错/bin/bash^M: bad interpreter: No such file or directory。
-
-解决方案：https://www.cnblogs.com/xyztank/articles/16594936.html
-
-具体操作如下：
-1. 在前面`docker-compose`启动的情况下，进入WSL
-    - 打开cmd
-    - 执行：`docker exec -it qanything-container-local bash`
-    - 进入wsl之后，修改 `run_for_local.sh`，如下：
-    ```shell
-    cd /workspace/qanything_local/scripts/
-    
-    # 将dos的回车符替换为空字符串
-    sed -i "s/\r//g" run_for_local.sh
-    sed -i "s/^M//g" run_for_local.sh
-    ```
-   
-    然后重新执行
-    ```shell
-    docker-compose -f docker-compose-windows.yaml up qanything_local
-    ```
----
 
 ### 结束WSL中某个进程
 
