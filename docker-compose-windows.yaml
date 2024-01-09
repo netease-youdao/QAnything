@@ -79,16 +79,22 @@ services:
   qanything_local:
     container_name: qanything-container-local
     image: freeren/qanything-win:v1.0.8
-    runtime: nvidia
+    # runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: "all"
+              capabilities: ["gpu"]
     command: /workspace/qanything_local/scripts/run_for_local.sh
     privileged: true
     shm_size: '8gb'
     volumes:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/models:/model_repos/QAEnsemble
       - ${DOCKER_VOLUME_DIRECTORY:-.}/:/workspace/qanything_local/
-      - ${DOCKER_VOLUME_DIRECTORY:-.}/nginx.conf:/etc/nginx/nginx.conf
     ports:
-      - "5052:8288"
+      - "5052:5052"
     environment:
       - NCCL_LAUNCH_MODE=PARALLEL
       - CUDA_VISIBLE_DEVICES=0
