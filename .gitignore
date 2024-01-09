@@ -6,3 +6,8 @@ __pycache__
 QANY_DB
 qanything_logs
 api.log
+front_end/dist
+node_modules
+models
+volumes
+*.log
