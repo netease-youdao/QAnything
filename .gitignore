@@ -13,3 +13,6 @@ volumes
 *.log
 front_end/yarn.lock
 front_end/package-lock.json
+front_end/.eslintrc-auto-import.json
+front_end/auto-imports.d.ts
+front_end/components.d.ts
