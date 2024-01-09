@@ -186,10 +186,16 @@ vim docker-compose-linux.yaml # change CUDA_VISIBLE_DEVICES to your gpu device i
 #### step4: 启动服务
 在Windows系统下
 ```
+# 如果你想查看进度条或详细信息，可以执行前台启动命令！（推荐！）
+docker-compose -f docker-compose-windows.yaml up qanything_local
+# 后台启动命令
 docker-compose -f docker-compose-windows.yaml up -d
 ```
 在Linux系统下
 ```
+# 如果你想查看进度条或详细信息，可以执行前台启动命令！（推荐！）
+docker-compose -f docker-compose-linux.yaml up qanything_local
+# 后台启动命令
 docker-compose -f docker-compose-linux.yaml up -d
 ```
 

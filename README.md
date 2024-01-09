@@ -189,10 +189,16 @@ vim docker-compose-linux.yaml # change CUDA_VISIBLE_DEVICES to your gpu device i
 #### step4: start server
 in the Windows system
 ```
+# If you want to view the progress bar or detailed information, you can execute the foreground startup command. (Recommend!)
+docker-compose -f docker-compose-windows.yaml up qanything_local
+# Background startup command
 docker-compose -f docker-compose-windows.yaml up -d
 ```
 in the Linux system
 ```
+# If you want to view the progress bar or detailed information, you can execute the foreground startup command. (Recommend!)
+docker-compose -f docker-compose-linux.yaml up qanything_local
+# Background startup command
 docker-compose -f docker-compose-linux.yaml up -d
 ```
 
