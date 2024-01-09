@@ -131,7 +131,7 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 | NVIDIA GPU Memory      |      >= 16GB              | 推荐NVIDIA 3090|
 | NVIDIA Driver 版本      |      >= 525.105.17        |                           |
 | CUDA 版本               |      >= 12.0              |                           |
-| docker compose 版本     |      >=1.27.4             | [docker compose 安装教程](https://docs.docker.com/compose/install/)|
+| docker compose 版本     |      >=1.29.0             | [docker compose 安装教程](https://docs.docker.com/compose/install/)|
 
 ### 下载安装
 #### step1: 下载本项目
