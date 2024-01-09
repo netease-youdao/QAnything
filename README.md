@@ -131,7 +131,7 @@ If you need to use it for commercial purposes, please follow the license of Qwen
 | NVIDIA GPU Memory      |      >= 16GB              | NVIDIA 3090 recommended |
 | NVIDIA Driver Version  |      >= 525.105.17        |                           |
 | CUDA Version           |      >= 12.0              |                           |
-| docker compose  version|      >=1.27.4             | [docker compose install](https://docs.docker.com/compose/install/)|
+| docker compose  version|      >=1.29.0             | [docker compose install](https://docs.docker.com/compose/install/)|
 
 
 
