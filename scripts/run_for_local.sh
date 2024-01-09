@@ -46,12 +46,13 @@ echo "已耗时: ${elapsed} 秒."
 
 cd /workspace/qanything_local/front_end
 # 安装依赖
-nohup npm install > npm_install.log 2>&1
+nohup npm i -g yarn > npm_install_yarn.log 2>&1
+nohup yarn > npm_install.log 2>&1
 if [ $? -eq 0 ]; then
     echo "npm install completed, starting front_end development service... (5/7)"
     echo "npm install 完成，正在启动前端服务... (5/7)"
     # 安装完成后，启动前端服务
-    nohup npm run dev > npm_run_dev.log 2>&1 &
+    nohup yarn dev > npm_run_dev.log 2>&1 &
     DEV_SERVER_PID=$!
     # echo "前端服务进程ID: $DEV_SERVER_PID"
     while ! grep -q "ready" npm_run_dev.log; do
