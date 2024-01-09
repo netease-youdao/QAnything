@@ -4,7 +4,7 @@ $content = Get-Content -Raw -Path .\scripts\run_for_local.sh -Encoding utf8
 $content = $content -replace "`r`n", "`n"
 
 # 移除文件结尾的空白字符
-$content = $content -replace "\s+$"
+$content = $content -replace "\s+$", "`n`n"
 
 $content | Set-Content -Path .\scripts\run_for_local.sh -Encoding utf8
 
