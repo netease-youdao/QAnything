@@ -175,7 +175,6 @@ unzip QAnything/models.zip   # in root directory of the current project
 ```
 
 #### step3：更改配置
-在Windows系统下
 ```
 vim docker-compose-windows.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
 ```
@@ -184,7 +183,15 @@ vim docker-compose-windows.yaml # change CUDA_VISIBLE_DEVICES to your gpu device
 vim docker-compose-linux.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
 ```
 #### step4: 启动服务
-在Windows系统下
+在Windows系统下：3种启动方式
+
+1. 双击 run_in_windows.bat
+2. 在 cmd / power shell 中执行 
+```shell
+Start-Process -FilePath ".\run_in_windows.bat" -Wait -NoNewWindow
+```
+
+3. 直接通过docker命令执行
 ```
 # 如果你想查看进度条或详细信息，可以执行前台启动命令！（推荐！）
 docker-compose -f docker-compose-windows.yaml up qanything_local
