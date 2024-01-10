@@ -20,52 +20,6 @@
 
 <body>
   <div id="app"></div>
-
   <script type="module" src="/src/main.ts"></script>
-  <script>
-    var _rlog = _rlog || [];
-    _rlog.push(['_setAccount', '']);
-  </script>
-  <script defer src="https://shared.ydstatic.com/js/rlog/v1.js"></script>
-
-  <script>
-    // 降级写法举例说明，产品可以根据自己场景写
-    var loadMessageError2 = function () {
-      // message加载失败降级到nginx,可以在load事件重新初始化
-      var cdnPath = 'https://dl.reg.163.com/webzj/ngx/message.js';
-      var script = document.createElement('script');
-      script.src = cdnPath;
-      document.body.appendChild(script);
-    }
-    // 降级写法举例说明，产品可以根据自己场景写
-    var loadMessageError1 = function () {
-      // message加载失败降级到备份cdn,可以在load事件重新初始化
-      var cdnPath = 'https://webzj.netstatic.net/webzj_cdn101/message4.js';
-      var script = document.createElement('script');
-      script.src = cdnPath;
-      script.onerror = loadMessageError2
-      document.body.appendChild(script);
-    } 
-  </script>
-  <script onerror="loadMessageError1()" src="https://urswebzj.nosdn.127.net/webzj_cdn101/message.js"></script>
-  <!-- <script>
-    var _czc = _czc || [];
-    (function () {
-      var um = document.createElement("script");
-      um.src = "https://c.cnzz.com/c.js?web_id=1261993376&t=z";
-      var s = document.getElementsByTagName("script")[0];
-      s.parentNode.insertBefore(um, s);
-    })();
-  </script> -->
-  <script>
-    var _czc = _czc || [];
-    (function () {
-      var um = document.createElement("script");
-      um.src = "https://s13.cnzz.com/z.js?id=1261993376&async=1";
-      var s = document.getElementsByTagName("script")[0];
-      s.parentNode.insertBefore(um, s);
-    })();
-  </script>
 </body>
-
 </html>
