@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 start_time=$(date +%s)  # 记录开始时间
 # 检查模型文件夹是否存在
@@ -42,23 +42,19 @@ echo "qanything后端服务已就绪! (4/7)"
 
 cd /workspace/qanything_local/front_end
 # 安装依赖
-echo "Waiting for download yarn"
-echo "等待安装yarn"
-npm i -g yarn
-echo "Downloaded yarn! Waiting for yarn to install frontend dependencies"
-echo "已下载yarn！等待yarn安装前端依赖"
-yarn
-echo "Successfully installed front-end dependencies.(5/7)"
-echo "已成功安装前端依赖。（5/7）"
-yarn dev > yarn_dev.log 2>&1 &
-tail -f yarn_dev.log &
-while ! grep -q "ready" yarn_dev.log; do
+echo "Waiting for WebUI dependencies."
+npm install
+echo "Successfully installed WebUI dependencies.(5/7)"
+echo "已成功 WebUI 依赖。（5/7）"
+npm run dev > npm_dev.log 2>&1 &
+tail -f npm_dev.log &
+while ! grep -q "ready" npm_dev.log; do
     echo "Waiting for the front-end service to start..."
-    echo "等待启动前端服务"
+    echo "等待启动 WebUI"
     sleep 5
 done
 echo "The front-end service is ready!...(6/7)"
-echo "前端服务已就绪!...(6/7)"
+echo "WebUI 已就绪!...(6/7)"
 
 current_time=$(date +%s)
 elapsed=$((current_time - start_time))  # 计算经过的时间（秒）
@@ -91,5 +87,3 @@ echo "前端加载大概需要15秒。"
 while true; do
   sleep 2
 done
-
-
