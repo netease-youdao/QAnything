@@ -47,6 +47,9 @@ echo "等待安装yarn"
 npm i -g yarn
 echo "Downloaded yarn!(5/7)。 Waiting for yarn to install frontend dependencies"
 echo "已下载yarn！（5/7)。等待yarn安装前端依赖"
+yarn
+echo "Successfully installed front-end dependencies."
+echo "已成功安装前端以来"
 yarn dev > yarn_dev.log 2>&1 &
 tail -f yarn_dev.log &
 while ! grep -q "ready" yarn_dev.log; do
