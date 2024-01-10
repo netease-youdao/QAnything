@@ -39,35 +39,23 @@ nohup python3 -u qanything_kernel/qanything_server/sanic_api.py > api.log 2>&1 &
 echo "The qanything backend service is ready! (4/7)"
 echo "qanything后端服务已就绪! (4/7)"
 
-current_time=$(date +%s)
-elapsed=$((current_time - start_time))  # 计算经过的时间（秒）
-echo "Time elapsed: ${elapsed} seconds."
-echo "已耗时: ${elapsed} 秒."
 
 cd /workspace/qanything_local/front_end
 # 安装依赖
-nohup npm i -g yarn > npm_install_yarn.log 2>&1
-nohup yarn > npm_install.log 2>&1
-if [ $? -eq 0 ]; then
-    echo "npm install completed, starting front_end development service... (5/7)"
-    echo "npm install 完成，正在启动前端服务... (5/7)"
-    # 安装完成后，启动前端服务
-    nohup yarn dev > npm_run_dev.log 2>&1 &
-    DEV_SERVER_PID=$!
-    # echo "前端服务进程ID: $DEV_SERVER_PID"
-    while ! grep -q "ready" npm_run_dev.log; do
-        echo "Waiting for the front-end service to start..."
-        echo "等待前端服务启动..."
-        sleep 5
-    done
-
-    echo "The front-end service is ready!...(6/7)"
-    echo "前端服务已就绪!...(6/7)"
-else
-    echo "npm install failed, please check the npm_install.log log file."
-    echo "npm install 失败，请检查 npm_install.log 日志文件。"
-    exit 1
-fi
+echo "Waiting for download yarn"
+echo "等待安装yarn"
+npm i -g yarn
+echo "Downloaded yarn!(5/7)。 Waiting for yarn to install frontend dependencies"
+echo "已下载yarn！（5/7)。等待yarn安装前端依赖"
+yarn dev > yarn_dev.log 2>&1 &
+tail -f yarn_dev.log &
+while ! grep -q "ready" yarn_dev.log; do
+    echo "Waiting for the front-end service to start..."
+    echo "等待启动前端服务"
+    sleep 5
+done
+echo "The front-end service is ready!...(6/7)"
+echo "前端服务已就绪!...(6/7)"
 
 current_time=$(date +%s)
 elapsed=$((current_time - start_time))  # 计算经过的时间（秒）
@@ -91,6 +79,10 @@ current_time=$(date +%s)
 elapsed=$((current_time - start_time))  # 计算经过的时间（秒）
 echo "Time elapsed: ${elapsed} seconds."
 echo "已耗时: ${elapsed} 秒."
+echo "Please visit the front-end service at [http://localhost:5052/qanything/] to conduct Q&A. Please replace "localhost" with the actual IP address according to the actual situation."
+echo "请在[http://localhost:5052/qanything/]下访问前端服务来进行问答，请根据实际情况将localhost替换为实际ip"
+echo "It takes about 15 seconds to open the front end."
+echo "前端加载大概需要15秒。"
 
 # 保持容器运行
 while true; do
