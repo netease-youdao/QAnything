@@ -15,7 +15,7 @@
 </div>
 
 <div align="center">
-<br />
+
 <a href="https://qanything.ai"><img src="https://img.shields.io/badge/try%20online-qanything.ai-purple"></a>
 &nbsp;&nbsp;&nbsp;&nbsp;
 <a href="https://read.youdao.com#/home"><img src="https://img.shields.io/badge/try%20online-read.youdao.com-purple"></a>
@@ -75,7 +75,6 @@ In scenarios with a large volume of knowledge base data, the advantages of a two
 <div align="center">
 <img src="docs/images/two_stage_retrieval.jpg" width = "500" alt="two stage retrievaal" align=center />
 </div>
-</br>
 
 QAnything uses the retrieval component [BCEmbedding](https://github.com/netease-youdao/BCEmbedding), which is distinguished for its bilingual and crosslingual proficiency. BCEmbedding excels in bridging Chinese and English linguistic gaps, which achieves
 - **A high performence on <a href="https://github.com/netease-youdao/BCEmbedding/tree/master?tab=readme-ov-file#evaluate-semantic-representation-by-mteb" target="_Self">Semantic Representation Evaluations in MTEB</a>**;
@@ -142,10 +141,14 @@ git clone https://github.com/netease-youdao/QAnything.git
 ```
 #### step2: download the model and unzip it to the root directory of the current project.
 This project provides multiple model download platforms. Choose one of the methods for downloading.
-##### WiseModel（recommend👍）
-[👉download from WiseModel](https://wisemodel.cn/models/Netease_Youdao/qanything)
 
-or download via git:
+[👉【WiseModel】](https://wisemodel.cn/models/Netease_Youdao/qanything)
+[👉【ModelScope】](https://www.modelscope.cn/models/netease-youdao/QAnything)
+[👉【HuggingFace】](https://huggingface.co/netease-youdao/QAnything)
+
+<details>
+<summary>Download method 1：WiseModel（recommend👍）</summary>
+
 ```
 cd QAnything
 # Make sure you have git-lfs installed (https://git-lfs.com)
@@ -153,10 +156,10 @@ git lfs install
 git clone https://www.wisemodel.cn/Netease_Youdao/qanything.git
 unzip qanything/models.zip   # in root directory of the current project
 ```
-##### ModelScope
-[👉download from ModelScope](https://www.modelscope.cn/models/netease-youdao/QAnything)
+</details>
+<details>
+<summary>Download method 2：ModelScope</summary>
 
-or download via git:
 ```
 cd QAnything
 # Make sure you have git-lfs installed (https://git-lfs.com)
@@ -164,10 +167,10 @@ git lfs install
 git clone https://www.modelscope.cn/netease-youdao/QAnything.git
 unzip QAnything/models.zip   # in root directory of the current project
 ```
-##### HuggingFace
-[👉download from HuggingFace](https://huggingface.co/netease-youdao/QAnything)
+</details>
+<details>
+<summary>Download method 3：HuggingFace</summary>
 
-or download via git:
 ```
 cd QAnything
 # Make sure you have git-lfs installed (https://git-lfs.com)
@@ -175,36 +178,81 @@ git lfs install
 git clone https://huggingface.co/netease-youdao/QAnything
 unzip QAnything/models.zip   # in root directory of the current project
 ```
+</details>
+
 
 #### step3: change config
-in the Windows system
+##### in the Windows system
 ```
 vim docker-compose-windows.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
 
 ```
-in the Linux system
+##### in the Linux system
 ```
 vim docker-compose-linux.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
 ```
 #### step4: start server
-in the Windows system
+##### in the Windows system: 3 ways to start
+1. Double click run_in_windows.bat
+2. Execute in cmd / power shell.
+```shell
+Start-Process -FilePath ".\run_in_windows.bat" -Wait -NoNewWindow
 ```
-# If you want to view the progress bar or detailed information, you can execute the foreground startup command. (Recommend!)
+3. Execute directly through the docker command (recommended).
+<details>
+<summary>Beginner's recommendation!</summary>
+
+```shell
+# Change the script file format from DOS to UNIX.
+sed -i "s/\r//" scripts/run_for_local.sh
+sed -i "s/^M//" scripts/run_for_local.sh
+# Front desk startup, log prints to the screen in real time, press ctrl+c to stop.
 docker-compose -f docker-compose-windows.yaml up qanything_local
-# Background startup command
+```
+</details>
+
+<details>
+<summary>Recommended for experienced players!</summary>
+
+```shell
+# The script file is changed from DOS format to Unix format.
+sed -i "s/\r//" scripts/run_for_local.sh
+sed -i "s/^M//" scripts/run_for_local.sh
+# Background startup, ctrl+c will not stop.
 docker-compose -f docker-compose-windows.yaml up -d
+# Execute the following command to view the log.
+docker-compose -f docker-compose-windows.yaml logs qanything_local
+# Stop service
+docker-compose -f docker-compose-windows.yaml down
 ```
-in the Linux system
-```
-# If you want to view the progress bar or detailed information, you can execute the foreground startup command. (Recommend!)
+</details>
+
+##### in the Linux system
+<details>
+<summary>Beginner's recommendation!</summary>
+
+```shell
+# Front desk startup, log prints to the screen in real time, press ctrl+c to stop.
 docker-compose -f docker-compose-linux.yaml up qanything_local
-# Background startup command
-docker-compose -f docker-compose-linux.yaml up -d
 ```
+</details>
+
+<details>
+<summary>Recommended for experienced players!</summary>
+
+```shell
+# Background startup, ctrl+c will not stop.
+docker-compose -f docker-compose-linux.yaml up -d
+# Execute the following command to view the log.
+docker-compose -f docker-compose-linux.yaml logs qanything_local
+# Stop service
+docker-compose -f docker-compose-linux.yaml down
+```
+</details>
 
 After successful installation, you can experience the application by entering the following addresses in your web browser.
 
-- Frontend address: http://{your_host}:5052/qanything
+- Frontend address: http://{your_host}:5052/qanything/
 
 - API address: http://{your_host}:5052/api/
 

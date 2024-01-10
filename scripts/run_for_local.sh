@@ -45,11 +45,11 @@ cd /workspace/qanything_local/front_end
 echo "Waiting for download yarn"
 echo "等待安装yarn"
 npm i -g yarn
-echo "Downloaded yarn!(5/7)。 Waiting for yarn to install frontend dependencies"
-echo "已下载yarn！（5/7)。等待yarn安装前端依赖"
+echo "Downloaded yarn! Waiting for yarn to install frontend dependencies"
+echo "已下载yarn！等待yarn安装前端依赖"
 yarn
-echo "Successfully installed front-end dependencies."
-echo "已成功安装前端以来"
+echo "Successfully installed front-end dependencies.(5/7)"
+echo "已成功安装前端依赖。（5/7）"
 yarn dev > yarn_dev.log 2>&1 &
 tail -f yarn_dev.log &
 while ! grep -q "ready" yarn_dev.log; do

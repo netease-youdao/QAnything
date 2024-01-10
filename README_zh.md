@@ -15,7 +15,6 @@
 </div>
 
 <div align="center">
-<br />
 
 <a href="https://qanything.ai"><img src="https://img.shields.io/badge/%E5%9C%A8%E7%BA%BF%E4%BD%93%E9%AA%8C-QAnything-purple"></a>
 &nbsp;&nbsp;&nbsp;&nbsp;
@@ -76,7 +75,6 @@
 <div align="center">
 <img src="docs/images/two_stage_retrieval.jpg" width = "500" alt="two stage retrievaal" align=center />
 </div>
-</br>
 
 QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BCEmbedding)有非常强悍的双语和跨语种能力，能消除语义检索里面的中英语言之间的差异，从而实现：
 - **强大的双语和跨语种语义表征能力【<a href="https://github.com/netease-youdao/BCEmbedding/tree/master?tab=readme-ov-file#semantic-representation-evaluations-in-mteb" target="_Self">基于MTEB的语义表征评测指标</a>】。**
@@ -140,10 +138,14 @@ git clone https://github.com/netease-youdao/QAnything.git
 ```
 #### step2: 下载模型并解压到本项目根目录下
 本项目提供多种模型下载平台，选择其中一个方式下载即可。
-##### 始智AI（推荐👍）
-[👉可以去【始智AI】平台下载](https://wisemodel.cn/models/Netease_Youdao/qanything)
 
-或者通过git下载：
+[👉【始智AI】](https://wisemodel.cn/models/Netease_Youdao/qanything)
+[👉【魔搭社区】](https://www.modelscope.cn/models/netease-youdao/QAnything)
+[👉【HuggingFace】](https://huggingface.co/netease-youdao/QAnything)
+
+<details>
+<summary>下载方式1：始智AI（推荐👍）</summary>
+
 ```
 cd QAnything
 # Make sure you have git-lfs installed (https://git-lfs.com)
@@ -151,10 +153,10 @@ git lfs install
 git clone https://www.wisemodel.cn/Netease_Youdao/qanything.git
 unzip qanything/models.zip   # in root directory of the current project
 ```
-##### 魔搭社区
-[👉可以去【摩搭社区】平台下载](https://www.modelscope.cn/models/netease-youdao/QAnything)
+</details>
+<details>
+<summary>下载方式2：魔搭社区</summary>
 
-或者通过git下载：
 ```
 cd QAnything
 # Make sure you have git-lfs installed (https://git-lfs.com)
@@ -162,10 +164,10 @@ git lfs install
 git clone https://www.modelscope.cn/netease-youdao/QAnything.git
 unzip QAnything/models.zip   # in root directory of the current project
 ```
-##### HuggingFace
-[👉可以去【HuggingFace】平台下载](https://huggingface.co/netease-youdao/QAnything)
+</details>
+<details>
+<summary>下载方式3：HuggingFace</summary>
 
-或者通过git下载：
 ```
 cd QAnything
 # Make sure you have git-lfs installed (https://git-lfs.com)
@@ -173,43 +175,82 @@ git lfs install
 git clone https://huggingface.co/netease-youdao/QAnything
 unzip QAnything/models.zip   # in root directory of the current project
 ```
+</details>
 
-#### step3：更改配置
+#### step3：修改配置
+##### 在WINDOWNS系统下：
 ```
 vim docker-compose-windows.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
+
 ```
-在Linux系统下
+##### 在Linux系统下：
 ```
+# 判断当前wsl2是否是
 vim docker-compose-linux.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
 ```
 #### step4: 启动服务
-在Windows系统下：3种启动方式
-
+##### 在Windows系统下：3种启动方式
 1. 双击 run_in_windows.bat
-2. 在 cmd / power shell 中执行 
+2. 在 cmd / power shell 中执行
 ```shell
 Start-Process -FilePath ".\run_in_windows.bat" -Wait -NoNewWindow
 ```
+3. 直接通过docker命令执行（推荐）
+<details>
+<summary>新手推荐！</summary>
 
-3. 直接通过docker命令执行
-```
-# 如果你想查看进度条或详细信息，可以执行前台启动命令！（推荐！）
+```shell
+# 脚本文件从dos格式改为unix格式
+sed -i "s/\r//" scripts/run_for_local.sh
+sed -i "s/^M//" scripts/run_for_local.sh
+# 前台启动，日志实时打印到屏幕上，ctrl+c即可停止
 docker-compose -f docker-compose-windows.yaml up qanything_local
-# 后台启动命令
+```
+</details>
+
+<details>
+<summary>老手推荐！</summary>
+
+```shell
+# 脚本文件从dos格式改为unix格式
+sed -i "s/\r//" scripts/run_for_local.sh
+sed -i "s/^M//" scripts/run_for_local.sh
+# 后台启动，ctrl+c不会停止
 docker-compose -f docker-compose-windows.yaml up -d
+# 执行如下命令查看日志
+docker-compose -f docker-compose-windows.yaml logs qanything_local
+# 停止服务
+docker-compose -f docker-compose-windows.yaml down
 ```
-在Linux系统下
-```
-# 如果你想查看进度条或详细信息，可以执行前台启动命令！（推荐！）
+</details>
+
+##### 在Linux系统下
+<details>
+<summary>新手推荐！</summary>
+
+```shell
+# 前台启动，日志实时打印到屏幕上，ctrl+c即可停止
 docker-compose -f docker-compose-linux.yaml up qanything_local
-# 后台启动命令
-docker-compose -f docker-compose-linux.yaml up -d
 ```
+</details>
+
+<details>
+<summary>老手推荐！</summary>
+
+```shell
+# 后台启动，ctrl+c不会停止
+docker-compose -f docker-compose-linux.yaml up -d
+# 执行如下命令查看日志
+docker-compose -f docker-compose-linux.yaml logs qanything_local
+# 停止服务
+docker-compose -f docker-compose-linux.yaml down
+```
+</details>
 
 
 安装成功后，即可在浏览器输入以下地址进行体验。
 
-- 前端地址: http://{your_host}:5052/qanything
+- 前端地址: http://{your_host}:5052/qanything/
 
 - api地址: http://{your_host}:5052/api/
 
