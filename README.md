@@ -125,12 +125,12 @@ If you need to use it for commercial purposes, please follow the license of Qwen
 [:point_right: try QAnything online](https://qanything.ai)
 ### Prerequisites
 
-|  **Required item**     | **Minimum Requirement**   | **Note** |
-| --------------         | ------------------------- | --------------------------------- |
-| NVIDIA GPU Memory      |      >= 16GB              | NVIDIA 3090 recommended |
-| NVIDIA Driver Version  |      >= 525.105.17        |                           |
-| CUDA Version           |      >= 12.0              |                           |
-| docker compose  version|      >=1.29.0             | [docker compose install](https://docs.docker.com/compose/install/)|
+|  **Required item**     | **Minimum Requirement** | **Note** |
+| --------------         |------------------------| --------------------------------- |
+| NVIDIA GPU Memory      | >= 16GB                | NVIDIA 3090 recommended |
+| NVIDIA Driver Version  | >= 525.105.17          |                           |
+| CUDA Version           | >= 12.0                |                           |
+| docker compose  version| >= 2.12.1              | [docker compose install](https://docs.docker.com/compose/install/)|
 
 
 
