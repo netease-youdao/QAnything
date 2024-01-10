@@ -4,11 +4,11 @@ $content = Get-Content -Raw -Path .\scripts\run_for_local.sh -Encoding utf8
 $content = $content -replace "`r$", ""
 # 移除 BOM
 $contentWithoutBOM = $content -replace '^\xEF\xBB\xBF', ''
-# 移除文件结尾的空白字符
-$content = $content -replace "\s+$", "`n`n`n"
+# 移除文件结尾的空白字符并添加一个新行
+$content = $content -replace "\s+$", "`n"
 
-# ([System.Text.Encoding]::UTF8) 可以禁止在开头添加bom
-$content | Set-Content -Path .\scripts\run_for_local.sh -Encoding ([System.Text.Encoding]::UTF8) -NoNewline
+# 设置编码和写入文件
+$content | Set-Content -Path .\scripts\run_for_local.sh -Encoding UTF8 -NoNewline
 
 # 判断Docker容器是否启动
 $dockerStatus = Get-Service | Where-Object {$_.DisplayName -like '*Docker*'} | Select-Object -ExpandProperty Status
