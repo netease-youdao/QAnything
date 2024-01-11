@@ -3,7 +3,11 @@
 $content = Get-Content -Raw -Path .\scripts\run_for_local.sh -Encoding utf8
 $content = $content -replace "`r$", ""
 # 移除 BOM
-$contentWithoutBOM = $content -replace '^\xEF\xBB\xBF', ''
+$content = $content -replace '^\xef\xbb\xbf', ''
+$content = $content -replace '^\xff\xfe', ''
+$content = $content -replace '^\xfe\xff', ''
+$content = $content -replace '^\xff\xfe\x00\x00', ''
+$content = $content -replace '^\x00\x00\xfe\xff', ''
 # 移除文件结尾的空白字符并添加一个新行
 $content = $content -replace "\s+$", "`n"
 

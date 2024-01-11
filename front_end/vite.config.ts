@@ -49,6 +49,8 @@ function resovePath(paths) {
 }
 
 export default defineConfig(({ mode }) => {
+    const env = loadEnv(mode, process.cwd());
+
   return {
     plugins: [
       Components({
@@ -108,7 +110,7 @@ export default defineConfig(({ mode }) => {
       outDir: `dist/qanything`,
     },
 
-    base: '/qanything/',
+    base: env.VITE_APP_WEB_PREFIX,
     server: {
       usePolling: true,
       port: 5052,
@@ -119,10 +121,10 @@ export default defineConfig(({ mode }) => {
       },
       cors: true,
       proxy: {
-        '/local_doc_qa': {
-          target: 'http://localhost:8777/api',
+        [env.VITE_APP_API_PREFIX]: {
+		  target: env.VITE_HOST,
           changeOrigin: true,
-          rewrite: path => path.replace(/^\/local_doc_qa/, '/local_doc_qa'),
+		  secure: false,
         },
       },
     },
