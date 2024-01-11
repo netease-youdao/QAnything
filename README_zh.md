@@ -181,29 +181,20 @@ unzip QAnything/models.zip   # in root directory of the current project
 ##### 在WINDOWNS系统下：
 ```
 vim docker-compose-windows.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
-vim front_end/.env # 设置准确的host，本地环境默认一般是localhost或0.0.0.0
+vim front_end/.env.production # 设置准确的host，本地环境默认一般是localhost或0.0.0.0
 ```
 ##### 在Linux系统下：
 ```
 # 判断当前wsl2是否是
 vim docker-compose-linux.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
-vim front_end/.env # 设置准确的host，本地环境默认一般是localhost或0.0.0.0
+vim front_end/.env.production # 设置准确的host，本地环境默认一般是localhost或0.0.0.0
 ```
 #### step4: 启动服务
-##### 在Windows系统下：3种启动方式
-1. 命令行中通过docker命令执行（推荐👍）
+##### 在Windows系统下
 <details>
 <summary>新手推荐！</summary>
 
 ```shell
-# 脚本文件从dos格式改为unix格式
-sed -i "s/\r//" scripts/run_for_local.sh
-sed -i "s/^M//" scripts/run_for_local.sh
-# 删除dos系统中的BOM字符
-sed -i '1s/^ *//' scripts/run_for_local.sh
-# 查看BOM是否删除成功
-head -1 scripts/run_for_local.sh | od -c
-# 如果显示：0000000   !   /   b   i   n   /   b   a   s   h  \n 表示成功
 # 前台启动，日志实时打印到屏幕上，ctrl+c即可停止
 docker-compose -f docker-compose-windows.yaml up qanything_local
 ```
@@ -213,9 +204,6 @@ docker-compose -f docker-compose-windows.yaml up qanything_local
 <summary>老手推荐！</summary>
 
 ```shell
-# 脚本文件从dos格式改为unix格式
-sed -i "s/\r//" scripts/run_for_local.sh
-sed -i "s/^M//" scripts/run_for_local.sh
 # 后台启动，ctrl+c不会停止
 docker-compose -f docker-compose-windows.yaml up -d
 # 执行如下命令查看日志

@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 start_time=$(date +%s)  # 记录开始时间
 # 检查模型文件夹是否存在
@@ -39,45 +39,107 @@ nohup python3 -u qanything_kernel/qanything_server/sanic_api.py > api.log 2>&1 &
 echo "The qanything backend service is ready! (4/8)"
 echo "qanything后端服务已就绪! (4/8)"
 
+function build_front_end() {
+    # 转到 front_end 目录
+    cd /workspace/qanything_local/front_end || exit
 
-cd /workspace/qanything_local/front_end
-# 安装依赖
-echo "Waiting for [npm run install]（5/8)"
-npm install
-echo "[npm run install] Installed successfully（5/8)"
-
-# 指定文件路径
-package_json="./package.json"
-version_txt="./version.txt"
-# 从 package.json 中提取版本号
-package_version=$(grep -E '"version"\s*:' "$package_json" | awk -F'"' '{print $4}')
-
-# 读取 version.txt 中的版本号
-if [ -e "$version_txt" ]; then
-    version=$(cat "$version_txt")
-    # 判断是否等于 package.json 中的版本号
-    if [ "$version" != "$package_version" ]; then
-        echo "Waiting for [npm run build](6/8)"
-        npm run build
-        echo "[npm run build] build successfully(6/8)"
+    # 安装依赖
+    echo "Waiting for [npm run install]（5/8)"
+    npm install
+    if [ $? -eq 0 ]; then
+        echo "[npm run install] Installed successfully（5/8)"
+    else
+        echo "Failed to install npm dependencies."
+        exit 1
     fi
-else
-    # 如果没有version文件，表示是第一次build
+
+    # 构建前端项目
     echo "Waiting for [npm run build](6/8)"
     npm run build
-    echo "[npm run build] build successfully(6/8)"
+    if [ $? -eq 0 ]; then
+        echo "[npm run build] build successfully(6/8)"
+    else
+        echo "Failed to build the front end."
+        exit 1
+    fi
+}
+
+# 在执行 build 前同时执行 git fetch，并提示用户是否需要 git pull
+git fetch
+# 检查远程是否有新的变动
+remote_changes=$(git log HEAD..origin/master --oneline)
+if [ -n "$remote_changes" ]; then
+    # 如果有变动，提示用户
+    echo "检测到远程仓库有新的变动。"
+    read -t 10 -p "是否执行 git pull 更新本地仓库？\n[Y/N]: " user_input
+    user_input=${user_input:-N} # 默认值为 'N'，如果用户没有输入任何内容
+
+    # 根据用户的输入决定是否执行 git pull
+    if [[ $user_input =~ ^[Yy]$ ]]; then
+        echo "正在执行 git pull..."
+        git pull
+    else
+        echo "跳过 git pull，继续执行脚本..."
+    fi
+else
+    echo "远程仓库没有新的变动。"
 fi
 
+# 定义 commit.log 文件路径
+commit_log_file="commit.log"
+
+# 定义特定文件夹路径，这里假设是 front_end
+folder_path="front_end/"
+
+# 获取当前的 commit id
+current_commit_id=$(git rev-parse HEAD)
+
+# 判断 commit.log 文件是否存在
+if [ ! -f "$commit_log_file" ]; then
+    # 如果不存在，则执行 build 并创建 commit.log
+    build_front_end
+    echo $current_commit_id > $commit_log_file
+else
+    # 如果存在，则与当前的 commit id 比对
+    saved_commit_id=$(cat $commit_log_file)
+    if [ "$saved_commit_id" != "$current_commit_id" ]; then
+        # 如果本地保存的 commit id 与当前的不一致，则执行 build 并更新 commit.log
+    	build_front_end
+        echo $current_commit_id > $commit_log_file
+    else
+        # 如果一致，则执行 git status 检查特定文件夹下是否有改动
+        if git status --porcelain $folder_path | grep "^ M"; then
+            # 如果存在 front_end 下的改动，则执行 build
+    	    build_front_end
+        else
+            # 否则不执行 build
+            echo "无需执行 build。"
+        fi
+    fi
+fi
+
+# cd /workspace/qanything_local/front_end
+# # 安装依赖
+# echo "Waiting for [npm run install]（5/8)"
+# npm install
+# echo "[npm run install] Installed successfully（5/8)"
+# 
+# echo "Waiting for [npm run build](6/8)"
+# npm run build
+# echo "[npm run build] build successfully(6/8)"
+
 # 启动前端页面服务
-nohup npm run serve 1>http-server.log 2>&1 &
+nohup npm run serve 1>npm_server.log 2>&1 &
 
 # 监听前端页面服务
-tail -f http-server.log &
-while ! grep -q "Local:" http-server.log; do
+tail -f npm_server.log &
+while ! grep -q "Local:" npm_server.log; do
     echo "Waiting for the front-end service to start..."
     echo "等待启动前端服务"
     sleep 1
 done
+echo "The front-end service is ready!...(7/8)"
+echo "前端服务已就绪!...(7/8)"
 
 current_time=$(date +%s)
 elapsed=$((current_time - start_time))  # 计算经过的时间（秒）
