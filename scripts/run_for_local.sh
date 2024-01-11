@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 start_time=$(date +%s)  # 记录开始时间
 # 检查模型文件夹是否存在
@@ -42,33 +42,42 @@ echo "qanything后端服务已就绪! (4/8)"
 
 cd /workspace/qanything_local/front_end
 # 安装依赖
-echo "Waiting for download yarn and http-server"
-echo "等待安装yarn和http-server"
-npm i -g yarn
-npm i -g http-server 
-echo "Downloaded yarn! Waiting for yarn to install frontend dependencies"
-echo "已下载yarn！等待yarn安装前端依赖"
-yarn
-echo "Successfully installed front-end dependencies.(5/8)"
-echo "已成功安装前端依赖。（5/8)"
-yarn build 1>yarn_build.log 2>&1 &
-tail -f yarn_build.log &
-while ! grep -q "modules transformed" yarn_build.log; do
-    echo "Waiting for the front-end service to build..."
-    echo "等待编译前端服务"
-    sleep 5
-done
-echo "The front-end service build is ready!...(6/8)"
-echo "前端服务已编译!...(6/8)"
-http-server ./dist -p 5052 --cors --name QAnything 1>http-server.log 2>&1 &
+echo "Waiting for [npm run install]（5/8)"
+npm install
+echo "[npm run install] Installed successfully（5/8)"
+
+# 指定文件路径
+package_json="./package.json"
+version_txt="./version.txt"
+# 从 package.json 中提取版本号
+package_version=$(grep -E '"version"\s*:' "$package_json" | awk -F'"' '{print $4}')
+
+# 读取 version.txt 中的版本号
+if [ -e "$version_txt" ]; then
+    version=$(cat "$version_txt")
+    # 判断是否等于 package.json 中的版本号
+    if [ "$version" != "$package_version" ]; then
+        echo "Waiting for [npm run build](6/8)"
+        npm run build
+        echo "[npm run build] build successfully(6/8)"
+    fi
+else
+    # 如果没有version文件，表示是第一次build
+    echo "Waiting for [npm run build](6/8)"
+    npm run build
+    echo "[npm run build] build successfully(6/8)"
+fi
+
+# 启动前端页面服务
+nohup npm run serve 1>http-server.log 2>&1 &
+
+# 监听前端页面服务
 tail -f http-server.log &
-while ! grep -q "Available" http-server.log; do
+while ! grep -q "Local:" http-server.log; do
     echo "Waiting for the front-end service to start..."
     echo "等待启动前端服务"
-    sleep 5
+    sleep 1
 done
-echo "The front-end service is ready!...(7/8)"
-echo "前端服务已就绪!...(7/8)"
 
 current_time=$(date +%s)
 elapsed=$((current_time - start_time))  # 计算经过的时间（秒）
