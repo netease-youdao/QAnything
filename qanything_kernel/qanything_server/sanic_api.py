@@ -19,7 +19,8 @@ sys.path.append(root_dir)
 from handler import *
 from qanything_kernel.core.local_doc_qa import LocalDocQA
 from sanic import Sanic
-from sanic_ext import Extend
+from sanic import response as sanic_response
+
 import os
 import argparse
 from sanic.worker.manager import WorkerManager
@@ -68,10 +69,29 @@ if args.mode not in ['local', 'online']:
     raise ValueError('mode must be local or online')
 
 app = Sanic("QAnything")
-app.config.CORS_ORIGINS = "*"
-Extend(app)
 # 设置请求体最大为 10MB
 app.config.REQUEST_MAX_SIZE = 400 * 1024 * 1024
+
+# CORS中间件，用于在每个响应中添加必要的头信息
+@app.middleware("response")
+async def add_cors_headers(request, response):
+    # response.headers["Access-Control-Allow-Origin"] = "http://10.234.10.144:5052"
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    response.headers["Access-Control-Allow-Credentials"] = "true"  # 如果需要的话
+
+@app.middleware("request")
+async def handle_options_request(request):
+    if request.method == "OPTIONS":
+        headers = {
+            # "Access-Control-Allow-Origin": "http://10.234.10.144:5052",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+            "Access-Control-Allow-Credentials": "true"  # 如果需要的话
+        }
+        return sanic_response.text("", headers=headers)
 
 
 @app.before_server_start
