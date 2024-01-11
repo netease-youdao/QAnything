@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2024-01-09 15:28:56
  * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2024-01-11 10:42:33
+k * @LastEditTime: 2024-01-11 11:33:16
  * @FilePath: /QAnything/front_end/src/services/index.ts
  * @Description:
  */
@@ -31,7 +31,7 @@ export default {
       method: 'get',
       url,
       mode: 'cors',
-      withCredentials: true,
+      withCredentials: false,
       validateStatus,
       // transformRequest,
       ...others,
@@ -56,7 +56,7 @@ export default {
       method: 'post',
       url,
       mode: 'cors',
-      withCredentials: true,
+      withCredentials: false,
       validateStatus,
       // transformRequest,
       data: params,

@@ -2,22 +2,14 @@
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2024-01-09 15:28:56
  * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2024-01-11 10:44:36
- * @FilePath: /QAnything/front_end/src/services/axiosInterceptor/index.ts
- * @Description:
- */
-/*
- * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @Date: 2024-01-09 15:28:56
- * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2024-01-11 10:44:36
+ * @LastEditTime: 2024-01-11 11:33:25
  * @FilePath: /QAnything/front_end/src/services/axiosInterceptor/index.ts
  * @Description:
  */
 
 import axios from 'axios';
 import interceptors from './interceptors/index';
-axios.defaults.withCredentials = true;
+axios.defaults.withCredentials = false;
 function isInterceptor(config: any, name: string) {
   return config[name];
 }
