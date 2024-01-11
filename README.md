@@ -194,12 +194,7 @@ vim front_end/.env # set the excetly host.
 ```
 #### step4: start server
 ##### in the Windows system: 3 ways to start
-1. Double click run_in_windows.bat
-2. Execute in cmd / power shell.
-```shell
-Start-Process -FilePath ".\run_in_windows.bat" -Wait -NoNewWindow
-```
-3. Execute directly through the docker command (recommended).
+1. Execute directly through the docker command (recommended👍).
 <details>
 <summary>Beginner's recommendation!</summary>
 

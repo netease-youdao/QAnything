@@ -191,12 +191,7 @@ vim front_end/.env # 设置准确的host，本地环境默认一般是localhost�
 ```
 #### step4: 启动服务
 ##### 在Windows系统下：3种启动方式
-1. 双击 run_in_windows.bat
-2. 在 cmd / power shell 中执行
-```shell
-Start-Process -FilePath ".\run_in_windows.bat" -Wait -NoNewWindow
-```
-3. 直接通过docker命令执行（推荐）
+1. 命令行中通过docker命令执行（推荐👍）
 <details>
 <summary>新手推荐！</summary>
 
