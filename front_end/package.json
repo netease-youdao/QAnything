@@ -11,7 +11,8 @@
     "lint-staged": "lint-staged",
     "cdn-test": "bash ./cicdn.sh test",
     "cdn-prod": "bash ./cicdn.sh prod",
-    "auto": "node ./autoHandle/create.js"
+    "auto": "node ./autoHandle/create.js",
+    "postbuild": "node writeVersion.js"
   },
   "dependencies": {
     "@vueuse/core": "^10.5.0",
