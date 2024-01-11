@@ -6,7 +6,7 @@
     "dev": "vite",
     "test": "vite build --mode test",
     "analyzer": "vite build --mode test",
-    "build": "vite build && npm version patch",
+    "build": "vite build",
     "serve": "vite preview --port 5052",
     "lint-staged": "lint-staged",
     "cdn-test": "bash ./cicdn.sh test",
