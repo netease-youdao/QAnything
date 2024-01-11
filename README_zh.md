@@ -205,7 +205,7 @@ Start-Process -FilePath ".\run_in_windows.bat" -Wait -NoNewWindow
 sed -i "s/\r//" scripts/run_for_local.sh
 sed -i "s/^M//" scripts/run_for_local.sh
 # 删除dos系统中的BOM字符
-sed -i '1s/^.*#//;s/\r$//' scripts/run_for_local.sh
+sed -i '1s/^ *//' scripts/run_for_local.sh
 # 查看BOM是否删除成功
 head -1 scripts/run_for_local.sh | od -c
 # 如果显示：0000000   !   /   b   i   n   /   b   a   s   h  \n 表示成功
