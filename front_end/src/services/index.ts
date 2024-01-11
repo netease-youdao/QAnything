@@ -9,6 +9,10 @@ k * @LastEditTime: 2024-01-11 11:33:16
 
 import axios from './axiosInterceptor/index';
 
+export const apiBase =
+  (import.meta.env.VITE_APP_MODE === 'dev' ? '' : import.meta.env.VITE_APP_API_HOST) +
+  import.meta.env.VITE_APP_API_PREFIX;
+
 function validateStatus(status: number) {
   return status >= 200 && status < 300;
 }
@@ -18,9 +22,7 @@ export const bondParams = {};
 
 export default {
   get(baseUrl: string, _query = {} as any, option = {} as any) {
-    let url = /http/.test(baseUrl)
-      ? `${baseUrl}`
-      : `${import.meta.env.VITE_APP_SERVER_URL}${baseUrl}`;
+    let url = /http/.test(baseUrl) ? `${baseUrl}` : `${apiBase}${baseUrl}`;
     const query = {
       ...bondParams,
       ..._query,
@@ -48,8 +50,8 @@ export default {
       ...bondParams,
       ...data,
     } as any;
-    const url = /http/.test(baseUrl) ? baseUrl : `${import.meta.env.VITE_APP_SERVER_URL}${baseUrl}`;
-
+    const _url = `${apiBase}${baseUrl}`;
+    const url = /http/.test(baseUrl) ? baseUrl : _url;
     const { getResponseHeader, ...others } = option;
 
     const options = {

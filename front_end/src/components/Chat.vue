@@ -120,6 +120,7 @@
   <DefaultModal :content="content" :confirm-loading="confirmLoading" @ok="confirm" />
 </template>
 <script lang="ts" setup>
+import { apiBase } from '@/services';
 import { IChatItem } from '@/utils/types';
 import { useThrottleFn, useClipboard } from '@vueuse/core';
 import { message } from 'ant-design-vue';
@@ -244,10 +245,9 @@ const send = () => {
     history.value = [];
   }
   showLoading.value = true;
-  const severUrl = import.meta.env.VITE_APP_SERVER_URL;
   ctrl = new AbortController();
 
-  fetchEventSource(severUrl + '/local_doc_qa/local_doc_chat', {
+  fetchEventSource(apiBase + '/local_doc_qa/local_doc_chat', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

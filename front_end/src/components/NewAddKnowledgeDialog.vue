@@ -4,7 +4,7 @@
  * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @LastEditTime: 2023-12-11 16:06:52
  * @FilePath: /ai-demo/src/components/NewAddKnowledgeDialog.vue
- * @Description: 
+ * @Description:
 -->
 <template>
   <Teleport to="body">
@@ -191,9 +191,7 @@ const acceptList = [
 //上传前校验
 const beforeFileUpload = async (file, index) => {
   return new Promise((resolve, reject) => {
-    console.log(file.name.split('.').pop());
-    console.log(acceptList.includes);
-    if (acceptList.includes('.' + file.name.split('.').pop().toLowerCase())) {
+    if (file.name && acceptList.includes('.' + file.name.split('.').pop().toLowerCase())) {
       fileList.value.push({
         file_name: file.name,
         file: file,
