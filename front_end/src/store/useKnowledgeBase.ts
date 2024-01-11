@@ -1,11 +1,12 @@
 /*
- * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
- * @Date: 2023-11-01 14:59:58
+ * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
+ * @Date: 2024-01-09 15:28:56
  * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2024-01-02 11:43:09
- * @FilePath: /qanything-open-source/src/store/useKnowledgeBase.ts
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ * @LastEditTime: 2024-01-11 10:45:35
+ * @FilePath: /QAnything/front_end/src/store/useKnowledgeBase.ts
+ * @Description:
  */
+
 import { IKnowledgeItem } from '@/utils/types';
 import { pageStatus } from '@/utils/enum';
 // import { resultControl } from '@/utils/utils';

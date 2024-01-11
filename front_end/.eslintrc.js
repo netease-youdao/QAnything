@@ -1,11 +1,12 @@
 /*
- * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
- * @Date: 2023-10-27 16:53:43
- * @LastEditors: 祝占朋 wb.zhuzp01@rd.netease.com
- * @LastEditTime: 2023-11-01 14:39:33
- * @FilePath: \ai-demo\.eslintrc.js
- * @Description:
+ * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
+ * @Date: 2024-01-09 15:28:56
+ * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
+ * @LastEditTime: 2024-01-11 10:48:36
+ * @FilePath: /QAnything/front_end/.eslintrc.js
+ * @Description: 
  */
+
 module.exports = {
   env: {
     node: true,

@@ -1,11 +1,12 @@
 <!--
- * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
- * @Date: 2023-10-31 15:05:47
- * @LastEditors: 祝占朋 wb.zhuzp01@rd.netease.com
- * @LastEditTime: 2023-11-01 10:08:24
- * @FilePath: \ai-demo\src\layout\index.vue
+ * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
+ * @Date: 2024-01-09 15:28:56
+ * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
+ * @LastEditTime: 2024-01-11 10:43:58
+ * @FilePath: /QAnything/front_end/src/layout/index.vue
  * @Description: 
 -->
+
 <template>
   <a-layout>
     <Head />

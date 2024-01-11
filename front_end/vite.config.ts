@@ -1,7 +1,6 @@
 import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import eslintPlugin from 'vite-plugin-eslint';
-import visualizer from 'rollup-plugin-visualizer';
 import path from 'path';
 import fs from 'fs';
 //按需加载antdvue
@@ -11,17 +10,6 @@ import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers';
 import AutoImport from 'unplugin-auto-import/vite';
 //自定义svg相关插件
 import { createSvgIconsPlugin } from 'vite-plugin-svg-icons';
-
-// const tagname = require('./package.json').tagname;
-// const devConfig = loadEnv('development', './');
-// const testConfig = loadEnv('test', './');
-// const prodConfig = loadEnv('prod', './');
-
-// const baseUrl = {
-//   development: devConfig.VITE_APP_PUBLIC,
-//   prod: `/saas/${tagname}/`,
-//   test: `/saas/${tagname}/`,
-// };
 
 function readFolder(entryPath, callback) {
   // 递归读取入口文件夹下的所有文件地址
@@ -55,15 +43,7 @@ const additionalData = (function () {
   return resources;
 })();
 const plugins = [] as any;
-// 打包生产环境才引入的插件
-// 打包依赖展示
-plugins.push(
-  visualizer({
-    open: true,
-    gzipSize: true,
-    brotliSize: true,
-  })
-);
+
 function resovePath(paths) {
   return path.resolve(__dirname, paths);
 }
@@ -127,7 +107,7 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: `dist/qanything`,
     },
-    // base: baseUrl[mode],
+
     base: '/qanything/',
     server: {
       usePolling: true,

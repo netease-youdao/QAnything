@@ -1,23 +1,17 @@
 /*
- * @Author: zhangxx zhangxx03@rd.netease.com
- * @Date: 2022-12-05 15:02:44
- * @LastEditors: 祝占朋 wb.zhuzp01@rd.netease.com
- * @LastEditTime: 2023-11-14 14:09:39
- * @FilePath: \ai-demo\src\services\index.ts
+ * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
+ * @Date: 2024-01-09 15:28:56
+ * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
+k * @LastEditTime: 2024-01-11 11:33:16
+ * @FilePath: /QAnything/front_end/src/services/index.ts
+ * @Description:
  */
+
 import axios from './axiosInterceptor/index';
-// import qs from 'qs';
 
 function validateStatus(status: number) {
   return status >= 200 && status < 300;
 }
-// const transformRequest = [
-//   function (data) {
-//     console.log('data', data);
-//     console.log(qs.stringify(data));
-//     return qs.stringify(data);
-//   },
-// ];
 
 //获取到当前业务线之后设置
 export const bondParams = {};
@@ -31,16 +25,13 @@ export default {
       ...bondParams,
       ..._query,
     };
-    // Object.keys(query).forEach(key => {
-    //   var val = query[key];
-    //   url += `${key}=${encodeURIComponent(val)}&`;
-    // });
+
     const { getResponseHeader, ...others } = option;
     const options = {
       method: 'get',
       url,
       mode: 'cors',
-      withCredentials: true,
+      withCredentials: false,
       validateStatus,
       // transformRequest,
       ...others,
@@ -58,23 +49,14 @@ export default {
       ...data,
     } as any;
     const url = /http/.test(baseUrl) ? baseUrl : `${import.meta.env.VITE_APP_SERVER_URL}${baseUrl}`;
-    // const fd = new FormData();
-    const { getResponseHeader, ...others } = option; //deepKey,
-    // Object.keys(params).forEach(key => {
-    //   if (deepKey && key === deepKey && Array.isArray(params[key])) {
-    //     params[key].forEach((file: any) => {
-    //       fd.append(`${key}`, file);
-    //     });
-    //     delete option.deepKey;
-    //   } else {
-    //     fd.append(key, params[key]);
-    //   }
-    // });
+
+    const { getResponseHeader, ...others } = option;
+
     const options = {
       method: 'post',
       url,
       mode: 'cors',
-      withCredentials: true,
+      withCredentials: false,
       validateStatus,
       // transformRequest,
       data: params,
