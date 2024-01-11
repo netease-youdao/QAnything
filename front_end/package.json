@@ -1,12 +1,12 @@
 {
   "name": "ai-demo",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "tagname": "qanything",
   "scripts": {
     "dev": "vite",
     "test": "vite build --mode test",
     "analyzer": "vite build --mode test",
-    "build": "vite build --mode prod",
+    "build": "vite build",
     "serve": "vite preview --port 5052",
     "lint-staged": "lint-staged",
     "cdn-test": "bash ./cicdn.sh test",
@@ -62,7 +62,7 @@
     "inquirer": "^8.2.0",
     "lint-staged": "^12.0.2",
     "prettier": "^2.4.1",
-    "rollup-plugin-visualizer": "^5.5.2",
+    "rollup-plugin-visualizer": "^5.12.0",
     "rxjs": "^7.4.0",
     "sass": "^1.42.1",
     "sass-loader": "^12.1.0",
