@@ -12,17 +12,6 @@ import AutoImport from 'unplugin-auto-import/vite';
 //自定义svg相关插件
 import { createSvgIconsPlugin } from 'vite-plugin-svg-icons';
 
-// const tagname = require('./package.json').tagname;
-// const devConfig = loadEnv('development', './');
-// const testConfig = loadEnv('test', './');
-// const prodConfig = loadEnv('prod', './');
-
-// const baseUrl = {
-//   development: devConfig.VITE_APP_PUBLIC,
-//   prod: `/saas/${tagname}/`,
-//   test: `/saas/${tagname}/`,
-// };
-
 function readFolder(entryPath, callback) {
   // 递归读取入口文件夹下的所有文件地址
   const files = fs.readdirSync(path.resolve(__dirname, entryPath));
@@ -127,7 +116,7 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: `dist/qanything`,
     },
-    // base: baseUrl[mode],
+
     base: '/qanything/',
     server: {
       usePolling: true,

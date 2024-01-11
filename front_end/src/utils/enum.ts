@@ -1,11 +1,20 @@
 /*
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @Date: 2023-12-22 11:39:18
+ * @Date: 2024-01-09 15:28:56
  * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2023-12-26 14:55:58
- * @FilePath: /qanything-open-source/src/utils/enum.ts
+ * @LastEditTime: 2024-01-11 10:46:18
+ * @FilePath: /QAnything/front_end/src/utils/enum.ts
  * @Description:
  */
+/*
+ * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
+ * @Date: 2024-01-09 15:28:56
+ * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
+ * @LastEditTime: 2024-01-11 10:46:17
+ * @FilePath: /QAnything/front_end/src/utils/enum.ts
+ * @Description:
+ */
+
 //文档状态说明 （接口返回值）
 export enum fileStatus {
   'success', //上传完成

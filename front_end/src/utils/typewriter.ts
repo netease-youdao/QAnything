@@ -1,11 +1,12 @@
 /*
- * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
- * @Date: 2023-11-16 17:15:16
- * @LastEditors: 祝占朋 wb.zhuzp01@rd.netease.com
- * @LastEditTime: 2023-11-16 17:28:39
- * @FilePath: \ai-demo\src\utils\typewriter.ts
+ * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
+ * @Date: 2024-01-09 15:28:56
+ * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
+ * @LastEditTime: 2024-01-11 10:46:40
+ * @FilePath: /QAnything/front_end/src/utils/typewriter.ts
  * @Description:
  */
+
 // 打字机队列
 export class Typewriter {
   private queue: string[] = [];

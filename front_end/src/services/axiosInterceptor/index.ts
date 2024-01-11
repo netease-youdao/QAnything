@@ -1,11 +1,20 @@
 /*
- * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
- * @Date: 2023-03-21 11:43:45
- * @LastEditors: 祝占朋 wb.zhuzp01@rd.netease.com
- * @LastEditTime: 2023-11-13 20:17:39
- * @FilePath: \ai-demo\src\services\axiosInterceptor\index.ts
+ * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
+ * @Date: 2024-01-09 15:28:56
+ * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
+ * @LastEditTime: 2024-01-11 10:44:36
+ * @FilePath: /QAnything/front_end/src/services/axiosInterceptor/index.ts
  * @Description:
  */
+/*
+ * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
+ * @Date: 2024-01-09 15:28:56
+ * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
+ * @LastEditTime: 2024-01-11 10:44:36
+ * @FilePath: /QAnything/front_end/src/services/axiosInterceptor/index.ts
+ * @Description:
+ */
+
 import axios from 'axios';
 import interceptors from './interceptors/index';
 axios.defaults.withCredentials = true;

@@ -1,11 +1,12 @@
 /*
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @Date: 2023-12-22 11:39:18
+ * @Date: 2024-01-09 15:28:56
  * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2023-12-29 16:14:29
- * @FilePath: /qanything-open-source/src/store/useChat.ts
+ * @LastEditTime: 2024-01-11 10:45:28
+ * @FilePath: /QAnything/front_end/src/store/useChat.ts
  * @Description:
  */
+
 import { IChatItem } from '@/utils/types';
 
 export const useChat = defineStore(

@@ -1,11 +1,12 @@
 /*
- * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
- * @Date: 2023-11-12 23:16:21
- * @LastEditors: 祝占朋 wb.zhuzp01@rd.netease.com
- * @LastEditTime: 2023-11-12 23:17:53
- * @FilePath: \ai-demo\src\utils\nporgress.ts
+ * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
+ * @Date: 2024-01-09 15:28:56
+ * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
+ * @LastEditTime: 2024-01-11 10:46:28
+ * @FilePath: /QAnything/front_end/src/utils/nporgress.ts
  * @Description:
  */
+
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
 

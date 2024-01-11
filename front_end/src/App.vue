@@ -1,11 +1,12 @@
 <!--
- * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
- * @Date: 2023-10-30 17:47:34
- * @LastEditors: 祝占朋 wb.zhuzp01@rd.netease.com
- * @LastEditTime: 2023-11-07 20:06:18
- * @FilePath: \ai-demo\src\App.vue
+ * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
+ * @Date: 2024-01-09 15:28:56
+ * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
+ * @LastEditTime: 2024-01-11 10:47:35
+ * @FilePath: /QAnything/front_end/src/App.vue
  * @Description: 
 -->
+
 <template>
   <a-config-provider :locale="locale" :auto-insert-space-in-button="false">
     <div class="page-app">

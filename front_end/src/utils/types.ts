@@ -1,13 +1,12 @@
 /*
- * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
- * @Date: 2023-11-07 17:48:13
- * @LastEditors: 祝占朋 wb.zhuzp01@rd.netease.com
- * @LastEditTime: 2023-11-13 15:16:52
- * @FilePath: \ai-demo\src\utils\types.ts
+ * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
+ * @Date: 2024-01-09 15:28:56
+ * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
+ * @LastEditTime: 2024-01-11 10:46:35
+ * @FilePath: /QAnything/front_end/src/utils/types.ts
  * @Description:
- *
- *
  */
+
 export interface IKnowledgeItem {
   kb_id: string;
   kb_name: string;
