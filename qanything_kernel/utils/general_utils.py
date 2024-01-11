@@ -94,18 +94,15 @@ def truncate_filename(filename, max_length=200):
     if filename_length > max_length:
         # 生成一个时间戳标记
         timestamp = str(int(time.time()))
-        
-        # 计算剩余的文件名长度
-        remaining_length = max_length - len(file_ext) - len(timestamp) - 1  # -1 是为了下划线
-        
-        # 截取文件名并添加标记
-        file_name_no_ext = file_name_no_ext[:remaining_length]
-        new_filename = file_name_no_ext + '_' + timestamp + file_ext
+        # 截取文件名
+        while filename_length > max_length:
+            file_name_no_ext = file_name_no_ext[:-4]
+            new_filename = file_name_no_ext + "_" + timestamp + file_ext
+            filename_length = len(new_filename.encode('utf-8'))
     else:
         new_filename = filename
 
     return new_filename
-
 
 def read_files_with_extensions():
     # 获取当前脚本文件的路径
