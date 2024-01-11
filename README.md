@@ -185,11 +185,12 @@ unzip QAnything/models.zip   # in root directory of the current project
 ##### in the Windows system
 ```
 vim docker-compose-windows.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
-
+vim front_end/.env # set the excetly host.
 ```
 ##### in the Linux system
 ```
 vim docker-compose-linux.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
+vim front_end/.env # set the excetly host.
 ```
 #### step4: start server
 ##### in the Windows system: 3 ways to start

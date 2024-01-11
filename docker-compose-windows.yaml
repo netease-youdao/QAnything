@@ -95,6 +95,7 @@ services:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/:/workspace/qanything_local/
     ports:
       - "5052:5052"
+      - "8777:8777"
     environment:
       - NCCL_LAUNCH_MODE=PARALLEL
       - CUDA_VISIBLE_DEVICES=0

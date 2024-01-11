@@ -15,50 +15,60 @@ echo "检查模型目录..."
 check_folder_existence "base"
 check_folder_existence "embed"
 check_folder_existence "rerank"
-echo "Model directories check passed. (0/7)"
-echo "模型路径检查通过. (0/7)"
+echo "Model directories check passed. (0/8)"
+echo "模型路径检查通过. (0/8)"
 
 # start llm server
 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble --http-port=10000 --grpc-port=10001 --metrics-port=10002 > /model_repos/QAEnsemble/QAEnsemble.log 2>&1 &
 
 cd /workspace/qanything_local/qanything_kernel/dependent_server/llm_for_local_serve
 nohup python3 -u llm_server_entrypoint.py --host="0.0.0.0" --port=36001 --model-path="tokenizer_assets" --model-url="0.0.0.0:10001" > llm.log 2>&1 &
-echo "The llm transfer service is ready! (1/7)"
-echo "大模型中转服务已就绪! (1/7)"
+echo "The llm transfer service is ready! (1/8)"
+echo "大模型中转服务已就绪! (1/8)"
 
 cd /workspace/qanything_local
 nohup python3 -u qanything_kernel/dependent_server/rerank_for_local_serve/rerank_server.py > rerank.log 2>&1 &
-echo "The rerank service is ready! (2/7)"
-echo "rerank服务已就绪! (2/7)"
+echo "The rerank service is ready! (2/8)"
+echo "rerank服务已就绪! (2/8)"
 
 nohup python3 -u qanything_kernel/dependent_server/ocr_serve/ocr_server.py > ocr.log 2>&1 &
-echo "The ocr service is ready! (3/7)"
-echo "OCR服务已就绪! (3/7)"
+echo "The ocr service is ready! (3/8)"
+echo "OCR服务已就绪! (3/8)"
 
 nohup python3 -u qanything_kernel/qanything_server/sanic_api.py > api.log 2>&1 &
-echo "The qanything backend service is ready! (4/7)"
-echo "qanything后端服务已就绪! (4/7)"
+echo "The qanything backend service is ready! (4/8)"
+echo "qanything后端服务已就绪! (4/8)"
 
 
 cd /workspace/qanything_local/front_end
 # 安装依赖
-echo "Waiting for download yarn"
-echo "等待安装yarn"
+echo "Waiting for download yarn and http-server"
+echo "等待安装yarn和http-server"
 npm i -g yarn
+npm i -g http-server 
 echo "Downloaded yarn! Waiting for yarn to install frontend dependencies"
 echo "已下载yarn！等待yarn安装前端依赖"
 yarn
-echo "Successfully installed front-end dependencies.(5/7)"
-echo "已成功安装前端依赖。（5/7）"
-yarn dev > yarn_dev.log 2>&1 &
-tail -f yarn_dev.log &
-while ! grep -q "ready" yarn_dev.log; do
+echo "Successfully installed front-end dependencies.(5/8)"
+echo "已成功安装前端依赖。（5/8)"
+yarn build 1>yarn_build.log 2>&1 &
+tail -f yarn_build.log &
+while ! grep -q "modules transformed" yarn_build.log; do
+    echo "Waiting for the front-end service to build..."
+    echo "等待编译前端服务"
+    sleep 5
+done
+echo "The front-end service build is ready!...(6/8)"
+echo "前端服务已编译!...(6/8)"
+http-server ./dist -p 5052 --cors --name QAnything 1>http-server.log 2>&1 &
+tail -f http-server.log &
+while ! grep -q "Available" http-server.log; do
     echo "Waiting for the front-end service to start..."
     echo "等待启动前端服务"
     sleep 5
 done
-echo "The front-end service is ready!...(6/7)"
-echo "前端服务已就绪!...(6/7)"
+echo "The front-end service is ready!...(7/8)"
+echo "前端服务已就绪!...(7/8)"
 
 current_time=$(date +%s)
 elapsed=$((current_time - start_time))  # 计算经过的时间（秒）
@@ -68,8 +78,8 @@ echo "已耗时: ${elapsed} 秒."
 while true; do
   response=$(curl -s -w "%{http_code}" http://localhost:10000/v2/health/ready -o /dev/null)
   if [ $response -eq 200 ]; then
-    echo "The triton service is ready!, now you can use the qanything service. (7/7)"
-    echo "Triton服务已准备就绪！现在您可以使用qanything服务。（7/7）"
+    echo "The triton service is ready!, now you can use the qanything service. (8/8)"
+    echo "Triton服务已准备就绪！现在您可以使用qanything服务。（8/8)"
     break
   else
     echo "The triton service is starting up, it can be long... you have time to make a coffee :)"
@@ -84,8 +94,6 @@ echo "Time elapsed: ${elapsed} seconds."
 echo "已耗时: ${elapsed} 秒."
 echo "Please visit the front-end service at [http://localhost:5052/qanything/] to conduct Q&A. Please replace "localhost" with the actual IP address according to the actual situation."
 echo "请在[http://localhost:5052/qanything/]下访问前端服务来进行问答，请根据实际情况将localhost替换为实际ip"
-echo "It takes about 15 seconds to open the front end."
-echo "前端加载大概需要15秒。"
 
 # 保持容器运行
 while true; do

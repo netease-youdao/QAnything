@@ -181,12 +181,13 @@ unzip QAnything/models.zip   # in root directory of the current project
 ##### 在WINDOWNS系统下：
 ```
 vim docker-compose-windows.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
-
+vim front_end/.env # 设置准确的host，本地环境默认一般是localhost或0.0.0.0
 ```
 ##### 在Linux系统下：
 ```
 # 判断当前wsl2是否是
 vim docker-compose-linux.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
+vim front_end/.env # 设置准确的host，本地环境默认一般是localhost或0.0.0.0
 ```
 #### step4: 启动服务
 ##### 在Windows系统下：3种启动方式
