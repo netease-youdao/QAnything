@@ -4,7 +4,7 @@
  * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @LastEditTime: 2024-01-08 15:09:48
  * @FilePath: /qanything-open-source/src/components/FileUploadDialog.vue
- * @Description: 
+ * @Description:
 -->
 <template>
   <Teleport to="body">
@@ -84,6 +84,7 @@
   </Teleport>
 </template>
 <script lang="ts" setup>
+import { apiBase } from '@/services';
 import { useKnowledgeModal } from '@/store/useKnowledgeModal';
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
 import { useOptiionList } from '@/store/useOptiionList';
@@ -149,7 +150,7 @@ const acceptList = [
 //上传前校验
 const beforeFileUpload = async (file, index) => {
   return new Promise((resolve, reject) => {
-    if (acceptList.includes('.' + file.name.split('.').pop().toLowerCase())) {
+    if (file.name && acceptList.includes('.' + file.name.split('.').pop().toLowerCase())) {
       uploadFileList.value.push({
         file_name: file.name,
         file: file,
@@ -233,8 +234,7 @@ const uplolad = async () => {
   // 上传模式，soft：文件名重复的文件不再上传，strong：文件名重复的文件强制上传
   formData.append('mode', 'strong');
 
-  const base = import.meta.env.VITE_APP_SERVER_URL;
-  fetch(base + '/local_doc_qa/upload_files', {
+  fetch(apiBase + '/local_doc_qa/upload_files', {
     method: 'POST',
     body: formData,
   })

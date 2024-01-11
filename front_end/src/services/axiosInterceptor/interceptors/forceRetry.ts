@@ -2,7 +2,8 @@ const forceHandle = {
   // 注意：切换页面是否要清空保留的requests根据业务来处理
   requests: {} as any,
   getKey(config: any) {
-    const url = config.url.split('?')[0];
+    console.log(config.url);
+    const url = config.url?.split('?')[0];
     return `${url}/&request_type=${config.method}`;
   },
   clear() {

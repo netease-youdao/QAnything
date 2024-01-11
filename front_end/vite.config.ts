@@ -49,7 +49,7 @@ function resovePath(paths) {
 }
 
 export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, process.cwd());
+  const env = loadEnv(mode, process.cwd());
 
   return {
     plugins: [
@@ -122,9 +122,9 @@ export default defineConfig(({ mode }) => {
       cors: true,
       proxy: {
         [env.VITE_APP_API_PREFIX]: {
-		  target: env.VITE_HOST,
+		      target: env.VITE_APP_API_HOST + env.VITE_APP_API_PREFIX,
           changeOrigin: true,
-		  secure: false,
+		      secure: false,
         },
       },
     },
