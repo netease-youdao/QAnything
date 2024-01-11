@@ -191,19 +191,11 @@ vim front_end/.env # 设置准确的host，本地环境默认一般是localhost�
 ```
 #### step4: 启动服务
 ##### 在Windows系统下：3种启动方式
-1. 双击 run_in_windows.bat
-2. 在 cmd / power shell 中执行
-```shell
-Start-Process -FilePath ".\run_in_windows.bat" -Wait -NoNewWindow
-```
-3. 直接通过docker命令执行（推荐）
+1. 命令行中通过docker命令执行（推荐👍）
 <details>
 <summary>新手推荐！</summary>
 
 ```shell
-# 脚本文件从dos格式改为unix格式
-sed -i "s/\r//" scripts/run_for_local.sh
-sed -i "s/^M//" scripts/run_for_local.sh
 # 前台启动，日志实时打印到屏幕上，ctrl+c即可停止
 docker-compose -f docker-compose-windows.yaml up qanything_local
 ```
@@ -213,9 +205,6 @@ docker-compose -f docker-compose-windows.yaml up qanything_local
 <summary>老手推荐！</summary>
 
 ```shell
-# 脚本文件从dos格式改为unix格式
-sed -i "s/\r//" scripts/run_for_local.sh
-sed -i "s/^M//" scripts/run_for_local.sh
 # 后台启动，ctrl+c不会停止
 docker-compose -f docker-compose-windows.yaml up -d
 # 执行如下命令查看日志
@@ -224,6 +213,12 @@ docker-compose -f docker-compose-windows.yaml logs qanything_local
 docker-compose -f docker-compose-windows.yaml down
 ```
 </details>
+
+2. 双击 run_in_windows.bat 
+3. 命令行执行run_in_windows.bat：
+```shell
+Start-Process -FilePath ".\run_in_windows.bat" -Wait -NoNewWindow
+```
 
 ##### 在Linux系统下
 <details>

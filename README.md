@@ -194,19 +194,11 @@ vim front_end/.env # set the excetly host.
 ```
 #### step4: start server
 ##### in the Windows system: 3 ways to start
-1. Double click run_in_windows.bat
-2. Execute in cmd / power shell.
-```shell
-Start-Process -FilePath ".\run_in_windows.bat" -Wait -NoNewWindow
-```
-3. Execute directly through the docker command (recommended).
+1. Execute directly through the docker command (recommended👍).
 <details>
 <summary>Beginner's recommendation!</summary>
 
 ```shell
-# Change the script file format from DOS to UNIX.
-sed -i "s/\r//" scripts/run_for_local.sh
-sed -i "s/^M//" scripts/run_for_local.sh
 # Front desk startup, log prints to the screen in real time, press ctrl+c to stop.
 docker-compose -f docker-compose-windows.yaml up qanything_local
 ```
@@ -216,9 +208,6 @@ docker-compose -f docker-compose-windows.yaml up qanything_local
 <summary>Recommended for experienced players!</summary>
 
 ```shell
-# The script file is changed from DOS format to Unix format.
-sed -i "s/\r//" scripts/run_for_local.sh
-sed -i "s/^M//" scripts/run_for_local.sh
 # Background startup, ctrl+c will not stop.
 docker-compose -f docker-compose-windows.yaml up -d
 # Execute the following command to view the log.
@@ -227,6 +216,12 @@ docker-compose -f docker-compose-windows.yaml logs qanything_local
 docker-compose -f docker-compose-windows.yaml down
 ```
 </details>
+
+2. Double click run_in_windows.bat
+3. Execute command line:
+```shell
+Start-Process -FilePath ".\run_in_windows.bat" -Wait -NoNewWindow
+```
 
 ##### in the Linux system
 <details>
