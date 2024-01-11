@@ -207,6 +207,12 @@ Start-Process -FilePath ".\run_in_windows.bat" -Wait -NoNewWindow
 # Change the script file format from DOS to UNIX.
 sed -i "s/\r//" scripts/run_for_local.sh
 sed -i "s/^M//" scripts/run_for_local.sh
+# delete BOM
+sed -i '1s/^.*#//;s/\r$//' scripts/run_for_local.sh
+# check bom
+head -1 scripts/run_for_local.sh | od -c
+# 0000000   !   /   b   i   n   /   b   a   s   h  \n
+
 # Front desk startup, log prints to the screen in real time, press ctrl+c to stop.
 docker-compose -f docker-compose-windows.yaml up qanything_local
 ```
