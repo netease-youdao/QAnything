@@ -135,7 +135,7 @@ const showUploadList = ref(false);
 //允许上传的文件格式
 const acceptList = [
   '.md',
-  'txt',
+  '.txt',
   '.pdf',
   '.jpg',
   '.png',
