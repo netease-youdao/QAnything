@@ -97,15 +97,15 @@ current_commit_id=$(git rev-parse HEAD)
 # 判断 commit.log 文件是否存在
 if [ ! -f "$commit_log_file" ]; then
     # 如果不存在，则执行 build 并创建 commit.log
-    build_front_end
     echo $current_commit_id > $commit_log_file
+    build_front_end
 else
     # 如果存在，则与当前的 commit id 比对
     saved_commit_id=$(cat $commit_log_file)
     if [ "$saved_commit_id" != "$current_commit_id" ]; then
         # 如果本地保存的 commit id 与当前的不一致，则执行 build 并更新 commit.log
-    	build_front_end
         echo $current_commit_id > $commit_log_file
+    	build_front_end
     else
         # 如果一致，则执行 git status 检查特定文件夹下是否有改动
         if git status --porcelain $folder_path | grep "^ M"; then
@@ -118,16 +118,7 @@ else
     fi
 fi
 
-# cd /workspace/qanything_local/front_end
-# # 安装依赖
-# echo "Waiting for [npm run install]（5/8)"
-# npm install
-# echo "[npm run install] Installed successfully（5/8)"
-# 
-# echo "Waiting for [npm run build](6/8)"
-# npm run build
-# echo "[npm run build] build successfully(6/8)"
-
+cd /workspace/qanything_local/front_end 
 # 启动前端页面服务
 nohup npm run serve 1>npm_server.log 2>&1 &
 
