@@ -61,13 +61,15 @@ class MilvusClient:
         for batch_idx, result in enumerate(batch_result):
             new_cands = []
             result.sort(key=lambda x: x.score)
-            for cand_i, cand in enumerate(result):
-                if cand.score <= self.threshold:
-                    doc = Document(page_content=cand.entity.get('content'),
-                                   metadata={"score": cand.score, "file_id": cand.entity.get('file_id'),
-                                             "file_name": cand.entity.get('file_name'),
-                                             "chunk_id": cand.entity.get('chunk_id')})
-                    new_cands.append(doc)
+            valid_results = [cand for cand in result if cand.score <= self.threshold]
+            if len(valid_results) == 0:  # 如果没有合适的结果，就取topk
+                valid_results = result[:self.top_k]
+            for cand_i, cand in enumerate(valid_results):
+                doc = Document(page_content=cand.entity.get('content'),
+                               metadata={"score": cand.score, "file_id": cand.entity.get('file_id'),
+                                         "file_name": cand.entity.get('file_name'),
+                                         "chunk_id": cand.entity.get('chunk_id')})
+                new_cands.append(doc)
             new_cands = self.expand_cand_docs(new_cands)
             new_result.append(new_cands)
         return new_result
