@@ -9,11 +9,18 @@ from langchain.document_loaders import UnstructuredExcelLoader
 from langchain.document_loaders import UnstructuredEmailLoader
 from langchain.document_loaders import UnstructuredPowerPointLoader
 from langchain.document_loaders import CSVLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from qanything_kernel.utils.splitter import ChineseTextSplitter
 from qanything_kernel.utils.loader import UnstructuredPaddleImageLoader, UnstructuredPaddlePDFLoader
 from qanything_kernel.utils.splitter import zh_title_enhance
 from sanic.request import File
 import os
+
+text_splitter = RecursiveCharacterTextSplitter(
+    separators=["\n", ".", "。", "!", "！", "?", "？"],
+    chunk_size=800,
+    length_function=num_tokens,
+)
 
 
 class LocalFile:
@@ -50,7 +57,7 @@ class LocalFile:
     def split_file_to_docs(self, ocr_engine: Callable, sentence_size=SENTENCE_SIZE,
                            using_zh_title_enhance=ZH_TITLE_ENHANCE):
         if self.url:
-            print("load url: {}".format(self.url))
+            self.logger.info("load url: {}".format(self.url))
             loader = MyRecursiveUrlLoader(url=self.url)
             textsplitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
             docs = loader.load_and_split(text_splitter=textsplitter)
@@ -91,6 +98,12 @@ class LocalFile:
         if using_zh_title_enhance:
             self.logger.info("using_zh_title_enhance %s", using_zh_title_enhance)
             docs = zh_title_enhance(docs)
+
+        # 重构docs，如果doc的文本长度大于800tokens，则利用text_splitter将其拆分成多个doc
+        # text_splitter: RecursiveCharacterTextSplitter
+        self.logger.info(f"before 2nd split doc lens: {len(docs)}")
+        docs = text_splitter.split_documents(docs)
+        self.logger.info(f"after 2nd split doc lens: {len(docs)}")
 
         # 这里给每个docs片段的metadata里注入file_id
         for doc in docs:

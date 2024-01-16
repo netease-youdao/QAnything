@@ -51,7 +51,7 @@ class MilvusClient:
             FieldSchema(name='file_name', dtype=DataType.VARCHAR, max_length=640),
             FieldSchema(name='file_path', dtype=DataType.VARCHAR, max_length=640),
             FieldSchema(name='timestamp', dtype=DataType.VARCHAR, max_length=64),
-            FieldSchema(name='content', dtype=DataType.VARCHAR, max_length=64000),  # TODO 减小成1000
+            FieldSchema(name='content', dtype=DataType.VARCHAR, max_length=2000),
             FieldSchema(name='embedding', dtype=DataType.FLOAT_VECTOR, dim=768)
         ]
         return fields

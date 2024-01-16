@@ -6,11 +6,15 @@ import time
 import os
 import logging
 import re
+import tiktoken
 
-__all__ = ['write_check_file', 'isURL', 'format_source_documents', 'get_time', 'safe_get', 'truncate_filename', 'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg']
+__all__ = ['write_check_file', 'isURL', 'format_source_documents', 'get_time', 'safe_get', 'truncate_filename',
+           'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens']
+
 
 def get_invalid_user_id_msg(user_id):
     return "fail, Invalid user_id: {}. user_id 必须只含有字母，数字和下划线且字母开头".format(user_id)
+
 
 def write_check_file(filepath, docs):
     folder_path = os.path.join(os.path.dirname(filepath), "tmp_files")
@@ -32,22 +36,23 @@ def isURL(string):
 
 
 def format_source_documents(ori_source_documents):
-    source_documents = [] 
+    source_documents = []
     for inum, doc in enumerate(ori_source_documents):
-    #for inum, doc in enumerate(answer_source_documents):
-        #doc_source = doc.metadata['source']
+        # for inum, doc in enumerate(answer_source_documents):
+        # doc_source = doc.metadata['source']
         file_id = doc.metadata['file_id']
         file_name = doc.metadata['file_name']
-        #source_str = doc_source if isURL(doc_source) else os.path.split(doc_source)[-1]
-        source_info = {'file_id': doc.metadata['file_id'], 
+        # source_str = doc_source if isURL(doc_source) else os.path.split(doc_source)[-1]
+        source_info = {'file_id': doc.metadata['file_id'],
                        'file_name': doc.metadata['file_name'],
                        'content': doc.page_content,
                        'retrieval_query': doc.metadata['retrieval_query'],
                        'kernel': doc.metadata['kernel'],
                        'score': str(doc.metadata['score']),
-                       'embed_version': doc.metadata['embed_version']} 
+                       'embed_version': doc.metadata['embed_version']}
         source_documents.append(source_info)
     return source_documents
+
 
 def get_time(func):
     def inner(*arg, **kwargs):
@@ -56,7 +61,9 @@ def get_time(func):
         e_time = time.time()
         print('函数 {} 执行耗时: {} 秒'.format(func.__name__, e_time - s_time))
         return res
+
     return inner
+
 
 def safe_get(req: Request, attr: str, default=None):
     try:
@@ -79,6 +86,7 @@ def safe_get(req: Request, attr: str, default=None):
         logging.warning(f"get {attr} from request failed:")
         logging.warning(traceback.format_exc())
     return default
+
 
 def truncate_filename(filename, max_length=200):
     # 获取文件名后缀
@@ -104,6 +112,7 @@ def truncate_filename(filename, max_length=200):
 
     return new_filename
 
+
 def read_files_with_extensions():
     # 获取当前脚本文件的路径
     current_file = os.path.abspath(__file__)
@@ -116,12 +125,13 @@ def read_files_with_extensions():
 
     directory = project_dir + '/data'
     print(f'now reading {directory}')
-    extensions = ['.md', '.txt', '.pdf', '.jpg', '.docx', '.xlsx', '.eml', '.csv'] 
+    extensions = ['.md', '.txt', '.pdf', '.jpg', '.docx', '.xlsx', '.eml', '.csv']
     for root, dirs, files in os.walk(directory):
         for file in files:
             if file.endswith(tuple(extensions)):
                 file_path = os.path.join(root, file)
                 yield file_path
+
 
 def validate_user_id(user_id):
     # 定义正则表达式模式
@@ -131,3 +141,9 @@ def validate_user_id(user_id):
         return True
     else:
         return False
+
+
+def num_tokens(text: str, model: str = 'gpt-3.5-turbo-0613') -> int:
+    """Return the number of tokens in a string."""
+    encoding = tiktoken.encoding_for_model(model)
+    return len(encoding.encode(text))
