@@ -38,7 +38,7 @@ services:
 
   standalone:
     container_name: milvus-standalone-local
-    image: milvusdb/milvus:v2.3.3
+    image: milvusdb/milvus:v2.3.4
     logging:
       driver: "json-file"
       options:
@@ -98,7 +98,7 @@ services:
       - "8777:8777"
     environment:
       - NCCL_LAUNCH_MODE=PARALLEL
-      - CUDA_VISIBLE_DEVICES=0
+      - VERBOSE=1
     depends_on:
       - "standalone"
       - "mysql"
