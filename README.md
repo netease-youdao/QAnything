@@ -275,6 +275,13 @@ Reach out to the maintainer at one of the following places:
 - [Github issues](https://github.com/netease-youdao/QAnything/issues)
 - Contact options listed on [this GitHub profile](https://github.com/netease-youdao)
 
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=netease-youdao/QAnything,netease-youdao/BCEmbedding&type=Date)](https://star-history.com/#netease-youdao/QAnything&netease-youdao/BCEmbedding&Date)
+
+
+
 ## License
 
 `QAnything` is licensed under [Apache 2.0 License](./LICENSE)
