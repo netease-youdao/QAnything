@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 
 env_file="/workspace/qanything_local/front_end/.env.production"
 user_file="/workspace/qanything_local/user.config"
@@ -24,7 +24,7 @@ else
     if [[ $answer == "local" || $answer == "本地" ]]; then
         host="localhost"
     else
-        read -p "Please enter the server IP address 请输入服务器IP地址 [x.x.x.x]: " host
+        read -p "Please enter the server IP address 请输入服务器IP地址(示例：10.234.10.144): " host
     fi
     # 保存配置到用户文件
     echo "$host" > "$user_file"
