@@ -65,7 +65,7 @@ fi
 if [[ -f "$user_file" ]]; then
     # 读取上次的配置
     host=$(cat "$user_file")
-    read -p "Do you want to use the previous host $host? (yes/no) 是否使用上次的host $host？(是/否) 回车默认选yes" use_previous
+    read -p "Do you want to use the previous host: $host? (yes/no) 是否使用上次的host: $host？(是/否) 回车默认选yes，请输入:" use_previous
     use_previous=${use_previous:-yes}
     if [[ $use_previous != "yes" && $use_previous != "是" ]]; then
         read -p "Are you running the code on a cloud server or on your local machine? (cloud/local) 您是在云服务器上还是本地机器上启动代码？(云服务器/本地) " answer
