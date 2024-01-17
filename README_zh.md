@@ -271,6 +271,10 @@ docker-compose -f docker-compose-linux.yaml down
 - [Github issues](https://github.com/netease-youdao/QAnything/issues)
 - [Netease Youdao](https://github.com/netease-youdao)
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=netease-youdao/QAnything,netease-youdao/BCEmbedding&type=Date)](https://star-history.com/#netease-youdao/QAnything&netease-youdao/BCEmbedding&Date)
+
 ## 协议
 
 `QAnything` 依照 [Apache 2.0 协议](./LICENSE)开源。
