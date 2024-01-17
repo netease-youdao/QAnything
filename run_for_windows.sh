@@ -102,6 +102,6 @@ grep "VITE_APP_API_HOST" "$env_file"
 echo "GPUID1=${gpu_id1}" > .env
 echo "GPUID2=${gpu_id2}" >> .env
 
-# docker-compose -p user -f docker-compose-linux.yaml down
+docker-compose -p user -f docker-compose-linux.yaml down
 docker-compose -p user -f docker-compose-windows.yaml up -d
 docker-compose -p user -f docker-compose-windows.yaml logs -f qanything_local 
