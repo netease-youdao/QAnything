@@ -10,115 +10,96 @@ check_folder_existence() {
   fi
 }
 
+check_version_file() {
+  local version_file="/workspace/qanything_local/models/version.txt"
+  local expected_version="$1"
+
+  # 检查 version.txt 文件是否存在
+  if [ ! -f "$version_file" ]; then
+    echo "/workspace/qanything_local/models/ 不存在version.txt 请检查您的模型文件。"
+    exit 1
+  fi
+
+  # 读取 version.txt 文件中的版本号
+  local version_in_file=$(cat "$version_file")
+
+  # 检查版本号是否为 v2.1.0
+  if [ "$version_in_file" != "$expected_version" ]; then
+    echo "当前版本为 $version_in_file ，不是期望的 $expected_version 版本。请更新您的模型文件。"
+    exit 1
+  fi
+
+  echo "检查模型版本成功，当前版本为 $expected_version。"
+}
+
 echo "Checking model directories..."
 echo "检查模型目录..."
 check_folder_existence "base"
 check_folder_existence "embed"
 check_folder_existence "rerank"
+check_version_file "v2.1.0"
 echo "Model directories check passed. (0/8)"
-echo "模型路径检查通过. (0/8)"
+echo "模型路径和模型版本检查通过. (0/8)"
+
+mkdir -p /model_repos/QAEnsemble_base /model_repos/QAEnsemble_embed /model_repos/QAEnsemble_rerank /model_repos/monitor_logs
+if [ ! -L "/model_repos/QAEnsemble_base/base" ]; then
+  cd /model_repos/QAEnsemble_base && ln -s /model_repos/QAEnsemble/base .
+fi
+
+if [ ! -L "/model_repos/QAEnsemble_embed/embed" ]; then
+  cd /model_repos/QAEnsemble_embed && ln -s /model_repos/QAEnsemble/embed .
+fi
+
+if [ ! -L "/model_repos/QAEnsemble_rerank/rerank" ]; then
+  cd /model_repos/QAEnsemble_rerank && ln -s /model_repos/QAEnsemble/rerank .
+fi
 
 # start llm server
-nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble --http-port=10000 --grpc-port=10001 --metrics-port=10002 > /model_repos/QAEnsemble/QAEnsemble.log 2>&1 &
+CUDA_VISIBLE_DEVICES=0 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_base --http-port=10000 --grpc-port=10001 --metrics-port=10002 --log-verbose=$VERBOSE > /model_repos/QAEnsemble_base/QAEnsemble_base.log 2>&1 &
+CUDA_VISIBLE_DEVICES=0 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_embed --http-port=9000 --grpc-port=9001 --metrics-port=9002 --log-verbose=$VERBOSE > /model_repos/QAEnsemble_embed/QAEnsemble_embed.log 2>&1 &
+CUDA_VISIBLE_DEVICES=0 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_rerank --http-port=8000 --grpc-port=8001 --metrics-port=8002 --log-verbose=$VERBOSE > /model_repos/QAEnsemble_rerank/QAEnsemble_rerank.log 2>&1 &
+cd /workspace/qanything_local || exit
+CUDA_VISIBLE_DEVICES=0 nohup python3 -u qanything_kernel/dependent_server/ocr_serve/ocr_server.py > ocr.log 2>&1 &
+echo "The ocr service is ready! (3/8)"
+echo "OCR服务已就绪! (3/8)"
 
-cd /workspace/qanything_local/qanything_kernel/dependent_server/llm_for_local_serve
+# cd /workspace/qanything_local/qanything_kernel/dependent_server/llm_for_local_serve || exit
 nohup python3 -u llm_server_entrypoint.py --host="0.0.0.0" --port=36001 --model-path="tokenizer_assets" --model-url="0.0.0.0:10001" > llm.log 2>&1 &
 echo "The llm transfer service is ready! (1/8)"
 echo "大模型中转服务已就绪! (1/8)"
 
-cd /workspace/qanything_local
 nohup python3 -u qanything_kernel/dependent_server/rerank_for_local_serve/rerank_server.py > rerank.log 2>&1 &
 echo "The rerank service is ready! (2/8)"
 echo "rerank服务已就绪! (2/8)"
-
-nohup python3 -u qanything_kernel/dependent_server/ocr_serve/ocr_server.py > ocr.log 2>&1 &
-echo "The ocr service is ready! (3/8)"
-echo "OCR服务已就绪! (3/8)"
 
 nohup python3 -u qanything_kernel/qanything_server/sanic_api.py > api.log 2>&1 &
 echo "The qanything backend service is ready! (4/8)"
 echo "qanything后端服务已就绪! (4/8)"
 
-function build_front_end() {
-    # 转到 front_end 目录
-    cd /workspace/qanything_local/front_end || exit
 
-    # 安装依赖
-    echo "Waiting for [npm run install]（5/8)"
-    npm install
-    if [ $? -eq 0 ]; then
-        echo "[npm run install] Installed successfully（5/8)"
-    else
-        echo "Failed to install npm dependencies."
-        exit 1
-    fi
+# 转到 front_end 目录
+cd /workspace/qanything_local/front_end || exit
 
-    # 构建前端项目
-    echo "Waiting for [npm run build](6/8)"
-    npm run build
-    if [ $? -eq 0 ]; then
-        echo "[npm run build] build successfully(6/8)"
-    else
-        echo "Failed to build the front end."
-        exit 1
-    fi
-}
-
-# 在执行 build 前同时执行 git fetch，并提示用户是否需要 git pull
-git fetch
-# 检查远程是否有新的变动
-remote_changes=$(git log HEAD..origin/master --oneline)
-if [ -n "$remote_changes" ]; then
-    # 如果有变动，提示用户
-    echo "检测到远程仓库有新的变动。"
-    read -t 10 -p "是否执行 git pull 更新本地仓库？\n[Y/N]: " user_input
-    user_input=${user_input:-N} # 默认值为 'N'，如果用户没有输入任何内容
-
-    # 根据用户的输入决定是否执行 git pull
-    if [[ $user_input =~ ^[Yy]$ ]]; then
-        echo "正在执行 git pull..."
-        git pull
-    else
-        echo "跳过 git pull，继续执行脚本..."
-    fi
+# 安装依赖
+echo "Waiting for [npm run install]（5/8)"
+npm install
+if [ $? -eq 0 ]; then
+    echo "[npm run install] Installed successfully（5/8)"
 else
-    echo "远程仓库没有新的变动。"
+    echo "Failed to install npm dependencies."
+    exit 1
 fi
 
-# 定义 commit.log 文件路径
-commit_log_file="commit.log"
-
-# 定义特定文件夹路径，这里假设是 front_end
-folder_path="front_end/"
-
-# 获取当前的 commit id
-current_commit_id=$(git rev-parse HEAD)
-
-# 判断 commit.log 文件是否存在
-if [ ! -f "$commit_log_file" ]; then
-    # 如果不存在，则执行 build 并创建 commit.log
-    echo $current_commit_id > $commit_log_file
-    build_front_end
+# 构建前端项目
+echo "Waiting for [npm run build](6/8)"
+npm run build
+if [ $? -eq 0 ]; then
+    echo "[npm run build] build successfully(6/8)"
 else
-    # 如果存在，则与当前的 commit id 比对
-    saved_commit_id=$(cat $commit_log_file)
-    if [ "$saved_commit_id" != "$current_commit_id" ]; then
-        # 如果本地保存的 commit id 与当前的不一致，则执行 build 并更新 commit.log
-        echo $current_commit_id > $commit_log_file
-    	build_front_end
-    else
-        # 如果一致，则执行 git status 检查特定文件夹下是否有改动
-        if git status --porcelain $folder_path | grep "^ M"; then
-            # 如果存在 front_end 下的改动，则执行 build
-    	    build_front_end
-        else
-            # 否则不执行 build
-            echo "无需执行 build。"
-        fi
-    fi
+    echo "Failed to build the front end."
+    exit 1
 fi
 
-cd /workspace/qanything_local/front_end 
 # 启动前端页面服务
 nohup npm run serve 1>npm_server.log 2>&1 &
 
