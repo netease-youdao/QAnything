@@ -1,6 +1,8 @@
 .venv
 .vscode
 .idea
+.env
+user.config
 venv
 __pycache__
 QANY_DB

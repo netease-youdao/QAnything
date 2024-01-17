@@ -1,84 +1,6 @@
 #!/bin/bash
 
-env_file="/workspace/qanything_local/front_end/.env.production"
-user_file="/workspace/qanything_local/user.config"
-
-# 检查是否存在用户文件
-if [[ -f "$user_file" ]]; then
-    # 读取上次的配置
-    host=$(cat "$user_file")
-    read -p "Do you want to use the previous host $host? (yes/no) 是否使用上次的host $host？(是/否) " use_previous
-    if [[ $use_previous != "yes" && $use_previous != "是" ]]; then
-        read -p "Are you running the code on a cloud server or on your local machine? (cloud/local) 您是在云服务器上还是本地机器上启动代码？(云服务器/本地) " answer
-        if [[ $answer == "local" || $answer == "本地" ]]; then
-            host="localhost"
-        else
-            read -p "Please enter the server IP address 请输入服务器IP地址(示例：10.234.10.144): " host
-        fi
-        # 保存新的配置到用户文件
-        echo "$host" > "$user_file"
-    fi
-else
-    # 如果用户文件不存在，询问用户并保存配置
-    read -p "Are you running the code on a cloud server or on your local machine? (cloud/local) 您是在云服务器上还是本地机器上启动代码？(云服务器/本地) " answer
-    if [[ $answer == "local" || $answer == "本地" ]]; then
-        host="localhost"
-    else
-        read -p "Please enter the server IP address 请输入服务器IP地址(示例：10.234.10.144): " host
-    fi
-    # 保存配置到用户文件
-    echo "$host" > "$user_file"
-fi
-
-# 保存IP地址到变量中
-api_host="http://$host:8777"
-
-# 使用 sed 命令更新 VITE_APP_API_HOST 的值
-sed -i "s|VITE_APP_API_HOST=.*|VITE_APP_API_HOST=$api_host|" "$env_file"
-
-echo "The file $env_file has been updated with the following configuration:"
-grep "VITE_APP_API_HOST" "$env_file"
-
 start_time=$(date +%s)  # 记录开始时间
-# 检查模型文件夹是否存在
-check_folder_existence() {
-  if [ ! -d "/workspace/qanything_local/models/$1" ]; then
-    echo "The $1 folder does not exist under /workspace/qanything_local/models/. Please check your setup."
-    echo "在/workspace/qanything_local/models/下不存在$1文件夹。请检查您的设置。"
-    exit 1
-  fi
-}
-
-check_version_file() {
-  local version_file="/workspace/qanything_local/models/version.txt"
-  local expected_version="$1"
-
-  # 检查 version.txt 文件是否存在
-  if [ ! -f "$version_file" ]; then
-    echo "/workspace/qanything_local/models/ 不存在version.txt 请检查您的模型文件。"
-    exit 1
-  fi
-
-  # 读取 version.txt 文件中的版本号
-  local version_in_file=$(cat "$version_file")
-
-  # 检查版本号是否为 v2.1.0
-  if [ "$version_in_file" != "$expected_version" ]; then
-    echo "当前版本为 $version_in_file ，不是期望的 $expected_version 版本。请更新您的模型文件。"
-    exit 1
-  fi
-
-  echo "检查模型版本成功，当前版本为 $expected_version。"
-}
-
-echo "Checking model directories..."
-echo "检查模型目录..."
-check_folder_existence "base"
-check_folder_existence "embed"
-check_folder_existence "rerank"
-check_version_file "v2.1.0"
-echo "Model directories check passed. (0/8)"
-echo "模型路径和模型版本检查通过. (0/8)"
 
 mkdir -p /model_repos/QAEnsemble_base /model_repos/QAEnsemble_embed /model_repos/QAEnsemble_rerank /model_repos/monitor_logs
 if [ ! -L "/model_repos/QAEnsemble_base/base" ]; then
@@ -93,10 +15,28 @@ if [ ! -L "/model_repos/QAEnsemble_rerank/rerank" ]; then
   cd /model_repos/QAEnsemble_rerank && ln -s /model_repos/QAEnsemble/rerank .
 fi
 
+# 设置默认值
+default_gpu_id1=0
+default_gpu_id2=0
+
+# 检查环境变量GPUID1是否存在，并读取其值或使用默认值
+if [ -z "${GPUID1}" ]; then
+    gpuid1=$default_gpu_id1
+else
+    gpuid1=${GPUID1}
+fi
+
+# 检查环境变量GPUID2是否存在，并读取其值或使用默认值
+if [ -z "${GPUID2}" ]; then
+    gpuid2=$default_gpu_id2
+else
+    gpuid2=${GPUID2}
+fi
+echo "GPU ID: $gpuid1, $gpuid2"
 # start llm server
-CUDA_VISIBLE_DEVICES=0 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_base --http-port=10000 --grpc-port=10001 --metrics-port=10002 --log-verbose=$VERBOSE > /model_repos/QAEnsemble_base/QAEnsemble_base.log 2>&1 &
-CUDA_VISIBLE_DEVICES=0 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_embed --http-port=9000 --grpc-port=9001 --metrics-port=9002 --log-verbose=$VERBOSE > /model_repos/QAEnsemble_embed/QAEnsemble_embed.log 2>&1 &
-CUDA_VISIBLE_DEVICES=0 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_rerank --http-port=8000 --grpc-port=8001 --metrics-port=8002 --log-verbose=$VERBOSE > /model_repos/QAEnsemble_rerank/QAEnsemble_rerank.log 2>&1 &
+CUDA_VISIBLE_DEVICES=$gpuid1 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_base --http-port=10000 --grpc-port=10001 --metrics-port=10002 --log-verbose=1 > /model_repos/QAEnsemble_base/QAEnsemble_base.log 2>&1 &
+CUDA_VISIBLE_DEVICES=$gpuid2 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_embed --http-port=9000 --grpc-port=9001 --metrics-port=9002 --log-verbose=1 > /model_repos/QAEnsemble_embed/QAEnsemble_embed.log 2>&1 &
+CUDA_VISIBLE_DEVICES=$gpuid2 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_rerank --http-port=8000 --grpc-port=8001 --metrics-port=8002 --log-verbose=1 > /model_repos/QAEnsemble_rerank/QAEnsemble_rerank.log 2>&1 &
 
 cd /workspace/qanything_local/qanything_kernel/dependent_server/llm_for_local_serve || exit
 nohup python3 -u llm_server_entrypoint.py --host="0.0.0.0" --port=36001 --model-path="tokenizer_assets" --model-url="0.0.0.0:10001" > llm.log 2>&1 &
@@ -108,7 +48,7 @@ nohup python3 -u qanything_kernel/dependent_server/rerank_for_local_serve/rerank
 echo "The rerank service is ready! (2/8)"
 echo "rerank服务已就绪! (2/8)"
 
-CUDA_VISIBLE_DEVICES=0 nohup python3 -u qanything_kernel/dependent_server/ocr_serve/ocr_server.py > ocr.log 2>&1 &
+CUDA_VISIBLE_DEVICES=$gpuid2 nohup python3 -u qanything_kernel/dependent_server/ocr_serve/ocr_server.py > ocr.log 2>&1 &
 echo "The ocr service is ready! (3/8)"
 echo "OCR服务已就绪! (3/8)"
 
@@ -201,6 +141,7 @@ current_time=$(date +%s)
 elapsed=$((current_time - start_time))  # 计算经过的时间（秒）
 echo "Time elapsed: ${elapsed} seconds."
 echo "已耗时: ${elapsed} 秒."
+host=$(cat "/workspace/qanything_local/user.config")
 echo "Please visit the front-end service at [http://$host:5052/qanything/] to conduct Q&A."
 echo "请在[http://$host:5052/qanything/]下访问前端服务来进行问答，如果前端报错，请在浏览器按F12以获取更多报错信息"
 

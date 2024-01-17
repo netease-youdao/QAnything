@@ -98,7 +98,8 @@ services:
       - "8777:8777"
     environment:
       - NCCL_LAUNCH_MODE=PARALLEL
-      - VERBOSE=1
+      - GPUID1=${GPUID1:-0}
+      - GPUID2=${GPUID2:-0}
     depends_on:
       - "standalone"
       - "mysql"
