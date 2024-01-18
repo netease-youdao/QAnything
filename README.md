@@ -1,4 +1,4 @@
-<div align="center">
+![star_us](https://github.com/netease-youdao/QAnything/assets/29041332/ea92eee0-b2d1-4ec1-88f5-8531669cf6ca)<div align="center">
 
   <a href="https://github.com/netease-youdao/QAnything">
     <!-- Please provide path to your logo here -->
@@ -64,6 +64,11 @@ Currently supported formats include: **PDF, Word (doc/docx), PPT, Markdown, Eml,
 - **High-performance production-grade system**, directly deployable for enterprise applications.
 - **User-friendly**, no need for cumbersome configurations, one-click installation and deployment, ready to use.
 - **Multi knowledge base QA** Support selecting multiple knowledge bases for Q&A
+
+## Before You Start
+**Star us on GitHub, and be instantly notified for new release!**
+![star_us](https://github.com/netease-youdao/QAnything/assets/29041332/fd5e5926-b9b2-4675-9f60-6cdcaca18e14)
+
 
 ### Architecture
 <div align="center">
