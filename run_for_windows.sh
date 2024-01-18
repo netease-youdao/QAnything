@@ -7,7 +7,7 @@ if [ ! -d "models" ]; then
   # 记录下载和解压的时间
   d_start_time=$(date +%s)
   git lfs install
-  git clone https://www.modelscope.cn/netease-youdao/QAnything.git
+  git clone https://www.wisemodel.cn/Netease_Youdao/qanything.git
   d_end_time=$(date +%s)
   elapsed=$((d_end_time - d_start_time))  # 计算经过的时间（秒）
   echo "Download Time elapsed: ${elapsed} seconds."
