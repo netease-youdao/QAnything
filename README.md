@@ -1,4 +1,4 @@
-![star_us](https://github.com/netease-youdao/QAnything/assets/29041332/ea92eee0-b2d1-4ec1-88f5-8531669cf6ca)<div align="center">
+<div align="center">
 
   <a href="https://github.com/netease-youdao/QAnything">
     <!-- Please provide path to your logo here -->
