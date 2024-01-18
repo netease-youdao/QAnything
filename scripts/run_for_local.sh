@@ -63,12 +63,12 @@ env_file="/workspace/qanything_local/front_end/.env.production"
 user_file="/workspace/qanything_local/user.config"
 user_ip=$(cat "$user_file")
 # 读取env_file的第一行
-current_host=$(grep VUE_APP_HOST "$env_file" | cut -d '=' -f2)
+current_host=$(grep VITE_APP_API_HOST "$env_file")
 user_host="VITE_APP_API_HOST=http://$user_ip:8777"
 # 检查current_host与user_host是否相同
 if [ "$current_host" != "$user_host" ]; then
     # 使用 sed 命令更新 VITE_APP_API_HOST 的值
-    sed -i "s|VUE_APP_HOST=.*|$user_host|" "$env_file"
+    sed -i "s|VITE_APP_API_HOST=.*|$user_host|" "$env_file"
     echo "The file $env_file has been updated with the following configuration:"
     grep "VITE_APP_API_HOST" "$env_file"
 fi
