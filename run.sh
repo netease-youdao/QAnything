@@ -152,14 +152,14 @@ echo "GPUID2=${gpu_id2}" >> .env
 if [ -e /proc/version ]; then
   if grep -qi microsoft /proc/version; then
     echo "Running under WSL"
-    if docker-compose -p user -f docker-compose-linux.yaml down 2>&1 | grep -q "services.qanything_local.deploy.resources.reservations value 'devices' does not match any of the regexes"; then
+    if docker-compose -p user -f docker-compose-windows.yaml down |& tee /dev/tty | grep -q "services.qanything_local.deploy.resources.reservations value 'devices' does not match any of the regexes"; then
         echo "检测到 Docker Compose 版本过低，请升级到2.12.1或更高版本。"
     fi
     docker-compose -p user -f docker-compose-windows.yaml up -d
     docker-compose -p user -f docker-compose-windows.yaml logs -f qanything_local
   else
     echo "Running under native Linux"
-    if docker-compose -p user -f docker-compose-linux.yaml down 2>&1 | grep -q "services.qanything_local.deploy.resources.reservations value 'devices' does not match any of the regexes"; then
+    if docker-compose -p user -f docker-compose-linux.yaml down |& tee /dev/tty | grep -q "services.qanything_local.deploy.resources.reservations value 'devices' does not match any of the regexes"; then
         echo "检测到 Docker Compose 版本过低，请升级到2.12.1或更高版本。"
     fi
     docker-compose -p user -f docker-compose-linux.yaml up -d
