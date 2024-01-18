@@ -33,10 +33,22 @@ else
     gpuid2=${GPUID2}
 fi
 echo "GPU ID: $gpuid1, $gpuid2"
+
 # start llm server
-CUDA_VISIBLE_DEVICES=$gpuid1 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_base --http-port=10000 --grpc-port=10001 --metrics-port=10002 --log-verbose=1 > /model_repos/QAEnsemble_base/QAEnsemble_base.log 2>&1 &
-CUDA_VISIBLE_DEVICES=$gpuid2 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_embed --http-port=9000 --grpc-port=9001 --metrics-port=9002 --log-verbose=1 > /model_repos/QAEnsemble_embed/QAEnsemble_embed.log 2>&1 &
-CUDA_VISIBLE_DEVICES=$gpuid2 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_rerank --http-port=8000 --grpc-port=8001 --metrics-port=8002 --log-verbose=1 > /model_repos/QAEnsemble_rerank/QAEnsemble_rerank.log 2>&1 &
+# 判断一下，如果gpu_id1和gpu_id2相同，则只启动一个triton_server
+if [ $gpuid1 -eq $gpuid2 ]; then
+    echo "The triton server will start on $gpuid1 GPU"
+    CUDA_VISIBLE_DEVICES=$gpuid1 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble --http-port=10000 --grpc-port=10001 --metrics-port=10002 --log-verbose=1 > /model_repos/QAEnsemble/QAEnsemble.log 2>&1 &
+    echo "RERANK_PORT=10001" >> /workspace/qanything_local/.env
+    echo "EMBED_PORT=10001" >> /workspace/qanything_local/.env
+else
+    echo "The triton server will start on $gpuid1 and $gpuid2 GPUs"
+    CUDA_VISIBLE_DEVICES=$gpuid1 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_base --http-port=10000 --grpc-port=10001 --metrics-port=10002 --log-verbose=1 > /model_repos/QAEnsemble_base/QAEnsemble_base.log 2>&1 &
+    CUDA_VISIBLE_DEVICES=$gpuid2 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_embed --http-port=9000 --grpc-port=9001 --metrics-port=9002 --log-verbose=1 > /model_repos/QAEnsemble_embed/QAEnsemble_embed.log 2>&1 &
+    CUDA_VISIBLE_DEVICES=$gpuid2 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_rerank --http-port=8000 --grpc-port=8001 --metrics-port=8002 --log-verbose=1 > /model_repos/QAEnsemble_rerank/QAEnsemble_rerank.log 2>&1 &
+    echo "RERANK_PORT=8001" >> /workspace/qanything_local/.env
+    echo "EMBED_PORT=9001" >> /workspace/qanything_local/.env
+fi
 
 cd /workspace/qanything_local/qanything_kernel/dependent_server/llm_for_local_serve || exit
 nohup python3 -u llm_server_entrypoint.py --host="0.0.0.0" --port=36001 --model-path="tokenizer_assets" --model-url="0.0.0.0:10001" > llm.log 2>&1 &
