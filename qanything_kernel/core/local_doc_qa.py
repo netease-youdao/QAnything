@@ -56,12 +56,10 @@ class LocalDocQA:
         else:
             print(*args, flush=True)
 
-    def get_ocr_result(self, image_path):
-        with open(image_path, 'rb') as image:
-            files = {'file': (image_path, image, 'image/jpeg')}
-            response = requests.post(self.ocr_url, files=files)
-            response.raise_for_status()  # 如果请求返回了错误状态码，将会抛出异常
-            return response.json()['results']
+    def get_ocr_result(self, image_data: dict):
+        response = requests.post(self.ocr_url, json=image_data)
+        response.raise_for_status()  # 如果请求返回了错误状态码，将会抛出异常
+        return response.json()['results']
 
     def init_cfg(self, mode='local', logger=None):
         self.logger = logger

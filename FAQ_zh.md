@@ -12,6 +12,8 @@ cat -A scripts/run_for_local.sh  # 验证文件格式
 ## 在前端页面输入问题后，返回结果报错：Triton Inference Error (error_code: 4)
 - 原因：显存不够了，目前在问答过程中大模型和paddleocr占用的显存会逐渐上升且不释放，可能造成显存不够。
 - 解决方案：重启服务，优化显存的工作已在计划中
+- 原因2：如果发现显存够用，那是因为模型与部分显卡型号不兼容。
+- 解决方案：请更换为兼容模型和镜像，手动下载模型文件解压并替换models目录，然后重启服务即可。
 
 ## 在前端页面输入问题后，返回结果是类似后面的乱码：omiteatures贶.scrollHeight㎜eaturesodo Curse.streaming pulumi窟IDI贶沤贶.scrollHeight贶贶贶eatures谜.scrollHeight她是
 - 原因：显卡型号不支持，例如V100，请使用3080，3090，4080，4090等显卡，显存需要大于16G

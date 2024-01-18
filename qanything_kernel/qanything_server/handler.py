@@ -320,7 +320,7 @@ async def local_doc_chat(req: request):
         file_infos.extend(local_doc_qa.milvus_summary.get_files(user_id, kb_id))
     valid_files = [fi for fi in file_infos if fi[2] == 'green']
     if len(valid_files) == 0:
-        return sanic_json({"code": 200, "msg": "success chat", "question": question,
+        return sanic_json({"code": 200, "msg": "当前知识库为空，请上传文件或等待文件解析完毕", "question": question,
                            "response": "All knowledge bases {} are empty or haven't green file, please upload files".format(
                                kb_ids), "history": history, "source_documents": [{}]})
     else:

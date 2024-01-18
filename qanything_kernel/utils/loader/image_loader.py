@@ -4,6 +4,8 @@ from typing import List, Callable
 from langchain.document_loaders.unstructured import UnstructuredFileLoader
 import os
 from typing import Union, Any
+import cv2
+import base64
 
 
 class UnstructuredPaddleImageLoader(UnstructuredFileLoader):
@@ -26,7 +28,10 @@ class UnstructuredPaddleImageLoader(UnstructuredFileLoader):
             if not os.path.exists(full_dir_path):
                 os.makedirs(full_dir_path)
             filename = os.path.split(filepath)[-1]
-            result = self.ocr_engine(filepath)
+            img_np = cv2.imread(filepath)
+            h, w, c = img_np.shape
+            img_data = {"img64": base64.b64encode(img_np).decode("utf-8"), "height": h, "width": w, "channels": c}
+            result = self.ocr_engine(img_data)
             result = [line for line in result if line]
 
             ocr_result = [i[1][0] for line in result for i in line]

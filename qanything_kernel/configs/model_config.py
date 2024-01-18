@@ -1,6 +1,8 @@
 import os
 import logging
 import uuid
+from dotenv import load_dotenv
+load_dotenv()
 
 # LOG_FORMAT = "%(levelname) -5s %(asctime)s" "-1d: %(message)s"
 # logger = logging.getLogger()
@@ -65,7 +67,16 @@ MYSQL_USER = 'root'
 MYSQL_PASSWORD = '123456'
 MYSQL_DATABASE = 'qanything'
 
-LOCAL_RERANK_SERVICE_URL = "localhost:10001"
+rerank_port = os.getenv('RERANK_PORT')
+embed_port = os.getenv('EMBED_PORT')
+print("rerank_port:", rerank_port)
+print("embed_port:", embed_port)
+LOCAL_RERANK_SERVICE_URL = f"localhost:{rerank_port}"
 LOCAL_RERANK_MODEL_NAME = 'rerank'
 LOCAL_RERANK_MAX_LENGTH = 512
 LOCAL_RERANK_BATCH = 16
+
+LOCAL_EMBED_SERVICE_URL = f"localhost:{embed_port}"
+LOCAL_EMBED_MODEL_NAME = 'embed'
+LOCAL_EMBED_MAX_LENGTH = 512
+LOCAL_EMBED_BATCH = 16

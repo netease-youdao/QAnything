@@ -15,7 +15,7 @@ class ZiyueLLM(BaseAnswer, LLM, ABC):
     model: str = "yd_gpt"
     token_window: int = 4096
     max_token: int = 300  # 300
-    offcut_token: int = 50
+    offcut_token: int = 1396
     truncate_len: int = 50
     temperature: float = 0.6
     top_p: float = 1.0
