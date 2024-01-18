@@ -52,24 +52,26 @@ QAnything接口文档
 
 user_id需要满足： 以字母开头，只允许包含字母，数字或下划线。
 
-如果不需要用户区分，传入user_id="public"即可
+如果不需要用户区分，传入user_id="zzp"即可
+
+### 注意前端默认只显示user_id="zzp"的知识库
 
 
 ## 新建知识库（POST）
 ### URL
-<http://0.0.0.0:5052/api/local_doc_qa/new_knowledge_base>
+<http://{your_host}:8777/api/local_doc_qa/new_knowledge_base>
 
 ### 请求参数（Body）
-| 参数名              | 示例参数值                                | 是否必填 | 参数类型    | 描述说明                                       |
-| ---------------- | ---------------------------------- | ---- | ------- | ------------------------------------------ |
-| user_id          | "public"                          | 是    | String  | 用户id                                       |
-| kb_name          | "kb_test"                         | 是    | String  | 知识库名称                                     |
+| 参数名              | 示例参数值                                | 是否必填 | 参数类型    | 描述说明                  |
+| ---------------- | ---------------------------------- | ---- | ------- |-----------------------|
+| user_id          | "zzp"                          | 是    | String  | 用户id （如需使用前端填zzp不要更换） |
+| kb_name          | "kb_test"                         | 是    | String  | 知识库名称 （可以随意指定）        |
 
 
 ### 请求示例
 ```json
 {
-    "user_id": "public",  //用户id
+    "user_id": "zzp",  //用户id
     "kb_name": "kb_test"  //知识库名称
 }
 ```
@@ -89,7 +91,7 @@ user_id需要满足： 以字母开头，只允许包含字母，数字或下划
 ## 上传文件（POST）
 
 ### URL
-<http://0.0.0.0:5052/api/local_doc_qa/upload_files>
+<http://{your_host}:8777/api/local_doc_qa/upload_files>
 
 
 Content-Type: multipart/form-data
@@ -99,7 +101,7 @@ Content-Type: multipart/form-data
 | 参数名              | 示例参数值                                | 是否必填 | 参数类型    | 描述说明                                       |
 | ---------------- | ---------------------------------- | ---- | ------- | ------------------------------------------ |
 | files            | 文件二进制                           | 是    | \[文件类型] | 需要上传的文件，可多选（当use\_lcoal\_file为true时，选择无效）  |
-| user\_id         | "public"                          | 是    | String  | 用户id                                       |
+| user\_id         | "zzp"                          | 是    | String  | 用户id                                       |
 | kb\_id           | "KBb1dd58e8485443ce81166d24f6febda7" | 是    | String  | 知识库id                                      |
 | mode             | "strong"                             | 是    | String  | 上传模式，soft：文件名重复的文件不再上传，strong：文件名重复的文件强制上传 |
 | use\_local\_file | false                              | 是    | Boolean | 是否使用本地目录上传文件：「source/data」，可选：【true，false】 |
@@ -111,10 +113,10 @@ Content-Type: multipart/form-data
 import os
 import requests
 
-url = "http://0.0.0.0:5052/api/local_doc_qa/upload_files"
+url = "http://{your_host}:8777/api/local_doc_qa/upload_files"
 folder_path = "./docx_data"
 data = {
-    "user_id": "public",
+    "user_id": "zzp",
     "kb_id": "KB6dae785cdd5d47a997e890521acbe1c9"
 }
 
@@ -157,9 +159,9 @@ response_times = []
 
 async def send_request(round_, files):
     print(len(files))
-    url = 'http://0.0.0.0:5052/api/local_doc_qa/upload_files'
+    url = 'http://{your_host}:8777/api/local_doc_qa/upload_files'
     data = aiohttp.FormData()
-    data.add_field('user_id', 'public')
+    data.add_field('user_id', 'zzp')
     data.add_field('kb_id', 'KBf1dafefdb08742f89530acb7e9ed66dd')
     data.add_field('mode', 'soft')
     
@@ -236,17 +238,17 @@ if __name__ == '__main__':
 ## 查看知识库（POST）
 
 ### URL
-<http://0.0.0.0:5052/api/local_doc_qa/list_knowledge_base>
+<http://{your_host}:8777/api/local_doc_qa/list_knowledge_base>
 
 ### 请求参数（Body)
 | 参数名              | 示例参数值                                | 是否必填 | 参数类型    | 描述说明                                       |
 | ---------------- | ---------------------------------- | ---- | ------- | ------------------------------------------ |
-| user\_id         | "public"                             | 是    | String  | 用户id                                       |
+| user\_id         | "zzp"                             | 是    | String  | 用户id                                       |
 
 ### 请求示例
 ```json
 {
-	"user_id": "public" //用户id
+	"user_id": "zzp" //用户id
 }
 ```
 
@@ -268,20 +270,20 @@ if __name__ == '__main__':
 ## 获取文件列表（POST）
 
 ### URL
-<http://0.0.0.0:5052/api/local_doc_qa/list_files>
+<http://{your_host}:8777/api/local_doc_qa/list_files>
 
 
 ### 请求参数（Body）
 | 参数名              | 示例参数值                                | 是否必填 | 参数类型    | 描述说明                                       |
 | ---------------- | ---------------------------------- | ---- | ------- | ------------------------------------------ |
-| user_id         | "public"                              | 是    | String  | 用户id                                       |
+| user_id         | "zzp"                              | 是    | String  | 用户id                                       |
 | kb_id           | "KBb1dd58e8485443ce81166d24f6febda7"  | 是    | String  | 知识库id                                      |
 
 ### 请求示例
 
 ```json
 {
-	"user_id": "public", //用户id  注意需要满足 只含有字母 数字 和下划线且字母开头 的要求
+	"user_id": "zzp", //用户id  注意需要满足 只含有字母 数字 和下划线且字母开头 的要求
 	"kb_id": "KBb1dd58e8485443ce81166d24f6febda7" //知识库id
 }
 ```
@@ -328,13 +330,13 @@ if __name__ == '__main__':
 ## 问答（POST）
 
 ### URL
-<http://0.0.0.0:5052/api/local_doc_qa/local_doc_chat>
+<http://{your_host}:8777/api/local_doc_qa/local_doc_chat>
 
 
 ### 请求参数（Body）
 | 参数名              | 示例参数值                                | 是否必填 | 参数类型    | 描述说明                |
 | ---------------- | ---------------------------------- | ---- | ------- | -----------------------------------|
-| user_id         | "public"                              | 是    | String  | 用户id                              |
+| user_id         | "zzp"                              | 是    | String  | 用户id                              |
 | kb_ids          | ["KBb1dd58e8485443ce81166d24f6febda7"]  | 是    | Array  | 知识库id的列表，支持多个知识库联合问答|
 | question          | "保险单号是多少？" | 是    | String  | 知识库id的列表，支持多个知识库联合问答|
 | history          | [["question1","answer1"],["question2","answer2"]]         | 是    | Array | 历史对话                     |
@@ -343,7 +345,7 @@ if __name__ == '__main__':
 
 ```json
 {
-	"user_id": "public", //用户id
+	"user_id": "zzp", //用户id
 	"kb_ids": ["KBb1dd58e8485443ce81166d24f6febda7"], //知识库id，支持多个知识库联合问答
 	"question": "保险单号是多少？", //用户问题
 	"history": [] //历史对话：List[str]
@@ -383,19 +385,19 @@ if __name__ == '__main__':
 ## 删除文件（POST）
 
 ### URL
-<http://0.0.0.0:5052/api/local_doc_qa/delete_files>
+<http://{your_host}:8777/api/local_doc_qa/delete_files>
 
 ### 请求参数（Body）
 | 参数名              | 示例参数值                                | 是否必填 | 参数类型    | 描述说明                |
 | ---------------- | ----------------------------------  | ---- | ------- | -----------------------------------|
-| user_id          | "public"                             | 是    | String  | 用户id                              |
+| user_id          | "zzp"                             | 是    | String  | 用户id                              |
 | kb_id            | "KB1271e71c36ec4028a6542586946a3906"  | 是    | String  | 知识库id|
 | file_ids         | ["73ff7cf76ff34c8aa3a5a0b4ba3cf534"] | 是    | Array  | 要删除文件的id，支持批量删除|
 
 ### 请求示例
 ```json
 {
-	"user_id": "public", //用户id
+	"user_id": "zzp", //用户id
 	"kb_id": "KB1271e71c36ec4028a6542586946a3906", //知识库id
 	"file_ids": [
 		"73ff7cf76ff34c8aa3a5a0b4ba3cf534"
@@ -415,19 +417,19 @@ if __name__ == '__main__':
 ## 删除知识库（POST）
 
 ### URL
-<http://0.0.0.0:5052/api/local_doc_qa/delete_knowledge_base>
+<http://{your_host}:8777/api/local_doc_qa/delete_knowledge_base>
 
 ### 请求参数（Body）
 
 | 参数名              | 示例参数值                                | 是否必填 | 参数类型    | 描述说明                |
 | ---------------- | ----------------------------------  | ---- | ------- | -----------------------------------|
-| user_id          | "public"                             | 是    | String  | 用户id                              |
+| user_id          | "zzp"                             | 是    | String  | 用户id                              |
 | kb_ids            | ["KB1cd81f2bc515437294bda1934a20b235"]  | 是    | Array  | 要删除的知识库id，支持批量删除|
 
 ### 请求示例
 ```json
 {
-	"user_id": "public", //用户id
+	"user_id": "zzp", //用户id
 	"kb_ids": [
 		"KB1cd81f2bc515437294bda1934a20b235"
 	] //知识库id列表

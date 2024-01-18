@@ -125,13 +125,13 @@ If you need to use it for commercial purposes, please follow the license of Qwen
 [:point_right: try QAnything online](https://qanything.ai)
 ### Prerequisites
 
-|  **Required item**     | **Minimum Requirement** | **Note** |
-| --------------         |------------------------| --------------------------------- |
-| NVIDIA GPU Memory      | >= 16GB                | NVIDIA 3090 recommended |
-| NVIDIA Driver Version  | >= 525.105.17          |                           |
-| CUDA Version           | >= 12.0                |                           |
-| docker compose  version| >= 2.12.1              | [docker compose install](https://docs.docker.com/compose/install/)|
-
+| **Required item**        | **Minimum Requirement** | **Note** |
+|--------------------------|-------------------------| --------------------------------- |
+| Single NVIDIA GPU Memory | >= 16GB                 | NVIDIA 3090 recommended |
+| Double NVIDIA GPU Memory | >= 11GB + 5G            | 2080TI × 2 recommended  |
+| NVIDIA Driver Version    | >= 525.105.17           |                           |
+| CUDA Version             | >= 12.0                 |                           |
+| docker compose  version  | >= 2.12.1               | [docker compose install](https://docs.docker.com/compose/install/)|
 
 
 ### Installation
@@ -139,111 +139,71 @@ If you need to use it for commercial purposes, please follow the license of Qwen
 ```
 git clone https://github.com/netease-youdao/QAnything.git
 ```
-#### step2: download the model and unzip it to the root directory of the current project.
-This project provides multiple model download platforms. Choose one of the methods for downloading.
-
-[👉【WiseModel】](https://wisemodel.cn/models/Netease_Youdao/qanything)
-[👉【ModelScope】](https://www.modelscope.cn/models/netease-youdao/QAnything)
-[👉【HuggingFace】](https://huggingface.co/netease-youdao/QAnything)
+#### step2: Enter the project root directory and execute the startup script.
+##### in the Windows11 system：(Need to enter the WSL environment.)
+The WSL environment is unstable under the Windows 10 system, and it is not recommended to use it.
+```
+cd QAnything
+bash run_for_windows.sh
+```
 
 <details>
-<summary>Download method 1：WiseModel（recommend👍）</summary>
+<summary>Specify GPU startup.</summary>
 
 ```
 cd QAnything
-# Make sure you have git-lfs installed (https://git-lfs.com)
-git lfs install
-git clone https://www.wisemodel.cn/Netease_Youdao/qanything.git
-unzip qanything/models.zip   # in root directory of the current project
+bash run_for_windows.sh 1  # gpu id 1
 ```
 </details>
+
 <details>
-<summary>Download method 2：ModelScope</summary>
+<summary>Specify multi-GPU startup (up to two).</summary>
 
 ```
 cd QAnything
-# Make sure you have git-lfs installed (https://git-lfs.com)
-git lfs install
-git clone https://www.modelscope.cn/netease-youdao/QAnything.git
-unzip QAnything/models.zip   # in root directory of the current project
+bash run_for_windows.sh 1,2  # gpu ids: 1,2 
 ```
 </details>
+
+##### in the Linux system:
+```
+cd QAnything
+bash run_for_linux.sh
+```
+
 <details>
-<summary>Download method 3：HuggingFace</summary>
+<summary>Specify GPU startup.</summary>
 
 ```
 cd QAnything
-# Make sure you have git-lfs installed (https://git-lfs.com)
-git lfs install
-git clone https://huggingface.co/netease-youdao/QAnything
-unzip QAnything/models.zip   # in root directory of the current project
-```
-</details>
-
-
-#### step3: change config
-##### in the Windows system
-```
-vim docker-compose-windows.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
-vim front_end/.env.production # set the excetly host.
-```
-##### in the Linux system
-```
-vim docker-compose-linux.yaml # change CUDA_VISIBLE_DEVICES to your gpu device id
-vim front_end/.env.production # set the excetly host.
-```
-#### step4: start server
-##### in the Windows system
-<details>
-<summary>Beginner's recommendation!</summary>
-
-```shell
-# Front desk startup, log prints to the screen in real time, press ctrl+c to stop.
-docker-compose -f docker-compose-windows.yaml up qanything_local
+bash run_for_linux.sh 1  # gpu id 1
 ```
 </details>
 
 <details>
-<summary>Recommended for experienced players!</summary>
+<summary>Specify multi-GPU startup (up to two).</summary>
 
-```shell
-# Background startup, ctrl+c will not stop.
-docker-compose -f docker-compose-windows.yaml up -d
-# Execute the following command to view the log.
-docker-compose -f docker-compose-windows.yaml logs qanything_local
-# Stop service
-docker-compose -f docker-compose-windows.yaml down
+```
+cd QAnything
+bash run_for_linux.sh 1,2  # gpu ids: 1,2 
 ```
 </details>
 
-##### in the Linux system
-<details>
-<summary>Beginner's recommendation!</summary>
-
+#### step3: Close service
+##### in the Windows system:
 ```shell
-# Front desk startup, log prints to the screen in real time, press ctrl+c to stop.
-docker-compose -f docker-compose-linux.yaml up qanything_local
+docker-compose -p user -f docker-compose-windows.yaml down
 ```
-</details>
-
-<details>
-<summary>Recommended for experienced players!</summary>
-
+##### in the Linux system:
 ```shell
-# Background startup, ctrl+c will not stop.
-docker-compose -f docker-compose-linux.yaml up -d
-# Execute the following command to view the log.
-docker-compose -f docker-compose-linux.yaml logs qanything_local
-# Stop service
-docker-compose -f docker-compose-linux.yaml down
+docker-compose -p user -f docker-compose-linux.yaml down
 ```
-</details>
 
 After successful installation, you can experience the application by entering the following addresses in your web browser.
 
 - Frontend address: http://{your_host}:5052/qanything/
 
-- API address: http://{your_host}:5052/api/
+- API address: http://{your_host}:8777/api/
 
 For detailed API documentation, please refer to [QAnything API 文档](docs/API.md)
 
