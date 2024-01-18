@@ -49,7 +49,7 @@
 </details>
 
 ## What is QAnything?
-**Q**uestion and **A**nswer based on **Anything** (`QAnything`) is a local knowledge base question-answering system designed to support a wide range of file formats and databases, allowing for offline installation and use.
+`QAnything`(**Q**uestion and **A**nswer based on **Anything**) is a local knowledge base question-answering system designed to support a wide range of file formats and databases, allowing for offline installation and use.
 
 With `QAnything`, you can simply drop any locally stored file of any format and receive accurate, fast, and reliable answers.
 
@@ -65,9 +65,7 @@ Currently supported formats include: **PDF, Word (doc/docx), PPT, Markdown, Eml,
 - **User-friendly**, no need for cumbersome configurations, one-click installation and deployment, ready to use.
 - **Multi knowledge base QA** Support selecting multiple knowledge bases for Q&A
 
-## Before You Start
-**Star us on GitHub, and be instantly notified for new release!**
-![star_us](https://github.com/netease-youdao/QAnything/assets/29041332/fd5e5926-b9b2-4675-9f60-6cdcaca18e14)
+
 
 
 ### Architecture
@@ -125,9 +123,12 @@ QAnything uses the retrieval component [BCEmbedding](https://github.com/netease-
 The open source version of QAnything is based on QwenLM and has been fine-tuned on a large number of professional question-answering datasets. It greatly enhances the ability of question-answering.
 If you need to use it for commercial purposes, please follow the license of QwenLM. For more details, please refer to: [QwenLM](https://github.com/QwenLM/Qwen)
 
+## Before You Start
+**Star us on GitHub, and be instantly notified for new release!**
+![star_us](https://github.com/netease-youdao/QAnything/assets/29041332/fd5e5926-b9b2-4675-9f60-6cdcaca18e14)
 
 ## Getting Started
-[:point_right: try QAnything online](https://qanything.ai)
+[👉 try QAnything online](https://qanything.ai)
 ### Prerequisites
 
 |  **Required item**     | **Minimum Requirement** | **Note** |

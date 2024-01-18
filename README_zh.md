@@ -120,8 +120,12 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 开源版本QAnything的大模型基于通义千问，并在大量专业问答数据集上进行微调；在千问的基础上大大加强了问答的能力。
 如果需要商用请遵循千问的license，具体请参阅：[通义千问](https://github.com/QwenLM/Qwen)
 
+## 开始之前
+**在GitHub上加星，即可立即收到新版本的通知！**
+![star_us](https://github.com/netease-youdao/QAnything/assets/29041332/fd5e5926-b9b2-4675-9f60-6cdcaca18e14)
+
 ## 开始
-[:point_right: 在线试用QAnything](https://qanything.ai)
+[👉 在线试用QAnything](https://qanything.ai)
 
 ### 必要条件
 |  **必要项**     | **最低要求**      | **备注** |
