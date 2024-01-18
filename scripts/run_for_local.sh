@@ -87,16 +87,14 @@ else
     echo "Failed to install npm dependencies."
     exit 1
 fi
-# 安装依赖
-echo "Waiting for [npm run install]（5/8)"
-timeout $timeout_time npm install
+
+# 构建前端项目
+echo "Waiting for [npm run build](6/8)"
+npm run build
 if [ $? -eq 0 ]; then
-    echo "[npm run install] Installed successfully（5/8)"
-elif [ $? -eq 124 ]; then
-    echo "npm install 下载超时，可能是网络问题，请修改 npm 代理。"
-    exit 1
+    echo "[npm run build] build successfully(6/8)"
 else
-    echo "Failed to install npm dependencies."
+    echo "Failed to build the front end."
     exit 1
 fi
 
