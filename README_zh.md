@@ -124,7 +124,10 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 **在GitHub上加星，即可立即收到新版本的通知！**
 ![star_us](https://github.com/netease-youdao/QAnything/assets/29041332/fd5e5926-b9b2-4675-9f60-6cdcaca18e14)
 * [🏄 在线试用QAnything](https://qanything.ai)
+* [📚 在线试用有道速读](https://read.youdao.com)
+* [🛠️ 想只使用BCEmbedding(embedding & rerank)](https://github.com/netease-youdao/BCEmbedding)
 * [📖 常见问题](FAQ_zh.md)
+
 ## 开始
 
 ### 必要条件

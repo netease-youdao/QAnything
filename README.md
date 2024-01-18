@@ -128,6 +128,8 @@ If you need to use it for commercial purposes, please follow the license of Qwen
 **Star us on GitHub, and be instantly notified for new release!**
 ![star_us](https://github.com/netease-youdao/QAnything/assets/29041332/fd5e5926-b9b2-4675-9f60-6cdcaca18e14)
 * [🏄 Try QAnything Online](https://qanything.ai)
+* [📚 Try read.youdao.com | 有道速读](https://read.youdao.com)
+* [🛠️ Only use our BCEmbedding(embedding & rerank)](https://github.com/netease-youdao/BCEmbedding)
 * [📖 FAQ](FAQ_zh.md)
 
 ## Getting Started
