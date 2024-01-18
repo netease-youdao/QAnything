@@ -4,11 +4,22 @@
 if [ ! -d "models" ]; then
   echo "models 文件夹不存在，开始克隆和解压模型..."
   echo "模型大小为8G左右，下载+解压时间可能较长，请耐心等待15分钟，仅首次启动需下载模型"
-
+  # 记录下载和解压的时间
+  d_start_time=$(date +%s)
   git lfs install
   git clone https://www.modelscope.cn/netease-youdao/QAnything.git
+  d_end_time=$(date +%s)
+  elapsed=$((d_end_time - d_start_time))  # 计算经过的时间（秒）
+  echo "Download Time elapsed: ${elapsed} seconds."
+  echo "下载耗时: ${elapsed} 秒."
+
   # 解压模型文件
   unzip qanything/models.zip
+
+  unzip_end_time=$(date +%s)
+  elapsed=$((unzip_end_time - d_end_time))  # 计算经过的时间（秒）
+  echo "unzip Time elapsed: ${elapsed} seconds."
+  echo "解压耗时: ${elapsed} 秒."
 
   # 重命名解压后的模型文件夹
   if [ -d "model" ]; then
