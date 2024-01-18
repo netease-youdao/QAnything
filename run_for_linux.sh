@@ -1,5 +1,28 @@
 #!/bin/bash
 
+# 检查是否存在 models 文件夹
+if [ ! -d "models" ]; then
+  echo "models 文件夹不存在，开始克隆和解压模型..."
+  echo "模型大小为8G左右，下载+解压时间可能较长，请耐心等待15分钟，仅首次启动需下载模型"
+
+  git lfs install
+  git clone https://www.modelscope.cn/netease-youdao/QAnything.git
+  # 解压模型文件
+  unzip qanything/models.zip
+
+  # 重命名解压后的模型文件夹
+  if [ -d "model" ]; then
+    mv "model" "models"
+  elif [ -d "qanything/model" ]; then
+    mv "qanything/model" "models"
+  fi
+
+  # 删除克隆的仓库
+  rm -rf qanything
+else
+  echo "models 文件夹已存在，无需下载。"
+fi
+
 # 检查模型文件夹是否存在
 check_folder_existence() {
   if [ ! -d "models/$1" ]; then
@@ -41,7 +64,7 @@ echo "Model directories check passed. (0/8)"
 echo "模型路径和模型版本检查通过. (0/8)"
 
 
-env_file="front_end/.env.production"
+#env_file="front_end/.env.production"
 user_file="user.config"
 
 gpu_id1=0
@@ -90,13 +113,13 @@ else
 fi
 
 # 保存IP地址到变量中
-api_host="http://$host:8777"
+# api_host="http://$host:8777"
 
 # 使用 sed 命令更新 VITE_APP_API_HOST 的值
-sed -i "s|VITE_APP_API_HOST=.*|VITE_APP_API_HOST=$api_host|" "$env_file"
+# sed -i "s|VITE_APP_API_HOST=.*|VITE_APP_API_HOST=$api_host|" "$env_file"
 
-echo "The file $env_file has been updated with the following configuration:"
-grep "VITE_APP_API_HOST" "$env_file"
+# echo "The file $env_file has been updated with the following configuration:"
+# grep "VITE_APP_API_HOST" "$env_file"
 
 # 创建.env文件并写入环境变量
 echo "GPUID1=${gpu_id1}" > .env

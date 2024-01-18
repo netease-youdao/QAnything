@@ -57,12 +57,26 @@ echo "The qanything backend service is ready! (4/8)"
 echo "qanything后端服务已就绪! (4/8)"
 
 
+timeout_time=300  # npm下载超时时间300秒，triton_server启动超时时间600秒
+
+env_file="/workspace/qanything_local/front_end/.env.production"
+user_file="/workspace/qanything_local/user.config"
+user_ip=$(cat "$user_file")
+# 读取env_file的第一行
+current_host=$(grep VUE_APP_HOST "$env_file" | cut -d '=' -f2)
+user_host="VITE_APP_API_HOST=http://$user_ip:8777"
+# 检查current_host与user_host是否相同
+if [ "$current_host" != "$user_host" ]; then
+    # 使用 sed 命令更新 VITE_APP_API_HOST 的值
+    sed -i "s|VUE_APP_HOST=.*|$user_host|" "$env_file"
+    echo "The file $env_file has been updated with the following configuration:"
+    grep "VITE_APP_API_HOST" "$env_file"
+fi
+
 # 转到 front_end 目录
 cd /workspace/qanything_local/front_end || exit
-
 # 安装依赖
 echo "Waiting for [npm run install]（5/8)"
-timeout_time=300
 timeout $timeout_time npm install
 if [ $? -eq 0 ]; then
     echo "[npm run install] Installed successfully（5/8)"
@@ -73,14 +87,16 @@ else
     echo "Failed to install npm dependencies."
     exit 1
 fi
-
-# 构建前端项目
-echo "Waiting for [npm run build](6/8)"
-npm run build
+# 安装依赖
+echo "Waiting for [npm run install]（5/8)"
+timeout $timeout_time npm install
 if [ $? -eq 0 ]; then
-    echo "[npm run build] build successfully(6/8)"
+    echo "[npm run install] Installed successfully（5/8)"
+elif [ $? -eq 124 ]; then
+    echo "npm install 下载超时，可能是网络问题，请修改 npm 代理。"
+    exit 1
 else
-    echo "Failed to build the front end."
+    echo "Failed to install npm dependencies."
     exit 1
 fi
 
@@ -141,9 +157,8 @@ current_time=$(date +%s)
 elapsed=$((current_time - start_time))  # 计算经过的时间（秒）
 echo "Time elapsed: ${elapsed} seconds."
 echo "已耗时: ${elapsed} 秒."
-host=$(cat "/workspace/qanything_local/user.config")
-echo "Please visit the front-end service at [http://$host:5052/qanything/] to conduct Q&A."
-echo "请在[http://$host:5052/qanything/]下访问前端服务来进行问答，如果前端报错，请在浏览器按F12以获取更多报错信息"
+echo "Please visit the front-end service at [http://$user_ip:5052/qanything/] to conduct Q&A."
+echo "请在[http://$user_ip:5052/qanything/]下访问前端服务来进行问答，如果前端报错，请在浏览器按F12以获取更多报错信息"
 
 # 保持容器运行
 while true; do
