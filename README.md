@@ -180,6 +180,9 @@ bash close.sh
 ### Common problem solutions：
 [Click here](FAQ_zh.md)
 
+### DockerFile:
+[DockerFile](docs/Dockerfile)
+
 After successful installation, you can experience the application by entering the following addresses in your web browser.
 
 - Frontend address: http://{your_host}:5052/qanything/

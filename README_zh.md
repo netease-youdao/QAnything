@@ -184,6 +184,9 @@ bash close.sh
 ### 常见问题解决方案：
 [点击这里](FAQ_zh.md)
 
+### DockerFile:
+[DockerFile](docs/Dockerfile)
+
 ## 使用
 ### 跨语种：多篇英文论文问答
 [![](docs/videos/multi_paper_qa.mp4)](https://github.com/netease-youdao/QAnything/assets/141105427/8915277f-c136-42b8-9332-78f64bf5df22)
