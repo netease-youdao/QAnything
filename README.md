@@ -131,14 +131,15 @@ If you need to use it for commercial purposes, please follow the license of Qwen
 [👉 try QAnything online](https://qanything.ai)
 ### Prerequisites
 
-| **Required item**        | **Minimum Requirement**   | **Note** |
-|--------------------------|---------------------------| --------------------------------- |
-| Single NVIDIA GPU Memory | >= 16GB                   | NVIDIA 3090 recommended |
-| Double NVIDIA GPU Memory | >= 11GB + 5G              | 2080TI × 2 recommended  |
-| NVIDIA Driver Version    | >= 525.105.17             |                           |
-| CUDA Version             | >= 12.0                   |                           |
+| **Required item**        | **Minimum Requirement**   | **Note**                                                                                      |
+|--------------------------|---------------------------|-----------------------------------------------------------------------------------------------|
+| Single NVIDIA GPU Memory | >= 16GB                   | NVIDIA 3090 recommended                                                                       |
+| Double NVIDIA GPU Memory | >= 11GB + 5G              | NVIDIA 2080TI × 2 recommended                                                                 |
+| NVIDIA Driver Version    | >= 525.105.17             |                                                                                               |
+| CUDA Version             | >= 12.0                   |                                                                                               |
 | System                   | windows11 or Linux x86_64 | The WSL environment is unstable under the Windows 10 system and it is not recommended to use. |
-| docker compose  version  | >= 2.12.1                 | [docker compose install](https://docs.docker.com/compose/install/)|
+| Docker version           | >= 20.10.5                | [docker install](https://docs.docker.com/engine/install/)       |
+| docker compose  version  | >= 2.23.3                 | [docker compose install](https://docs.docker.com/compose/install/)                            |
 
 
 ### Installation
@@ -154,7 +155,7 @@ bash run.sh  # Start on GPU 0 by default.
 ```
 
 <details>
-<summary>Specify GPU startup.</summary>
+<summary>Specify GPU startup.(Optional)</summary>
 
 ```shell
 cd QAnything
@@ -163,13 +164,17 @@ bash run.sh 0  # gpu id 0
 </details>
 
 <details>
-<summary>Specify multi-GPU startup (up to two).</summary>
+<summary>Specify multi-GPU startup (Optional).</summary>
 
 ```shell
 cd QAnything
-bash run.sh 0,1  # gpu ids: 0,1, Please confirm how many GPUs are available.
+bash run.sh 0,1  # gpu ids: 0,1, Please confirm how many GPUs are available. Supports up to two cards for startup. 
 ```
 </details>
+
+After successful installation, you can experience the application by entering the following addresses in your web browser.
+
+- Frontend address: http://{your_host}:5052/qanything/
 
 ### step3: Close service
 If you are in the Windows11 system: Need to enter the WSL environment.
@@ -177,19 +182,15 @@ If you are in the Windows11 system: Need to enter the WSL environment.
 bash close.sh
 ```
 
-### Common problem solutions：
+### API
+- API address: http://{your_host}:8777/api/
+- For detailed API documentation, please refer to [QAnything API 文档](docs/API.md)
+
+### FAQ
 [Click here](FAQ_zh.md)
 
-### DockerFile:
+### DockerFile
 [DockerFile](docs/Dockerfile)
-
-After successful installation, you can experience the application by entering the following addresses in your web browser.
-
-- Frontend address: http://{your_host}:5052/qanything/
-
-- API address: http://{your_host}:8777/api/
-
-For detailed API documentation, please refer to [QAnything API 文档](docs/API.md)
 
 
 ## Usage

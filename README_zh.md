@@ -135,7 +135,8 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 | NVIDIA Driver 版本         | >= 525.105.17             |                                                                 |
 | CUDA 版本                  | >= 12.0                   |                                                                 |
 | System                   | windows11 or Linux x86_64 | windows10系统下wsl环境不稳定，不建议使用，支持本地ubuntu或Centos等系统的云服务器            |
-| docker compose 版本        | >= 2.12.1                 | [docker compose 安装教程](https://docs.docker.com/compose/install/) |
+| Docker 版本                | >= 20.10.5                | [docker 安装教程](https://docs.docker.com/engine/install/)       | 
+| docker compose 版本        | >= 2.23.3                 | [docker compose 安装教程](https://docs.docker.com/compose/install/) |
 
 ### 下载安装
 ### step1: 下载本项目
@@ -150,7 +151,7 @@ bash run.sh  # 默认在0号GPU上启动
 ```
 
 <details>
-<summary>指定GPU启动</summary>
+<summary>指定GPU启动（可选）</summary>
 
 ```shell
 cd QAnything
@@ -159,13 +160,17 @@ bash run.sh 0  # 指定0号GPU启动 GPU编号从0开始 windows机器一般只�
 </details>
 
 <details>
-<summary>指定多GPU启动（最多两个）</summary>
+<summary>指定多GPU启动（可选）</summary>
 
 ```shell
 cd QAnything
-bash run.sh 0,1  # 指定0,1号GPU启动，请确认有多张GPU可用
+bash run.sh 0,1  # 指定0,1号GPU启动，请确认有多张GPU可用，最多支持两张卡启动
 ```
 </details>
+
+运行成功后，即可在浏览器输入以下地址进行体验。
+
+- 前端地址: http://{your_host}:5052/qanything/
 
 ### step3: 关闭服务
 如果在Windows系统下请先进入wsl环境
@@ -173,16 +178,12 @@ bash run.sh 0,1  # 指定0,1号GPU启动，请确认有多张GPU可用
 bash close.sh
 ```
 
-运行成功后，即可在浏览器输入以下地址进行体验。
-
-- 前端地址: http://{your_host}:5052/qanything/
-
+### API
 - api地址: http://{your_host}:8777/api/
+- 详细API文档请移步[QAnything API 文档](docs/API.md)
 
-详细API文档请移步[QAnything API 文档](docs/API.md)
-
-### 常见问题解决方案：
-[点击这里](FAQ_zh.md)
+### FAQ：
+[常见问题解决方案](FAQ_zh.md)
 
 ### DockerFile:
 [DockerFile](docs/Dockerfile)
