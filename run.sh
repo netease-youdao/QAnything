@@ -152,21 +152,19 @@ echo "GPUID2=${gpu_id2}" >> .env
 if [ -e /proc/version ]; then
   if grep -qi microsoft /proc/version; then
     echo "Running under WSL"
-    docker-compose -p user -f docker-compose-windows.yaml down
-    docker-compose -p user -f docker-compose-windows.yaml up -d
-    # 检查日志输出
-    if docker-compose -p user -f docker-compose-windows.yaml logs -f qanything_local | grep -q "services.qanything_local.deploy.resources.reservations value 'devices' does not match any of the regexes"; then
+    if docker-compose -p user -f docker-compose-linux.yaml down 2>&1 | grep -q "services.qanything_local.deploy.resources.reservations value 'devices' does not match any of the regexes"; then
         echo "检测到 Docker Compose 版本过低，请升级到2.12.1或更高版本。"
     fi
+    docker-compose -p user -f docker-compose-windows.yaml up -d
+    docker-compose -p user -f docker-compose-windows.yaml logs -f qanything_local
   else
     echo "Running under native Linux"
-    docker-compose -p user -f docker-compose-linux.yaml down
+    if docker-compose -p user -f docker-compose-linux.yaml down 2>&1 | grep -q "services.qanything_local.deploy.resources.reservations value 'devices' does not match any of the regexes"; then
+        echo "检测到 Docker Compose 版本过低，请升级到2.12.1或更高版本。"
+    fi
     docker-compose -p user -f docker-compose-linux.yaml up -d
     docker-compose -p user -f docker-compose-linux.yaml logs -f qanything_local
     # 检查日志输出
-    if docker-compose -p user -f docker-compose-linux.yaml logs -f qanything_local | grep -q "services.qanything_local.deploy.resources.reservations value 'devices' does not match any of the regexes"; then
-        echo "检测到 Docker Compose 版本过低，请升级到2.12.1或更高版本。"
-    fi
   fi
 else
   echo "/proc/version 文件不存在。请确认自己位于Linux或Windows的WSL环境下"
