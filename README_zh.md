@@ -124,77 +124,49 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 [:point_right: 在线试用QAnything](https://qanything.ai)
 
 ### 必要条件
-| **必要项**                  | **最低要求**      | **备注**                                                          |
-|--------------------------|---------------|-----------------------------------------------------------------|
-| Single NVIDIA GPU Memory | >= 16GB       | 推荐NVIDIA 3090                                                   |
-| Double NVIDIA GPU Memory | >= 11GB + 5G  | 推荐NVIDIA 2080TI × 2                                             |
-| NVIDIA Driver 版本         | >= 525.105.17 |                                                                 |
-| CUDA 版本                  | >= 12.0       |                                                                 |
-| docker compose 版本        | >= 2.12.1     | [docker compose 安装教程](https://docs.docker.com/compose/install/) |
+| **必要项**                  | **最低要求**                  | **备注**                                                          |
+|--------------------------|---------------------------|-----------------------------------------------------------------|
+| Single NVIDIA GPU Memory | >= 16GB                   | 推荐NVIDIA 3090                                                   |
+| Double NVIDIA GPU Memory | >= 11GB + 5G              | 推荐NVIDIA 2080TI × 2                                             |
+| NVIDIA Driver 版本         | >= 525.105.17             |                                                                 |
+| CUDA 版本                  | >= 12.0                   |                                                                 |
+| System                   | windows11 or Linux x86_64 | windows10系统下wsl环境不稳定，不建议使用，支持本地ubuntu或Centos等系统的云服务器            |
+| docker compose 版本        | >= 2.12.1                 | [docker compose 安装教程](https://docs.docker.com/compose/install/) |
 
 ### 下载安装
-#### step1: 下载本项目
-```
+### step1: 下载本项目
+```shell
 git clone https://github.com/netease-youdao/QAnything.git
 ```
-#### step2: 进入项目根目录执行启动脚本
-##### 在Windows11系统下：（需要进入wsl环境）
-windows10系统下wsl环境不稳定，不建议使用
-```
+### step2: 进入项目根目录执行启动脚本
+如果在Windows系统下请先进入wsl环境
+```shell
 cd QAnything
-bash run_for_windows.sh
+bash run.sh  # 默认在0号GPU上启动
 ```
 
 <details>
 <summary>指定GPU启动</summary>
 
-```
+```shell
 cd QAnything
-bash run_for_windows.sh 1  # 指定1号GPU启动
+bash run.sh 0  # 指定0号GPU启动 GPU编号从0开始 windows机器一般只有一张卡，所以只能指定0号GPU
 ```
 </details>
 
 <details>
 <summary>指定多GPU启动（最多两个）</summary>
 
-```
-cd QAnything
-bash run_for_windows.sh 1,2  # 指定1,2号GPU启动
-```
-</details>
-
-##### 在Linux系统下：
-```
-cd QAnything
-bash run_for_linux.sh
-```
-
-<details>
-<summary>指定GPU启动</summary>
-
-```
-cd QAnything
-bash run_for_linux.sh 1  # 指定1号GPU启动
-```
-</details>
-
-<details>
-<summary>指定多GPU启动（最多两个）</summary>
-
-```
-cd QAnything
-bash run_for_linux.sh 1,2  # 指定1,2号GPU启动
-```
-</details>
-
-#### step3: 关闭服务
-##### 在Windows系统下
 ```shell
-docker-compose -p user -f docker-compose-windows.yaml down
+cd QAnything
+bash run.sh 0,1  # 指定0,1号GPU启动，请确认有多张GPU可用
 ```
-##### 在Linux系统下：
+</details>
+
+### step3: 关闭服务
+如果在Windows系统下请先进入wsl环境
 ```shell
-docker-compose -p user -f docker-compose-linux.yaml down
+bash close.sh
 ```
 
 运行成功后，即可在浏览器输入以下地址进行体验。
@@ -204,6 +176,9 @@ docker-compose -p user -f docker-compose-linux.yaml down
 - api地址: http://{your_host}:8777/api/
 
 详细API文档请移步[QAnything API 文档](docs/API.md)
+
+### 常见问题解决方案：
+[点击这里](FAQ_zh.md)
 
 ## 使用
 ### 跨语种：多篇英文论文问答
