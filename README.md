@@ -28,6 +28,11 @@
 <a href="https://twitter.com/YDopensource"><img src="https://img.shields.io/badge/follow-%40YDOpenSource-1DA1F2?logo=twitter&style={style}"></a>
 &nbsp;&nbsp;&nbsp;&nbsp;
 
+<a href="https://discord.gg/5uNpPsEJz8"><img src="https://img.shields.io/discord/1197874288963895436?style=social&logo=discord"></a>
+&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+
 </div>
 
 <details open="open">
@@ -223,8 +228,9 @@ If you need to access the API, please refer to the [QAnything API documentation]
 
 ## Community & Support
 
-### Discord
+### Discord <a href="https://discord.gg/5uNpPsEJz8"><img src="https://img.shields.io/discord/1197874288963895436?style=social&logo=discord"></a>
 Welcome to the QAnything [Discord](https://discord.gg/5uNpPsEJz8) community
+
 
 ### GitHub issues
 Reach out to the maintainer at one of the following places:
