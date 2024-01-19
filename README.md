@@ -191,7 +191,7 @@ After successful installation, you can experience the application by entering th
 #### API
 If you want to visit API, please refer to the following address:
 - API address: http://`your_host`:8777/api/
-- For detailed API documentation, please refer to [QAnything API 文档](docs/API.md)
+- For detailed API documentation, please refer to [QAnything API documentation](docs/API.md)
 
 ### Close service
 If you are in the Windows11 system: Need to enter the WSL environment.
