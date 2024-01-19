@@ -81,7 +81,7 @@ In scenarios with a large volume of knowledge base data, the advantages of a two
 </div>
 
 QAnything uses the retrieval component [BCEmbedding](https://github.com/netease-youdao/BCEmbedding), which is distinguished for its bilingual and crosslingual proficiency. BCEmbedding excels in bridging Chinese and English linguistic gaps, which achieves
-- **A high performence on <a href="https://github.com/netease-youdao/BCEmbedding/tree/master?tab=readme-ov-file#evaluate-semantic-representation-by-mteb" target="_Self">Semantic Representation Evaluations in MTEB</a>**;
+- **A high performance on <a href="https://github.com/netease-youdao/BCEmbedding/tree/master?tab=readme-ov-file#evaluate-semantic-representation-by-mteb" target="_Self">Semantic Representation Evaluations in MTEB</a>**;
 - **A new benchmark in the realm of <a href="https://github.com/netease-youdao/BCEmbedding/tree/master?tab=readme-ov-file#evaluate-rag-by-llamaindex" target="_Self">RAG Evaluations in LlamaIndex</a>**.
 
 
@@ -115,7 +115,7 @@ QAnything uses the retrieval component [BCEmbedding](https://github.com/netease-
 ***NOTE:***
 
 - In `WithoutReranker` setting, our `bce-embedding-base_v1` outperforms all the other embedding models.
-- With fixing the embedding model, our `bce-reranker-base_v1` achieves the best performence.
+- With fixing the embedding model, our `bce-reranker-base_v1` achieves the best performance.
 - **The combination of `bce-embedding-base_v1` and `bce-reranker-base_v1` is SOTA**.
 - If you want to use embedding and rerank separately, please refer to [BCEmbedding](https://github.com/netease-youdao/BCEmbedding)
 
