@@ -20,6 +20,7 @@ cat -A scripts/run_for_local.sh  # 验证文件格式
     - git reset --hard 79b3da3bbb35406f0b2da3acfcdb4c96c2837faf
     - unzip models.zip
     - 替换掉现有的models目录
+    - echo "v2.1.0" > models/version.txt  # 手动避过版本检查
 
 ## 在前端页面输入问题后，返回结果是类似后面的乱码：omiteatures贶.scrollHeight㎜eaturesodo Curse.streaming pulumi窟IDI贶沤贶.scrollHeight贶贶贶eatures谜.scrollHeight她是
 - 原因：显卡型号不支持，例如V100，请使用3080，3090，4080，4090等显卡，显存需要大于16G
