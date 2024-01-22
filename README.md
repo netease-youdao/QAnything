@@ -48,7 +48,7 @@
 - [Usage](#usage)
   - [API Document](#API-Document)
 - [WeChat Group](#WeChat-Group)
-- [Support](#support)
+- [Community & Support](#Community--Support)
 - [License](#license)
 - [Acknowledgements](#Acknowledgments)
 
@@ -232,11 +232,6 @@ If you need to access the API, please refer to the [QAnything API documentation]
 Welcome to the QAnything [Discord](https://discord.gg/5uNpPsEJz8) community
 
 
-### GitHub issues
-Reach out to the maintainer at one of the following places:
-
-- [Github issues](https://github.com/netease-youdao/QAnything/issues)
-- Contact options listed on [this GitHub profile](https://github.com/netease-youdao)
 
 ### WeChat Group
 
@@ -244,6 +239,16 @@ Welcome to scan the QR code below and join the WeChat group.
 
 <img src="docs/images/Wechat.jpg" width="20%" height="auto">
 
+### Email
+If you need to contact our team privately, please reach out to us via the following email:
+
+qanything@rd.netease.com
+
+### GitHub issues
+Reach out to the maintainer at one of the following places:
+
+- [Github issues](https://github.com/netease-youdao/QAnything/issues)
+- Contact options listed on [this GitHub profile](https://github.com/netease-youdao)
 
 
 ## Star History
