@@ -212,18 +212,29 @@ bash close.sh
 ### 接入API
 如果需要接入API，请参阅[QAnything API 文档](docs/API.md)
 
-## 微信群
 
-欢迎大家扫码加入官方微信交流群。
-
-<img src="docs/images/Wechat.jpg" width="20%" height="auto">
 
 ## 支持
 
-有任何问题，请通过以下方式联系我们:
+### Discord <a href="https://discord.gg/5uNpPsEJz8"><img src="https://img.shields.io/discord/1197874288963895436?style=social&logo=discord"></a>
+欢迎加入QAnything [Discord](https://discord.gg/5uNpPsEJz8) 社区！
 
-- [Github issues](https://github.com/netease-youdao/QAnything/issues)
-- [Netease Youdao](https://github.com/netease-youdao)
+
+
+### 微信群
+
+扫描下方二维码，加入QAnything官方微信群
+
+<img src="docs/images/Wechat.jpg" width="20%" height="auto">
+
+### 邮箱
+如果你需要私信我们团队，请通过下面的邮箱联系我们：
+
+qanything@rd.netease.com
+
+### GitHub issues
+有任何公开的问题，欢迎提交
+[Github issues](https://github.com/netease-youdao/QAnything/issues)
 
 ## Star History
 
