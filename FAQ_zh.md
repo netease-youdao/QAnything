@@ -8,6 +8,14 @@ sed -i "s/\r//" scripts/run_for_local.sh
 sed -i "s/^M//" scripts/run_for_local.sh
 cat -A scripts/run_for_local.sh  # 验证文件格式
 ```
+## 在windows 上启动docker compose 提示端口占用：Error response from daemon: Ports are not available: exposing port TCP 0.0.0.0:5052 -> 0.0.0.0:0: listen tcp 0.0.0.0:5052: bind: An attempt was made to access a socket in a way forbidden by its access permissions.
+- 原因：windows 上5052端口被Hyper-V随机占用
+- 验证：在powershell中输入 `netsh int ipv4 show excludedportrange protocol=tcp` 列出的端口中包含5052所在的端口范围
+- 解决方案：重新设置tcp动态端口范围
+```shell
+ netsh int ipv4 set dynamic tcp start=11000 num=10000
+```
+然后重启windows
 
 ## 在前端页面输入问题后，返回结果报错：Triton Inference Error (error_code: 4)
 - 原因：显存不够了，目前在问答过程中大模型和paddleocr占用的显存会逐渐上升且不释放，可能造成显存不够。
