@@ -301,7 +301,7 @@ async def local_doc_chat(req: request):
     local_doc_qa.print('local_doc_chat %s', user_id)
     kb_ids = safe_get(req, 'kb_ids')
     question = safe_get(req, 'question')
-    rerank = safe_get(req, 'rerank', default=False)
+    rerank = safe_get(req, 'rerank', default=True)
     local_doc_qa.print('rerank %s', rerank)
     streaming = safe_get(req, 'streaming', False)
     history = safe_get(req, 'history', [])
