@@ -85,6 +85,15 @@ if [ "$current_host" != "$user_host" ]; then
     grep "VITE_APP_API_HOST" "$env_file"
 fi
 
+# 检查npm是否已安装
+if ! command -v npm &> /dev/null
+then
+    echo "please install nodejs / 请安装 nodejs"
+    exit 1
+else
+    echo "npm is already installed. / nodejs 已经安装"
+fi
+
 # 转到 front_end 目录
 cd /workspace/qanything_local/front_end || exit
 # 安装依赖
