@@ -1,5 +1,30 @@
 #!/bin/bash
 
+# 获取脚本名
+script_name=$(basename "$0")
+
+# 编写usage消息
+usage() {
+  echo "Usage: $script_name [-a <argumentA>] [-b <argumentB>] [-c]"
+  echo "  -a <argumentA>: Specify argument A"
+  echo "  -b <argumentB>: Specify argument B"
+  echo "  -c: Use option C"
+  echo "  -h: Display this usage message"
+  exit 1
+}
+
+# 解析命令行参数
+while getopts "a:b:ch" opt; do
+  case $opt in
+    a) argumentA=$OPTARG ;;
+    b) argumentB=$OPTARG ;;
+    c) optionC=true ;;
+    h) usage ;;
+    *) usage ;;
+  esac
+done
+
+
 # 检查是否存在 models 文件夹
 if [ ! -d "models" ]; then
   echo "models 文件夹不存在，开始克隆和解压模型..."
@@ -92,6 +117,7 @@ user_file="user.config"
 
 gpu_id1=0
 gpu_id2=0
+
 
 # 判断命令行参数
 if [[ -n "$1" ]]; then

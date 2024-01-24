@@ -13,7 +13,9 @@ from qanything_kernel.utils.general_utils import get_time
 import aiohttp
 import requests
 import traceback
+import logging
 
+logging.basicConfig(level=logging.INFO)
 
 def _embeddings_hash(self):
     return hash(self.model_name)
@@ -255,6 +257,8 @@ class LocalDocQA:
             resp = answer_result.llm_output["answer"]
             prompt = answer_result.prompt
             history = answer_result.history
+
+            logging.info(f"[debug] get_knowledge_based_answer history = {history}")
             history[-1][0] = query
             response = {"query": query,
                         "prompt": prompt,

@@ -26,6 +26,7 @@ PROMPT_TEMPLATE = """参考信息：
 ---
 请根据上述参考信息回答我的问题或回复我的指令。前面的参考信息可能有用，也可能没用，你需要从我给出的参考信息中选出与我的问题最相关的那些，来为你的回答提供依据。回答一定要忠于原文，简洁但不丢信息，不要胡乱编造。我的问题或指令是什么语种，你就用什么语种回复,
 你的回复："""
+# PROMPT_TEMPLATE = """{question}"""
 
 QUERY_PROMPT_TEMPLATE = """{question}"""
 
@@ -67,10 +68,20 @@ MYSQL_USER = 'root'
 MYSQL_PASSWORD = '123456'
 MYSQL_DATABASE = 'qanything'
 
+llm_api_serve_model = os.getenv('LLM_API_SERVE_MODEL')
+llm_api_serve_port = os.getenv('LLM_API_SERVE_PORT')
 rerank_port = os.getenv('RERANK_PORT')
 embed_port = os.getenv('EMBED_PORT')
+
+print("llm_api_serve_port:", llm_api_serve_port)
 print("rerank_port:", rerank_port)
 print("embed_port:", embed_port)
+
+
+LOCAL_LLM_SERVICE_URL = f"localhost:{llm_api_serve_port}"
+LOCAL_LLM_MODEL_NAME = llm_api_serve_model
+LOCAL_LLM_MAX_LENGTH = 4096
+
 LOCAL_RERANK_SERVICE_URL = f"localhost:{rerank_port}"
 LOCAL_RERANK_MODEL_NAME = 'rerank'
 LOCAL_RERANK_MAX_LENGTH = 512
