@@ -237,6 +237,7 @@ bash close.sh
 - [BCEmbedding](https://github.com/netease-youdao/BCEmbedding)
 - [Qwen](https://github.com/QwenLM/Qwen)
 - [Triton Inference Server](https://github.com/triton-inference-server/server)
+- [FastChat](https://github.com/lm-sys/FastChat)
 - [FasterTransformer](https://github.com/NVIDIA/FasterTransformer)
 - [Langchain](https://github.com/langchain-ai/langchain)
 - [Langchain-Chatchat](https://github.com/chatchat-space/Langchain-Chatchat)
