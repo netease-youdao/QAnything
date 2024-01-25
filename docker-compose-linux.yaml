@@ -87,7 +87,7 @@ services:
             - driver: nvidia
               count: "all"
               capabilities: ["gpu"]
-    command: /workspace/qanything_local/scripts/run_for_local.sh
+    command: /bin/bash -c " npm config set registry https://registry.npmmirror.com ;npm config get registry ;  /workspace/qanything_local/scripts/run_for_local.sh "
     privileged: true
     shm_size: '8gb'
     volumes:
