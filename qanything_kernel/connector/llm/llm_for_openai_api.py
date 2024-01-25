@@ -15,11 +15,12 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_API_URL = os.getenv("OPENAI_API_URL")
+OPENAI_API_BASE = os.getenv("OPENAI_API_BASE")
 OPENAI_API_MODEL_NAME = os.getenv("OPENAI_API_MODEL_NAME")
-OPENAI_API_CONTEXT_LENGTH = int(os.getenv("OPENAI_API_CONTEXT_LENGTH"))
-
-logging.info(f"OPENAI_API_URL = {OPENAI_API_URL}")
+OPENAI_API_CONTEXT_LENGTH = os.getenv("OPENAI_API_CONTEXT_LENGTH")
+if isinstance(OPENAI_API_CONTEXT_LENGTH, str) and OPENAI_API_CONTEXT_LENGTH != '':
+    OPENAI_API_CONTEXT_LENGTH = int(OPENAI_API_CONTEXT_LENGTH)
+logging.info(f"OPENAI_API_BASE = {OPENAI_API_BASE}")
 logging.info(f"OPENAI_API_MODEL_NAME = {OPENAI_API_MODEL_NAME}")
 
 
@@ -37,7 +38,7 @@ class OpenAILLM(BaseAnswer, ABC):
 
     def __init__(self):
         super().__init__()
-        self.client = OpenAI(base_url=OPENAI_API_URL, api_key=OPENAI_API_KEY)
+        self.client = OpenAI(base_url=OPENAI_API_BASE, api_key=OPENAI_API_KEY)
 
     @property
     def _llm_type(self) -> str:
@@ -53,6 +54,7 @@ class OpenAILLM(BaseAnswer, ABC):
     # 定义函数 num_tokens_from_messages，该函数返回由一组消息所使用的token数
     def num_tokens_from_messages(self, messages, model=None):
         """Return the number of tokens used by a list of messages. From https://github.com/DjangoPeng/openai-quickstart/blob/main/openai_api/count_tokens_with_tiktoken.ipynb"""
+        logging.info(f"[debug] num_tokens_from_messages<model, self.model> = {model, self.model}")
         if model is None:
             model = self.model
         # 尝试获取模型的编码
@@ -117,7 +119,7 @@ class OpenAILLM(BaseAnswer, ABC):
         
         # 尝试获取模型的编码
         try:
-            encoding = tiktoken.encoding_for_model(model)
+            encoding = tiktoken.encoding_for_model(self.model)
         except KeyError:
             # 如果模型没有找到，使用 cl100k_base 编码并给出警告
             logging.info("Warning: model not found. Using cl100k_base encoding.")

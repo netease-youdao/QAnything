@@ -110,7 +110,7 @@ class OpenAICustomLLM(BaseAnswer, ABC):
                     messages=messages,
                     stream=True,
                     max_tokens=self.max_token,
-                    temperature=self.temperature,
+                    # temperature=self.temperature,
                     stop=[self.stop_words] if self.stop_words is not None else None,
                 )
 
@@ -130,7 +130,7 @@ class OpenAICustomLLM(BaseAnswer, ABC):
                     messages=messages,
                     stream=False,
                     max_tokens=self.max_token,
-                    temperature=self.temperature,
+                    # temperature=self.temperature,
                     stop=[self.stop_words] if self.stop_words is not None else None,
                 )
                 

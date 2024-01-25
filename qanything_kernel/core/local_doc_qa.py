@@ -172,6 +172,8 @@ class LocalDocQA:
         query_token_num = self.llm.num_tokens_from_messages([query])
         history_token_num = self.llm.num_tokens_from_messages([x for sublist in history for x in sublist])
         template_token_num = self.llm.num_tokens_from_messages([prompt_template])
+
+        # logging.info(f"<self.llm.token_window, self.llm.max_token, self.llm.offcut_token, query_token_num, history_token_num, template_token_num>, types = {type(self.llm.token_window), type(self.llm.max_token), type(self.llm.offcut_token), type(query_token_num), type(history_token_num), type(template_token_num)}, values = {query_token_num, history_token_num, template_token_num}")
         limited_token_nums = self.llm.token_window - self.llm.max_token - self.llm.offcut_token - query_token_num - history_token_num - template_token_num
         new_source_docs = []
         total_token_num = 0

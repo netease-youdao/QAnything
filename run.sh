@@ -1,29 +1,91 @@
 #!/bin/bash
 
-# 获取脚本名
+### 启动参数说明
+### bash ./run.sh -c cloud -i 0 -b default 表示使用在线 LLM API 以及本地部署Embed/Rerank
+### bash ./run.sh -c local -i 0 -b default 表示使用本地 Qwen-7B-Base QAnything微调版本以及本地部署Embed/Rerank，LLM 使用 FastTransformer runtime 单卡部署 LLM-INT8-Weight-Only 推理
+### bash ./run.sh -c local -i 0,1 -b default 表示使用本地 Qwen-7B-Base QAnything微调版本以及本地部署Embed/Rerank，LLM 使用 FastTransformer runtime GPU0部署 LLM-INT8-Weight-Only 推理，GPU1部署Embed/Rerank
+### bash ./run.sh -c local -i 0 -b hf -m MiniChat-2-3B -t minichat 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 huggingface runtime 部署 LLM-bf16 推理，权重默认加载为8-bits节省显存
+### bash ./run.sh -c local -i 0,1 -b hf -m MiniChat-2-3B -t minichat 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 huggingface runtime GPU0 部署 LLM-bf16 推理，权重默认加载为8-bits节省显存, GPU1部署Embed/Rerank
+### bash ./run.sh -c local -i 0,1 -b vllm -m MiniChat-2-3B -t minichat -p 1 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 vllm runtime GPU0 部署 LLM-bf16 推理，默认使用kv-cache reuse 提高吞吐, 默认 gpu_memory_utilization=0.81, GPU1部署Embed/Rerank
+### bash ./run.sh -c local -i 0,1 -b vllm -m MiniChat-2-3B -t minichat -p 1 -r 0.81 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 vllm runtime GPU0 部署 LLM-bf16 推理，默认使用kv-cache reuse 提高吞吐, 使用gpu_memory_utilization=0.81, GPU1部署Embed/Rerank
+### bash ./run.sh -c local -i 0,1 -b vllm -m MiniChat-2-3B -t minichat -p 2 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 vllm runtime GPU0 和 GPU1两卡部署LLM-bf16推理, 默认使用kv-cache reuse 提高吞吐，执行Tensor并行推理, GPU1部署Embed/Rerank
+
+
+### If using OpenAI API, please export the following environments into .env fisrt
+echo 'OPENAI_API_KEY=""' > .env
+echo 'OPENAI_API_BASE=""' >> .env
+echo 'OPENAI_API_MODEL_NAME="gpt-3.5-turbo"' >> .env
+echo 'OPENAI_API_CONTEXT_LENGTH=4096' >> .env
+
 script_name=$(basename "$0")
 
-# 编写usage消息
 usage() {
-  echo "Usage: $script_name [-a <argumentA>] [-b <argumentB>] [-c]"
-  echo "  -a <argumentA>: Specify argument A"
-  echo "  -b <argumentB>: Specify argument B"
-  echo "  -c: Use option C"
-  echo "  -h: Display this usage message"
+  echo "Usage: $script_name [-c <llm_api>] [-i <device_id>] [-b <runtime_backend>] [-m <model_name>] [-t <conv_template>] [-p <tensor_parallel>] [-r <gpu_memory_utilization>]"
+  echo "  -c : Options {local, cloud} to specify the llm API mode, default is 'local'. If set to '-c cloud', please mannually set the environments {OPENAI_API_KEY, OPENAI_API_BASE, OPENAI_API_MODEL_NAME, OPENAI_API_CONTEXT_LENGTH} into .env fisrt in run.sh"
+  echo "  -i <device_id>: Specify argument GPU device_id"
+  echo "  -b <runtime_backend>: Specify argument LLM inference runtime backend, options={default, hf, vllm}"
+  echo "  -m <model_name>: Specify argument the path to load LLM model using FastChat serve API, options={Qwen-7B-Chat, deepseek-llm-7b-chat, ...}"
+  echo "  -t <conv_template>: Specify argument the conversation template according to the LLM model when using FastChat serve API, options={qwen-7b-chat, deepseek-chat, ...}"
+  echo "  -p <tensor_parallel>: Use option of tensor parallel parameters for hf/vllm backend when using FastChat serve API, default tensor_parallel=1"
+  echo "  -r <gpu_memory_utilization>: Specify argument gpu_memory_utilization for vllm backend when using FastChat serve API, default gpu_memory_utilization=0.81"
+  echo "  -h: Display help usage message"
+
+  echo "\n=========================== LLM 服务启动参数说明 =========================== \n
+(1) bash ./run.sh -c cloud -i 0 -b default 表示使用在线 LLM API 以及本地部署Embed/Rerank
+(2) bash ./run.sh -c local -i 0 -b default 表示使用本地 Qwen-7B-Base QAnything微调版本以及本地部署Embed/Rerank，LLM 使用 FastTransformer runtime 单卡部署 LLM-INT8-Weight-Only 推理
+(3) bash ./run.sh -c local -i 0,1 -b default 表示使用本地 Qwen-7B-Base QAnything微调版本以及本地部署Embed/Rerank，LLM 使用 FastTransformer runtime GPU0部署 LLM-INT8-Weight-Only 推理，GPU1部署Embed/Rerank
+(4) bash ./run.sh -c local -i 0 -b hf -m MiniChat-2-3B -t minichat 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 huggingface runtime 部署 LLM-bf16 推理，权重默认加载为8-bits节省显存
+(4) bash ./run.sh -c local -i 0,1 -b hf -m MiniChat-2-3B -t minichat 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 huggingface runtime GPU0 部署 LLM-bf16 推理，权重默认加载为8-bits节省显存, GPU1部署Embed/Rerank
+(5) bash ./run.sh -c local -i 0,1 -b vllm -m MiniChat-2-3B -t minichat -p 1 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 vllm runtime GPU0 部署 LLM-bf16 推理，默认使用kv-cache reuse 提高吞吐, 默认使用gpu_memory_utilization=0.81, GPU1部署Embed/Rerank
+(6) bash ./run.sh -c local -i 0,1 -b vllm -m MiniChat-2-3B -t minichat -p 1 -r 0.81 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 vllm runtime GPU0 部署 LLM-bf16 推理，默认使用kv-cache reuse 提高吞吐, 使用gpu_memory_utilization=0.81, GPU1部署Embed/Rerank
+(7) bash ./run.sh -c local -i 0,1 -b vllm -m MiniChat-2-3B -t minichat -p 2 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 vllm runtime GPU0 和 GPU1两卡部署LLM-bf16推理, 默认使用kv-cache reuse 提高吞吐，执行Tensor并行推理, GPU1部署Embed/Rerank
+"
   exit 1
 }
 
+llm_api="local"
+device_id="0"
+runtime_backend="default"
+model_name=""
+conv_template=""
+tensor_parallel=1
+gpu_memory_utilization=0.81
+
 # 解析命令行参数
-while getopts "a:b:ch" opt; do
+while getopts ":c:i:b:m:t:p:r:h" opt; do
   case $opt in
-    a) argumentA=$OPTARG ;;
-    b) argumentB=$OPTARG ;;
-    c) optionC=true ;;
+    c) llm_api=$OPTARG ;;
+    i) device_id=$OPTARG ;;
+    b) runtime_backend=$OPTARG ;;
+    m) model_name=$OPTARG ;;
+    t) conv_template=$OPTARG ;;
+    p) tensor_parallel=$OPTARG ;;
+    r) gpu_memory_utilization=$OPTARG ;;
     h) usage ;;
     *) usage ;;
   esac
 done
 
+if [ $llm_api = 'online' ]; then
+  echo "If set to '-c online', please mannually set the environments {OPENAI_API_KEY, OPENAI_API_BASE, OPENAI_API_MODEL_NAME, OPENAI_API_CONTEXT_LENGTH} into .env fisrt in run.sh"
+fi
+
+echo "llm_api is set to [$llm_api]"
+echo "device_id is set to [$device_id]"
+echo "runtime_backend is set to [$runtime_backend]"
+echo "model_name is set to [$model_name]"
+echo "conv_template is set to [$conv_template]"
+echo "tensor_parallel is set to [$tensor_parallel]"
+echo "gpu_memory_utilization is set to [$gpu_memory_utilization]"
+
+# 写入环境变量.env文件
+echo "LLM_API=${llm_api}" >> .env
+echo "DEVICE_ID=$device_id" >> .env
+echo "RUNTIME_BACKEND=$runtime_backend" >> .env
+echo "MODEL_NAME=$model_name" >> .env
+echo "CONV_TEMPLATE=$conv_template" >> .env
+echo "TP=$tensor_parallel" >> .env
+echo "GPU_MEM_UTILI=$gpu_memory_utilization" >> .env
 
 # 检查是否存在 models 文件夹
 if [ ! -d "models" ]; then
@@ -120,9 +182,9 @@ gpu_id2=0
 
 
 # 判断命令行参数
-if [[ -n "$1" ]]; then
+if [[ -n "$device_id" ]]; then
     # 如果传入参数，分割成两个GPU ID
-    IFS=',' read -ra gpu_ids <<< "$1"
+    IFS=',' read -ra gpu_ids <<< "$device_id"
     gpu_id1=${gpu_ids[0]}
     gpu_id2=${gpu_ids[1]:-$gpu_id1}  # 如果没有第二个ID，则默认使用第一个ID
 fi
@@ -132,6 +194,9 @@ if ! [[ $gpu_id1 =~ ^[0-9]+$ ]] || ! [[ $gpu_id2 =~ ^[0-9]+$ ]]; then
     echo "Invalid GPU IDs. Please enter IDs like '0' or '0,1'."
     exit 1
 fi
+
+echo "GPUID1=${gpu_id1}" >> .env
+echo "GPUID2=${gpu_id2}" >> .env
 
 # 检查是否存在用户文件
 if [[ -f "$user_file" ]]; then
@@ -169,11 +234,6 @@ fi
 
 # echo "The file $env_file has been updated with the following configuration:"
 # grep "VITE_APP_API_HOST" "$env_file"
-
-# 创建.env文件并写入环境变量
-echo "GPUID1=${gpu_id1}" > .env
-echo "GPUID2=${gpu_id2}" >> .env
-
 
 if [ -e /proc/version ]; then
   if grep -qi microsoft /proc/version; then
