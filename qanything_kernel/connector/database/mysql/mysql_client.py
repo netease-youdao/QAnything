@@ -153,7 +153,7 @@ class KnowledgeBaseManager:
     def check_file_exist(self, user_id, kb_id, file_ids):
         # 筛选出有效的文件
         if not file_ids:
-            debug_logger.info("check_file_exist []")
+            debug_logger.info("check_file_exist skipped because of empty file_ids")
             return []
         
         file_ids_str = ','.join("'{}'".format(str(x)) for x in file_ids)
@@ -162,7 +162,6 @@ class KnowledgeBaseManager:
                  AND file_id IN ({})
                  AND kb_id = %s 
                  AND kb_id IN (SELECT kb_id FROM KnowledgeBase WHERE user_id = %s)""".format(file_ids_str)
-        # self.execute_query_(query, (kb_id, user_id), commit=True)
         result = self.execute_query_(query, (kb_id, user_id), fetch=True)
         debug_logger.info("check_file_exist {}".format(result))
         return result
@@ -230,11 +229,13 @@ class KnowledgeBaseManager:
 
         # 更新文件的删除状态也需要使用参数化查询
         query = "UPDATE File SET deleted = 1 WHERE kb_id IN ({}) AND kb_id IN (SELECT kb_id FROM KnowledgeBase WHERE user_id = %s)".format(placeholders)
+        debug_logger.info("delete_knowledge_base: {}".format(kb_ids))
         self.execute_query_(query, query_params, commit=True)
     
     # [知识库] 重命名知识库
     def rename_knowledge_base(self, user_id, kb_id, kb_name):
         query = "UPDATE KnowledgeBase SET kb_name = %s WHERE kb_id = %s AND user_id = %s"
+        debug_logger.info("rename_knowledge_base: {}".format(kb_id))
         self.execute_query_(query, (kb_name, kb_id, user_id), commit=True)
 
     # [文件] 向指定知识库下面增加文件
@@ -248,6 +249,7 @@ class KnowledgeBaseManager:
         file_id = uuid.uuid4().hex
         query = "INSERT INTO File (file_id, kb_id, file_name, status, timestamp) VALUES (%s, %s, %s, %s, %s)"
         self.execute_query_(query, (file_id, kb_id, file_name, status, timestamp), commit=True)
+        debug_logger.info("add_file: {}".format(file_id))
         return file_id, "success"
 
     #  更新file中的file_size
@@ -266,7 +268,7 @@ class KnowledgeBaseManager:
         self.execute_query_(query, (chunk_size, file_id), commit=True)
 
     def update_file_status(self, file_id, status):
-        query = "UPDATE File SET status = %s WHERE file_id = %s" 
+        query = "UPDATE File SET status = %s WHERE file_id = %s"
         self.execute_query_(query, (status, file_id), commit=True)
 
     def from_status_to_status(self, file_ids, from_status, to_status):
@@ -284,5 +286,5 @@ class KnowledgeBaseManager:
     def delete_files(self, kb_id, file_ids):
         file_ids_str = ','.join("'{}'".format(str(x)) for x in file_ids)
         query = "UPDATE File SET deleted = 1 WHERE kb_id = %s AND file_id IN ({})".format(file_ids_str)
-        #debug_logger.info("delete_files: {}".format(query))
+        debug_logger.info("delete_files: {}".format(file_ids))
         self.execute_query_(query, (kb_id,), commit=True)
