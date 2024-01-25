@@ -102,6 +102,7 @@ async def upload_files(req: request):
             debug_logger.info('decode name: %s', file_name)
         # 删除掉全角字符
         file_name = re.sub(r'[\uFF01-\uFF5E\u3000-\u303F]', '', file_name)
+        file_name = file_name.replace("/", "_")
         debug_logger.info('cleaned name: %s', file_name)
         file_name = truncate_filename(file_name)
         file_names.append(file_name)
