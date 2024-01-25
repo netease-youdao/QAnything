@@ -37,7 +37,7 @@
                 </p>
               </div>
               <p v-if="!showUploadList" class="desc">
-                支持文件格式md、txt、pdf、jpg、png、jpeg、docx、xlsx、pptx、eml、csv、单个文档小于30M,单张图片小于5M
+                支持文件格式md、txt、pdf、jpg、png、jpeg、docx、xlsx、pptx、eml、csv、单个文档小于30M,单张图片小于5M,单次上传小于400M
               </p>
             </div>
           </div>
@@ -59,7 +59,9 @@
                         src="../assets/home/icon-loading.png"
                         alt="loading"
                       />
-                      <span class="status">{{ item.text }}</span>
+                      <span class="status">{{
+                        item.status == 'loading' ? item.text : item.errorText
+                      }}</span>
                     </div>
                   </li>
                 </ul>
