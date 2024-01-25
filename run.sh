@@ -35,10 +35,10 @@ usage() {
 (2) bash ./run.sh -c local -i 0 -b default 表示使用本地 Qwen-7B-Base QAnything微调版本以及本地部署Embed/Rerank，LLM 使用 FastTransformer runtime 单卡部署 LLM-INT8-Weight-Only 推理
 (3) bash ./run.sh -c local -i 0,1 -b default 表示使用本地 Qwen-7B-Base QAnything微调版本以及本地部署Embed/Rerank，LLM 使用 FastTransformer runtime GPU0部署 LLM-INT8-Weight-Only 推理，GPU1部署Embed/Rerank
 (4) bash ./run.sh -c local -i 0 -b hf -m MiniChat-2-3B -t minichat 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 huggingface runtime 部署 LLM-bf16 推理，权重默认加载为8-bits节省显存
-(4) bash ./run.sh -c local -i 0,1 -b hf -m MiniChat-2-3B -t minichat 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 huggingface runtime GPU0 部署 LLM-bf16 推理，权重默认加载为8-bits节省显存, GPU1部署Embed/Rerank
-(5) bash ./run.sh -c local -i 0,1 -b vllm -m MiniChat-2-3B -t minichat -p 1 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 vllm runtime GPU0 部署 LLM-bf16 推理，默认使用kv-cache reuse 提高吞吐, 默认使用gpu_memory_utilization=0.81, GPU1部署Embed/Rerank
-(6) bash ./run.sh -c local -i 0,1 -b vllm -m MiniChat-2-3B -t minichat -p 1 -r 0.81 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 vllm runtime GPU0 部署 LLM-bf16 推理，默认使用kv-cache reuse 提高吞吐, 使用gpu_memory_utilization=0.81, GPU1部署Embed/Rerank
-(7) bash ./run.sh -c local -i 0,1 -b vllm -m MiniChat-2-3B -t minichat -p 2 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 vllm runtime GPU0 和 GPU1两卡部署LLM-bf16推理, 默认使用kv-cache reuse 提高吞吐，执行Tensor并行推理, GPU1部署Embed/Rerank
+(5) bash ./run.sh -c local -i 0,1 -b hf -m MiniChat-2-3B -t minichat 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 huggingface runtime GPU0 部署 LLM-bf16 推理，权重默认加载为8-bits节省显存, GPU1部署Embed/Rerank
+(6) bash ./run.sh -c local -i 0,1 -b vllm -m MiniChat-2-3B -t minichat -p 1 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 vllm runtime GPU0 部署 LLM-bf16 推理，默认使用kv-cache reuse 提高吞吐, 默认使用gpu_memory_utilization=0.81, GPU1部署Embed/Rerank
+(7) bash ./run.sh -c local -i 0,1 -b vllm -m MiniChat-2-3B -t minichat -p 1 -r 0.81 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 vllm runtime GPU0 部署 LLM-bf16 推理，默认使用kv-cache reuse 提高吞吐, 使用gpu_memory_utilization=0.81, GPU1部署Embed/Rerank
+(8) bash ./run.sh -c local -i 0,1 -b vllm -m MiniChat-2-3B -t minichat -p 2 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 vllm runtime GPU0 和 GPU1两卡部署LLM-bf16推理, 默认使用kv-cache reuse 提高吞吐，执行Tensor并行推理, GPU1部署Embed/Rerank
 "
   exit 1
 }
