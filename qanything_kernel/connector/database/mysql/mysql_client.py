@@ -131,9 +131,12 @@ class KnowledgeBaseManager:
         return result is not None and len(result) > 0
 
     def check_kb_exist(self, user_id, kb_ids):
-        kb_ids_str = ','.join("'{}'".format(str(x)) for x in kb_ids)
-        query = "SELECT kb_id FROM KnowledgeBase WHERE kb_id IN ({}) AND deleted = 0 AND user_id = %s".format(kb_ids_str)
-        result = self.execute_query_(query, (user_id,), fetch=True)
+        # 使用参数化查询
+        placeholders = ','.join(['%s'] * len(kb_ids))
+        query = "SELECT kb_id FROM KnowledgeBase WHERE kb_id IN ({}) AND deleted = 0 AND user_id = %s".format(
+            placeholders)
+        query_params = kb_ids + [user_id]
+        result = self.execute_query_(query, query_params, fetch=True)
         debug_logger.info("check_kb_exist {}".format(result))
         valid_kb_ids = [kb_info[0] for kb_info in result]
         unvalid_kb_ids = list(set(kb_ids) - set(valid_kb_ids))
@@ -163,26 +166,26 @@ class KnowledgeBaseManager:
         result = self.execute_query_(query, (kb_id, user_id), fetch=True)
         debug_logger.info("check_file_exist {}".format(result))
         return result
-    
+
     def check_file_exist_by_name(self, user_id, kb_id, file_names):
         results = []
         batch_size = 100  # 根据实际情况调整批次大小
 
         # 分批处理file_names
         for i in range(0, len(file_names), batch_size):
-            batch_file_names = file_names[i:i+batch_size]
-            file_names_str = ','.join("'{}'".format(str(x).replace("'", "\\'")) for x in batch_file_names)
+            batch_file_names = file_names[i:i + batch_size]
+            placeholders = ','.join(['%s'] * len(batch_file_names))
             query = """
                 SELECT file_id, file_name, file_size, status FROM File 
                 WHERE deleted = 0
                 AND file_name IN ({})
                 AND kb_id = %s 
                 AND kb_id IN (SELECT kb_id FROM KnowledgeBase WHERE user_id = %s)
-            """.format(file_names_str)
-            
-            # 这里假设 execute_query_ 是一个可以执行SQL查询并提交或获取结果的方法
-            batch_result = self.execute_query_(query, (kb_id, user_id), fetch=True)
-            debug_logger.info("check_file_exist_by_name batch {}: {}".format(i//batch_size, batch_result))
+            """.format(placeholders)
+
+            query_params = batch_file_names + [kb_id, user_id]
+            batch_result = self.execute_query_(query, query_params, fetch=True)
+            debug_logger.info("check_file_exist_by_name batch {}: {}".format(i // batch_size, batch_result))
             results.extend(batch_result)
 
         return results
@@ -211,19 +214,23 @@ class KnowledgeBaseManager:
 
     # [知识库] 获取指定kb_ids的知识库
     def get_knowledge_base_name(self, kb_ids):
-        kb_ids_str = ','.join("'{}'".format(str(x)) for x in kb_ids)
-        query = "SELECT user_id, kb_id, kb_name FROM KnowledgeBase WHERE kb_id IN ({}) AND deleted = 0".format(kb_ids_str)
-        return self.execute_query_(query, (), fetch=True)
+        # 使用参数化查询
+        placeholders = ','.join(['%s'] * len(kb_ids))
+        query = "SELECT user_id, kb_id, kb_name FROM KnowledgeBase WHERE kb_id IN ({}) AND deleted = 0".format(placeholders)
+        query_params = kb_ids
+        return self.execute_query_(query, query_params, fetch=True)
 
     # [知识库] 删除指定知识库
     def delete_knowledge_base(self, user_id, kb_ids):
-        # 删除知识库
-        kb_ids_str = ','.join("'{}'".format(str(x)) for x in kb_ids)
-        query = "UPDATE KnowledgeBase SET deleted = 1 WHERE user_id = %s AND kb_id IN ({})".format(kb_ids_str)
-        self.execute_query_(query, (user_id,), commit=True)
-        # 删除知识库下面的文件
-        query = """UPDATE File SET deleted = 1 WHERE kb_id IN ({}) AND kb_id IN (SELECT kb_id FROM KnowledgeBase WHERE user_id = %s)""".format(kb_ids_str)
-        self.execute_query_(query, (user_id,), commit=True)
+        # 使用参数化查询
+        placeholders = ','.join(['%s'] * len(kb_ids))
+        query = "UPDATE KnowledgeBase SET deleted = 1 WHERE user_id = %s AND kb_id IN ({})".format(placeholders)
+        query_params = [user_id] + kb_ids
+        self.execute_query_(query, query_params, commit=True)
+
+        # 更新文件的删除状态也需要使用参数化查询
+        query = "UPDATE File SET deleted = 1 WHERE kb_id IN ({}) AND kb_id IN (SELECT kb_id FROM KnowledgeBase WHERE user_id = %s)".format(placeholders)
+        self.execute_query_(query, query_params, commit=True)
     
     # [知识库] 重命名知识库
     def rename_knowledge_base(self, user_id, kb_id, kb_name):
