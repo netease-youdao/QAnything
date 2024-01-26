@@ -3,16 +3,26 @@ from paddleocr import PaddleOCR
 import base64
 import numpy as np
 from sanic.worker.manager import WorkerManager
+import argparse
 import logging
 
 WorkerManager.THRESHOLD = 6000
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, filename='ocr.log', filemode='a', format='%(asctime)s - %(levelname)s - %(message)s')
+
+
+parser = argparse.ArgumentParser(description='启动 OCR 服务')
+parser.add_argument('OCR_USE_GPU', type=str, nargs='?', default='True', help='是否使用 GPU (True/False)')
+
+args = parser.parse_args()
+use_gpu = args.OCR_USE_GPU.lower() in ('true', '1', 't', 'y', 'yes')
+
+logging.info(f"OCR_USE_GPU parameter is set to {args.OCR_USE_GPU}, use_gpu={use_gpu}")
 
 # 创建 Sanic 应用
 app = Sanic("OCRService")
 
 # 初始化 PaddleOCR 引擎
-ocr_engine = PaddleOCR(use_angle_cls=True, lang="ch", use_gpu=True, show_log=False)
+ocr_engine = PaddleOCR(use_angle_cls=True, lang="ch", use_gpu=use_gpu, show_log=False)
 
 
 # 定义 OCR API 路由
@@ -35,6 +45,7 @@ async def ocr_request(request):
 
     # 调用 PaddleOCR 进行识别
     res = ocr_engine.ocr(img_array)
+    logging.info("ocr result: {}".format(res))
 
     # 返回识别结果
     return response.json({'results': res})
