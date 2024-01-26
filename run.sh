@@ -224,8 +224,13 @@ fi
 # grep "VITE_APP_API_HOST" "$env_file"
 
 if [ -e /proc/version ]; then
-  if grep -qi microsoft /proc/version; then
-    echo "Running under WSL"
+  if grep -qi microsoft /proc/version || grep -qi MINGW /proc/version; then
+    if grep -qi microsoft /proc/version; then
+        echo "Running under WSL"
+    else
+        echo "Running under git bash"
+    fi
+    
     if docker-compose -p user -f docker-compose-windows.yaml down |& tee /dev/tty | grep -q "services.qanything_local.deploy.resources.reservations value 'devices' does not match any of the regexes"; then
         echo "检测到 Docker Compose 版本过低，请升级到v2.23.3或更高版本。执行docker-compose -v查看版本。"
     fi

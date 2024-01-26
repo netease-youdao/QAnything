@@ -4,7 +4,7 @@
 
 If there are any vulnerabilities in **QAnything**, don't hesitate to _report them_.
 
-1. Use any of the [private contact addresses](https://github.com/youdao/qanything#support).
+1. To facilitate the reporting of security issues, kindly send your detailed security report to our dedicated email address: qanything@rd.netease.com
 2. Describe the vulnerability.
 
    If you have a fix, that is most welcome -- please attach or summarize it in your message!

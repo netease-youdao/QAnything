@@ -1,12 +1,12 @@
 from qanything_kernel.configs.model_config import MYSQL_DATABASE, MYSQL_HOST_LOCAL, MYSQL_HOST_ONLINE, MYSQL_PASSWORD, MYSQL_PORT, MYSQL_USER
+from qanything_kernel.utils.custom_log import debug_logger
 import mysql.connector
 from mysql.connector import pooling
 import uuid
 
 
 class KnowledgeBaseManager:
-    def __init__(self, mode, logger):
-        self.logger = logger
+    def __init__(self, mode):
         if mode == 'local':
             host = MYSQL_HOST_LOCAL
         else:
@@ -25,7 +25,7 @@ class KnowledgeBaseManager:
         }
         self.cnxpool = pooling.MySQLConnectionPool(pool_size=5, pool_reset_session=True, **dbconfig)
         self.create_tables_()
-        self.logger.info("[SUCCESS] 数据库{}连接成功".format(database))
+        debug_logger.info("[SUCCESS] 数据库{}连接成功".format(database))
 
     def check_database_(self, host, port, user, password, database_name):
         # 连接 MySQL 服务器
@@ -44,8 +44,8 @@ class KnowledgeBaseManager:
         if database_name not in databases:
             # 如果数据库不存在，则新建数据库
             cursor.execute('CREATE DATABASE IF NOT EXISTS {}'.format(database_name))
-            self.logger.info("数据库{}新建成功或已存在".format(database_name))
-        self.logger.info("[SUCCESS] 数据库{}检查通过".format(database_name))
+            debug_logger.info("数据库{}新建成功或已存在".format(database_name))
+        debug_logger.info("[SUCCESS] 数据库{}检查通过".format(database_name))
         # 关闭游标
         cursor.close()
         # 连接到数据库
@@ -115,26 +115,29 @@ class KnowledgeBaseManager:
                 ALTER TABLE File
                 ADD COLUMN timestamp VARCHAR(255) DEFAULT '197001010000';
             """
-            self.logger.info('ADD COLUMN timestamp')
+            debug_logger.info('ADD COLUMN timestamp')
             res = self.execute_query_(query, (), commit=True)
-            self.logger.info(res)
+            debug_logger.info(res)
         except Exception as e:
             if 'Duplicate column name' in str(e):
-                self.logger.info(e)
+                debug_logger.info(e)
             else:
                 raise e
         
     def check_user_exist_(self, user_id):
         query = "SELECT user_id FROM User WHERE user_id = %s"
         result = self.execute_query_(query, (user_id,), fetch=True)
-        self.logger.info("check_user_exist {}".format(result))
+        debug_logger.info("check_user_exist {}".format(result))
         return result is not None and len(result) > 0
 
     def check_kb_exist(self, user_id, kb_ids):
-        kb_ids_str = ','.join("'{}'".format(str(x)) for x in kb_ids)
-        query = "SELECT kb_id FROM KnowledgeBase WHERE kb_id IN ({}) AND deleted = 0 AND user_id = %s".format(kb_ids_str)
-        result = self.execute_query_(query, (user_id,), fetch=True)
-        self.logger.info("check_kb_exist {}".format(result))
+        # 使用参数化查询
+        placeholders = ','.join(['%s'] * len(kb_ids))
+        query = "SELECT kb_id FROM KnowledgeBase WHERE kb_id IN ({}) AND deleted = 0 AND user_id = %s".format(
+            placeholders)
+        query_params = kb_ids + [user_id]
+        result = self.execute_query_(query, query_params, fetch=True)
+        debug_logger.info("check_kb_exist {}".format(result))
         valid_kb_ids = [kb_info[0] for kb_info in result]
         unvalid_kb_ids = list(set(kb_ids) - set(valid_kb_ids))
         return unvalid_kb_ids
@@ -150,7 +153,7 @@ class KnowledgeBaseManager:
     def check_file_exist(self, user_id, kb_id, file_ids):
         # 筛选出有效的文件
         if not file_ids:
-            self.logger.info("check_file_exist []")
+            debug_logger.info("check_file_exist skipped because of empty file_ids")
             return []
         
         file_ids_str = ','.join("'{}'".format(str(x)) for x in file_ids)
@@ -159,30 +162,29 @@ class KnowledgeBaseManager:
                  AND file_id IN ({})
                  AND kb_id = %s 
                  AND kb_id IN (SELECT kb_id FROM KnowledgeBase WHERE user_id = %s)""".format(file_ids_str)
-        # self.execute_query_(query, (kb_id, user_id), commit=True)
         result = self.execute_query_(query, (kb_id, user_id), fetch=True)
-        self.logger.info("check_file_exist {}".format(result))
+        debug_logger.info("check_file_exist {}".format(result))
         return result
-    
+
     def check_file_exist_by_name(self, user_id, kb_id, file_names):
         results = []
         batch_size = 100  # 根据实际情况调整批次大小
 
         # 分批处理file_names
         for i in range(0, len(file_names), batch_size):
-            batch_file_names = file_names[i:i+batch_size]
-            file_names_str = ','.join("'{}'".format(str(x).replace("'", "\\'")) for x in batch_file_names)
+            batch_file_names = file_names[i:i + batch_size]
+            placeholders = ','.join(['%s'] * len(batch_file_names))
             query = """
                 SELECT file_id, file_name, file_size, status FROM File 
                 WHERE deleted = 0
                 AND file_name IN ({})
                 AND kb_id = %s 
                 AND kb_id IN (SELECT kb_id FROM KnowledgeBase WHERE user_id = %s)
-            """.format(file_names_str)
-            
-            # 这里假设 execute_query_ 是一个可以执行SQL查询并提交或获取结果的方法
-            batch_result = self.execute_query_(query, (kb_id, user_id), fetch=True)
-            self.logger.info("check_file_exist_by_name batch {}: {}".format(i//batch_size, batch_result))
+            """.format(placeholders)
+
+            query_params = batch_file_names + [kb_id, user_id]
+            batch_result = self.execute_query_(query, query_params, fetch=True)
+            debug_logger.info("check_file_exist_by_name batch {}: {}".format(i // batch_size, batch_result))
             results.extend(batch_result)
 
         return results
@@ -211,23 +213,29 @@ class KnowledgeBaseManager:
 
     # [知识库] 获取指定kb_ids的知识库
     def get_knowledge_base_name(self, kb_ids):
-        kb_ids_str = ','.join("'{}'".format(str(x)) for x in kb_ids)
-        query = "SELECT user_id, kb_id, kb_name FROM KnowledgeBase WHERE kb_id IN ({}) AND deleted = 0".format(kb_ids_str)
-        return self.execute_query_(query, (), fetch=True)
+        # 使用参数化查询
+        placeholders = ','.join(['%s'] * len(kb_ids))
+        query = "SELECT user_id, kb_id, kb_name FROM KnowledgeBase WHERE kb_id IN ({}) AND deleted = 0".format(placeholders)
+        query_params = kb_ids
+        return self.execute_query_(query, query_params, fetch=True)
 
     # [知识库] 删除指定知识库
     def delete_knowledge_base(self, user_id, kb_ids):
-        # 删除知识库
-        kb_ids_str = ','.join("'{}'".format(str(x)) for x in kb_ids)
-        query = "UPDATE KnowledgeBase SET deleted = 1 WHERE user_id = %s AND kb_id IN ({})".format(kb_ids_str)
-        self.execute_query_(query, (user_id,), commit=True)
-        # 删除知识库下面的文件
-        query = """UPDATE File SET deleted = 1 WHERE kb_id IN ({}) AND kb_id IN (SELECT kb_id FROM KnowledgeBase WHERE user_id = %s)""".format(kb_ids_str)
-        self.execute_query_(query, (user_id,), commit=True)
+        # 使用参数化查询
+        placeholders = ','.join(['%s'] * len(kb_ids))
+        query = "UPDATE KnowledgeBase SET deleted = 1 WHERE user_id = %s AND kb_id IN ({})".format(placeholders)
+        query_params = [user_id] + kb_ids
+        self.execute_query_(query, query_params, commit=True)
+
+        # 更新文件的删除状态也需要使用参数化查询
+        query = "UPDATE File SET deleted = 1 WHERE kb_id IN ({}) AND kb_id IN (SELECT kb_id FROM KnowledgeBase WHERE user_id = %s)".format(placeholders)
+        debug_logger.info("delete_knowledge_base: {}".format(kb_ids))
+        self.execute_query_(query, query_params, commit=True)
     
     # [知识库] 重命名知识库
     def rename_knowledge_base(self, user_id, kb_id, kb_name):
         query = "UPDATE KnowledgeBase SET kb_name = %s WHERE kb_id = %s AND user_id = %s"
+        debug_logger.info("rename_knowledge_base: {}".format(kb_id))
         self.execute_query_(query, (kb_name, kb_id, user_id), commit=True)
 
     # [文件] 向指定知识库下面增加文件
@@ -241,6 +249,7 @@ class KnowledgeBaseManager:
         file_id = uuid.uuid4().hex
         query = "INSERT INTO File (file_id, kb_id, file_name, status, timestamp) VALUES (%s, %s, %s, %s, %s)"
         self.execute_query_(query, (file_id, kb_id, file_name, status, timestamp), commit=True)
+        debug_logger.info("add_file: {}".format(file_id))
         return file_id, "success"
 
     #  更新file中的file_size
@@ -259,7 +268,7 @@ class KnowledgeBaseManager:
         self.execute_query_(query, (chunk_size, file_id), commit=True)
 
     def update_file_status(self, file_id, status):
-        query = "UPDATE File SET status = %s WHERE file_id = %s" 
+        query = "UPDATE File SET status = %s WHERE file_id = %s"
         self.execute_query_(query, (status, file_id), commit=True)
 
     def from_status_to_status(self, file_ids, from_status, to_status):
@@ -277,5 +286,5 @@ class KnowledgeBaseManager:
     def delete_files(self, kb_id, file_ids):
         file_ids_str = ','.join("'{}'".format(str(x)) for x in file_ids)
         query = "UPDATE File SET deleted = 1 WHERE kb_id = %s AND file_id IN ({})".format(file_ids_str)
-        #self.logger.info("delete_files: {}".format(query))
+        debug_logger.info("delete_files: {}".format(file_ids))
         self.execute_query_(query, (kb_id,), commit=True)
