@@ -10,6 +10,7 @@ from langchain.document_loaders import UnstructuredEmailLoader
 from langchain.document_loaders import UnstructuredPowerPointLoader
 from langchain.document_loaders import CSVLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from qanything_kernel.utils.splitter import ChineseTextSplitter
 from qanything_kernel.utils.loader import UnstructuredPaddleImageLoader, UnstructuredPaddlePDFLoader
 from qanything_kernel.utils.splitter import zh_title_enhance
@@ -24,8 +25,7 @@ text_splitter = RecursiveCharacterTextSplitter(
 
 
 class LocalFile:
-    def __init__(self, user_id, kb_id, file: Union[File, str], file_id, file_name, embedding, logger, is_url=False, in_milvus=False):
-        self.logger = logger
+    def __init__(self, user_id, kb_id, file: Union[File, str], file_id, file_name, embedding, is_url=False, in_milvus=False):
         self.user_id = user_id
         self.kb_id = kb_id
         self.file_id = file_id
@@ -52,12 +52,12 @@ class LocalFile:
                 self.file_content = file.body
             with open(self.file_path, "wb+") as f:
                 f.write(self.file_content)
-        self.logger.info(f'success init localfile {self.file_name}')
+        debug_logger.info(f'success init localfile {self.file_name}')
 
     def split_file_to_docs(self, ocr_engine: Callable, sentence_size=SENTENCE_SIZE,
                            using_zh_title_enhance=ZH_TITLE_ENHANCE):
         if self.url:
-            self.logger.info("load url: {}".format(self.url))
+            debug_logger.info("load url: {}".format(self.url))
             loader = MyRecursiveUrlLoader(url=self.url)
             textsplitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
             docs = loader.load_and_split(text_splitter=textsplitter)
@@ -96,14 +96,14 @@ class LocalFile:
         else:
             raise TypeError("文件类型不支持，目前仅支持：[md,txt,pdf,jpg,png,jpeg,docx,xlsx,pptx,eml,csv]")
         if using_zh_title_enhance:
-            self.logger.info("using_zh_title_enhance %s", using_zh_title_enhance)
+            debug_logger.info("using_zh_title_enhance %s", using_zh_title_enhance)
             docs = zh_title_enhance(docs)
 
         # 重构docs，如果doc的文本长度大于800tokens，则利用text_splitter将其拆分成多个doc
         # text_splitter: RecursiveCharacterTextSplitter
-        self.logger.info(f"before 2nd split doc lens: {len(docs)}")
+        debug_logger.info(f"before 2nd split doc lens: {len(docs)}")
         docs = text_splitter.split_documents(docs)
-        self.logger.info(f"after 2nd split doc lens: {len(docs)}")
+        debug_logger.info(f"after 2nd split doc lens: {len(docs)}")
 
         # 这里给每个docs片段的metadata里注入file_id
         for doc in docs:
@@ -111,9 +111,9 @@ class LocalFile:
             doc.metadata["file_name"] = self.url if self.url else os.path.split(self.file_path)[-1]
         write_check_file(self.file_path, docs)
         if docs:
-            self.logger.info('langchain analysis content head: %s', docs[0].page_content[:100])
+            debug_logger.info('langchain analysis content head: %s', docs[0].page_content[:100])
         else:
-            self.logger.info('langchain analysis docs is empty!')
+            debug_logger.info('langchain analysis docs is empty!')
         self.docs = docs
 
     def create_embedding(self):
