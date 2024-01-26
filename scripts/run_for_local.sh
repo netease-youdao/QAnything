@@ -63,6 +63,9 @@ if [ "$GPU2_MEMORY_SIZE" -lt 12288 ]; then
     OCR_USE_GPU="False"
 fi
 
+echo "GPU1_MEMORY_SIZE=$GPU1_MEMORY_SIZE"
+echo "OCR_USE_GPU=$OCR_USE_GPU"
+
 echo "===================================================="
 echo "******************** 重要提示 ********************"
 echo "===================================================="

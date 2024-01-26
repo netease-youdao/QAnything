@@ -7,7 +7,8 @@ import argparse
 import logging
 
 WorkerManager.THRESHOLD = 6000
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, filename='ocr.log', filemode='a', format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 parser = argparse.ArgumentParser(description='启动 OCR 服务')
 parser.add_argument('OCR_USE_GPU', type=str, nargs='?', default='True', help='是否使用 GPU (True/False)')
@@ -44,6 +45,7 @@ async def ocr_request(request):
 
     # 调用 PaddleOCR 进行识别
     res = ocr_engine.ocr(img_array)
+    logging.info("ocr result: {}".format(res))
 
     # 返回识别结果
     return response.json({'results': res})
