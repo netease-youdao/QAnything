@@ -16,10 +16,6 @@ load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 
-# LOCAL_LLM_SERVICE_URL = "http://localhost:7802"
-# LOCAL_LLM_MODEL_NAME = "Qwen-7B-Chat-8K"
-# LOCAL_LLM_MAX_LENGTH = 4096
-
 class OpenAICustomLLM(BaseAnswer, ABC):
     model: str = LOCAL_LLM_MODEL_NAME
     token_window: int = LOCAL_LLM_MAX_LENGTH
@@ -27,8 +23,6 @@ class OpenAICustomLLM(BaseAnswer, ABC):
     offcut_token: int = 50
     truncate_len: int = 50
     temperature: float = 0
-    # stop_words: str = "<｜end▁of▁sentence｜>"
-    # stop_words: str = "<|im_end|>"
     stop_words: str = None
     history: List[List[str]] = []
     history_len: int = 2
@@ -44,7 +38,7 @@ class OpenAICustomLLM(BaseAnswer, ABC):
 
     @property
     def _llm_type(self) -> str:
-        return "CustomLLM using FastChat w/ huggingface or vllm backend"
+        return "CustomLLM using FastChat w/ huggingface transformers or vllm backend"
 
     @property
     def _history_len(self) -> int:
@@ -53,7 +47,7 @@ class OpenAICustomLLM(BaseAnswer, ABC):
     def set_history_len(self, history_len: int = 10) -> None:
         self.history_len = history_len
 
-    def token_check(self, query) -> int:
+    def token_check(self, query: str) -> int:
         
         if LOCAL_LLM_SERVICE_URL.startswith("http://"):
             base_url = f"{LOCAL_LLM_SERVICE_URL}/api/v1/token_check" 
@@ -100,8 +94,6 @@ class OpenAICustomLLM(BaseAnswer, ABC):
         messages.append({"role": "user", "content": prompt})
         logging.info(messages)
 
-        # token_num = self.token_check(messages[0]['content'])
-        # logging.info(f"[debug] token_num = [{token_num}]")
         try:
 
             if streaming:
@@ -156,7 +148,7 @@ class OpenAICustomLLM(BaseAnswer, ABC):
             history = [[]]
         logging.info(f"history_len: {self.history_len}")
         logging.info(f"prompt: {prompt}")
-        logging.info(f"prompt tokens: {self.num_tokens_from_messages([{'content': prompt}])}")
+        logging.info(f"prompt tokens: {self.num_tokens_from_messages([prompt])}")
         logging.info(f"streaming: {streaming}")
                 
         response = self._call(prompt, history[:-1], streaming)
@@ -178,6 +170,21 @@ class OpenAICustomLLM(BaseAnswer, ABC):
 
 
 if __name__ == "__main__":
+
+    base_url = f"http://{LOCAL_LLM_SERVICE_URL}/api/v1/token_check" 
+    headers = {"Content-Type": "application/json"}
+    query = "hello"
+    response = requests.post(
+        base_url, 
+        data=json.dumps(
+            {'prompts': [{'model': LOCAL_LLM_MODEL_NAME, 'prompt': query, 'max_tokens': 512}]}
+        ),
+        headers=headers)
+
+    # {'prompts': [{'fits': True, 'tokenCount': 317, 'contextLength': 8192}]}
+    result = response.json()
+    logging.info(f"[debug] result = {result}")
+
 
     llm = OpenAICustomLLM()
     streaming = True

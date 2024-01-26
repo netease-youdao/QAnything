@@ -3,14 +3,14 @@
 script_name=$(basename "$0")
 
 usage() {
-  echo "Usage: $script_name [-u <llm_api>] [-i <device_id>] [-b <runtime_backend>] [-m <model_name>] [-t <conv_template>] [-p <tensor_parallel>] [-r <gpu_memory_utilization>]"
-  echo "  -c : Use option {local, cloud} to specify the llm API mode, default is local"
+  echo "Usage: $script_name [-c <llm_api>] [-i <device_id>] [-b <runtime_backend>] [-m <model_name>] [-t <conv_template>] [-p <tensor_parallel>] [-r <gpu_memory_utilization>] [-h]"
+  echo "  -c : Options {local, cloud} to specify the llm API mode, default is 'local'. If set to '-c cloud', please mannually set the environments {OPENAI_API_KEY, OPENAI_API_BASE, OPENAI_API_MODEL_NAME, OPENAI_API_CONTEXT_LENGTH} into .env fisrt in run.sh"
   echo "  -i <device_id>: Specify argument GPU device_id"
   echo "  -b <runtime_backend>: Specify argument LLM inference runtime backend, options={default, hf, vllm}"
   echo "  -m <model_name>: Specify argument the path to load LLM model using FastChat serve API, options={Qwen-7B-Chat, deepseek-llm-7b-chat, ...}"
   echo "  -t <conv_template>: Specify argument the conversation template according to the LLM model when using FastChat serve API, options={qwen-7b-chat, deepseek-chat, ...}"
-  echo "  -p <tensor_parallel>: Specify argument tensor parallel parameters for hf/vllm backend when using FastChat serve API, default tensor_parallel=1"
-  echo "  -r <gpu_memory_utilization>: Specify argument gpu_memory_utilization for vllm backend when using FastChat serve API, default gpu_memory_utilization=0.81"
+  echo "  -p <tensor_parallel>: Use options {1, 2} to set tensor parallel parameters for transformers/vllm backend when using FastChat serve API, default tensor_parallel=1"
+  echo "  -r <gpu_memory_utilization>: Specify argument gpu_memory_utilization (0,1] for vllm backend when using FastChat serve API, default gpu_memory_utilization=0.81"
   echo "  -h: Display help usage message"
   exit 1
 }
@@ -58,7 +58,6 @@ start_time=$(date +%s)  # 记录开始时间
 
 # cd ~/.cache/ && tar -xvf /workspace/qanything_local/pip_deps.tar
 # cd /workspace/qanything_local/third_party/FastChat && pip install transformers==4.36.0 vllm==0.2.7 transformers-stream-generator==0.0.4 einops==0.6.0 accelerate==0.21.0 && pip install -e .
-
 
 # 获取默认的 MD5 校验和
 default_checksum=$(cat /workspace/qanything_local/third_party/checksum.config)
@@ -274,7 +273,7 @@ echo "The front-end service is ready!...(7/8)"
 echo "前端服务已就绪!...(7/8)"
 
 
-timeout_time=200
+timeout_time=300
 
 current_time=$(date +%s)
 elapsed=$((current_time - start_time))  # 计算经过的时间（秒）
@@ -283,26 +282,42 @@ echo "已耗时: ${elapsed} 秒."
 
 while true; do
 
-    if [ $runtime_backend -eq "default" ]; then
-        response=$(curl -s -w "%{http_code}" http://localhost:10000/v2/health/ready -o /dev/null)
-        if [ $response -eq 200 ]; then
-            echo "The llm service is ready!, now you can use the qanything service. (8/8)"
-            echo "LLM 服务已准备就绪！现在您可以使用qanything服务。（8/8)"
-            break
-        else
-            echo "The llm service is starting up, it can be long... you have time to make a coffee :)"
-            echo "LLM 服务正在启动，可能需要一段时间...你有时间去冲杯咖啡 :)"
-
-            current_time=$(date +%s)
-            elapsed_time=$((current_time - start_time))
-
-            # 检查是否超时
-            if [ $elapsed_time -ge $((timeout_time * 2)) ]; then
-                echo "启动 LLM 服务超时，请进入容器内检查/model_repos/QAEnsemble_base/QAEnsemble_base.log以获取更多信息。"
-                exit 1
+    if [ "$runtime_backend" = "default" ]; then
+        if [ $gpuid1 -eq $gpuid2 ]; then
+            response=$(curl -s -w "%{http_code}" http://localhost:10000/v2/health/ready -o /dev/null)
+            if [ $response -eq 200 ]; then
+                echo "The llm service is ready!, now you can use the qanything service. (8/8)"
+                echo "LLM 服务已准备就绪！现在您可以使用qanything服务。（8/8)"
+                break
             fi
-            sleep 5
+        else
+            response_llm=$(curl -s -w "%{http_code}" http://localhost:10000/v2/health/ready -o /dev/null)
+            response_embed=$(curl -s -w "%{http_code}" http://localhost:9000/v2/health/ready -o /dev/null)
+            response_rerank=$(curl -s -w "%{http_code}" http://localhost:8000/v2/health/ready -o /dev/null)
+            echo "health_response_llm = $response_llm"
+            echo "health_response_embed = $response_embed"
+            echo "health_response_rerank = $response_rerank"
+
+            if [ $response_llm -eq 200 ] && [ $response_embed -eq 200 ] && [ $response_rerank -eq 200 ]; then
+                echo "The llm service is ready!, now you can use the qanything service. (8/8)"
+                echo "LLM 服务已准备就绪！现在您可以使用qanything服务。（8/8)"
+                break
+            fi
         fi
+
+        echo "The llm service is starting up, it can be long... you have time to make a coffee :)"
+        echo "LLM 服务正在启动，可能需要一段时间...你有时间去冲杯咖啡 :)"
+
+        current_time=$(date +%s)
+        elapsed_time=$((current_time - start_time))
+
+        # 检查是否超时
+        if [ $elapsed_time -ge $((timeout_time * 2)) ]; then
+            echo "启动 LLM 服务超时，请进入容器内检查/model_repos/QAEnsemble_base/QAEnsemble_base.log以获取更多信息。"
+            exit 1
+        fi
+        sleep 5
+
     else
         fastchat_register_model=$(curl --request POST --url http://localhost:7800/list_models)
         if [[ $fastchat_register_model == *"$LLM_API_SERVE_MODEL"* ]]; then

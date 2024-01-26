@@ -260,7 +260,7 @@ class LocalDocQA:
             prompt = answer_result.prompt
             history = answer_result.history
 
-            logging.info(f"[debug] get_knowledge_based_answer history = {history}")
+            # logging.info(f"[debug] get_knowledge_based_answer history = {history}")
             history[-1][0] = query
             response = {"query": query,
                         "prompt": prompt,

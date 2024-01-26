@@ -1,45 +1,24 @@
 #!/bin/bash
 
-### 启动参数说明
-### bash ./run.sh -c cloud -i 0 -b default 表示使用在线 LLM API 以及本地部署Embed/Rerank
-### bash ./run.sh -c local -i 0 -b default 表示使用本地 Qwen-7B-Base QAnything微调版本以及本地部署Embed/Rerank，LLM 使用 FastTransformer runtime 单卡部署 LLM-INT8-Weight-Only 推理
-### bash ./run.sh -c local -i 0,1 -b default 表示使用本地 Qwen-7B-Base QAnything微调版本以及本地部署Embed/Rerank，LLM 使用 FastTransformer runtime GPU0部署 LLM-INT8-Weight-Only 推理，GPU1部署Embed/Rerank
-### bash ./run.sh -c local -i 0 -b hf -m MiniChat-2-3B -t minichat 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 huggingface runtime 部署 LLM-bf16 推理，权重默认加载为8-bits节省显存
-### bash ./run.sh -c local -i 0,1 -b hf -m MiniChat-2-3B -t minichat 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 huggingface runtime GPU0 部署 LLM-bf16 推理，权重默认加载为8-bits节省显存, GPU1部署Embed/Rerank
-### bash ./run.sh -c local -i 0,1 -b vllm -m MiniChat-2-3B -t minichat -p 1 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 vllm runtime GPU0 部署 LLM-bf16 推理，默认使用kv-cache reuse 提高吞吐, 默认 gpu_memory_utilization=0.81, GPU1部署Embed/Rerank
-### bash ./run.sh -c local -i 0,1 -b vllm -m MiniChat-2-3B -t minichat -p 1 -r 0.81 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 vllm runtime GPU0 部署 LLM-bf16 推理，默认使用kv-cache reuse 提高吞吐, 使用gpu_memory_utilization=0.81, GPU1部署Embed/Rerank
-### bash ./run.sh -c local -i 0,1 -b vllm -m MiniChat-2-3B -t minichat -p 2 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 vllm runtime GPU0 和 GPU1两卡部署LLM-bf16推理, 默认使用kv-cache reuse 提高吞吐，执行Tensor并行推理, GPU1部署Embed/Rerank
-
 
 ### If using OpenAI API, please export the following environments into .env fisrt
-echo 'OPENAI_API_KEY=""' > .env
-echo 'OPENAI_API_BASE=""' >> .env
-echo 'OPENAI_API_MODEL_NAME="gpt-3.5-turbo"' >> .env
-echo 'OPENAI_API_CONTEXT_LENGTH=4096' >> .env
+echo "OPENAI_API_KEY=''" > .env
+echo "OPENAI_API_BASE=''" >> .env
+echo "OPENAI_API_MODEL_NAME='gpt-3.5-turbo'" >> .env
+echo "OPENAI_API_CONTEXT_LENGTH=4096" >> .env
 
 script_name=$(basename "$0")
 
 usage() {
-  echo "Usage: $script_name [-c <llm_api>] [-i <device_id>] [-b <runtime_backend>] [-m <model_name>] [-t <conv_template>] [-p <tensor_parallel>] [-r <gpu_memory_utilization>]"
+  echo "Usage: $script_name [-c <llm_api>] [-i <device_id>] [-b <runtime_backend>] [-m <model_name>] [-t <conv_template>] [-p <tensor_parallel>] [-r <gpu_memory_utilization>] [-h]"
   echo "  -c : Options {local, cloud} to specify the llm API mode, default is 'local'. If set to '-c cloud', please mannually set the environments {OPENAI_API_KEY, OPENAI_API_BASE, OPENAI_API_MODEL_NAME, OPENAI_API_CONTEXT_LENGTH} into .env fisrt in run.sh"
   echo "  -i <device_id>: Specify argument GPU device_id"
   echo "  -b <runtime_backend>: Specify argument LLM inference runtime backend, options={default, hf, vllm}"
   echo "  -m <model_name>: Specify argument the path to load LLM model using FastChat serve API, options={Qwen-7B-Chat, deepseek-llm-7b-chat, ...}"
   echo "  -t <conv_template>: Specify argument the conversation template according to the LLM model when using FastChat serve API, options={qwen-7b-chat, deepseek-chat, ...}"
-  echo "  -p <tensor_parallel>: Use option of tensor parallel parameters for hf/vllm backend when using FastChat serve API, default tensor_parallel=1"
-  echo "  -r <gpu_memory_utilization>: Specify argument gpu_memory_utilization for vllm backend when using FastChat serve API, default gpu_memory_utilization=0.81"
+  echo "  -p <tensor_parallel>: Use options {1, 2} to set tensor parallel parameters for transformers/vllm backend when using FastChat serve API, default tensor_parallel=1"
+  echo "  -r <gpu_memory_utilization>: Specify argument gpu_memory_utilization (0,1] for vllm backend when using FastChat serve API, default gpu_memory_utilization=0.81"
   echo "  -h: Display help usage message"
-
-  echo "\n=========================== LLM 服务启动参数说明 =========================== \n
-(1) bash ./run.sh -c cloud -i 0 -b default 表示使用在线 LLM API 以及本地部署Embed/Rerank
-(2) bash ./run.sh -c local -i 0 -b default 表示使用本地 Qwen-7B-Base QAnything微调版本以及本地部署Embed/Rerank，LLM 使用 FastTransformer runtime 单卡部署 LLM-INT8-Weight-Only 推理
-(3) bash ./run.sh -c local -i 0,1 -b default 表示使用本地 Qwen-7B-Base QAnything微调版本以及本地部署Embed/Rerank，LLM 使用 FastTransformer runtime GPU0部署 LLM-INT8-Weight-Only 推理，GPU1部署Embed/Rerank
-(4) bash ./run.sh -c local -i 0 -b hf -m MiniChat-2-3B -t minichat 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 huggingface runtime 部署 LLM-bf16 推理，权重默认加载为8-bits节省显存
-(5) bash ./run.sh -c local -i 0,1 -b hf -m MiniChat-2-3B -t minichat 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 huggingface runtime GPU0 部署 LLM-bf16 推理，权重默认加载为8-bits节省显存, GPU1部署Embed/Rerank
-(6) bash ./run.sh -c local -i 0,1 -b vllm -m MiniChat-2-3B -t minichat -p 1 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 vllm runtime GPU0 部署 LLM-bf16 推理，默认使用kv-cache reuse 提高吞吐, 默认使用gpu_memory_utilization=0.81, GPU1部署Embed/Rerank
-(7) bash ./run.sh -c local -i 0,1 -b vllm -m MiniChat-2-3B -t minichat -p 1 -r 0.81 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 vllm runtime GPU0 部署 LLM-bf16 推理，默认使用kv-cache reuse 提高吞吐, 使用gpu_memory_utilization=0.81, GPU1部署Embed/Rerank
-(8) bash ./run.sh -c local -i 0,1 -b vllm -m MiniChat-2-3B -t minichat -p 2 表示使用开源LLM模型以及本地部署Embed/Rerank, LLM 使用 vllm runtime GPU0 和 GPU1两卡部署LLM-bf16推理, 默认使用kv-cache reuse 提高吞吐，执行Tensor并行推理, GPU1部署Embed/Rerank
-"
   exit 1
 }
 
@@ -66,8 +45,17 @@ while getopts ":c:i:b:m:t:p:r:h" opt; do
   esac
 done
 
-if [ $llm_api = 'online' ]; then
-  echo "If set to '-c online', please mannually set the environments {OPENAI_API_KEY, OPENAI_API_BASE, OPENAI_API_MODEL_NAME, OPENAI_API_CONTEXT_LENGTH} into .env fisrt in run.sh"
+if [ $llm_api = 'cloud' ]; then
+  echo "If set to '-c cloud', please mannually set the environments {OPENAI_API_KEY, OPENAI_API_BASE, OPENAI_API_MODEL_NAME, OPENAI_API_CONTEXT_LENGTH} into .env fisrt in run.sh"
+  read -p "Please enter OPENAI_API_KEY: " OPENAI_API_KEY
+  read -p "Please enter OPENAI_API_BASE: " OPENAI_API_BASE
+  read -p "Please enter OPENAI_API_MODEL_NAME: " OPENAI_API_MODEL_NAME
+  read -p "Please enter OPENAI_API_CONTEXT_LENGTH: " OPENAI_API_CONTEXT_LENGTH
+  
+  echo "OPENAI_API_KEY='$OPENAI_API_KEY'" > .env
+  echo "OPENAI_API_BASE='$OPENAI_API_BASE'" >> .env
+  echo "OPENAI_API_MODEL_NAME='$OPENAI_API_MODEL_NAME'" >> .env
+  echo "OPENAI_API_CONTEXT_LENGTH=$OPENAI_API_CONTEXT_LENGTH" >> .env
 fi
 
 echo "llm_api is set to [$llm_api]"

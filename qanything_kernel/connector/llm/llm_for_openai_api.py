@@ -54,7 +54,7 @@ class OpenAILLM(BaseAnswer, ABC):
     # 定义函数 num_tokens_from_messages，该函数返回由一组消息所使用的token数
     def num_tokens_from_messages(self, messages, model=None):
         """Return the number of tokens used by a list of messages. From https://github.com/DjangoPeng/openai-quickstart/blob/main/openai_api/count_tokens_with_tiktoken.ipynb"""
-        logging.info(f"[debug] num_tokens_from_messages<model, self.model> = {model, self.model}")
+        # logging.info(f"[debug] num_tokens_from_messages<model, self.model> = {model, self.model}")
         if model is None:
             model = self.model
         # 尝试获取模型的编码
@@ -174,7 +174,7 @@ class OpenAILLM(BaseAnswer, ABC):
                     stop=[self.stop_words] if self.stop_words is not None else None,
                 )
                 
-                logging.info(f"[debug] response.choices = [{response.choices}]")
+                # logging.info(f"[debug] response.choices = [{response.choices}]")
                 event_text = response.choices[0].message.content if response.choices else ""
                 delta = {'answer': event_text}
                 yield "data: " + json.dumps(delta, ensure_ascii=False)
@@ -185,7 +185,7 @@ class OpenAILLM(BaseAnswer, ABC):
             yield "data: " + json.dumps(delta, ensure_ascii=False)
 
         finally:
-            logging.info("[debug] try-finally")
+            # logging.info("[debug] try-finally")
             yield f"data: [DONE]\n\n"
 
     def generatorAnswer(self, prompt: str,

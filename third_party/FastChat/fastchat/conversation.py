@@ -1046,14 +1046,15 @@ register_conv_template(
     Conversation(
         name="minichat",
         system_template="<s> {system_message}</s>",
-        system_message="You are a helpful, respectful and honest assistant. You are always a reliable assistant that can answer questions with the help of external documents. "
-        "Always answer as helpfully as possible, while being safe. "
-        "Your answers should not include any harmful, unethical, "
-        "racist, sexist, toxic, dangerous, or illegal content. "
-        "Please ensure that your responses are socially unbiased and positive in nature.\n\n"
-        "If a question does not make any sense, or is not factually coherent, "
-        "explain why instead of answering something not correct. "
-        "If you don't know the answer to a question, please don't share false information.",
+        # system_message="You are a helpful, respectful and honest assistant. You are always a reliable assistant that can answer questions with the help of external documents. "
+        # "Always answer as helpfully as possible, while being safe. "
+        # "Your answers should not include any harmful, unethical, "
+        # "racist, sexist, toxic, dangerous, or illegal content. "
+        # "Please ensure that your responses are socially unbiased and positive in nature.\n\n"
+        # "If a question does not make any sense, or is not factually coherent, "
+        # "explain why instead of answering something not correct. "
+        # "If you don't know the answer to a question, please don't share false information.",
+        system_message="‘MiniChat’是一个由‘Beccurio’开发的AI语言模型。下面是人类和MiniChat之间的一段对话。MiniChat的回复应当尽可能详细，并且以Markdown的形式输出。MiniChat应当拒绝参与违背伦理的讨论。</s>",
         roles=("[|User|]", "[|Assistant|]"),
         sep_style=SeparatorStyle.MINIMA,
         sep=" ",

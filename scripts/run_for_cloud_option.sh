@@ -3,14 +3,14 @@
 script_name=$(basename "$0")
 
 usage() {
-  echo "Usage: $script_name [-u <llm_api>] [-i <device_id>] [-b <runtime_backend>] [-m <model_name>] [-t <conv_template>] [-p <tensor_parallel>] [-r <gpu_memory_utilization>]"
-  echo "  -c : Use option {local, cloud} to specify the llm API mode, default is local"
+  echo "Usage: $script_name [-c <llm_api>] [-i <device_id>] [-b <runtime_backend>] [-m <model_name>] [-t <conv_template>] [-p <tensor_parallel>] [-r <gpu_memory_utilization>] [-h]"
+  echo "  -c : Options {local, cloud} to specify the llm API mode, default is 'local'. If set to '-c cloud', please mannually set the environments {OPENAI_API_KEY, OPENAI_API_BASE, OPENAI_API_MODEL_NAME, OPENAI_API_CONTEXT_LENGTH} into .env fisrt in run.sh"
   echo "  -i <device_id>: Specify argument GPU device_id"
   echo "  -b <runtime_backend>: Specify argument LLM inference runtime backend, options={default, hf, vllm}"
   echo "  -m <model_name>: Specify argument the path to load LLM model using FastChat serve API, options={Qwen-7B-Chat, deepseek-llm-7b-chat, ...}"
   echo "  -t <conv_template>: Specify argument the conversation template according to the LLM model when using FastChat serve API, options={qwen-7b-chat, deepseek-chat, ...}"
-  echo "  -p <tensor_parallel>: Specify argument tensor parallel parameters for hf/vllm backend when using FastChat serve API, default tensor_parallel=1"
-  echo "  -r <gpu_memory_utilization>: Specify argument gpu_memory_utilization for vllm backend when using FastChat serve API, default gpu_memory_utilization=0.81"
+  echo "  -p <tensor_parallel>: Use options {1, 2} to set tensor parallel parameters for transformers/vllm backend when using FastChat serve API, default tensor_parallel=1"
+  echo "  -r <gpu_memory_utilization>: Specify argument gpu_memory_utilization (0,1] for vllm backend when using FastChat serve API, default gpu_memory_utilization=0.81"
   echo "  -h: Display help usage message"
   exit 1
 }
@@ -204,9 +204,13 @@ echo "已耗时: ${elapsed} 秒."
 
 while true; do
 
-    if [ $runtime_backend -eq "default" ]; then
-        response=$(curl -s -w "%{http_code}" http://localhost:10000/v2/health/ready -o /dev/null)
-        if [ $response -eq 200 ]; then
+    if [ "$runtime_backend" = "default" ]; then
+        response_embed=$(curl -s -w "%{http_code}" http://localhost:9000/v2/health/ready -o /dev/null)
+        response_rerank=$(curl -s -w "%{http_code}" http://localhost:8000/v2/health/ready -o /dev/null)
+        echo "health response_embed = $response_embed"
+        echo "health response_rerank = $response_rerank"
+
+        if [ $response_embed -eq 200 ] && [ $response_rerank -eq 200 ]; then
             echo "The llm service is ready!, now you can use the qanything service. (8/8)"
             echo "LLM 服务已准备就绪！现在您可以使用qanything服务。（8/8)"
             break
