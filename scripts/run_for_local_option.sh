@@ -72,8 +72,8 @@ if [ "$default_checksum" != "$checksum" ]; then
 fi
 
 install_deps=$(pip list | grep vllm)
-if [ "$install_deps" != *"vllm"* ]; then
-    
+if [[ "$install_deps" != *"vllm"* ]]; then
+    echo "vllm deps not found"
     cd /workspace/qanything_local/third_party/FastChat && pip install transformers==4.36.0 vllm==0.2.7 transformers-stream-generator==0.0.4 einops==0.6.0 accelerate==0.21.0 && pip install -e . 
     checksum=$(find /workspace/qanything_local/third_party/FastChat -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | awk '{print $1}') && echo "$checksum" > /workspace/qanything_local/third_party/checksum.config
 fi
@@ -190,13 +190,48 @@ else
     esac
 fi
 
+# 默认ocr_use_gpu为True
+OCR_USE_GPU="True"
+
+# 使用nvidia-smi命令获取GPU的显存大小（以MiB为单位）
+GPU1_MEMORY_SIZE=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits -i $gpuid1)
+GPU2_MEMORY_SIZE=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits -i $gpuid2)
+
+# 检查显存大小是否小于12G（即 12288 MiB）
+if [ "$GPU2_MEMORY_SIZE" -lt 12288 ]; then
+    OCR_USE_GPU="False"
+fi
+
+echo "GPU1_MEMORY_SIZE=$GPU1_MEMORY_SIZE"
+echo "OCR_USE_GPU=$OCR_USE_GPU"
+
+echo "===================================================="
+echo "******************** 重要提示 ********************"
+echo "===================================================="
+echo ""
+
+if [ "$GPU1_MEMORY_SIZE" -lt 8100 ]; then
+    echo "检测到您的 GPU 显存小于 8GB，推荐使用 OpenAI 或其他在线大型语言模型 (LLM)。"
+elif [ "$GPU1_MEMORY_SIZE" -ge 8100 ] && [ "$GPU1_MEMORY_SIZE" -le 16400 ]; then
+    echo "检测到您的 GPU 显存在 8GB 到 16GB 之间，推荐使用本地 3B 大小以内的语言模型。"
+else
+    echo "检测到您的 GPU 显存大于 16GB，推荐使用本地 7B 的语言模型。"
+fi
+
+echo ""
+echo "===================================================="
+echo "请根据您的显存情况选择合适的语言模型以获得最佳性能。"
+echo "===================================================="
+echo ""
+sleep 5
+
 
 cd /workspace/qanything_local || exit
 nohup python3 -u qanything_kernel/dependent_server/rerank_for_local_serve/rerank_server.py > rerank.log 2>&1 &
 echo "The rerank service is ready! (2/8)"
 echo "rerank服务已就绪! (2/8)"
 
-CUDA_VISIBLE_DEVICES=$gpuid2 nohup python3 -u qanything_kernel/dependent_server/ocr_serve/ocr_server.py > ocr.log 2>&1 &
+CUDA_VISIBLE_DEVICES=$gpuid2 nohup python3 -u qanything_kernel/dependent_server/ocr_serve/ocr_server.py $OCR_USE_GPU > ocr.log 2>&1 &
 echo "The ocr service is ready! (3/8)"
 echo "OCR服务已就绪! (3/8)"
 
