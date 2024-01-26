@@ -34,17 +34,6 @@ else
 fi
 echo "GPU ID: $gpuid1, $gpuid2"
 
-# 默认ocr_use_gpu为True
-OCR_USE_GPU="True"
-
-# 使用nvidia-smi命令获取GPU2的显存大小（以MiB为单位）
-GPU2_MEMORY_SIZE=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits -i $gpuid2)
-
-# 检查显存大小是否小于12G（即 12288 MiB）
-if [ "$GPU2_MEMORY_SIZE" -lt 12288 ]; then
-    OCR_USE_GPU="False"
-fi
-
 # start llm server
 # 判断一下，如果gpu_id1和gpu_id2相同，则只启动一个triton_server
 if [ $gpuid1 -eq $gpuid2 ]; then
@@ -60,6 +49,40 @@ else
     echo "RERANK_PORT=8001" >> /workspace/qanything_local/.env
     echo "EMBED_PORT=9001" >> /workspace/qanything_local/.env
 fi
+
+
+# 默认ocr_use_gpu为True
+OCR_USE_GPU="True"
+
+# 使用nvidia-smi命令获取GPU的显存大小（以MiB为单位）
+GPU1_MEMORY_SIZE=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits -i $gpuid1)
+GPU2_MEMORY_SIZE=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits -i $gpuid2)
+
+# 检查显存大小是否小于12G（即 12288 MiB）
+if [ "$GPU2_MEMORY_SIZE" -lt 12288 ]; then
+    OCR_USE_GPU="False"
+fi
+
+echo "===================================================="
+echo "******************** 重要提示 ********************"
+echo "===================================================="
+echo ""
+
+if [ "$GPU1_MEMORY_SIZE" -lt 8100 ]; then
+    echo "检测到您的 GPU 显存小于 8GB，推荐使用 OpenAI 或其他在线大型语言模型 (LLM)。"
+elif [ "$GPU1_MEMORY_SIZE" -ge 8100 ] && [ "$GPU1_MEMORY_SIZE" -le 16400 ]; then
+    echo "检测到您的 GPU 显存在 8GB 到 16GB 之间，推荐使用本地 3B 大小以内的语言模型。"
+else
+    echo "检测到您的 GPU 显存大于 16GB，推荐使用本地 7B 的语言模型。"
+fi
+
+echo ""
+echo "===================================================="
+echo "请根据您的显存情况选择合适的语言模型以获得最佳性能。"
+echo "===================================================="
+echo ""
+sleep 5
+
 
 cd /workspace/qanything_local/qanything_kernel/dependent_server/llm_for_local_serve || exit
 nohup python3 -u llm_server_entrypoint.py --host="0.0.0.0" --port=36001 --model-path="tokenizer_assets" --model-url="0.0.0.0:10001" > llm.log 2>&1 &
