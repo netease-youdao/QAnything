@@ -34,6 +34,17 @@ else
 fi
 echo "GPU ID: $gpuid1, $gpuid2"
 
+# 默认ocr_use_gpu为True
+OCR_USE_GPU="True"
+
+# 使用nvidia-smi命令获取GPU2的显存大小（以MiB为单位）
+GPU2_MEMORY_SIZE=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits -i $gpuid2)
+
+# 检查显存大小是否小于12G（即 12288 MiB）
+if [ "$GPU2_MEMORY_SIZE" -lt 12288 ]; then
+    OCR_USE_GPU="False"
+fi
+
 # start llm server
 # 判断一下，如果gpu_id1和gpu_id2相同，则只启动一个triton_server
 if [ $gpuid1 -eq $gpuid2 ]; then
@@ -60,7 +71,7 @@ nohup python3 -u qanything_kernel/dependent_server/rerank_for_local_serve/rerank
 echo "The rerank service is ready! (2/8)"
 echo "rerank服务已就绪! (2/8)"
 
-CUDA_VISIBLE_DEVICES=$gpuid2 nohup python3 -u qanything_kernel/dependent_server/ocr_serve/ocr_server.py > ocr.log 2>&1 &
+CUDA_VISIBLE_DEVICES=$gpuid2 nohup python3 -u qanything_kernel/dependent_server/ocr_serve/ocr_server.py OCR_USE_GPU > ocr.log 2>&1 &
 echo "The ocr service is ready! (3/8)"
 echo "OCR服务已就绪! (3/8)"
 
