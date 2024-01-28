@@ -13,7 +13,9 @@ from .local_file import LocalFile
 from qanything_kernel.utils.general_utils import get_time
 import requests
 import traceback
+import logging
 
+logging.basicConfig(level=logging.INFO)
 
 def _embeddings_hash(self):
     return hash(self.model_name)
@@ -150,6 +152,8 @@ class LocalDocQA:
         query_token_num = self.llm.num_tokens_from_messages([query])
         history_token_num = self.llm.num_tokens_from_messages([x for sublist in history for x in sublist])
         template_token_num = self.llm.num_tokens_from_messages([prompt_template])
+
+        # logging.info(f"<self.llm.token_window, self.llm.max_token, self.llm.offcut_token, query_token_num, history_token_num, template_token_num>, types = {type(self.llm.token_window), type(self.llm.max_token), type(self.llm.offcut_token), type(query_token_num), type(history_token_num), type(template_token_num)}, values = {query_token_num, history_token_num, template_token_num}")
         limited_token_nums = self.llm.token_window - self.llm.max_token - self.llm.offcut_token - query_token_num - history_token_num - template_token_num
         new_source_docs = []
         total_token_num = 0
@@ -235,6 +239,8 @@ class LocalDocQA:
             resp = answer_result.llm_output["answer"]
             prompt = answer_result.prompt
             history = answer_result.history
+
+            # logging.info(f"[debug] get_knowledge_based_answer history = {history}")
             history[-1][0] = query
             response = {"query": query,
                         "prompt": prompt,
