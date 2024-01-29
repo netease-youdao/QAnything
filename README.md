@@ -241,7 +241,7 @@ Welcome to the QAnything [Discord](https://discord.gg/5uNpPsEJz8) community
 
 Welcome to scan the QR code below and join the WeChat group.
 
-<img src="docs/images/Wechat.jpg" width="20%" height="auto">
+<img src="docs/images/Wechat.jpg" width="30%" height="auto">
 
 ### Email
 If you need to contact our team privately, please reach out to us via the following email:
