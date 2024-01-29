@@ -48,10 +48,9 @@ class LocalDocQA:
         self.mode = mode
         if self.mode == 'local':
             self.llm: ZiyueLLM = ZiyueLLM()
-            self.embeddings = YouDaoLocalEmbeddings()
         else:
             self.llm: OpenAILLM = OpenAILLM()
-            self.embeddings = YouDaoEmbeddings()
+        self.embeddings = YouDaoLocalEmbeddings()
         self.milvus_summary = KnowledgeBaseManager(self.mode)
 
     def create_milvus_collection(self, user_id, kb_id, kb_name):
