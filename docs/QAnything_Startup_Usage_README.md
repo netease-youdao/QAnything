@@ -48,7 +48,7 @@ Note: You can choose the most suitable Service Startup Command based on your own
 | model_name                                | conv_template       | Supported Pulic LLM List                                                        |
 |-------------------------------------------|---------------------|---------------------------------------------------------------------------------|
 | Qwen-7B-QAnything                         | qwen-7b-qanything   | [Qwen-7B-QAnything](https://huggingface.co/netease-youdao/Qwen-7B-QAnything)    |        
-| Qwen-1.8B-Chat/Qwen-7B-Chat/Qwen-14B-Chat | qwen-7b-chat        | [Qwen](https://huggingface.co/Qwen)                                             |        
+| Qwen-1_8B-Chat/Qwen-7B-Chat/Qwen-14B-Chat | qwen-7b-chat        | [Qwen](https://huggingface.co/Qwen)                                             |        
 | Baichuan2-7B-Chat/Baichuan2-13B-Chat      | baichuan2-chat      | [Baichuan2](https://huggingface.co/baichuan-inc)                                | 
 | MiniChat-2-3B                             | minichat            | [MiniChat](https://huggingface.co/GeneZC/MiniChat-2-3B)                         |
 | deepseek-llm-7b-chat                      | deepseek-chat       | [Deepseek](https://huggingface.co/deepseek-ai/deepseek-llm-7b-chat)             | 
@@ -89,7 +89,8 @@ bash ./run.sh -c local -i 0 -b vllm -m MiniChat-2-3B -t minichat -p 1 -r 0.5
 
 ## Tricks for saving GPU VRAM
 ```bash
-## Trick 1. (Recommend for VRAM<=12 GB) Using PaddleOCR serve in CPU mode **use_gpu=False** in '/path/to/QAnything/qanything_kernel/dependent_server/ocr_serve/ocr_server.py'
+## Trick 1. (Recommend for VRAM<=12 GB or GPU Compute Capability < 7.5) Using PaddleOCR serve in CPU mode **use_gpu=False** in '/path/to/QAnything/qanything_kernel/dependent_server/ocr_serve/ocr_server.py'
+# GPU Compute Capability: https://developer.nvidia.com/cuda-gpus
 # Note that **use_gpu=False** must be set when using RTX-1080Ti GPU, otherwise PaddleOCR will always return **empty ocr result** when using **use_gpu=True**.
 ocr_engine = PaddleOCR(use_angle_cls=True, lang="ch", use_gpu=False, show_log=False)
 

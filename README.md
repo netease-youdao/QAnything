@@ -269,7 +269,7 @@ Reach out to the maintainer at one of the following places:
 `QAnything` adopts dependencies from the following:
 - Thanks to our [BCEmbedding](https://github.com/netease-youdao/BCEmbedding) for the excellent embedding and rerank model. 
 - Thanks to [Qwen](https://github.com/QwenLM/Qwen) for strong base language models.
-- Thanks to [Triton Inference Server](https://github.com/triton-inference-server/server) and vllm(https://github.com/vllm-project/vllm) for providing great open source inference serving.
+- Thanks to [Triton Inference Server](https://github.com/triton-inference-server/server) and [vllm](https://github.com/vllm-project/vllm) for providing great open source inference serving.
 - Thanks to [FastChat](https://github.com/lm-sys/FastChat) for providing a fully OpenAI-compatible API server.
 - Thanks to [FasterTransformer](https://github.com/NVIDIA/FasterTransformer) for highly optimized LLM inference backend.
 - Thanks to [Langchain](https://github.com/langchain-ai/langchain) for the wonderful llm application framework. 

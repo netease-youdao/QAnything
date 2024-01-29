@@ -16,7 +16,7 @@ usage() {
   echo "  -b <runtime_backend>: Specify argument LLM inference runtime backend, options={default, hf, vllm}"
   echo "  -m <model_name>: Specify argument the path to load LLM model using FastChat serve API, options={Qwen-7B-Chat, deepseek-llm-7b-chat, ...}"
   echo "  -t <conv_template>: Specify argument the conversation template according to the LLM model when using FastChat serve API, options={qwen-7b-chat, deepseek-chat, ...}"
-  echo "  -p <tensor_parallel>: Use options {1, 2} to set tensor parallel parameters for transformers/vllm backend when using FastChat serve API, default tensor_parallel=1"
+  echo "  -p <tensor_parallel>: Use options {1, 2} to set tensor parallel parameters for vllm backend when using FastChat serve API, default tensor_parallel=1"
   echo "  -r <gpu_memory_utilization>: Specify argument gpu_memory_utilization (0,1] for vllm backend when using FastChat serve API, default gpu_memory_utilization=0.81"
   echo "  -h: Display help usage message"
   exit 1
