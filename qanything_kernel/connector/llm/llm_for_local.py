@@ -8,6 +8,10 @@ import requests
 from requests.exceptions import RequestException
 from collections import OrderedDict
 import tiktoken
+from qanything_kernel.utils.custom_log import debug_logger, qa_logger
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 
 class ZiyueLLM(BaseAnswer, LLM, ABC):
@@ -15,7 +19,7 @@ class ZiyueLLM(BaseAnswer, LLM, ABC):
     model: str = "yd_gpt"
     token_window: int = 4096
     max_token: int = 300  # 300
-    offcut_token: int = 1396
+    offcut_token: int = os.getenv("OFFCUT_TOKEN", 50)
     truncate_len: int = 50
     temperature: float = 0.6
     top_p: float = 1.0
@@ -29,6 +33,7 @@ class ZiyueLLM(BaseAnswer, LLM, ABC):
 
     def __init__(self):
         super().__init__()
+        debug_logger.info("ZiyueLLM offcut_token:", self.offcut_token)
 
     @property
     def _llm_type(self) -> str:

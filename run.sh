@@ -2,8 +2,8 @@
 
 
 ### If using OpenAI API, please export the following environments into .env fisrt
-echo "OPENAI_API_KEY=''" > .env
-echo "OPENAI_API_BASE=''" >> .env
+echo "OPENAI_API_KEY='your-api-key-here'" > .env
+echo "OPENAI_API_BASE='https://api.openai.com/v1'" >> .env
 echo "OPENAI_API_MODEL_NAME='gpt-3.5-turbo'" >> .env
 echo "OPENAI_API_CONTEXT_LENGTH=4096" >> .env
 
@@ -65,13 +65,159 @@ while getopts ":c:i:b:m:t:p:r:h" opt; do
   esac
 done
 
+# 获取大模型B数
+if [ $llm_api = 'cloud' ]; then
+    model_size='0B'
+elif [ $runtime_backend = 'default' ]; then
+    model_size='7B'
+else
+    read -p "请输入您使用的大模型B数(示例：1.8B/3B/7B): " model_size
+    # 检查是否合法，必须输入数字+B的形式，可以是小数
+    if ! [[ $model_size =~ ^[0-9]+(\.[0-9]+)?B$ ]]; then
+        echo "Invalid model size. Please enter a number like '1.8B' or '3B' or '7B'."
+        exit 1
+    fi
+fi
+echo "model_size=$model_size"
+model_size_num=$(echo $model_size | grep -oP '^[0-9]+(\.[0-9]+)?')
+
+gpu_id1=0
+gpu_id2=0
+
+# 判断命令行参数
+if [[ -n "$device_id" ]]; then
+    # 如果传入参数，分割成两个GPU ID
+    IFS=',' read -ra gpu_ids <<< "$device_id"
+    gpu_id1=${gpu_ids[0]}
+    gpu_id2=${gpu_ids[1]:-$gpu_id1}  # 如果没有第二个ID，则默认使用第一个ID
+fi
+
+# 检查GPU ID是否合法
+if ! [[ $gpu_id1 =~ ^[0-9]+$ ]] || ! [[ $gpu_id2 =~ ^[0-9]+$ ]]; then
+    echo "Invalid GPU IDs. Please enter IDs like '0' or '0,1'."
+    exit 1
+fi
+
+echo "GPUID1=${gpu_id1}" >> .env
+echo "GPUID2=${gpu_id2}" >> .env
+
+# 获取显卡型号
+gpu_model=$(nvidia-smi --query-gpu=gpu_name --format=csv,noheader,nounits -i $gpu_id1)
+# nvidia RTX 30系列或40系列
+gpu_series=$(echo $gpu_model | grep -oP 'RTX\s*(30|40)')
+compute_capability=$(jq -r ".[\"$gpu_model\"]" scripts/gpu_capabilities.json)
+# 如果compute_capability为空，则说明显卡型号不在gpu_capabilities.json中
+if [ -z "$compute_capability" ]; then
+    echo "您的显卡型号 $gpu_model 不在支持列表中，请联系技术支持。"
+    exit 1
+fi
+echo "GPU1 Model: $gpu_model"
+echo "Compute Capability: $compute_capability"
+# 使用nvidia-smi命令获取GPU的显存大小（以MiB为单位）
+GPU1_MEMORY_SIZE=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits -i $gpu_id1)
+
+OFFCUT_TOKEN=0
+echo "===================================================="
+echo "******************** 重要提示 ********************"
+echo "===================================================="
+echo ""
+if [ "$GPU1_MEMORY_SIZE" -ge 10240 ] && [ "$GPU1_MEMORY_SIZE" -lt 12288 ]; then
+    # 10GB, 11GB, 12GB显存，推荐部署3B及3B以下的模型
+    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB，推荐部署3B及3B以下的模型，包括在线的OpenAI API"
+    if [ "$model_size_num" -gt 3 ]; then  # 模型大小大于3B
+        echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
+        exit 1
+    fi
+elif [ "$GPU1_MEMORY_SIZE" -eq 8192 ]; then
+    # 8GB显存，推荐部署1.8B的大模型
+    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 推荐部署1.8B的大模型，包括在线的OpenAI API"
+    if [ "$model_size_num" -gt 2 ]; then  # 模型大小大于2B
+        echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
+        exit 1
+    fi
+elif [ "$GPU1_MEMORY_SIZE" -lt 8192 ]; then
+    # 显存小于8GB，仅推荐使用在线的OpenAI API
+    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 仅推荐使用在线的OpenAI API"
+    if [ "$model_size_num" -gt 0 ]; then  # 模型大小大于0B
+        echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
+        exit 1
+    fi
+elif [ "$GPU1_MEMORY_SIZE" -eq 16384 ]; then
+    # 16GB显存
+    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 推荐部署小于等于7B的大模型"
+    if [ "$model_size_num" -gt 7 ]; then  # 模型大小大于7B
+        echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
+        exit 1
+    fi
+    if [ "$runtime_backend" = "default" ]; then  # 默认使用Qwen-7B-QAnything+FasterTransformer
+        if [ -n "$gpu_series" ]; then
+            # Nvidia 30系列或40系列
+            if [ $gpu_id1 -eq $gpu_id2 ]; then
+                echo "为了防止显存溢出，tokens上限默认设置为2700"
+                OFFCUT_TOKEN=1400
+            else
+                echo "tokens上限默认设置为4096"
+                OFFCUT_TOKEN=0
+            fi
+        else
+            echo "您的显卡型号 $gpu_model 不支持部署Qwen-7B-QAnything模型"
+            exit 1
+        fi
+    elif [ "$runtime_backend" = "hf" ]; then  # 使用Huggingface Transformers后端
+        if [ "$model_size_num" -le 7 ] && [ "$model_size_num" -gt 3 ]; then  # 模型大小大于3B，小于等于7B
+            if [ $gpu_id1 -eq $gpu_id2 ]; then
+                echo "为了防止显存溢出，tokens上限默认设置为1400"
+                OFFCUT_TOKEN=2700
+            else
+                echo "为了防止显存溢出，tokens上限默认设置为2300"
+                OFFCUT_TOKEN=1800
+            fi
+        else
+            echo "tokens上限默认设置为4096"
+            OFFCUT_TOKEN=0
+        fi
+    elif [ "$runtime_backend" = "vllm" ]; then  # 使用VLLM后端
+        if [ "$model_size_num" -gt 3 ]; then  # 模型大小大于3B
+            echo "您的显存不足以使用vllm后端部署 $model_size 模型"
+            exit 1
+        else
+            echo "tokens上限默认设置为4096"
+            OFFCUT_TOKEN=0
+        fi
+    fi
+elif [ "$GPU1_MEMORY_SIZE" -ge 22528 ] && [ "$GPU1_MEMORY_SIZE" -le 24576 ]; then  # 22GB, 24GB显存
+    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 推荐部署7B模型"
+    if [ "$model_size_num" -gt 7 ]; then  # 模型大小大于7B
+        echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
+        exit 1
+    fi
+    OFFCUT_TOKEN=0
+else
+    OFFCUT_TOKEN=0
+fi
+
+echo "OFFCUT_TOKEN=$OFFCUT_TOKEN" >> .env
+
 if [ $llm_api = 'cloud' ]; then
   echo "If set to '-c cloud', please mannually set the environments {OPENAI_API_KEY, OPENAI_API_BASE, OPENAI_API_MODEL_NAME, OPENAI_API_CONTEXT_LENGTH} into .env fisrt in run.sh"
   read -p "Please enter OPENAI_API_KEY: " OPENAI_API_KEY
-  read -p "Please enter OPENAI_API_BASE: " OPENAI_API_BASE
-  read -p "Please enter OPENAI_API_MODEL_NAME: " OPENAI_API_MODEL_NAME
-  read -p "Please enter OPENAI_API_CONTEXT_LENGTH: " OPENAI_API_CONTEXT_LENGTH
-  
+  read -p "Please enter OPENAI_API_BASE: (default: https://api.openai.com/v1)" OPENAI_API_BASE
+  read -p "Please enter OPENAI_API_MODEL_NAME: (default: gpt-3.5-turbo)" OPENAI_API_MODEL_NAME
+  read -p "Please enter OPENAI_API_CONTEXT_LENGTH: (default: 4096)" OPENAI_API_CONTEXT_LENGTH
+
+  if [ -z "$OPENAI_API_BASE" ]; then  # 如果OPENAI_API_BASE为空，则设置默认值
+    OPENAI_API_BASE="https://api.openai.com/v1"
+  fi
+  if [ -z "$OPENAI_API_MODEL_NAME" ]; then  # 如果OPENAI_API_MODEL_NAME为空，则设置默认值
+    OPENAI_API_MODEL_NAME="gpt-3.5-turbo"
+  fi
+  if [ -z "$OPENAI_API_CONTEXT_LENGTH" ]; then  # 如果OPENAI_API_CONTEXT_LENGTH为空，则设置默认值
+    OPENAI_API_CONTEXT_LENGTH=4096
+  fi
+  if [ -z "$OPENAI_API_KEY" ]; then  # 如果OPENAI_API_KEY为空，则退出
+    echo "OPENAI_API_KEY is empty, please enter OPENAI_API_KEY."
+    exit 1
+  fi
   echo "OPENAI_API_KEY='$OPENAI_API_KEY'" > .env
   echo "OPENAI_API_BASE='$OPENAI_API_BASE'" >> .env
   echo "OPENAI_API_MODEL_NAME='$OPENAI_API_MODEL_NAME'" >> .env
@@ -95,9 +241,9 @@ echo "CONV_TEMPLATE=$conv_template" >> .env
 echo "TP=$tensor_parallel" >> .env
 echo "GPU_MEM_UTILI=$gpu_memory_utilization" >> .env
 
-# 检查是否存在 models 文件夹
-if [ ! -d "models" ]; then
-  echo "models 文件夹不存在，开始克隆和解压模型..."
+# 检查是否存在 models 文件夹，且models下是否存在embed，rerank，base三个文件夹
+if [ ! -d "models" ] || [ ! -d "models/embed" ] || [ ! -d "models/rerank" ] || [ ! -d "models/base" ]; then
+  echo "models文件夹不完整 开始克隆和解压模型..."
   echo "===================================================="
   echo "******************** 重要提示 ********************"
   echo "===================================================="
@@ -112,16 +258,37 @@ if [ ! -d "models" ]; then
   echo "如果你在下载过程中遇到任何问题，请及时联系技术支持。"
   echo "===================================================="
   # 记录下载和解压的时间
+
   d_start_time=$(date +%s)
-  git lfs install
-  git clone https://www.wisemodel.cn/Netease_Youdao/qanything.git
-  d_end_time=$(date +%s)
-  elapsed=$((d_end_time - d_start_time))  # 计算经过的时间（秒）
-  echo "Download Time elapsed: ${elapsed} seconds."
-  echo "下载耗时: ${elapsed} 秒."
+  # 判断是否存在lfs，不存在建议使用apt-get install git-lfs安装
+  if ! command -v git-lfs &> /dev/null; then
+    echo "git-lfs 命令不存在，请使用 apt-get install git-lfs 安装。或参考 https://git-lfs.com/ 页面安装"
+    exit 1
+  fi
+
+  # 如果存在QAanything/models.zip，不用下载
+  if [ ! -f "QAnything/models.zip" ]; then
+    echo "Downloading models.zip..."
+    echo "开始下载模型文件..."
+    git lfs install
+    git clone https://github.com/netease-youdao/QAnything.git
+    d_end_time=$(date +%s)
+    elapsed=$((d_end_time - d_start_time))  # 计算经过的时间（秒）
+    echo "Download Time elapsed: ${elapsed} seconds."
+    echo "下载耗时: ${elapsed} 秒."
+  else
+    echo "models.zip already exists, no need to download."
+    echo "models.zip已存在，无需下载。"
+  fi
 
   # 解压模型文件
-  unzip qanything/models.zip
+  # 判断是否存在unzip，不存在建议使用apt-get install unzip安装
+  if ! command -v unzip &> /dev/null; then
+    echo "unzip 命令不存在，请使用 apt-get install unzip 安装。"
+    exit 1
+  fi
+
+  unzip QAnything/models.zip
 
   unzip_end_time=$(date +%s)
   elapsed=$((unzip_end_time - d_end_time))  # 计算经过的时间（秒）
@@ -136,19 +303,10 @@ if [ ! -d "models" ]; then
   fi
 
   # 删除克隆的仓库
-  rm -rf qanything
+  rm -rf QAnything
 else
   echo "models 文件夹已存在，无需下载。"
 fi
-
-# 检查模型文件夹是否存在
-check_folder_existence() {
-  if [ ! -d "models/$1" ]; then
-    echo "The $1 folder does not exist under QAnything/models/. Please check your setup."
-    echo "在QAnything/models/下不存在$1文件夹。请检查您的模型文件。"
-    exit 1
-  fi
-}
 
 check_version_file() {
   local version_file="models/version.txt"
@@ -172,39 +330,11 @@ check_version_file() {
   echo "检查模型版本成功，当前版本为 $expected_version。"
 }
 
-echo "Checking model directories..."
-echo "检查模型目录..."
-check_folder_existence "base"
-check_folder_existence "embed"
-check_folder_existence "rerank"
 check_version_file "v2.1.0"
 echo "Model directories check passed. (0/8)"
 echo "模型路径和模型版本检查通过. (0/8)"
 
-
-#env_file="front_end/.env.production"
 user_file="user.config"
-
-gpu_id1=0
-gpu_id2=0
-
-
-# 判断命令行参数
-if [[ -n "$device_id" ]]; then
-    # 如果传入参数，分割成两个GPU ID
-    IFS=',' read -ra gpu_ids <<< "$device_id"
-    gpu_id1=${gpu_ids[0]}
-    gpu_id2=${gpu_ids[1]:-$gpu_id1}  # 如果没有第二个ID，则默认使用第一个ID
-fi
-
-# 检查GPU ID是否合法
-if ! [[ $gpu_id1 =~ ^[0-9]+$ ]] || ! [[ $gpu_id2 =~ ^[0-9]+$ ]]; then
-    echo "Invalid GPU IDs. Please enter IDs like '0' or '0,1'."
-    exit 1
-fi
-
-echo "GPUID1=${gpu_id1}" >> .env
-echo "GPUID2=${gpu_id2}" >> .env
 
 # 检查是否存在用户文件
 if [[ -f "$user_file" ]]; then
@@ -233,15 +363,6 @@ else
     # 保存配置到用户文件
     echo "$host" > "$user_file"
 fi
-
-# 保存IP地址到变量中
-# api_host="http://$host:8777"
-
-# 使用 sed 命令更新 VITE_APP_API_HOST 的值
-# sed -i "s|VITE_APP_API_HOST=.*|VITE_APP_API_HOST=$api_host|" "$env_file"
-
-# echo "The file $env_file has been updated with the following configuration:"
-# grep "VITE_APP_API_HOST" "$env_file"
 
 if [ -e /proc/version ]; then
   if grep -qi microsoft /proc/version || grep -qi MINGW /proc/version; then
