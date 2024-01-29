@@ -154,7 +154,10 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 git clone https://github.com/netease-youdao/QAnything.git
 ```
 ### step2: 进入项目根目录执行启动脚本
-如果在Windows系统下请先进入wsl环境
+* [📖 QAnything_Startup_Usage](docs/QAnything_Startup_Usage_README.md)
+* 执行 ```bash ./run.sh -h``` 获取详细的LLM服务配置方法 
+  
+如果在Windows系统下请先进入**WSL**环境
 ```shell
 cd QAnything
 bash run.sh  # 默认在0号GPU上启动
@@ -165,7 +168,7 @@ bash run.sh  # 默认在0号GPU上启动
 
 ```shell
 cd QAnything
-bash run.sh 0  # 指定0号GPU启动 GPU编号从0开始 windows机器一般只有一张卡，所以只能指定0号GPU
+bash ./run.sh -c local -i 0 -b default # 指定0号GPU启动 GPU编号从0开始 windows机器一般只有一张卡，所以只能指定0号GPU
 ```
 </details>
 
@@ -174,7 +177,7 @@ bash run.sh 0  # 指定0号GPU启动 GPU编号从0开始 windows机器一般只�
 
 ```shell
 cd QAnything
-bash run.sh 0,1  # 指定0,1号GPU启动，请确认有多张GPU可用，最多支持两张卡启动
+bash ./run.sh -c local -i 0,1 -b default  # 指定0,1号GPU启动，请确认有多张GPU可用，最多支持两张卡启动
 ```
 </details>
 
@@ -225,7 +228,7 @@ bash close.sh
 
 扫描下方二维码，加入QAnything官方微信群
 
-<img src="docs/images/Wechat.jpg" width="20%" height="auto">
+<img src="docs/images/Wechat.jpg" width="30%" height="auto">
 
 ### 邮箱
 如果你需要私信我们团队，请通过下面的邮箱联系我们：
@@ -248,6 +251,8 @@ qanything@rd.netease.com
 - [BCEmbedding](https://github.com/netease-youdao/BCEmbedding)
 - [Qwen](https://github.com/QwenLM/Qwen)
 - [Triton Inference Server](https://github.com/triton-inference-server/server)
+- [vllm](https://github.com/vllm-project/vllm)
+- [FastChat](https://github.com/lm-sys/FastChat)
 - [FasterTransformer](https://github.com/NVIDIA/FasterTransformer)
 - [Langchain](https://github.com/langchain-ai/langchain)
 - [Langchain-Chatchat](https://github.com/chatchat-space/Langchain-Chatchat)
