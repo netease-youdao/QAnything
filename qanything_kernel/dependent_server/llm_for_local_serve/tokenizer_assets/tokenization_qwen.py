@@ -1,25 +1,62 @@
+# Copyright (c) Alibaba Cloud.
+#
+# This source code is licensed under the license found in the
+# LICENSE file in the root directory of this source tree.
 
-from __future__ import absolute_import, division, print_function, unicode_literals
+"""Tokenization classes for QWen."""
+"""Fix: AttributeError: 'QwenTokenizer' object has no attribute 'mergeable_ranks' using transformers >= 4.36"""
 
-import json
+import base64
 import logging
 import os
 import unicodedata
-from io import open
-import base64
-import tiktoken
-from typing import List, Optional, Tuple, Union
+from typing import Collection, Dict, List, Set, Tuple, Union
 
+import tiktoken
 from transformers import PreTrainedTokenizer, AddedToken
 
 logger = logging.getLogger(__name__)
 
+
 VOCAB_FILES_NAMES = {"vocab_file": "qwen.tiktoken"}
 
-class QwenTokenizer(PreTrainedTokenizer):
-    """Qwen tokenizer."""
+PAT_STR = r"""(?i:'s|'t|'re|'ve|'m|'ll|'d)|[^\r\n\p{L}\p{N}]?\p{L}+|\p{N}| ?[^\s\p{L}\p{N}]+[\r\n]*|\s*[\r\n]+|\s+(?!\S)|\s+"""
+ENDOFTEXT = "<|endoftext|>"
+IMSTART = "<|im_start|>"
+IMEND = "<|im_end|>"
+# as the default behavior is changed to allow special tokens in
+# regular texts, the surface forms of special tokens need to be
+# as different as possible to minimize the impact
+EXTRAS = tuple((f"<|extra_{i}|>" for i in range(205)))
+# changed to use actual index to avoid misconfiguration with vocabulary expansion
+SPECIAL_START_ID = 151643
+SPECIAL_TOKENS = tuple(
+    enumerate(
+        (
+            (
+                ENDOFTEXT,
+                IMSTART,
+                IMEND,
+            )
+            + EXTRAS
+        ),
+        start=SPECIAL_START_ID,
+    )
+)
+SPECIAL_TOKENS_SET = set(t for i, t in SPECIAL_TOKENS)
 
-    """NOTE: This tokenizer will not handle special tokens to avoid injection attacks"""
+
+def _load_tiktoken_bpe(tiktoken_bpe_file: str) -> Dict[bytes, int]:
+    with open(tiktoken_bpe_file, "rb") as f:
+        contents = f.read()
+    return {
+        base64.b64decode(token): int(rank)
+        for token, rank in (line.split() for line in contents.splitlines() if line)
+    }
+
+
+class QWenTokenizer(PreTrainedTokenizer):
+    """QWen tokenizer."""
 
     vocab_files_names = VOCAB_FILES_NAMES
 
@@ -27,137 +64,113 @@ class QwenTokenizer(PreTrainedTokenizer):
         self,
         vocab_file,
         errors="replace",
-        max_len=None,
-        unk_token="<|endoftext|>",
-        bos_token="<|endoftext|>",
-        eos_token="<|endoftext|>",
-        pad_token=None,
-        add_prefix_space=False,
-        add_bos_token=False,
-        add_more_sp_tokens=True,
+        extra_vocab_file=None,
         **kwargs,
     ):
-        bos_token = (
-            AddedToken(bos_token, lstrip=False, rstrip=False)
-            if isinstance(bos_token, str)
-            else bos_token
-        )
-        eos_token = (
-            AddedToken(eos_token, lstrip=False, rstrip=False)
-            if isinstance(eos_token, str)
-            else eos_token
-        )
-        unk_token = (
-            AddedToken(unk_token, lstrip=False, rstrip=False)
-            if isinstance(unk_token, str)
-            else unk_token
-        )
-        pad_token = (
-            AddedToken(pad_token, lstrip=False, rstrip=False)
-            if isinstance(pad_token, str)
-            else pad_token
-        )
-        super().__init__(
-            errors=errors,
-            unk_token=unk_token,
-            bos_token=bos_token,
-            eos_token=eos_token,
-            pad_token=pad_token,
-            add_prefix_space=add_prefix_space,
-            add_bos_token=add_bos_token,
-        )
-        self.add_bos_token = add_bos_token
-        self.max_len = max_len if max_len is not None else int(1e12)
+        super().__init__(**kwargs)
 
-        self.errors = errors  # how to handle errors in decoding
+        # how to handle errors in decoding UTF-8 byte sequences
+        # use ignore if you are in streaming inference
+        self.errors = errors  
 
-        name = "Qwen"
-        ENDOFTEXT = "<|endoftext|>"
-        IMSTART = "<|im_start|>"
-        IMEND = "<|im_end|>"
-        if add_more_sp_tokens:
-            special_tokens = (
-                ENDOFTEXT,
-                IMSTART,
-                IMEND,
-                "<R>",
-                "<S>",
-                "<X>",
-                "<mask>",
-                "<sep>",
-            ) + tuple([f"<extra_{i}>" for i in range(200)])
-        else:
-            special_tokens = (ENDOFTEXT, IMSTART, IMEND)
-
-        PAT_STR = r"""(?i:'s|'t|'re|'ve|'m|'ll|'d)|[^\r\n\p{L}\p{N}]?\p{L}+|\p{N}| ?[^\s\p{L}\p{N}]+[\r\n]*|\s*[\r\n]+|\s+(?!\S)|\s+"""
-
-        def load_tiktoken_bpe(tiktoken_bpe_file: str) -> "dict[bytes, int]":
-            contents = open(tiktoken_bpe_file, "rb").read()
-            return {
-                base64.b64decode(token): int(rank)
-                for token, rank in (
-                    line.split() for line in contents.splitlines() if line
-                )
-            }
-
-        mergeable_ranks = load_tiktoken_bpe(vocab_file)
-        special_tokens = {
+        self.mergeable_ranks = _load_tiktoken_bpe(vocab_file)  # type: Dict[bytes, int]
+        self.special_tokens = {
             token: index
-            for index, token in enumerate(special_tokens, start=len(mergeable_ranks))
+            for index, token in SPECIAL_TOKENS
         }
-        self.special_tokens = special_tokens
+
+        # try load extra vocab from file
+        if extra_vocab_file is not None:
+            used_ids = set(self.mergeable_ranks.values()) | set(self.special_tokens.values())
+            extra_mergeable_ranks = _load_tiktoken_bpe(extra_vocab_file)
+            for token, index in extra_mergeable_ranks.items():
+                if token in self.mergeable_ranks:
+                    logger.info(f"extra token {token} exists, skipping")
+                    continue
+                if index in used_ids:
+                    logger.info(f'the index {index} for extra token {token} exists, skipping')
+                    continue
+                self.mergeable_ranks[token] = index
+            # the index may be sparse after this, but don't worry tiktoken.Encoding will handle this
+
         enc = tiktoken.Encoding(
-            name,
+            "Qwen",
             pat_str=PAT_STR,
-            mergeable_ranks=mergeable_ranks,
-            special_tokens=special_tokens,
+            mergeable_ranks=self.mergeable_ranks,
+            special_tokens=self.special_tokens,
         )
         assert (
-            len(mergeable_ranks) + len(special_tokens) == enc.n_vocab
-        ), f"{len(mergeable_ranks) + len(special_tokens)} != {enc.n_vocab} in encoding"
+            len(self.mergeable_ranks) + len(self.special_tokens) == enc.n_vocab
+        ), f"{len(self.mergeable_ranks) + len(self.special_tokens)} != {enc.n_vocab} in encoding"
 
-        self.mergeable_ranks = mergeable_ranks
-        self.encoder = self.mergeable_ranks
-        self.decoder = {v: k for k, v in self.encoder.items()}
+        self.decoder = {
+            v: k for k, v in self.mergeable_ranks.items()
+        }  # type: dict[int, bytes|str]
         self.decoder.update({v: k for k, v in self.special_tokens.items()})
-        self.tokenizer = enc  # type: tiktoken.Encoding
-        self.eod_id = self.tokenizer.eot_token
-        self.im_start_id = special_tokens[IMSTART]
-        self.im_end_id = special_tokens[IMEND]
 
-    def __len__(self):
+        self.tokenizer = enc  # type: tiktoken.Encoding
+
+        self.eod_id = self.tokenizer.eot_token
+        self.im_start_id = self.special_tokens[IMSTART]
+        self.im_end_id = self.special_tokens[IMEND]
+        self.bos_token_id = SPECIAL_START_ID
+        self.eos_token_id = self.eod_id
+
+    def __getstate__(self):
+        # for pickle lovers
+        state = self.__dict__.copy()
+        del state["tokenizer"]
+        return state
+
+    def __setstate__(self, state):
+        # tokenizer is not python native; don't pass it; rebuild it
+        self.__dict__.update(state)
+        enc = tiktoken.Encoding(
+            "Qwen",
+            pat_str=PAT_STR,
+            mergeable_ranks=self.mergeable_ranks,
+            special_tokens=self.special_tokens,
+        )
+        self.tokenizer = enc
+
+    def __len__(self) -> int:
         return self.tokenizer.n_vocab
 
-    def get_vocab(self):
+    def get_vocab(self) -> Dict[bytes, int]:
         return self.mergeable_ranks
 
-    def convert_tokens_to_ids(self, tokens):
+    def convert_tokens_to_ids(
+        self, tokens: Union[bytes, str, List[Union[bytes, str]]]
+    ) -> List[int]:
         ids = []
-        # Remove support for py2
-        if isinstance(tokens, str):
+        if isinstance(tokens, (str, bytes)):
             if tokens in self.special_tokens:
                 return self.special_tokens[tokens]
             else:
-                return self.encoder.get(tokens)
+                return self.mergeable_ranks.get(tokens)
         for token in tokens:
             if token in self.special_tokens:
                 ids.append(self.special_tokens[token])
             else:
-                ids.append(self.encoder.get(token))
-        if len(ids) > self.max_len:
-            logger.warning(
-                "Token indices sequence length is longer than the specified maximum "
-                " sequence length for this model ({} > {}). Running this"
-                " sequence through the model will result in indexing errors".format(
-                    len(ids), self.max_len
-                )
-            )
+                ids.append(self.mergeable_ranks.get(token))
         return ids
+
+    def _add_tokens(
+        self,
+        new_tokens: Union[List[str], List[AddedToken]],
+        special_tokens: bool = False,
+    ) -> int:
+        if not special_tokens and new_tokens:
+            raise ValueError("Adding regular tokens is not supported")
+        for token in new_tokens:
+            surface_form = token.content if isinstance(token, AddedToken) else token
+            if surface_form not in SPECIAL_TOKENS_SET:
+                raise ValueError("Adding unknown special tokens is not supported")
+        return 0
 
     def save_vocabulary(self, save_directory: str, **kwargs) -> Tuple[str]:
         """
-        Save only the vocabulary of the tokenizer (vocabulary + added tokens).
-
+        Save only the vocabulary of the tokenizer (vocabulary).
         Returns:
             `Tuple(str)`: Paths to the files saved.
         """
@@ -168,80 +181,81 @@ class QwenTokenizer(PreTrainedTokenizer):
                 w.write(line)
         return (file_path,)
 
-    def tokenize(self, text: str, **kwargs) -> List[str]:
+    def tokenize(
+        self,
+        text: str,
+        allowed_special: Union[Set, str] = "all",
+        disallowed_special: Union[Collection, str] = (),
+        **kwargs,
+    ) -> List[Union[bytes, str]]:
         """
-        Converts a string in a sequence of tokens, replacing unknown tokens with the `unk_token`.
-
+        Converts a string in a sequence of tokens.
         Args:
             text (`str`):
                 The sequence to be encoded.
+            allowed_special (`Literal["all"]` or `set`):
+                The surface forms of the tokens to be encoded as special tokens in regular texts.
+                Default to "all".
+            disallowed_special (`Literal["all"]` or `Collection`):
+                The surface forms of the tokens that should not be in regular texts and trigger errors.
+                Default to an empty tuple.
             kwargs (additional keyword arguments, *optional*):
                 Will be passed to the underlying model specific encode method.
-                Tiktoken allows users to allow the tokenization of special tokens with the following args:
-                `allowed_special`: set to 'all' or a `set` of special tokens.
-                `disallowed_special`: set to 'all' or a `Collection` of special tokens. NOT RECOMMENDED, AS IT MAY BE CONFLICTED WITH `allowed_special`.
-
         Returns:
-            `List[str]`: The list of tokens.
+            `List[bytes|str]`: The list of tokens.
         """
         tokens = []
         text = unicodedata.normalize("NFC", text)
 
-        for t in self.tokenizer.encode(text, **kwargs):
+        # this implementation takes a detour: text -> token id -> token surface forms
+        for t in self.tokenizer.encode(
+            text, allowed_special=allowed_special, disallowed_special=disallowed_special
+        ):
             tokens.append(self.decoder[t])
-
         return tokens
 
-    def convert_tokens_to_string(self, tokens: List[str]) -> str:
+    def convert_tokens_to_string(self, tokens: List[Union[bytes, str]]) -> str:
         """
-        Converts a sequence of tokens in a single string. The most simple way to do it is `" ".join(tokens)` but we
-        often want to remove sub-word tokenization artifacts at the same time.
+        Converts a sequence of tokens in a single string.
         """
-        text = "".join(tokens)
-        text = bytearray([self.byte_decoder[c] for c in text]).decode(
-            "utf-8", errors=self.errors
-        )
+        text = ""
+        temp = b""
+        for t in tokens:
+            if isinstance(t, str):
+                if temp:
+                    text += temp.decode("utf-8", errors=self.errors)
+                    temp = b""
+                text += t
+            elif isinstance(t, bytes):
+                temp += t
+            else:
+                raise TypeError("token should only be of type types or str")
+        if temp:
+            text += temp.decode("utf-8", errors=self.errors)
         return text
-  
+
     @property
     def vocab_size(self):
         return self.tokenizer.n_vocab
 
-    def _convert_id_to_token(self, index: int) -> str:
-        if index >= self.tokenizer.n_vocab:
-            return self.unk_token
-        return self.tokenizer.decode([index])
+    def _convert_id_to_token(self, index: int) -> Union[bytes, str]:
+        """Converts an id to a token, special tokens included"""
+        if index in self.decoder:
+            return self.decoder[index]
+        raise ValueError("unknown ids")
 
-    def _convert_token_to_id(self, token: str) -> int:
-        """Converts a token to an id using the vocab."""
-        return self.encoder.get(
-            token.encode("UTF-8"),
-            self.tokenizer.encode(self.unk_token, allowed_special="all")[0],
-        )
+    def _convert_token_to_id(self, token: Union[bytes, str]) -> int:
+        """Converts a token to an id using the vocab, special tokens included"""
+        if token in self.special_tokens:
+            return self.special_tokens[token]
+        if token in self.mergeable_ranks:
+            return self.mergeable_ranks[token]
+        raise ValueError("unknown token")
 
-    @property
-    def all_special_tokens(self) -> List[str]:
-        """
-        `List[str]`: All the special tokens (`'<unk>'`, `'<cls>'`, etc.) mapped to class attributes.
-
-        Convert tokens of `tokenizers.AddedToken` type to string.
-        """
-        all_toks = [str(s) for s in self.special_tokens.keys()]
-        return all_toks
-
-    @property
-    def all_special_ids(self) -> List[int]:
-        """
-        `List[int]`: List the ids of the special tokens(`'<unk>'`, `'<cls>'`, etc.) mapped to class attributes.
-        """
-        all_ids = [v for v in self.special_tokens.values()]
-        return all_ids
-
-    def _tokenize(self, text, **kwargs):
+    def _tokenize(self, text: str, **kwargs):
         """
         Converts a string in a sequence of tokens (string), using the tokenizer. Split in words for word-based
         vocabulary or sub-words for sub-word-based vocabularies (BPE/SentencePieces/WordPieces).
-
         Do NOT take care of added tokens.
         """
         raise NotImplementedError
@@ -250,10 +264,11 @@ class QwenTokenizer(PreTrainedTokenizer):
         self,
         token_ids: Union[int, List[int]],
         skip_special_tokens: bool = False,
+        errors: str = None,
         **kwargs,
     ) -> str:
         if isinstance(token_ids, int):
             token_ids = [token_ids]
         if skip_special_tokens:
-            token_ids = [i for i in token_ids if i not in self.all_special_ids]
-        return self.tokenizer.decode(token_ids)
+            token_ids = [i for i in token_ids if i < self.eod_id]
+        return self.tokenizer.decode(token_ids, errors=errors or self.errors)

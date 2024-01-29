@@ -7,6 +7,9 @@ venv
 __pycache__
 QANY_DB
 qanything_logs
+debug_logs
+qa_logs
+*.lock
 api.log
 front_end/dist
 node_modules

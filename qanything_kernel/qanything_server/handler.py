@@ -1,6 +1,7 @@
 from qanything_kernel.core.local_file import LocalFile
 from qanything_kernel.core.local_doc_qa import LocalDocQA
 from qanything_kernel.utils.general_utils import *
+from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from sanic.response import ResponseStream
 from sanic.response import json as sanic_json
 from sanic.response import text as sanic_text
@@ -23,10 +24,12 @@ INVALID_USER_ID = f"fail, Invalid user_id: . user_id 必须只含有字母，数
 async def new_knowledge_base(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
     is_valid = validate_user_id(user_id)
     if not is_valid:
         return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
-    local_doc_qa.print("new_knowledge_base %s", user_id)
+    debug_logger.info("new_knowledge_base %s", user_id)
     kb_name = safe_get(req, 'kb_name')
     kb_id = 'KB' + uuid.uuid4().hex
     local_doc_qa.create_milvus_collection(user_id, kb_id, kb_name)
@@ -39,10 +42,12 @@ async def new_knowledge_base(req: request):
 async def upload_weblink(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
     is_valid = validate_user_id(user_id)
     if not is_valid:
         return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
-    local_doc_qa.print("upload_weblink %s", user_id)
+    debug_logger.info("upload_weblink %s", user_id)
     kb_id = safe_get(req, 'kb_id')
     url = safe_get(req, 'url')
     mode = safe_get(req, 'mode', default='soft')  # soft代表不上传同名文件，strong表示强制上传同名文件
@@ -61,8 +66,7 @@ async def upload_weblink(req: request):
         data = [{"file_id": file_id, "file_name": url, "status": status, "bytes": file_size, "timestamp": timestamp}]
     else:
         file_id, msg = local_doc_qa.milvus_summary.add_file(user_id, kb_id, url, timestamp)
-        local_file = LocalFile(user_id, kb_id, url, file_id, url, local_doc_qa.embeddings, logger=local_doc_qa.logger,
-                               is_url=True)
+        local_file = LocalFile(user_id, kb_id, url, file_id, url, local_doc_qa.embeddings, is_url=True)
         data = [{"file_id": file_id, "file_name": url, "status": "gray", "bytes": 0, "timestamp": timestamp}]
         asyncio.create_task(local_doc_qa.insert_files_to_milvus(user_id, kb_id, [local_file]))
         msg = "success，后台正在飞速上传文件，请耐心等待"
@@ -72,13 +76,15 @@ async def upload_weblink(req: request):
 async def upload_files(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.form: {req.form}，request.files: {req.files}请检查！'})
     is_valid = validate_user_id(user_id)
     if not is_valid:
         return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
-    local_doc_qa.print("upload_files %s", user_id)
+    debug_logger.info("upload_files %s", user_id)
     kb_id = safe_get(req, 'kb_id')
     mode = safe_get(req, 'mode', default='soft')  # soft代表不上传同名文件，strong表示强制上传同名文件
-    local_doc_qa.print("mode: %s", mode)
+    debug_logger.info("mode: %s", mode)
     use_local_file = safe_get(req, 'use_local_file', 'false')
     if use_local_file == 'true':
         files = read_files_with_extensions()
@@ -97,12 +103,13 @@ async def upload_files(req: request):
         if isinstance(file, str):
             file_name = os.path.basename(file)
         else:
-            local_doc_qa.print('ori name: %s', file.name)
+            debug_logger.info('ori name: %s', file.name)
             file_name = urllib.parse.unquote(file.name, encoding='UTF-8')
-            local_doc_qa.print('decode name: %s', file_name)
+            debug_logger.info('decode name: %s', file_name)
         # 删除掉全角字符
         file_name = re.sub(r'[\uFF01-\uFF5E\u3000-\u303F]', '', file_name)
-        local_doc_qa.print('cleaned name: %s', file_name)
+        file_name = file_name.replace("/", "_")
+        debug_logger.info('cleaned name: %s', file_name)
         file_name = truncate_filename(file_name)
         file_names.append(file_name)
 
@@ -118,9 +125,8 @@ async def upload_files(req: request):
         if file_name in exist_file_names:
             continue
         file_id, msg = local_doc_qa.milvus_summary.add_file(user_id, kb_id, file_name, timestamp)
-        local_doc_qa.print(f"{file_name}, {file_id}, {msg}")
-        local_file = LocalFile(user_id, kb_id, file, file_id, file_name, local_doc_qa.embeddings,
-                               logger=local_doc_qa.logger)
+        debug_logger.info(f"{file_name}, {file_id}, {msg}")
+        local_file = LocalFile(user_id, kb_id, file, file_id, file_name, local_doc_qa.embeddings)
         local_files.append(local_file)
         local_doc_qa.milvus_summary.update_file_size(file_id, len(local_file.file_content))
         data.append(
@@ -138,27 +144,31 @@ async def upload_files(req: request):
 async def list_kbs(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
     is_valid = validate_user_id(user_id)
     if not is_valid:
         return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
-    local_doc_qa.print("list_kbs %s", user_id)
+    debug_logger.info("list_kbs %s", user_id)
     kb_infos = local_doc_qa.milvus_summary.get_knowledge_bases(user_id)
     data = []
     for kb in kb_infos:
         data.append({"kb_id": kb[0], "kb_name": kb[1]})
-    local_doc_qa.print("all kb infos: {}".format(data))
+    debug_logger.info("all kb infos: {}".format(data))
     return sanic_json({"code": 200, "data": data})
 
 
 async def list_docs(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
     is_valid = validate_user_id(user_id)
     if not is_valid:
         return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
-    local_doc_qa.print("list_docs %s", user_id)
+    debug_logger.info("list_docs %s", user_id)
     kb_id = safe_get(req, 'kb_id')
-    local_doc_qa.print("kb_id: {}".format(kb_id))
+    debug_logger.info("kb_id: {}".format(kb_id))
     data = []
     file_infos = local_doc_qa.milvus_summary.get_files(user_id, kb_id)
     status_count = {}
@@ -180,10 +190,12 @@ async def list_docs(req: request):
 async def delete_knowledge_base(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
     is_valid = validate_user_id(user_id)
     if not is_valid:
         return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
-    local_doc_qa.print("delete_knowledge_base %s", user_id)
+    debug_logger.info("delete_knowledge_base %s", user_id)
     kb_ids = safe_get(req, 'kb_ids')
     not_exist_kb_ids = local_doc_qa.milvus_summary.check_kb_exist(user_id, kb_ids)
     if not_exist_kb_ids:
@@ -199,10 +211,12 @@ async def delete_knowledge_base(req: request):
 async def rename_knowledge_base(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
     is_valid = validate_user_id(user_id)
     if not is_valid:
         return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
-    local_doc_qa.print("rename_knowledge_base %s", user_id)
+    debug_logger.info("rename_knowledge_base %s", user_id)
     kb_id = safe_get(req, 'kb_id')
     new_kb_name = safe_get(req, 'new_kb_name')
     not_exist_kb_ids = local_doc_qa.milvus_summary.check_kb_exist(user_id, [kb_id])
@@ -215,10 +229,12 @@ async def rename_knowledge_base(req: request):
 async def delete_docs(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
     is_valid = validate_user_id(user_id)
     if not is_valid:
         return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
-    local_doc_qa.print("delete_docs %s", user_id)
+    debug_logger.info("delete_docs %s", user_id)
     kb_id = safe_get(req, 'kb_id')
     file_ids = safe_get(req, "file_ids")
     not_exist_kb_ids = local_doc_qa.milvus_summary.check_kb_exist(user_id, [kb_id])
@@ -237,10 +253,12 @@ async def delete_docs(req: request):
 async def get_total_status(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
     is_valid = validate_user_id(user_id)
     if not is_valid:
         return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
-    local_doc_qa.print('get_total_status %s', user_id)
+    debug_logger.info('get_total_status %s', user_id)
     if not user_id:
         users = local_doc_qa.milvus_summary.get_users()
         users = [user[0] for user in users]
@@ -265,10 +283,12 @@ async def get_total_status(req: request):
 async def clean_files_by_status(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
     is_valid = validate_user_id(user_id)
     if not is_valid:
         return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
-    local_doc_qa.print('clean_files_by_status %s', user_id)
+    debug_logger.info('clean_files_by_status %s', user_id)
     status = safe_get(req, 'status', default='gray')
     kb_ids = safe_get(req, 'kb_ids')
     if not kb_ids:
@@ -282,7 +302,7 @@ async def clean_files_by_status(req: request):
     gray_file_infos = local_doc_qa.milvus_summary.get_file_by_status(kb_ids, status)
     gray_file_ids = [f[0] for f in gray_file_infos]
     gray_file_names = [f[1] for f in gray_file_infos]
-    local_doc_qa.print(f'{status} files number: {len(gray_file_names)}')
+    debug_logger.info(f'{status} files number: {len(gray_file_names)}')
     # 删除milvus中的file
     if gray_file_ids:
         milvus_kb = local_doc_qa.match_milvus_kb(user_id, kb_ids)
@@ -295,20 +315,22 @@ async def clean_files_by_status(req: request):
 async def local_doc_chat(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
     is_valid = validate_user_id(user_id)
     if not is_valid:
         return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
-    local_doc_qa.print('local_doc_chat %s', user_id)
+    debug_logger.info('local_doc_chat %s', user_id)
     kb_ids = safe_get(req, 'kb_ids')
     question = safe_get(req, 'question')
     rerank = safe_get(req, 'rerank', default=True)
-    local_doc_qa.print('rerank %s', rerank)
+    debug_logger.info('rerank %s', rerank)
     streaming = safe_get(req, 'streaming', False)
     history = safe_get(req, 'history', [])
-    local_doc_qa.print("history: %s ", history)
-    local_doc_qa.print("question: %s", question)
-    local_doc_qa.print("kb_ids: %s", kb_ids)
-    local_doc_qa.print("user_id: %s", user_id)
+    debug_logger.info("history: %s ", history)
+    debug_logger.info("question: %s", question)
+    debug_logger.info("kb_ids: %s", kb_ids)
+    debug_logger.info("user_id: %s", user_id)
 
     not_exist_kb_ids = local_doc_qa.milvus_summary.check_kb_exist(user_id, kb_ids)
     if not_exist_kb_ids:
@@ -324,12 +346,12 @@ async def local_doc_chat(req: request):
                            "response": "All knowledge bases {} are empty or haven't green file, please upload files".format(
                                kb_ids), "history": history, "source_documents": [{}]})
     else:
-        local_doc_qa.print("streaming: %s", streaming)
+        debug_logger.info("streaming: %s", streaming)
         if streaming:
-            local_doc_qa.print("start generate answer")
+            debug_logger.info("start generate answer")
 
             async def generate_answer(response):
-                local_doc_qa.print("start generate...")
+                debug_logger.info("start generate...")
                 for resp, next_history in local_doc_qa.get_knowledge_based_answer(
                         query=question, milvus_kb=milvus_kb, chat_history=history, streaming=True, rerank=rerank
                 ):
@@ -352,8 +374,8 @@ async def local_doc_chat(req: request):
                         chat_data = {'user_info': user_id, 'kb_ids': kb_ids, 'query': question, 'history': history,
                                      'prompt': resp['prompt'], 'result': next_history[-1][1],
                                      'retrieval_documents': retrieval_documents, 'source_documents': source_documents}
-                        local_doc_qa.print("chat_data: %s", chat_data)
-                        local_doc_qa.print("response: %s", chat_data['result'])
+                        qa_logger.info("chat_data: %s", chat_data)
+                        debug_logger.info("response: %s", chat_data['result'])
                         stream_res = {
                             "code": 200,
                             "msg": "success",
@@ -392,8 +414,8 @@ async def local_doc_chat(req: request):
             chat_data = {'user_id': user_id, 'kb_ids': kb_ids, 'query': question, 'history': history,
                          'retrieval_documents': retrieval_documents, 'prompt': resp['prompt'], 'result': resp['result'],
                          'source_documents': source_documents}
-            local_doc_qa.print("chat_data: %s", chat_data)
-            local_doc_qa.print("response: %s", chat_data['result'])
+            qa_logger.info("chat_data: %s", chat_data)
+            debug_logger.info("response: %s", chat_data['result'])
             return sanic_json({"code": 200, "msg": "success chat", "question": question, "response": resp["result"],
                                "history": history, "source_documents": source_documents})
 
