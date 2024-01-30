@@ -56,7 +56,22 @@ Note: You can choose the most suitable Service Startup Command based on your own
 | chatglm3-6b                               | chatglm3            | [ChatGLM3](https://huggingface.co/THUDM/chatglm3-6b)                            | 
 | ...                          ```check or add conv_template for more LLMs in "/path/to/QAnything/third_party/FastChat/fastchat/conversation.py"``` |
 
+
 ### 1. Run QAnything using FastChat API with **Huggingface transformers** runtime backend (recommend for GPU device with VRAM <= 16GB).
+### 1.1
+```bash
+## Step 1. Download the public LLM model (e.g., Qwen-7B-QAnything) and save to "/path/to/QAnything/assets/custom_models"
+cd /path/to/QAnything/assets/custom_models
+git clone https://huggingface.co/netease-youdao/Qwen-7B-QAnything
+
+## Step 2. Execute the service startup command.  Here we use "-b hf" to specify the Huggingface transformers backend.
+## Here we use "-b hf" to specify the transformers backend that will load model in 8 bits but do bf16 inference as default for saving VRAM.
+cd /path/to/QAnything
+bash ./run.sh -c local -i 0 -b hf -m Qwen-7B-QAnything -t qwen-7b-qanything
+
+```
+
+### 1.2
 ```bash
 ## Step 1. Download the public LLM model (e.g., MiniChat-2-3B) and save to "/path/to/QAnything/assets/custom_models"
 cd /path/to/QAnything/assets/custom_models
@@ -70,7 +85,21 @@ bash ./run.sh -c local -i 0 -b hf -m MiniChat-2-3B -t minichat
 ```
 
 ### 2. Run QAnything using FastChat API with **vllm** runtime backend (recommend for GPU device with enough VRAM).
+### 2.1
+```bash
+## Step 1. Download the public LLM model (e.g., Qwen-7B-QAnything) and save to "/path/to/QAnything/assets/custom_models"
+cd /path/to/QAnything/assets/custom_models
+git clone https://huggingface.co/netease-youdao/Qwen-7B-QAnything
 
+## Step 2. Execute the service startup command.  Here we use "-b vllm" to specify the Huggingface transformers backend.
+## Here we use "-b vllm" to specify the vllm backend that will do bf16 inference as default.
+## Note you should adjust the gpu_memory_utilization yourself according to the model size to avoid out of memory (e.g., gpu_memory_utilization=0.81 is set default for 7B. Here, gpu_memory_utilization is set to 0.5 by "-r 0.5").
+cd /path/to/QAnything
+bash ./run.sh -c local -i 0 -b vllm -m Qwen-7B-QAnything -t qwen-7b-qanything -p 1 -r 0.81
+
+```
+
+###2.2
 ```bash
 ## Step 1. Download the public LLM model (e.g., MiniChat-2-3B) and save to "/path/to/QAnything/assets/custom_models"
 cd /path/to/QAnything/assets/custom_models
@@ -78,7 +107,7 @@ git clone https://huggingface.co/GeneZC/MiniChat-2-3B
 
 ## Step 2. Execute the service startup command. 
 ## Here we use "-b vllm" to specify the vllm backend that will do bf16 inference as default.
-## Note you should adjust the gpu_memory_utilization yourself according to the model size to aviod out of memory (e.g., gpu_memory_utilization=0.81 is set default for 7B. Here, gpu_memory_utilization is set to 0.5 by "-r 0.5").
+## Note you should adjust the gpu_memory_utilization yourself according to the model size to avoid out of memory (e.g., gpu_memory_utilization=0.81 is set default for 7B. Here, gpu_memory_utilization is set to 0.5 by "-r 0.5").
 cd /path/to/QAnything
 bash ./run.sh -c local -i 0 -b vllm -m MiniChat-2-3B -t minichat -p 1 -r 0.5
 

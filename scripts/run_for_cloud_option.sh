@@ -56,9 +56,6 @@ check_folder_existence() {
 
 start_time=$(date +%s)  # 记录开始时间 
 
-# cd ~/.cache/ && tar -xvf /workspace/qanything_local/pip_deps.tar
-# cd /workspace/qanything_local/third_party/FastChat && pip install transformers==4.36.0 vllm==0.2.7 transformers-stream-generator==0.0.4 einops==0.6.0 accelerate==0.21.0 && pip install -e .
-
 # 获取默认的 MD5 校验和
 default_checksum=$(cat /workspace/qanything_local/third_party/checksum.config)
 
@@ -80,13 +77,14 @@ if [[ "$install_deps" != *"vllm"* ]]; then
     checksum=$(find /workspace/qanything_local/third_party/FastChat -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | awk '{print $1}') && echo "$checksum" > /workspace/qanything_local/third_party/checksum.config
 fi
 
-mkdir -p /model_repos/QAEnsemble_embed /model_repos/QAEnsemble_rerank /model_repos/monitor_logs
-if [ ! -L "/model_repos/QAEnsemble_embed/embed" ]; then
-  cd /model_repos/QAEnsemble_embed && ln -s /model_repos/QAEnsemble/embed .
+mkdir -p /model_repos/QAEnsemble_embed_rerank && mkdir -p /workspace/qanything_local/logs/debug_logs && mkdir -p /workspace/qanything_local/logs/qa_logs
+
+if [ ! -L "/model_repos/QAEnsemble_embed_rerank/rerank" ]; then
+  cd /model_repos/QAEnsemble_embed_rerank && ln -s /model_repos/QAEnsemble/rerank .
 fi
 
-if [ ! -L "/model_repos/QAEnsemble_rerank/rerank" ]; then
-  cd /model_repos/QAEnsemble_rerank && ln -s /model_repos/QAEnsemble/rerank .
+if [ ! -L "/model_repos/QAEnsemble_embed_rerank/embed" ]; then
+  cd /model_repos/QAEnsemble_embed_rerank && ln -s /model_repos/QAEnsemble/embed .
 fi
 
 # 设置默认值
@@ -110,59 +108,37 @@ echo "GPU ID: $gpuid1, $gpuid2"
 
 echo "The triton server will start on $gpuid1 GPU"
 
-CUDA_VISIBLE_DEVICES=$gpuid1 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_embed --http-port=9000 --grpc-port=9001 --metrics-port=9002 --log-verbose=1 > /model_repos/QAEnsemble_embed/QAEnsemble_embed.log 2>&1 &
-CUDA_VISIBLE_DEVICES=$gpuid1 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_rerank --http-port=8000 --grpc-port=8001 --metrics-port=8002 --log-verbose=1 > /model_repos/QAEnsemble_rerank/QAEnsemble_rerank.log 2>&1 &
+CUDA_VISIBLE_DEVICES=$gpuid1 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_embed_rerank --http-port=9000 --grpc-port=9001 --metrics-port=9002 --log-verbose=1 > /workspace/qanything_local/logs/debug_logs/embed_rerank_tritonserver.log 2>&1 &
 
-echo "RERANK_PORT=8001" >> /workspace/qanything_local/.env
+echo "RERANK_PORT=9001" >> /workspace/qanything_local/.env
 echo "EMBED_PORT=9001" >> /workspace/qanything_local/.env
 
-# 默认ocr_use_gpu为True
-OCR_USE_GPU="True"
-
-# 使用nvidia-smi命令获取GPU的显存大小（以MiB为单位）
-GPU1_MEMORY_SIZE=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits -i $gpuid1)
-GPU2_MEMORY_SIZE=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits -i $gpuid2)
-
-# 检查显存大小是否小于12G（即 12288 MiB）
-if [ "$GPU2_MEMORY_SIZE" -lt 12288 ]; then
+if [ $gpuid1 -eq $gpuid2 ]; then
+    gpu_model=$(nvidia-smi --query-gpu=gpu_name --format=csv,noheader,nounits -i $gpuid1)
+else
+    gpu_model=$(nvidia-smi --query-gpu=gpu_name --format=csv,noheader,nounits -i $gpuid2)
+fi
+compute_capability=$(jq -r ".[\"$gpu_model\"]" scripts/gpu_capabilities.json)
+# 如果算力>=7.5，则使用OCR_USE_GPU=True
+if [ $(echo "$compute_capability >= 7.5" | bc) -eq 1 ]; then
+    OCR_USE_GPU="True"
+else
     OCR_USE_GPU="False"
 fi
 
-echo "GPU1_MEMORY_SIZE=$GPU1_MEMORY_SIZE"
 echo "OCR_USE_GPU=$OCR_USE_GPU"
-
-echo "===================================================="
-echo "******************** 重要提示 ********************"
-echo "===================================================="
-echo ""
-
-if [ "$GPU1_MEMORY_SIZE" -lt 8100 ]; then
-    echo "检测到您的 GPU 显存小于 8GB，推荐使用 OpenAI 或其他在线大型语言模型 (LLM)。"
-elif [ "$GPU1_MEMORY_SIZE" -ge 8100 ] && [ "$GPU1_MEMORY_SIZE" -le 16400 ]; then
-    echo "检测到您的 GPU 显存在 8GB 到 16GB 之间，推荐使用本地 3B 大小以内的语言模型。"
-else
-    echo "检测到您的 GPU 显存大于 16GB，推荐使用本地 7B 的语言模型。"
-fi
-
-echo ""
-echo "===================================================="
-echo "请根据您的显存情况选择合适的语言模型以获得最佳性能。"
-echo "===================================================="
-echo ""
-sleep 5
-
 
 
 cd /workspace/qanything_local || exit
-nohup python3 -u qanything_kernel/dependent_server/rerank_for_local_serve/rerank_server.py > rerank.log 2>&1 &
+nohup python3 -u qanything_kernel/dependent_server/rerank_for_local_serve/rerank_server.py > /workspace/qanything_local/logs/debug_logs/rerank_server.log 2>&1 &
 echo "The rerank service is ready! (2/8)"
 echo "rerank服务已就绪! (2/8)"
 
-CUDA_VISIBLE_DEVICES=$gpuid2 nohup python3 -u qanything_kernel/dependent_server/ocr_serve/ocr_server.py $OCR_USE_GPU > ocr.log 2>&1 &
+CUDA_VISIBLE_DEVICES=$gpuid2 nohup python3 -u qanything_kernel/dependent_server/ocr_serve/ocr_server.py $OCR_USE_GPU > /workspace/qanything_local/logs/debug_logs/ocr_server.log 2>&1 &
 echo "The ocr service is ready! (3/8)"
 echo "OCR服务已就绪! (3/8)"
 
-nohup python3 -u qanything_kernel/qanything_server/sanic_api.py --mode "online" > api.log 2>&1 &
+nohup python3 -u qanything_kernel/qanything_server/sanic_api.py --mode "online" > /workspace/qanything_local/logs/debug_logs/sanic_api.log 2>&1 &
 echo "The qanything backend service is ready! (4/8)"
 echo "qanything后端服务已就绪! (4/8)"
 
@@ -187,6 +163,7 @@ fi
 cd /workspace/qanything_local/front_end || exit
 # 安装依赖
 echo "Waiting for [npm run install]（5/8)"
+npm config set registry https://registry.npmmirror.com
 timeout $timeout_time npm install
 if [ $? -eq 0 ]; then
     echo "[npm run install] Installed successfully（5/8)"
@@ -209,14 +186,14 @@ else
 fi
 
 # 启动前端页面服务
-nohup npm run serve 1>npm_server.log 2>&1 &
+nohup npm run serve 1>/workspace/qanything_local/logs/debug_logs/npm_server.log 2>&1 &
 
 # 监听前端页面服务
 tail -f npm_server.log &
 
 front_end_start_time=$(date +%s)
 
-while ! grep -q "Local:" npm_server.log; do
+while ! grep -q "Local:" /workspace/qanything_local/logs/debug_logs/npm_server.log; do
     echo "Waiting for the front-end service to start..."
     echo "等待启动前端服务"
     sleep 1
@@ -227,7 +204,7 @@ while ! grep -q "Local:" npm_server.log; do
 
     # 检查是否超时
     if [ $elapsed_time -ge 120 ]; then
-        echo "启动前端服务超时，请检查日志文件 front_end/npm_server.log 获取更多信息。"
+        echo "启动前端服务超时，请检查日志文件 /workspace/qanything_local/logs/debug_logs/npm_server.log 获取更多信息。"
         exit 1
     fi
 done
@@ -240,14 +217,11 @@ echo "Time elapsed: ${elapsed} seconds."
 echo "已耗时: ${elapsed} 秒."
 
 while true; do
-
     if [ "$runtime_backend" = "default" ]; then
-        response_embed=$(curl -s -w "%{http_code}" http://localhost:9000/v2/health/ready -o /dev/null)
-        response_rerank=$(curl -s -w "%{http_code}" http://localhost:8000/v2/health/ready -o /dev/null)
-        echo "health response_embed = $response_embed"
-        echo "health response_rerank = $response_rerank"
+        response_embed_rerank=$(curl -s -w "%{http_code}" http://localhost:9000/v2/health/ready -o /dev/null)
+        echo "health response_embed_rerank = $response_embed_rerank"
 
-        if [ $response_embed -eq 200 ] && [ $response_rerank -eq 200 ]; then
+        if [ "$response_embed_rerank" -eq 200 ]; then
             echo "The llm service is ready!, now you can use the qanything service. (8/8)"
             echo "LLM 服务已准备就绪！现在您可以使用qanything服务。（8/8)"
             break
@@ -260,31 +234,15 @@ while true; do
 
             # 检查是否超时
             if [ $elapsed_time -ge $((timeout_time * 2)) ]; then
-                echo "启动 LLM 服务超时，请进入容器内检查/model_repos/QAEnsemble_base/QAEnsemble_base.log以获取更多信息。"
+                echo "启动 LLM 服务超时，请检查项目根目录下 logs/debug_logs/embed_rerank_tritonserver.log 以获取更多信息。"
                 exit 1
             fi
             sleep 5
         fi
     else
-        fastchat_register_model=$(curl --request POST --url http://localhost:7800/list_models)
-        if [[ $fastchat_register_model == *"$LLM_API_SERVE_MODEL"* ]]; then
-            echo "The llm service is ready!, now you can use the qanything service. (8/8)"
-            echo "LLM 服务已准备就绪！现在您可以使用qanything服务。（8/8)"
-            break
-        else
-            echo "The llm service is starting up, it can be long... you have time to make a coffee :)"
-            echo "LLM 服务正在启动，可能需要一段时间...你有时间去冲杯咖啡 :)"
-
-            current_time=$(date +%s)
-            elapsed_time=$((current_time - start_time))
-
-            # 检查是否超时
-            if [ $elapsed_time -ge $((timeout_time * 2)) ]; then
-                echo "启动 LLM 服务超时，请进入容器内检查/workspace/qanything_local/qanything_logs/fastchat_logs/fschat_model_worker_7801.log以获取更多信息。"
-                exit 1
-            fi
-            sleep 5
-        fi
+        # cloud版本runtime只支持default
+        echo "runtime_backend only support default in cloud version."
+        exit 1
     fi
 done
 
