@@ -35,7 +35,7 @@ if args.mode not in ['local', 'online']:
     raise ValueError('mode must be local or online')
 
 app = Sanic("QAnything")
-# 设置请求体最大为 10MB
+# 设置请求体最大为 400MB
 app.config.REQUEST_MAX_SIZE = 400 * 1024 * 1024
 
 
