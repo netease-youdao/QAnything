@@ -92,6 +92,8 @@ if [[ -n "$device_id" ]]; then
     gpu_id2=${gpu_ids[1]:-$gpu_id1}  # 如果没有第二个ID，则默认使用第一个ID
 fi
 
+echo "GPUID1=${gpu_id1}, GPUID2=${gpu_id2}, device_id=${device_id}"
+
 # 检查GPU ID是否合法
 if ! [[ $gpu_id1 =~ ^[0-9]+$ ]] || ! [[ $gpu_id2 =~ ^[0-9]+$ ]]; then
     echo "Invalid GPU IDs. Please enter IDs like '0' or '0,1'."
@@ -203,12 +205,28 @@ fi
 echo "OFFCUT_TOKEN=$OFFCUT_TOKEN" >> .env
 
 if [ $llm_api = 'cloud' ]; then
-  echo "If set to '-c cloud', please mannually set the environments {OPENAI_API_KEY, OPENAI_API_BASE, OPENAI_API_MODEL_NAME, OPENAI_API_CONTEXT_LENGTH} into .env fisrt in run.sh"
-  read -p "Please enter OPENAI_API_KEY: " OPENAI_API_KEY
-  read -p "Please enter OPENAI_API_BASE (default: https://api.openai.com/v1):" OPENAI_API_BASE
-  read -p "Please enter OPENAI_API_MODEL_NAME (default: gpt-3.5-turbo):" OPENAI_API_MODEL_NAME
-  read -p "Please enter OPENAI_API_CONTEXT_LENGTH (default: 4096):" OPENAI_API_CONTEXT_LENGTH
+  # 如果.env中已存在OPENAI_API_KEY的值（不为空），则询问用户是否使用上次默认值：$OPENAI_API_KEY，$OPENAI_API_BASE, $OPENAI_API_MODEL_NAME, $OPENAI_API_CONTEXT_LENGTH
+  if [ -n "$OPENAI_API_KEY" ]; then
+    read -p "Do you want to use the previous OPENAI_API_KEY: $OPENAI_API_KEY? (yes/no) 是否使用上次的OPENAI_API_KEY: $OPENAI_API_KEY？(yes/no) 回车默认选yes，请输入:" use_previous
+    use_previous=${use_previous:-yes}
+    if [ "$use_previous" != "yes" ]; then
+      read -p "Please enter OPENAI_API_KEY: " OPENAI_API_KEY
+      read -p "Please enter OPENAI_API_BASE (default: https://api.openai.com/v1):" OPENAI_API_BASE
+      read -p "Please enter OPENAI_API_MODEL_NAME (default: gpt-3.5-turbo):" OPENAI_API_MODEL_NAME
+      read -p "Please enter OPENAI_API_CONTEXT_LENGTH (default: 4096):" OPENAI_API_CONTEXT_LENGTH
+    fi
+  else # 如果.env中不存在OPENAI_API_KEY的值，则询问用户
+    echo "If set to '-c cloud', please mannually set the environments {OPENAI_API_KEY, OPENAI_API_BASE, OPENAI_API_MODEL_NAME, OPENAI_API_CONTEXT_LENGTH} into .env fisrt in run.sh"
+    read -p "Please enter OPENAI_API_KEY: " OPENAI_API_KEY
+    read -p "Please enter OPENAI_API_BASE (default: https://api.openai.com/v1):" OPENAI_API_BASE
+    read -p "Please enter OPENAI_API_MODEL_NAME (default: gpt-3.5-turbo):" OPENAI_API_MODEL_NAME
+    read -p "Please enter OPENAI_API_CONTEXT_LENGTH (default: 4096):" OPENAI_API_CONTEXT_LENGTH
+  fi
 
+  if [ -z "$OPENAI_API_KEY" ]; then  # 如果OPENAI_API_KEY为空，则退出
+    echo "OPENAI_API_KEY is empty, please enter OPENAI_API_KEY."
+    exit 1
+  fi
   if [ -z "$OPENAI_API_BASE" ]; then  # 如果OPENAI_API_BASE为空，则设置默认值
     OPENAI_API_BASE="https://api.openai.com/v1"
   fi
@@ -218,10 +236,7 @@ if [ $llm_api = 'cloud' ]; then
   if [ -z "$OPENAI_API_CONTEXT_LENGTH" ]; then  # 如果OPENAI_API_CONTEXT_LENGTH为空，则设置默认值
     OPENAI_API_CONTEXT_LENGTH=4096
   fi
-  if [ -z "$OPENAI_API_KEY" ]; then  # 如果OPENAI_API_KEY为空，则退出
-    echo "OPENAI_API_KEY is empty, please enter OPENAI_API_KEY."
-    exit 1
-  fi
+
   echo "OPENAI_API_KEY='$OPENAI_API_KEY'" > .env
   echo "OPENAI_API_BASE='$OPENAI_API_BASE'" >> .env
   echo "OPENAI_API_MODEL_NAME='$OPENAI_API_MODEL_NAME'" >> .env

@@ -218,12 +218,10 @@ echo "已耗时: ${elapsed} 秒."
 
 while true; do
     if [ "$runtime_backend" = "default" ]; then
-        response_embed=$(curl -s -w "%{http_code}" http://localhost:9000/v2/health/ready -o /dev/null)
-        response_rerank=$(curl -s -w "%{http_code}" http://localhost:8000/v2/health/ready -o /dev/null)
-        echo "health response_embed = $response_embed"
-        echo "health response_rerank = $response_rerank"
+        response_embed_rerank=$(curl -s -w "%{http_code}" http://localhost:9000/v2/health/ready -o /dev/null)
+        echo "health response_embed_rerank = $response_embed_rerank"
 
-        if [ $response_embed -eq 200 ] && [ $response_rerank -eq 200 ]; then
+        if [ "$response_embed_rerank" -eq 200 ]; then
             echo "The llm service is ready!, now you can use the qanything service. (8/8)"
             echo "LLM 服务已准备就绪！现在您可以使用qanything服务。（8/8)"
             break
@@ -236,7 +234,7 @@ while true; do
 
             # 检查是否超时
             if [ $elapsed_time -ge $((timeout_time * 2)) ]; then
-                echo "启动 LLM 服务超时，请进入容器内检查/workspace/qanything_local/logs/debug_logs/embed_rerank_tritonserver.log以获取更多信息。"
+                echo "启动 LLM 服务超时，请检查项目根目录下 logs/debug_logs/embed_rerank_tritonserver.log 以获取更多信息。"
                 exit 1
             fi
             sleep 5
