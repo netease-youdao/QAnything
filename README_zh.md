@@ -132,22 +132,21 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 
 ### 必要条件
 #### **For Linux**
-|**System**| **Required item**        | **Minimum Requirement**   | **Note**                                                                           |
-|---------------------------|--------------------------|---------------------------|-------------------------------------------------------------------------|
-|Linux | Single NVIDIA GPU Memory  <br> or Double NVIDIA GPU Memory | >= 16GB <br> >= 11GB + 5G    | NVIDIA 3090 x 1 recommended <br> NVIDIA 2080TI × 2 recommended            |
-|      | NVIDIA Driver Version    | >= 525.105.17             |                                                                                               |
-|      | CUDA Version             | >= 12.0                   |                                                                                               |
-|      |  Docker version           | >= 20.10.5                |  [Docker install](https://docs.docker.com/engine/install/) |
-|      | docker compose  version  | >= 2.23.3                 | [docker compose install](https://docs.docker.com/compose/install/)  |
-|      | git-lfs   |                  | [git-lfs install](https://git-lfs.com/)  |
+|**System**| **Required item** | **Minimum Requirement** | **Note**                                                           |
+|---------------------------|-------------------|-------------------------|--------------------------------------------------------------------|
+|Linux | NVIDIA GPU Memory | >= 4GB (use OpenAI API)  | 最低: GTX 1050Ti（use OpenAI API） <br> 推荐: RTX 3090                   |
+|      | NVIDIA Driver Version | >= 525.105.17           |                                                                    |
+|      |  Docker version    | >= 20.10.5              | [Docker install](https://docs.docker.com/engine/install/)          |
+|      | docker compose  version | >= 2.23.3               | [docker compose install](https://docs.docker.com/compose/install/) |
+|      | git-lfs   |                         | [git-lfs install](https://git-lfs.com/)                            |
 
-#### **For Winodws 11 with WSL 2**
-|**System**| **Required item**        | **Minimum Requirement**   | **Note**                                                                           |
-|---------------------------|--------------------------|---------------------------|-----------------------------------------------------------------------------------------------|
-|Windows 11 with WSL 2| Single NVIDIA GPU Memory <br> or Double NVIDIA GPU Memory | >= 16GB  <br>  >= 11GB + 5G                | NVIDIA 3090 <br> NVIDIA 2080TI × 2                                                                      |                                                                |
-|      | GEFORCE EXPERIENCE    | >= 546.33 |[GEFORCE EXPERIENCE download](https://us.download.nvidia.com/GFE/GFEClient/3.27.0.120/GeForce_Experience_v3.27.0.120.exe)             |                                                                                               |
-|      |  Docker Desktop           | >=  4.26.1（131620）     | [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)     |
-|      | git-lfs   |                  | [git-lfs install](https://git-lfs.com/)  |
+#### **For Windows with WSL Ubuntu子系统**
+| **System**                 | **Required item**        | **Minimum Requirement**   | **Note**                                                                                                                  |
+|----------------------------|--------------------------|---------------------------|---------------------------------------------------------------------------------------------------------------------------|
+| Windows with WSL Ubuntu子系统 | NVIDIA GPU Memory | >= 4GB (use OpenAI API)                | 最低: GTX 1050Ti（use OpenAI API） <br> 推荐: RTX 3090                                                                          |                                                                |
+|                            | GEFORCE EXPERIENCE    | >= 546.33 | [GEFORCE EXPERIENCE download](https://us.download.nvidia.com/GFE/GFEClient/3.27.0.120/GeForce_Experience_v3.27.0.120.exe) |                                                                                               |
+|                            |  Docker Desktop           | >=  4.26.1（131620）     | [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)                                    |
+|                            | git-lfs   |                  | [git-lfs install](https://git-lfs.com/)                                                                                   |
 
 ### 下载安装
 ### step1: 下载本项目
