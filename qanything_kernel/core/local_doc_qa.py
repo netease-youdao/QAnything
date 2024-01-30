@@ -8,12 +8,14 @@ from qanything_kernel.connector.llm import OpenAILLM, ZiyueLLM
 from langchain.schema import Document
 from qanything_kernel.connector.database.mysql.mysql_client import KnowledgeBaseManager
 from qanything_kernel.connector.database.milvus.milvus_client import MilvusClient
+from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from .local_file import LocalFile
 from qanything_kernel.utils.general_utils import get_time
-import aiohttp
 import requests
 import traceback
+import logging
 
+logging.basicConfig(level=logging.INFO)
 
 def _embeddings_hash(self):
     return hash(self.model_name)
@@ -36,58 +38,37 @@ class LocalDocQA:
         self.mode: str = None
         self.local_rerank_service_url = "http://0.0.0.0:8776"
         self.ocr_url = 'http://0.0.0.0:8010/ocr'
-        self.logger = None
-
-    def print(self, *args):
-        if self.logger:
-            self.logger.info(*args)
-        else:
-            print(*args, flush=True)
-
-    def error(self, *args):
-        if self.logger:
-            self.logger.error(*args)
-        else:
-            print(*args, flush=True)
-
-    def warning(self, *args):
-        if self.logger:
-            self.logger.warning(*args)
-        else:
-            print(*args, flush=True)
 
     def get_ocr_result(self, image_data: dict):
         response = requests.post(self.ocr_url, json=image_data)
         response.raise_for_status()  # 如果请求返回了错误状态码，将会抛出异常
         return response.json()['results']
 
-    def init_cfg(self, mode='local', logger=None):
-        self.logger = logger
+    def init_cfg(self, mode='local'):
         self.mode = mode
+        self.embeddings = YouDaoLocalEmbeddings()
         if self.mode == 'local':
             self.llm: ZiyueLLM = ZiyueLLM()
-            self.embeddings = YouDaoLocalEmbeddings()
         else:
             self.llm: OpenAILLM = OpenAILLM()
-            self.embeddings = YouDaoEmbeddings()
-        self.milvus_summary = KnowledgeBaseManager(self.mode, self.logger)
+        self.milvus_summary = KnowledgeBaseManager(self.mode)
 
     def create_milvus_collection(self, user_id, kb_id, kb_name):
-        milvus_kb = MilvusClient(self.mode, user_id, [kb_id], self.logger)
+        milvus_kb = MilvusClient(self.mode, user_id, [kb_id])
         self.milvus_kbs.append(milvus_kb)
         self.milvus_summary.new_milvus_base(kb_id, user_id, kb_name)
 
     def match_milvus_kb(self, user_id, kb_ids):
         for kb in self.milvus_kbs:
             if user_id == kb.user_id and kb_ids == kb.kb_ids:
-                self.print(f'match milvus_client: {kb}')
+                debug_logger.info(f'match milvus_client: {kb}')
                 return kb
-        milvus_kb = MilvusClient(self.mode, user_id, kb_ids, self.logger)
+        milvus_kb = MilvusClient(self.mode, user_id, kb_ids)
         self.milvus_kbs.append(milvus_kb)
         return milvus_kb
 
     async def insert_files_to_milvus(self, user_id, kb_id, local_files: List[LocalFile]):
-        self.print(f'insert_files_to_milvus: {kb_id}')
+        debug_logger.info(f'insert_files_to_milvus: {kb_id}')
         milvus_kv = self.match_milvus_kb(user_id, [kb_id])
         assert milvus_kv is not None
         success_list = []
@@ -100,37 +81,37 @@ class LocalDocQA:
                 content_length = sum([len(doc.page_content) for doc in local_file.docs])
             except Exception as e:
                 error_info = f'split error: {traceback.format_exc()}'
-                self.error(error_info)
+                debug_logger.error(error_info)
                 self.milvus_summary.update_file_status(local_file.file_id, status='red')
                 failed_list.append(local_file)
                 continue
             end = time.time()
             self.milvus_summary.update_content_length(local_file.file_id, content_length)
-            self.print(f'split time: {end - start} {len(local_file.docs)}')
+            debug_logger.info(f'split time: {end - start} {len(local_file.docs)}')
             start = time.time()
             try:
                 local_file.create_embedding()
             except Exception as e:
                 error_info = f'embedding error: {traceback.format_exc()}'
-                self.error(error_info)
+                debug_logger.error(error_info)
                 self.milvus_summary.update_file_status(local_file.file_id, status='red')
                 failed_list.append(local_file)
                 continue
             end = time.time()
-            self.print(f'embedding time: {end - start} {len(local_file.embs)}')
+            debug_logger.info(f'embedding time: {end - start} {len(local_file.embs)}')
 
             self.milvus_summary.update_chunk_size(local_file.file_id, len(local_file.docs))
             ret = await milvus_kv.insert_files(local_file.file_id, local_file.file_name, local_file.file_path,
                                                local_file.docs, local_file.embs)
             insert_time = time.time()
-            self.print(f'insert time: {insert_time - end}')
+            debug_logger.info(f'insert time: {insert_time - end}')
             if ret:
                 self.milvus_summary.update_file_status(local_file.file_id, status='green')
                 success_list.append(local_file)
             else:
                 self.milvus_summary.update_file_status(local_file.file_id, status='yellow')
                 failed_list.append(local_file)
-        self.print(
+        debug_logger.info(
             f"insert_to_milvus: success num: {len(success_list)}, failed num: {len(failed_list)}")
 
     def deduplicate_documents(self, source_docs):
@@ -151,7 +132,7 @@ class LocalDocQA:
         t1 = time.time()
         batch_result = milvus_kb.search_emb_async(embs=embs, top_k=top_k)
         t2 = time.time()
-        self.print(f"milvus search time: {t2 - t1}")
+        debug_logger.info(f"milvus search time: {t2 - t1}")
         for query, query_docs in zip(queries, batch_result):
             for doc in query_docs:
                 doc.metadata['retrieval_query'] = query  # 添加查询到文档的元数据中
@@ -170,6 +151,8 @@ class LocalDocQA:
         query_token_num = self.llm.num_tokens_from_messages([query])
         history_token_num = self.llm.num_tokens_from_messages([x for sublist in history for x in sublist])
         template_token_num = self.llm.num_tokens_from_messages([prompt_template])
+
+        # logging.info(f"<self.llm.token_window, self.llm.max_token, self.llm.offcut_token, query_token_num, history_token_num, template_token_num>, types = {type(self.llm.token_window), type(self.llm.max_token), type(self.llm.offcut_token), type(query_token_num), type(history_token_num), type(template_token_num)}, values = {query_token_num, history_token_num, template_token_num}")
         limited_token_nums = self.llm.token_window - self.llm.max_token - self.llm.offcut_token - query_token_num - history_token_num - template_token_num
         new_source_docs = []
         total_token_num = 0
@@ -194,11 +177,11 @@ class LocalDocQA:
                 new_source_docs.append(doc)
                 break
 
-        self.print(f"limited token nums: {limited_token_nums}")
-        self.print(f"template token nums: {template_token_num}")
-        self.print(f"query token nums: {query_token_num}")
-        self.print(f"history token nums: {history_token_num}")
-        self.print(f"new_source_docs token nums: {self.llm.num_tokens_from_docs(new_source_docs)}")
+        debug_logger.info(f"limited token nums: {limited_token_nums}")
+        debug_logger.info(f"template token nums: {template_token_num}")
+        debug_logger.info(f"query token nums: {query_token_num}")
+        debug_logger.info(f"history token nums: {history_token_num}")
+        debug_logger.info(f"new_source_docs token nums: {self.llm.num_tokens_from_docs(new_source_docs)}")
         return new_source_docs
 
     def generate_prompt(self, query, source_docs, prompt_template):
@@ -221,8 +204,8 @@ class LocalDocQA:
 
             source_documents = sorted(source_documents, key=lambda x: x.metadata['score'], reverse=True)
         except Exception as e:
-            self.error("rerank error: %s", traceback.format_exc())
-            self.warning("rerank error, use origin retrieval docs")
+            debug_logger.error("rerank error: %s", traceback.format_exc())
+            debug_logger.warning("rerank error, use origin retrieval docs")
 
         return source_documents
 
@@ -238,7 +221,7 @@ class LocalDocQA:
         deduplicated_docs = self.deduplicate_documents(source_documents)
         retrieval_documents = sorted(deduplicated_docs, key=lambda x: x.metadata['score'], reverse=True)
         if rerank and len(retrieval_documents) > 1:
-            self.print(f"use rerank, rerank docs num: {len(retrieval_documents)}")
+            debug_logger.info(f"use rerank, rerank docs num: {len(retrieval_documents)}")
             retrieval_documents = self.rerank_documents(query, retrieval_documents)
 
         source_documents = self.reprocess_source_documents(query=query,
@@ -255,6 +238,8 @@ class LocalDocQA:
             resp = answer_result.llm_output["answer"]
             prompt = answer_result.prompt
             history = answer_result.history
+
+            # logging.info(f"[debug] get_knowledge_based_answer history = {history}")
             history[-1][0] = query
             response = {"query": query,
                         "prompt": prompt,
@@ -263,4 +248,4 @@ class LocalDocQA:
                         "source_documents": source_documents}
             yield response, history
         t2 = time.time()
-        self.print(f"LLM time: {t2 - t1}")
+        debug_logger.info(f"LLM time: {t2 - t1}")

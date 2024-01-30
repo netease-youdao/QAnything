@@ -3,11 +3,11 @@ from pymilvus import connections, FieldSchema, CollectionSchema, DataType, Colle
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import asyncio
 from functools import partial
-import logging
 import time
 import copy
 from datetime import datetime
 from qanything_kernel.configs.model_config import MILVUS_HOST_LOCAL, MILVUS_HOST_ONLINE, MILVUS_PORT, CHUNK_SIZE, VECTOR_SEARCH_TOP_K
+from qanything_kernel.utils.custom_log import debug_logger
 from langchain.docstore.document import Document
 import math
 from itertools import groupby
@@ -20,10 +20,9 @@ class MilvusFailed(Exception):
 
 
 class MilvusClient:
-    def __init__(self, mode, user_id, kb_ids, logger, *, threshold=1.1, client_timeout=3):
+    def __init__(self, mode, user_id, kb_ids, *, threshold=1.1, client_timeout=3):
         self.user_id = user_id
         self.kb_ids = kb_ids
-        self.logger = logger
         if mode == 'local':
             self.host = MILVUS_HOST_LOCAL
         else:
@@ -83,20 +82,20 @@ class MilvusClient:
             connections.connect(host=self.host, port=self.port)  # timeout=3 [cannot set]
             if utility.has_collection(self.user_id):
                 self.sess = Collection(self.user_id)
-                self.logger.info(f'collection {self.user_id} exists')
+                debug_logger.info(f'collection {self.user_id} exists')
             else:
                 schema = CollectionSchema(self.fields)
-                self.logger.info(f'create collection {self.user_id} {schema}')
+                debug_logger.info(f'create collection {self.user_id} {schema}')
                 self.sess = Collection(self.user_id, schema)
                 self.sess.create_index(field_name="embedding", index_params=self.create_params)
             for kb_id in self.kb_ids:
                 if not self.sess.has_partition(kb_id):
                     self.sess.create_partition(kb_id)
             self.partitions = [Partition(self.sess, kb_id) for kb_id in self.kb_ids]
-            self.logger.info('partitions: %s', self.kb_ids)
+            debug_logger.info('partitions: %s', self.kb_ids)
             self.sess.load()
         except Exception as e:
-            logging.error(e)
+            debug_logger.error(e)
 
     def __search_emb_sync(self, embs, expr='', top_k=None, client_timeout=None):
         if not top_k:
@@ -104,7 +103,7 @@ class MilvusClient:
         milvus_records = self.sess.search(data=embs, partition_names=self.kb_ids, anns_field="embedding",
                                           param=self.search_params, limit=top_k,
                                           output_fields=self.output_fields, expr=expr, timeout=client_timeout)
-        # self.logger.info(milvus_records)
+        # debug_logger.info(milvus_records)
         return self.parse_batch_result(milvus_records)
 
     def search_emb_async(self, embs, expr='', top_k=None, client_timeout=None):
@@ -125,7 +124,7 @@ class MilvusClient:
         return future.result()
 
     async def insert_files(self, file_id, file_name, file_path, docs, embs, batch_size=1000):
-        self.logger.info(f'now inser_file {file_name}')
+        debug_logger.info(f'now inser_file {file_name}')
         now = datetime.now()
         timestamp = now.strftime("%Y%m%d%H%M")
         loop = asyncio.get_running_loop()
@@ -149,12 +148,12 @@ class MilvusClient:
 
             # 执行插入操作
             try:
-                self.logger.info('Inserting into Milvus...')
+                debug_logger.info('Inserting into Milvus...')
                 mr = await loop.run_in_executor(
                     self.executor, partial(self.partitions[0].insert, data=data))
-                self.logger.info(f'{file_name} {mr}')
+                debug_logger.info(f'{file_name} {mr}')
             except Exception as e:
-                self.logger.info(f'Milvus insert file_id:{file_id}, file_name:{file_name} failed: {e}')
+                debug_logger.error(f'Milvus insert file_id:{file_id}, file_name:{file_name} failed: {e}')
                 return False
 
         return True
@@ -170,7 +169,7 @@ class MilvusClient:
 
     def delete_files(self, files_id):
         self.sess.delete(expr=f"file_id in {files_id}")
-        self.logger.info('milvus delete files_id: %s', files_id)
+        debug_logger.info('milvus delete files_id: %s', files_id)
 
     def get_files(self, files_id):
         res = self.query_expr_async(expr=f"file_id in {files_id}", output_fields=["file_id"])
@@ -249,7 +248,7 @@ class MilvusClient:
         cand_docs = sorted(cand_docs, key=lambda x: x.metadata['file_id'])
         # 按照file_id进行分组
         m_grouped = [list(group) for key, group in groupby(cand_docs, key=lambda x: x.metadata['file_id'])]
-        self.logger.info('milvus group number: %s', len(m_grouped))
+        debug_logger.info('milvus group number: %s', len(m_grouped))
 
         with ThreadPoolExecutor(max_workers=10) as executor:
             futures = []

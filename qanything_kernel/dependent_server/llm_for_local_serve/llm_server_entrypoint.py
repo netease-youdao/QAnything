@@ -183,7 +183,7 @@ def generator_llm(params: OrderedDict) -> str:
                 if chunk_out:
                     bytes_ids += res[input_len + decode_len + bytes_len:]
                     decoding = tokenizer.decode(bytes_ids, skip_special_tokens=True)
-                    if isinstance(decoding, bytes):
+                    if isinstance(decoding, bytes) or (isinstance(decoding, str) and '�' in decoding):
                         bytes_len = len(bytes_ids)
                         continue
                     else:

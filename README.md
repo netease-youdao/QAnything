@@ -163,7 +163,11 @@ If you need to use it for commercial purposes, please follow the license of Qwen
 git clone https://github.com/netease-youdao/QAnything.git
 ```
 ### step2: Enter the project root directory and execute the startup script.
-If you are in the Windows11 system: Need to enter the WSL environment.
+* [📖 QAnything_Startup_Usage](docs/QAnything_Startup_Usage_README.md)
+* Get detailed usage of LLM interface by ```bash ./run.sh -h```
+  
+
+If you are in the Windows11 system: Need to enter the **WSL** environment.
 ```shell
 cd QAnything
 bash run.sh  # Start on GPU 0 by default.
@@ -174,7 +178,7 @@ bash run.sh  # Start on GPU 0 by default.
 
 ```shell
 cd QAnything
-bash run.sh 0  # gpu id 0
+bash ./run.sh -c local -i 0 -b default  # gpu id 0
 ```
 </details>
 
@@ -183,7 +187,7 @@ bash run.sh 0  # gpu id 0
 
 ```shell
 cd QAnything
-bash run.sh 0,1  # gpu ids: 0,1, Please confirm how many GPUs are available. Supports up to two cards for startup. 
+bash ./run.sh -c local -i 0,1 -b default  # gpu ids: 0,1, Please confirm how many GPUs are available. Supports up to two cards for startup. 
 ```
 </details>
 
@@ -237,7 +241,7 @@ Welcome to the QAnything [Discord](https://discord.gg/5uNpPsEJz8) community
 
 Welcome to scan the QR code below and join the WeChat group.
 
-<img src="docs/images/Wechat.jpg" width="20%" height="auto">
+<img src="docs/images/Wechat.jpg" width="30%" height="auto">
 
 ### Email
 If you need to contact our team privately, please reach out to us via the following email:
@@ -266,7 +270,8 @@ Reach out to the maintainer at one of the following places:
 - Thanks to our [BCEmbedding](https://github.com/netease-youdao/BCEmbedding) for the excellent embedding and rerank model. 
 - Thanks to [Qwen](https://github.com/QwenLM/Qwen) for strong base language models.
 - Thanks to [Triton Inference Server](https://github.com/triton-inference-server/server) for providing great open source inference serving.
-- Thanks to [FasterTransformer](https://github.com/NVIDIA/FasterTransformer) for highly optimized LLM inference backend.
+- Thanks to [FastChat](https://github.com/lm-sys/FastChat) for providing a fully OpenAI-compatible API server.
+- Thanks to [FasterTransformer](https://github.com/NVIDIA/FasterTransformer) and [vllm](https://github.com/vllm-project/vllm) for highly optimized LLM inference backend.
 - Thanks to [Langchain](https://github.com/langchain-ai/langchain) for the wonderful llm application framework. 
 - Thanks to [Langchain-Chatchat](https://github.com/chatchat-space/Langchain-Chatchat) for the inspiration provided on local knowledge base Q&A.
 - Thanks to [Milvus](https://github.com/milvus-io/milvus) for the excellent semantic search library.
