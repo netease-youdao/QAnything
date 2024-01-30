@@ -1,8 +1,12 @@
 #!/bin/bash
 
 if [ -e /proc/version ]; then
-  if grep -qi microsoft /proc/version; then
-    echo "Running under WSL"
+  if grep -qi microsoft /proc/version || grep -qi MINGW /proc/version; then
+    if grep -qi microsoft /proc/version; then
+        echo "Running under WSL"
+    else
+        echo "Running under git bash"
+    fi
     docker-compose -p user -f docker-compose-windows.yaml down
   else
     echo "Running under native Linux"
