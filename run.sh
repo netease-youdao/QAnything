@@ -105,6 +105,10 @@ echo "GPUID2=${gpu_id2}" >> .env
 gpu_model=$(nvidia-smi --query-gpu=gpu_name --format=csv,noheader,nounits -i $gpu_id1)
 # nvidia RTX 30系列或40系列
 gpu_series=$(echo $gpu_model | grep -oP 'RTX\s*(30|40)')
+if ! command -v jq &> /dev/null; then
+    echo "Error: jq 命令不存在，请使用 apt-get install jq 安装，再重新启动。"
+    exit 1
+fi
 compute_capability=$(jq -r ".[\"$gpu_model\"]" scripts/gpu_capabilities.json)
 # 如果compute_capability为空，则说明显卡型号不在gpu_capabilities.json中
 if [ -z "$compute_capability" ]; then
@@ -262,7 +266,7 @@ if [ ! -d "models" ] || [ ! -d "models/embed" ] || [ ! -d "models/rerank" ] || [
   d_start_time=$(date +%s)
   # 判断是否存在lfs，不存在建议使用apt-get install git-lfs安装
   if ! command -v git-lfs &> /dev/null; then
-    echo "git-lfs 命令不存在，请使用 apt-get install git-lfs 安装。或参考 https://git-lfs.com/ 页面安装"
+    echo "Error: git-lfs 命令不存在，请使用 apt-get install git-lfs 安装。或参考 https://git-lfs.com/ 页面安装，再重新启动"
     exit 1
   fi
 
@@ -284,7 +288,7 @@ if [ ! -d "models" ] || [ ! -d "models/embed" ] || [ ! -d "models/rerank" ] || [
   # 解压模型文件
   # 判断是否存在unzip，不存在建议使用apt-get install unzip安装
   if ! command -v unzip &> /dev/null; then
-    echo "unzip 命令不存在，请使用 apt-get install unzip 安装。"
+    echo "Error: unzip 命令不存在，请使用 apt-get install unzip 安装，再重新启动"
     exit 1
   fi
 
