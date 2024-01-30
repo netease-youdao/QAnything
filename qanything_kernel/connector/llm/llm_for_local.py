@@ -33,7 +33,7 @@ class ZiyueLLM(BaseAnswer, LLM, ABC):
 
     def __init__(self):
         super().__init__()
-        debug_logger.info("ZiyueLLM offcut_token:", self.offcut_token)
+        debug_logger.info("ZiyueLLM offcut_token: %s", self.offcut_token)
 
     @property
     def _llm_type(self) -> str:
