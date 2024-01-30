@@ -174,6 +174,17 @@ bash run.sh  # Start on GPU 0 by default.
 ```
 
 <details>
+<summary>(Note) If automatic download fails, you can manually download the model from one of the three addresses below.</summary>
+
+modelscope: https://modelscope.cn/models/netease-youdao/QAnything
+
+wisemodel: https://wisemodel.cn/models/Netease_Youdao/qanything
+
+huggingfase: https://huggingface.co/netease-youdao/QAnything
+
+</details>
+
+<details>
 <summary>(Optional) Specify GPU startup</summary>
 
 ```shell

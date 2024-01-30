@@ -164,6 +164,17 @@ bash run.sh  # 默认在0号GPU上启动
 ```
 
 <details>
+<summary>（注意）如果自动下载失败，您可以从以下三个地址之一手动下载模型。</summary>
+
+modelscope: https://modelscope.cn/models/netease-youdao/QAnything
+
+wisemodel: https://wisemodel.cn/models/Netease_Youdao/qanything
+
+huggingfase: https://huggingface.co/netease-youdao/QAnything
+
+</details>
+
+<details>
 <summary>（可选）指定单GPU启动</summary>
 
 ```shell
