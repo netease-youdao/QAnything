@@ -148,6 +148,7 @@ If you need to use it for commercial purposes, please follow the license of Qwen
 |      | CUDA Version             | >= 12.0                   |                                                                                               |
 |      |  Docker version           | >= 20.10.5                |  [Docker install](https://docs.docker.com/engine/install/) |
 |      | docker compose  version  | >= 2.23.3                 | [docker compose install](https://docs.docker.com/compose/install/)  |
+|      | git-lfs   |                  | [git-lfs install](https://git-lfs.com/)  |
 
 #### **For Winodws 11 with WSL 2**
 |**System**| **Required item**        | **Minimum Requirement**   | **Note**                                                                           |
@@ -155,6 +156,7 @@ If you need to use it for commercial purposes, please follow the license of Qwen
 |Windows 11 with WSL 2| Single NVIDIA GPU Memory <br> or Double NVIDIA GPU Memory | >= 16GB  <br>  >= 11GB + 5G                | NVIDIA 3090 <br> NVIDIA 2080TI × 2                                                                      |                                                                |
 |      | GEFORCE EXPERIENCE    | >= 546.33 |[GEFORCE EXPERIENCE download](https://us.download.nvidia.com/GFE/GFEClient/3.27.0.120/GeForce_Experience_v3.27.0.120.exe)             |                                                                                               |
 |      |  Docker Desktop           | >=  4.26.1（131620）     | [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)     |
+|      | git-lfs   |                  | [git-lfs install](https://git-lfs.com/)  |
 
 
 ### Installation
