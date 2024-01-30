@@ -59,7 +59,7 @@
 
 With `QAnything`, you can simply drop any locally stored file of any format and receive accurate, fast, and reliable answers.
 
-Currently supported formats include: **PDF, Word (doc/docx), PPT, Markdown, Eml, TXT, Images (jpg, png, etc.), Web links** and more formats coming soon…
+Currently supported formats include: **PDF(pdf)**,**Word(docx)**,**PPT(pptx)**,**XLS(xlsx)**,**Markdown(md)**,**Email(eml)**,**TXT(txt)**,**Image(jpg，jpeg，png)**,**CSV(csv)**,**Web links(html)** and more formats coming soon…
 
 
 ### Key features
@@ -212,6 +212,29 @@ After successful installation, you can experience the application by entering th
 If you want to visit API, please refer to the following address:
 - API address: http://`your_host`:8777/api/
 - For detailed API documentation, please refer to [QAnything API documentation](docs/API.md)
+
+#### DEBUG
+If you want to view the relevant logs, please check the log files in the `QAnything/logs/debug_logs` directory.
+- **debug.log**
+  - User request processing log
+- **sanic_api.log**
+  - Backend service running log
+- **llm_embed_rerank_tritonserver.log**(Single card deployment)
+  - LLM embedding and rerank tritonserver service startup log
+- **llm_tritonserver.log**(Multi-card deployment)
+  - LLM tritonserver service startup log
+- **embed_rerank_tritonserver.log**(Multi-card deployment or use of the OpenAI interface.)
+  - Embedding and rerank tritonserver service startup log
+- rerank_server.log
+  - Rerank service running log
+- ocr_server.log
+  - OCR service running log
+- npm_server.log
+  - Front-end service running log 
+- llm_server_entrypoint.log
+  - LLM intermediate server running log
+- fastchat_logs/*.log
+  - FastChat service running log
 
 ### Close service
 If you are in the Windows11 system: Need to enter the WSL environment.

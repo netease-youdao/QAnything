@@ -54,7 +54,7 @@
 
 您的任何格式的本地文件都可以往里扔，即可获得准确、快速、靠谱的问答体验。
 
-目前已支持格式: **PDF**，**Word(doc/docx)**，**PPT**，**Markdown**，**Eml**，**TXT**，**图片（jpg，png等）**，**网页链接**，更多格式，敬请期待...
+目前已支持格式: **PDF(pdf)**，**Word(docx)**，**PPT(pptx)**，**XLS(xlsx)**，**Markdown(md)**，**电子邮件(eml)**，**TXT(txt)**，**图片(jpg，jpeg，png)**，**CSV(csv)**，**网页链接(html)**，更多格式，敬请期待...
 
 ### 特点
 - 数据安全，支持全程拔网线安装使用。
@@ -203,6 +203,29 @@ bash ./run.sh -c local -i 0,1 -b default  # 指定0,1号GPU启动，请确认有
 如果想要访问API接口，请参考下面的地址:
 - API address: http://`your_host`:8777/api/
 - For detailed API documentation, please refer to [QAnything API 文档](docs/API.md)
+
+#### DEBUG
+如果想要查看相关日志，请查看`QAnything/logs/debug_logs`目录下的日志文件。
+- **debug.log**
+  - 用户请求处理日志
+- **sanic_api.log**
+  - 后端服务运行日志
+- **llm_embed_rerank_tritonserver.log**（单卡部署）
+  - LLM embedding和rerank tritonserver服务启动日志
+- **llm_tritonserver.log**（多卡部署）
+  - LLM tritonserver服务启动日志
+- **embed_rerank_tritonserver.log**（多卡部署或使用openai接口）
+  - embedding和rerank tritonserver服务启动日志
+- rerank_server.log
+  - rerank服务运行日志
+- ocr_server.log
+  - OCR服务运行日志
+- npm_server.log
+  - 前端服务运行日志
+- llm_server_entrypoint.log
+  - LLM中转服务运行日志
+- fastchat_logs/*.log
+  - FastChat服务运行日志
 
 ### 关闭服务
 ```shell
