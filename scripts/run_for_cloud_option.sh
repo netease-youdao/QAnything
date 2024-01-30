@@ -113,28 +113,12 @@ CUDA_VISIBLE_DEVICES=$gpuid1 nohup /opt/tritonserver/bin/tritonserver --model-st
 echo "RERANK_PORT=9001" >> /workspace/qanything_local/.env
 echo "EMBED_PORT=9001" >> /workspace/qanything_local/.env
 
-if [ $gpuid1 -eq $gpuid2 ]; then
-    gpu_model=$(nvidia-smi --query-gpu=gpu_name --format=csv,noheader,nounits -i $gpuid1)
-else
-    gpu_model=$(nvidia-smi --query-gpu=gpu_name --format=csv,noheader,nounits -i $gpuid2)
-fi
-compute_capability=$(jq -r ".[\"$gpu_model\"]" scripts/gpu_capabilities.json)
-# 如果算力>=7.5，则使用OCR_USE_GPU=True
-if [ $(echo "$compute_capability >= 7.5" | bc) -eq 1 ]; then
-    OCR_USE_GPU="True"
-else
-    OCR_USE_GPU="False"
-fi
-
-echo "OCR_USE_GPU=$OCR_USE_GPU"
-
-
 cd /workspace/qanything_local || exit
 nohup python3 -u qanything_kernel/dependent_server/rerank_for_local_serve/rerank_server.py > /workspace/qanything_local/logs/debug_logs/rerank_server.log 2>&1 &
 echo "The rerank service is ready! (2/8)"
 echo "rerank服务已就绪! (2/8)"
 
-CUDA_VISIBLE_DEVICES=$gpuid2 nohup python3 -u qanything_kernel/dependent_server/ocr_serve/ocr_server.py $OCR_USE_GPU > /workspace/qanything_local/logs/debug_logs/ocr_server.log 2>&1 &
+CUDA_VISIBLE_DEVICES=$gpuid2 nohup python3 -u qanything_kernel/dependent_server/ocr_serve/ocr_server.py > /workspace/qanything_local/logs/debug_logs/ocr_server.log 2>&1 &
 echo "The ocr service is ready! (3/8)"
 echo "OCR服务已就绪! (3/8)"
 

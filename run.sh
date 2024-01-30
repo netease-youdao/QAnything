@@ -119,6 +119,20 @@ if [ -z "$compute_capability" ]; then
 fi
 echo "GPU1 Model: $gpu_model"
 echo "Compute Capability: $compute_capability"
+
+if ! command -v bc &> /dev/null; then
+    echo "Error: bc 命令不存在，请使用 sudo apt-get install bc 安装，再重新启动。"
+    exit 1
+fi
+
+if [ $(echo "$compute_capability >= 7.5" | bc) -eq 1 ]; then
+    OCR_USE_GPU="True"
+else
+    OCR_USE_GPU="False"
+fi
+echo "OCR_USE_GPU=$OCR_USE_GPU because $compute_capability >= 7.5"
+echo "OCR_USE_GPU=$OCR_USE_GPU" >> .env
+
 # 使用nvidia-smi命令获取GPU的显存大小（以MiB为单位）
 GPU1_MEMORY_SIZE=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits -i $gpu_id1)
 
