@@ -77,7 +77,7 @@ if [[ "$install_deps" != *"vllm"* ]]; then
     checksum=$(find /workspace/qanything_local/third_party/FastChat -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | awk '{print $1}') && echo "$checksum" > /workspace/qanything_local/third_party/checksum.config
 fi
 
-mkdir -p /model_repos/QAEnsemble_embed_rerank
+mkdir -p /model_repos/QAEnsemble_embed_rerank && mkdir -p /workspace/qanything_local/logs/debug_logs && mkdir -p /workspace/qanything_local/logs/qa_logs
 
 if [ ! -L "/model_repos/QAEnsemble_embed_rerank/rerank" ]; then
   cd /model_repos/QAEnsemble_embed_rerank && ln -s /model_repos/QAEnsemble/rerank .

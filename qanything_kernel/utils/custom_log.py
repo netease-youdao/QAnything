@@ -28,8 +28,8 @@ class CustomConcurrentRotatingFileHandler(ConcurrentRotatingFileHandler):
 # 获取当前时间作为日志文件名的一部分
 current_time = time.strftime("%Y%m%d_%H%M%S")
 # 定义日志文件夹路径
-debug_log_folder = './debug_logs'
-qa_log_folder = './qa_logs'
+debug_log_folder = './logs/debug_logs'
+qa_log_folder = './logs/qa_logs'
 # 确保日志文件夹存在
 if not os.path.exists(debug_log_folder):
     os.makedirs(debug_log_folder)
