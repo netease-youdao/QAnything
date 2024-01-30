@@ -58,7 +58,7 @@ Note: You can choose the most suitable Service Startup Command based on your own
 
 
 ### 1. Run QAnything using FastChat API with **Huggingface transformers** runtime backend (recommend for GPU device with VRAM <= 16GB).
-### 1.1
+#### 1.1 Run Qwen-7B-QAnything
 ```bash
 ## Step 1. Download the public LLM model (e.g., Qwen-7B-QAnything) and save to "/path/to/QAnything/assets/custom_models"
 cd /path/to/QAnything/assets/custom_models
@@ -71,7 +71,7 @@ bash ./run.sh -c local -i 0 -b hf -m Qwen-7B-QAnything -t qwen-7b-qanything
 
 ```
 
-### 1.2
+#### 1.2 Run a public LLM model (e.g., MiniChat-2-3B)
 ```bash
 ## Step 1. Download the public LLM model (e.g., MiniChat-2-3B) and save to "/path/to/QAnything/assets/custom_models"
 cd /path/to/QAnything/assets/custom_models
@@ -85,7 +85,7 @@ bash ./run.sh -c local -i 0 -b hf -m MiniChat-2-3B -t minichat
 ```
 
 ### 2. Run QAnything using FastChat API with **vllm** runtime backend (recommend for GPU device with enough VRAM).
-### 2.1
+#### 2.1 Run Qwen-7B-QAnything
 ```bash
 ## Step 1. Download the public LLM model (e.g., Qwen-7B-QAnything) and save to "/path/to/QAnything/assets/custom_models"
 cd /path/to/QAnything/assets/custom_models
@@ -93,13 +93,13 @@ git clone https://huggingface.co/netease-youdao/Qwen-7B-QAnything
 
 ## Step 2. Execute the service startup command.  Here we use "-b vllm" to specify the Huggingface transformers backend.
 ## Here we use "-b vllm" to specify the vllm backend that will do bf16 inference as default.
-## Note you should adjust the gpu_memory_utilization yourself according to the model size to avoid out of memory (e.g., gpu_memory_utilization=0.81 is set default for 7B. Here, gpu_memory_utilization is set to 0.5 by "-r 0.5").
+## Note you should adjust the gpu_memory_utilization yourself according to the model size to avoid out of memory (e.g., gpu_memory_utilization=0.81 is set default for 7B. Here, gpu_memory_utilization is set to 0.85 by "-r 0.85").
 cd /path/to/QAnything
-bash ./run.sh -c local -i 0 -b vllm -m Qwen-7B-QAnything -t qwen-7b-qanything -p 1 -r 0.81
+bash ./run.sh -c local -i 0 -b vllm -m Qwen-7B-QAnything -t qwen-7b-qanything -p 1 -r 0.85
 
 ```
 
-###2.2
+#### 2.2 Run a public LLM model (e.g., MiniChat-2-3B)
 ```bash
 ## Step 1. Download the public LLM model (e.g., MiniChat-2-3B) and save to "/path/to/QAnything/assets/custom_models"
 cd /path/to/QAnything/assets/custom_models
