@@ -308,10 +308,11 @@ if [ ! -d "models" ] || [ ! -d "models/embed" ] || [ ! -d "models/rerank" ] || [
     exit 1
   fi
 
+  unzip_start_time=$(date +%s)
   unzip QAnything/models.zip
 
   unzip_end_time=$(date +%s)
-  elapsed=$((unzip_end_time - d_end_time))  # 计算经过的时间（秒）
+  elapsed=$((unzip_end_time - unzip_start_time))  # 计算经过的时间（秒）
   echo "unzip Time elapsed: ${elapsed} seconds."
   echo "解压耗时: ${elapsed} 秒."
 
@@ -346,6 +347,9 @@ check_version_file() {
 check_version_file "v2.1.0"
 echo "Model directories check passed. (0/8)"
 echo "模型路径和模型版本检查通过. (0/8)"
+
+# 删除克隆的https://www.modelscope.cn/netease-youdao/QAnything.git模型仓库
+rm -rf QAnything
 
 user_file="user.config"
 
