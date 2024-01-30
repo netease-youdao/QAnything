@@ -291,7 +291,7 @@ if [ ! -d "models" ] || [ ! -d "models/embed" ] || [ ! -d "models/rerank" ] || [
     echo "Downloading models.zip..."
     echo "开始下载模型文件..."
     git lfs install
-    git clone https://github.com/netease-youdao/QAnything.git
+    git clone https://www.modelscope.cn/netease-youdao/QAnything.git
     d_end_time=$(date +%s)
     elapsed=$((d_end_time - d_start_time))  # 计算经过的时间（秒）
     echo "Download Time elapsed: ${elapsed} seconds."
@@ -315,15 +315,8 @@ if [ ! -d "models" ] || [ ! -d "models/embed" ] || [ ! -d "models/rerank" ] || [
   echo "unzip Time elapsed: ${elapsed} seconds."
   echo "解压耗时: ${elapsed} 秒."
 
-  # 重命名解压后的模型文件夹
-  if [ -d "model" ]; then
-    mv "model" "models"
-  elif [ -d "qanything/model" ]; then
-    mv "qanything/model" "models"
-  fi
-
   # 删除克隆的仓库
-  rm -rf QAnything
+  # rm -rf QAnything
 else
   echo "models 文件夹已存在，无需下载。"
 fi
