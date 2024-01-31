@@ -19,19 +19,26 @@ sed -i "s/^M//" scripts/run.sh
  netsh int ipv4 set dynamic tcp start=11000 num=10000
 ```
 
-## 在前端页面输入问题后，返回结果报错：Triton Inference Error (error_code: 4)
-- 原因1：显存不够了，目前在问答过程中大模型和paddleocr占用的显存会逐渐上升且不释放，可能造成显存不够。
-- 解决方案：重启服务，优化显存的工作已在计划中
-- 原因2：如果发现显存够用，确认下显卡型号，目前只有Nvidia 30系，40系可以直接使用
-  - 另外Nvidia A系列，或2080Ti显卡可以通过更换旧版的模型和镜像解决这个问题
-  - 解决方案：手动更换镜像版本，下载模型文件解压并替换models目录，然后重启服务即可。  
-      - 将docker-compose-xxx.yaml中的freeren/qanyxxx:v1.0.9改为freeren/qanyxxx:v1.0.8
-      - git clone https://www.wisemodel.cn/Netease_Youdao/qanything.git 
-      - cd qanything
-      - git reset --hard 79b3da3bbb35406f0b2da3acfcdb4c96c2837faf
-      - unzip models.zip
-      - 替换掉现有的models目录
-      - echo "v2.1.0" > models/version.txt  # 手动避过版本检查
+## 选择Qwen-7B-QAnything大模型启动，在前端页面输入问题后，返回结果报错：Triton Inference Error (error_code: 4)
+- 原因1：显存不够了，目前在问答过程中大模型和paddleocr占用的显存会逐渐上升且不释放，可能造成显存溢出。
+- 解决方案：重启服务，或换成更小的大模型，比如3B或1.8B或OpenAI API
+- 原因2：如果发现显存够用，则是因为当前显卡型号不支持默认的triton后端，需要切换到vllm后端，或者hf后端
+- 解决方案如下： 
+```shell
+# 算力查询：请对照/path/to/QAnything/scripts/gpu_capabilities.json
+# 高算力卡（>=8.0）推荐vllm后端：
+cd /path/to/QAnything/assets/custom_models
+git lfs install
+git clone https://huggingface.co/netease-youdao/Qwen-7B-QAnything
+cd - 
+bash run.sh -c local -i 0 -b vllm -m Qwen-7B-QAnything -t qwen-7b-qanything -p 1 -r 0.85
+# 低算力高显存卡推荐hf后端：
+cd assets/custom_models
+git lfs install
+git clone https://huggingface.co/netease-youdao/Qwen-7B-QAnything
+cd - 
+bash run.sh -c local -i 0 -b hf -m Qwen-7B-QAnything -t qwen-7b-qanything
+```
 
 ## 在前端页面输入问题后，返回结果是类似后面的乱码：omiteatures贶.scrollHeight㎜eaturesodo Curse.streaming pulumi窟IDI贶沤贶.scrollHeight贶贶贶eatures谜.scrollHeight她是
 - 原因：显卡型号不支持，例如V100，请使用3080，3090，4080，4090等显卡，显存需要大于16G
