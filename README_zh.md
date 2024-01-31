@@ -249,6 +249,12 @@ bash close.sh
 ### 接入API
 如果需要接入API，请参阅[QAnything API 文档](docs/API.md)
 
+## 贡献代码
+我们感谢您对贡献到我们项目的兴趣。无论您是修复错误、改进现有功能还是添加全新内容，我们都欢迎您的贡献！
+### 贡献者
+<a href="https://github.com/netease-youdao/QAnything/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=netease-youdao/QAnything" />
+</a>
 
 
 ## 支持
