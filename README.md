@@ -265,7 +265,7 @@ If you need to access the API, please refer to the [QAnything API documentation]
 
 ### Contributing
 We appreciate your interest in contributing to our project. Whether you're fixing a bug, improving an existing feature, or adding something completely new, your contributions are welcome!
-#### Contributors
+#### Thanks to all contributors for their efforts
 <a href="https://github.com/netease-youdao/QAnything/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=netease-youdao/QAnything" />
 </a>
