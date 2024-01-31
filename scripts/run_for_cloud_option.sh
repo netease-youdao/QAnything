@@ -1,5 +1,20 @@
 #!/bin/bash
 
+update_or_append_to_env() {
+  local key=$1
+  local value=$2
+  local env_file="/workspace/qanything_local/.env"
+
+  # 检查键是否存在于.env文件中
+  if grep -q "^${key}=" "$env_file"; then
+    # 如果键存在，则更新它的值
+    sed -i "/^${key}=/c\\${key}=${value}" "$env_file"
+  else
+    # 如果键不存在，则追加键值对到文件
+    echo "${key}=${value}" >> "$env_file"
+  fi
+}
+
 script_name=$(basename "$0")
 
 usage() {
@@ -110,8 +125,10 @@ echo "The triton server will start on $gpuid1 GPU"
 
 CUDA_VISIBLE_DEVICES=$gpuid1 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_embed_rerank --http-port=9000 --grpc-port=9001 --metrics-port=9002 --log-verbose=1 > /workspace/qanything_local/logs/debug_logs/embed_rerank_tritonserver.log 2>&1 &
 
-echo "RERANK_PORT=9001" >> /workspace/qanything_local/.env
-echo "EMBED_PORT=9001" >> /workspace/qanything_local/.env
+update_or_append_to_env "EMBED_PORT" "9001"
+update_or_append_to_env "RERANK_PORT" "9001"
+# echo "RERANK_PORT=9001" >> /workspace/qanything_local/.env
+# echo "EMBED_PORT=9001" >> /workspace/qanything_local/.env
 
 cd /workspace/qanything_local || exit
 nohup python3 -u qanything_kernel/dependent_server/rerank_for_local_serve/rerank_server.py > /workspace/qanything_local/logs/debug_logs/rerank_server.log 2>&1 &
