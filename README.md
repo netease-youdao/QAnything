@@ -263,7 +263,12 @@ bash close.sh
 ### API Document
 If you need to access the API, please refer to the [QAnything API documentation](docs/API.md).
 
-
+### Contributing
+We appreciate your interest in contributing to our project. Whether you're fixing a bug, improving an existing feature, or adding something completely new, your contributions are welcome!
+#### Contributors
+<a href="https://github.com/netease-youdao/QAnything/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=netease-youdao/QAnything" />
+</a>
 
 ## Community & Support
 
