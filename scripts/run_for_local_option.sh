@@ -1,5 +1,20 @@
 #!/bin/bash
 
+update_or_append_to_env() {
+  local key=$1
+  local value=$2
+  local env_file="/workspace/qanything_local/.env"
+
+  # 检查键是否存在于.env文件中
+  if grep -q "^${key}=" "$env_file"; then
+    # 如果键存在，则更新它的值
+    sed -i "/^${key}=/c\\${key}=${value}" "$env_file"
+  else
+    # 如果键不存在，则追加键值对到文件
+    echo "${key}=${value}" >> "$env_file"
+  fi
+}
+
 script_name=$(basename "$0")
 
 usage() {
@@ -115,16 +130,19 @@ if [ "$runtime_backend" = "default" ]; then
     if [ $gpuid1 -eq $gpuid2 ]; then
         echo "The triton server will start on $gpuid1 GPU"
         CUDA_VISIBLE_DEVICES=$gpuid1 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble --http-port=10000 --grpc-port=10001 --metrics-port=10002 --log-verbose=1 >  /workspace/qanything_local/logs/debug_logs/llm_embed_rerank_tritonserver.log 2>&1 &
-        echo "RERANK_PORT=10001" >> /workspace/qanything_local/.env
-        echo "EMBED_PORT=10001" >> /workspace/qanything_local/.env
+        update_or_append_to_env "RERANK_PORT" "10001"
+        update_or_append_to_env "EMBED_PORT" "10001"
+        # echo "RERANK_PORT=10001" >> /workspace/qanything_local/.env
+        # echo "EMBED_PORT=10001" >> /workspace/qanything_local/.env
     else
         echo "The triton server will start on $gpuid1 and $gpuid2 GPUs"
 
         CUDA_VISIBLE_DEVICES=$gpuid1 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_base --http-port=10000 --grpc-port=10001 --metrics-port=10002 --log-verbose=1 > /workspace/qanything_local/logs/debug_logs/llm_tritonserver.log 2>&1 &
         CUDA_VISIBLE_DEVICES=$gpuid2 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_embed_rerank --http-port=9000 --grpc-port=9001 --metrics-port=9002 --log-verbose=1 > /workspace/qanything_local/logs/debug_logs/embed_rerank_tritonserver.log 2>&1 &
-
-        echo "RERANK_PORT=9001" >> /workspace/qanything_local/.env
-        echo "EMBED_PORT=9001" >> /workspace/qanything_local/.env
+        update_or_append_to_env "RERANK_PORT" "9001"
+        update_or_append_to_env "EMBED_PORT" "9001"
+        # echo "RERANK_PORT=9001" >> /workspace/qanything_local/.env
+        # echo "EMBED_PORT=9001" >> /workspace/qanything_local/.env
     fi
 
     cd /workspace/qanything_local/qanything_kernel/dependent_server/llm_for_local_serve || exit
@@ -134,17 +152,22 @@ if [ "$runtime_backend" = "default" ]; then
 else
     echo "The triton server for embedding and reranker will start on $gpuid2 GPUs"
     CUDA_VISIBLE_DEVICES=$gpuid2 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_embed_rerank --http-port=9000 --grpc-port=9001 --metrics-port=9002 --log-verbose=1 > /workspace/qanything_local/logs/debug_logs/embed_rerank_tritonserver.log 2>&1 &
-    echo "RERANK_PORT=9001" >> /workspace/qanything_local/.env
-    echo "EMBED_PORT=9001" >> /workspace/qanything_local/.env
+    update_or_append_to_env "RERANK_PORT" "9001"
+    update_or_append_to_env "EMBED_PORT" "9001"
+    # echo "RERANK_PORT=9001" >> /workspace/qanything_local/.env
+    # echo "EMBED_PORT=9001" >> /workspace/qanything_local/.env
 
     LLM_API_SERVE_CONV_TEMPLATE="$conv_template"
     LLM_API_SERVE_MODEL="$model_name"
 
     check_folder_existence "$LLM_API_SERVE_MODEL"
 
-    echo "LLM_API_SERVE_PORT=7802" >> /workspace/qanything_local/.env
-    echo "LLM_API_SERVE_MODEL=$LLM_API_SERVE_MODEL" >> /workspace/qanything_local/.env
-    echo "LLM_API_SERVE_CONV_TEMPLATE=$LLM_API_SERVE_CONV_TEMPLATE" >> /workspace/qanything_local/.env
+    update_or_append_to_env "LLM_API_SERVE_PORT" "7802"
+    update_or_append_to_env "LLM_API_SERVE_MODEL" "$LLM_API_SERVE_MODEL"
+    update_or_append_to_env "LLM_API_SERVE_CONV_TEMPLATE" "$LLM_API_SERVE_CONV_TEMPLATE"
+    # echo "LLM_API_SERVE_PORT=7802" >> /workspace/qanything_local/.env
+    # echo "LLM_API_SERVE_MODEL=$LLM_API_SERVE_MODEL" >> /workspace/qanything_local/.env
+    # echo "LLM_API_SERVE_CONV_TEMPLATE=$LLM_API_SERVE_CONV_TEMPLATE" >> /workspace/qanything_local/.env
 
     # mkdir -p /workspace/qanything_local/qanything_logs/fastchat_logs && cd /workspace/qanything_local/qanything_logs/fastchat_logs
     mkdir -p /workspace/qanything_local/logs/debug_logs/fastchat_logs && cd /workspace/qanything_local/logs/debug_logs/fastchat_logs

@@ -1,11 +1,20 @@
 #!/bin/bash
 
+# 函数：更新或追加键值对到.env文件
+update_or_append_to_env() {
+  local key=$1
+  local value=$2
+  local env_file=".env"
 
-### If using OpenAI API, please export the following environments into .env fisrt
-echo "OPENAI_API_KEY='your-api-key-here'" > .env
-echo "OPENAI_API_BASE='https://api.openai.com/v1'" >> .env
-echo "OPENAI_API_MODEL_NAME='gpt-3.5-turbo'" >> .env
-echo "OPENAI_API_CONTEXT_LENGTH=4096" >> .env
+  # 检查键是否存在于.env文件中
+  if grep -q "^${key}=" "$env_file"; then
+    # 如果键存在，则更新它的值
+    sed -i "/^${key}=/c\\${key}=${value}" "$env_file"
+  else
+    # 如果键不存在，则追加键值对到文件
+    echo "${key}=${value}" >> "$env_file"
+  fi
+}
 
 script_name=$(basename "$0")
 
@@ -100,15 +109,17 @@ if ! [[ $gpu_id1 =~ ^[0-9]+$ ]] || ! [[ $gpu_id2 =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 
-echo "GPUID1=${gpu_id1}" >> .env
-echo "GPUID2=${gpu_id2}" >> .env
+# echo "GPUID1=${gpu_id1}" >> .env
+# echo "GPUID2=${gpu_id2}" >> .env
+update_or_append_to_env "GPUID1" "$gpu_id1"
+update_or_append_to_env "GPUID2" "$gpu_id2"
 
 # 获取显卡型号
 gpu_model=$(nvidia-smi --query-gpu=gpu_name --format=csv,noheader,nounits -i $gpu_id1)
 # nvidia RTX 30系列或40系列
 gpu_series=$(echo $gpu_model | grep -oP 'RTX\s*(30|40)')
 if ! command -v jq &> /dev/null; then
-    echo "Error: jq 命令不存在，请使用 sudo apt-get install jq 安装，再重新启动。"
+    echo "Error: jq 命令不存在，请使用 sudo apt update && sudo apt-get install jq 安装，再重新启动。"
     exit 1
 fi
 compute_capability=$(jq -r ".[\"$gpu_model\"]" scripts/gpu_capabilities.json)
@@ -121,7 +132,7 @@ echo "GPU1 Model: $gpu_model"
 echo "Compute Capability: $compute_capability"
 
 if ! command -v bc &> /dev/null; then
-    echo "Error: bc 命令不存在，请使用 sudo apt-get install bc 安装，再重新启动。"
+    echo "Error: bc 命令不存在，请使用 sudo apt update && sudo apt-get install bc 安装，再重新启动。"
     exit 1
 fi
 
@@ -131,7 +142,8 @@ else
     OCR_USE_GPU="False"
 fi
 echo "OCR_USE_GPU=$OCR_USE_GPU because $compute_capability >= 7.5"
-echo "OCR_USE_GPU=$OCR_USE_GPU" >> .env
+# echo "OCR_USE_GPU=$OCR_USE_GPU" >> .env
+update_or_append_to_env "OCR_USE_GPU" "$OCR_USE_GPU"
 
 # 使用nvidia-smi命令获取GPU的显存大小（以MiB为单位）
 GPU1_MEMORY_SIZE=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits -i $gpu_id1)
@@ -217,45 +229,54 @@ elif [ "$GPU1_MEMORY_SIZE" -gt 25000 ]; then  # 显存大于24GB
     OFFCUT_TOKEN=0
 fi
 
-echo "OFFCUT_TOKEN=$OFFCUT_TOKEN" >> .env
+# echo "OFFCUT_TOKEN=$OFFCUT_TOKEN" >> .env
+update_or_append_to_env "OFFCUT_TOKEN" "$OFFCUT_TOKEN"
 
 if [ $llm_api = 'cloud' ]; then
+  need_input_openai_info=1
+  OPENAI_API_KEY=$(grep OPENAI_API_KEY .env | cut -d '=' -f2)
   # 如果.env中已存在OPENAI_API_KEY的值（不为空），则询问用户是否使用上次默认值：$OPENAI_API_KEY，$OPENAI_API_BASE, $OPENAI_API_MODEL_NAME, $OPENAI_API_CONTEXT_LENGTH
   if [ -n "$OPENAI_API_KEY" ]; then
     read -p "Do you want to use the previous OPENAI_API_KEY: $OPENAI_API_KEY? (yes/no) 是否使用上次的OPENAI_API_KEY: $OPENAI_API_KEY？(yes/no) 回车默认选yes，请输入:" use_previous
     use_previous=${use_previous:-yes}
-    if [ "$use_previous" != "yes" ]; then
-      read -p "Please enter OPENAI_API_KEY: " OPENAI_API_KEY
-      read -p "Please enter OPENAI_API_BASE (default: https://api.openai.com/v1):" OPENAI_API_BASE
-      read -p "Please enter OPENAI_API_MODEL_NAME (default: gpt-3.5-turbo):" OPENAI_API_MODEL_NAME
-      read -p "Please enter OPENAI_API_CONTEXT_LENGTH (default: 4096):" OPENAI_API_CONTEXT_LENGTH
+    if [ "$use_previous" = "yes" ]; then
+      need_input_openai_info=0
     fi
-  else # 如果.env中不存在OPENAI_API_KEY的值，则询问用户
-    echo "If set to '-c cloud', please mannually set the environments {OPENAI_API_KEY, OPENAI_API_BASE, OPENAI_API_MODEL_NAME, OPENAI_API_CONTEXT_LENGTH} into .env fisrt in run.sh"
+  fi
+  if [ $need_input_openai_info -eq 1 ]; then
     read -p "Please enter OPENAI_API_KEY: " OPENAI_API_KEY
     read -p "Please enter OPENAI_API_BASE (default: https://api.openai.com/v1):" OPENAI_API_BASE
     read -p "Please enter OPENAI_API_MODEL_NAME (default: gpt-3.5-turbo):" OPENAI_API_MODEL_NAME
     read -p "Please enter OPENAI_API_CONTEXT_LENGTH (default: 4096):" OPENAI_API_CONTEXT_LENGTH
-  fi
 
-  if [ -z "$OPENAI_API_KEY" ]; then  # 如果OPENAI_API_KEY为空，则退出
+    if [ -z "$OPENAI_API_KEY" ]; then  # 如果OPENAI_API_KEY为空，则退出
     echo "OPENAI_API_KEY is empty, please enter OPENAI_API_KEY."
     exit 1
-  fi
-  if [ -z "$OPENAI_API_BASE" ]; then  # 如果OPENAI_API_BASE为空，则设置默认值
-    OPENAI_API_BASE="https://api.openai.com/v1"
-  fi
-  if [ -z "$OPENAI_API_MODEL_NAME" ]; then  # 如果OPENAI_API_MODEL_NAME为空，则设置默认值
-    OPENAI_API_MODEL_NAME="gpt-3.5-turbo"
-  fi
-  if [ -z "$OPENAI_API_CONTEXT_LENGTH" ]; then  # 如果OPENAI_API_CONTEXT_LENGTH为空，则设置默认值
-    OPENAI_API_CONTEXT_LENGTH=4096
-  fi
+    fi
+    if [ -z "$OPENAI_API_BASE" ]; then  # 如果OPENAI_API_BASE为空，则设置默认值
+      OPENAI_API_BASE="https://api.openai.com/v1"
+    fi
+    if [ -z "$OPENAI_API_MODEL_NAME" ]; then  # 如果OPENAI_API_MODEL_NAME为空，则设置默认值
+      OPENAI_API_MODEL_NAME="gpt-3.5-turbo"
+    fi
+    if [ -z "$OPENAI_API_CONTEXT_LENGTH" ]; then  # 如果OPENAI_API_CONTEXT_LENGTH为空，则设置默认值
+      OPENAI_API_CONTEXT_LENGTH=4096
+    fi
 
-  echo "OPENAI_API_KEY='$OPENAI_API_KEY'" > .env
-  echo "OPENAI_API_BASE='$OPENAI_API_BASE'" >> .env
-  echo "OPENAI_API_MODEL_NAME='$OPENAI_API_MODEL_NAME'" >> .env
-  echo "OPENAI_API_CONTEXT_LENGTH=$OPENAI_API_CONTEXT_LENGTH" >> .env
+    update_or_append_to_env "OPENAI_API_KEY" "$OPENAI_API_KEY"
+    update_or_append_to_env "OPENAI_API_BASE" "$OPENAI_API_BASE"
+    update_or_append_to_env "OPENAI_API_MODEL_NAME" "$OPENAI_API_MODEL_NAME"
+    update_or_append_to_env "OPENAI_API_CONTEXT_LENGTH" "$OPENAI_API_CONTEXT_LENGTH"
+  else
+    OPENAI_API_BASE=$(grep OPENAI_API_BASE .env | cut -d '=' -f2)
+    OPENAI_API_MODEL_NAME=$(grep OPENAI_API_MODEL_NAME .env | cut -d '=' -f2)
+    OPENAI_API_CONTEXT_LENGTH=$(grep OPENAI_API_CONTEXT_LENGTH .env | cut -d '=' -f2)
+    echo "使用上次的配置："
+    echo "OPENAI_API_KEY: $OPENAI_API_KEY"
+    echo "OPENAI_API_BASE: $OPENAI_API_BASE"
+    echo "OPENAI_API_MODEL_NAME: $OPENAI_API_MODEL_NAME"
+    echo "OPENAI_API_CONTEXT_LENGTH: $OPENAI_API_CONTEXT_LENGTH"
+  fi
 fi
 
 echo "llm_api is set to [$llm_api]"
@@ -267,13 +288,21 @@ echo "tensor_parallel is set to [$tensor_parallel]"
 echo "gpu_memory_utilization is set to [$gpu_memory_utilization]"
 
 # 写入环境变量.env文件
-echo "LLM_API=${llm_api}" >> .env
-echo "DEVICE_ID=$device_id" >> .env
-echo "RUNTIME_BACKEND=$runtime_backend" >> .env
-echo "MODEL_NAME=$model_name" >> .env
-echo "CONV_TEMPLATE=$conv_template" >> .env
-echo "TP=$tensor_parallel" >> .env
-echo "GPU_MEM_UTILI=$gpu_memory_utilization" >> .env
+#echo "LLM_API=${llm_api}" >> .env
+#echo "DEVICE_ID=$device_id" >> .env
+#echo "RUNTIME_BACKEND=$runtime_backend" >> .env
+#echo "MODEL_NAME=$model_name" >> .env
+#echo "CONV_TEMPLATE=$conv_template" >> .env
+#echo "TP=$tensor_parallel" >> .env
+#echo "GPU_MEM_UTILI=$gpu_memory_utilization" >> .env
+
+update_or_append_to_env "LLM_API" "$llm_api"
+update_or_append_to_env "DEVICE_ID" "$device_id"
+update_or_append_to_env "RUNTIME_BACKEND" "$runtime_backend"
+update_or_append_to_env "MODEL_NAME" "$model_name"
+update_or_append_to_env "CONV_TEMPLATE" "$conv_template"
+update_or_append_to_env "TP" "$tensor_parallel"
+update_or_append_to_env "GPU_MEM_UTILI" "$gpu_memory_utilization"
 
 # 检查是否存在 models 文件夹，且models下是否存在embed，rerank，base三个文件夹
 if [ ! -d "models" ] || [ ! -d "models/embed" ] || [ ! -d "models/rerank" ] || [ ! -d "models/base" ]; then
@@ -296,7 +325,7 @@ if [ ! -d "models" ] || [ ! -d "models/embed" ] || [ ! -d "models/rerank" ] || [
   d_start_time=$(date +%s)
   # 判断是否存在lfs，不存在建议使用sudo apt-get install git-lfs安装
   if ! command -v git-lfs &> /dev/null; then
-    echo "Error: git-lfs 命令不存在，请使用 sudo apt-get install git-lfs 安装。或参考 https://git-lfs.com/ 页面安装，再重新启动"
+    echo "Error: git-lfs 命令不存在，请使用 sudo apt update && sudo apt-get install git-lfs 安装。或参考 https://git-lfs.com/ 页面安装，再重新启动"
     exit 1
   fi
 
@@ -318,7 +347,7 @@ if [ ! -d "models" ] || [ ! -d "models/embed" ] || [ ! -d "models/rerank" ] || [
   # 解压模型文件
   # 判断是否存在unzip，不存在建议使用sudo apt-get install unzip安装
   if ! command -v unzip &> /dev/null; then
-    echo "Error: unzip 命令不存在，请使用 sudo apt-get install unzip 安装，再重新启动"
+    echo "Error: unzip 命令不存在，请使用 sudo apt update && sudo apt-get install unzip 安装，再重新启动"
     exit 1
   fi
 
