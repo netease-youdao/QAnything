@@ -119,7 +119,7 @@ gpu_model=$(nvidia-smi --query-gpu=gpu_name --format=csv,noheader,nounits -i $gp
 # nvidia RTX 30系列或40系列
 gpu_series=$(echo $gpu_model | grep -oP 'RTX\s*(30|40)')
 if ! command -v jq &> /dev/null; then
-    echo "Error: jq 命令不存在，请使用 sudo apt-get install jq 安装，再重新启动。"
+    echo "Error: jq 命令不存在，请使用 sudo apt update && sudo apt-get install jq 安装，再重新启动。"
     exit 1
 fi
 compute_capability=$(jq -r ".[\"$gpu_model\"]" scripts/gpu_capabilities.json)
@@ -132,7 +132,7 @@ echo "GPU1 Model: $gpu_model"
 echo "Compute Capability: $compute_capability"
 
 if ! command -v bc &> /dev/null; then
-    echo "Error: bc 命令不存在，请使用 sudo apt-get install bc 安装，再重新启动。"
+    echo "Error: bc 命令不存在，请使用 sudo apt update && sudo apt-get install bc 安装，再重新启动。"
     exit 1
 fi
 
@@ -271,7 +271,11 @@ if [ $llm_api = 'cloud' ]; then
     OPENAI_API_BASE=$(grep OPENAI_API_BASE .env | cut -d '=' -f2)
     OPENAI_API_MODEL_NAME=$(grep OPENAI_API_MODEL_NAME .env | cut -d '=' -f2)
     OPENAI_API_CONTEXT_LENGTH=$(grep OPENAI_API_CONTEXT_LENGTH .env | cut -d '=' -f2)
-    echo "使用上次的配置：OPENAI_API_KEY: $OPENAI_API_KEY, OPENAI_API_BASE: $OPENAI_API_BASE, OPENAI_API_MODEL_NAME: $OPENAI_API_MODEL_NAME, OPENAI_API_CONTEXT_LENGTH: $OPENAI_API_CONTEXT_LENGTH"
+    echo "使用上次的配置："
+    echo "OPENAI_API_KEY: $OPENAI_API_KEY"
+    echo "OPENAI_API_BASE: $OPENAI_API_BASE"
+    echo "OPENAI_API_MODEL_NAME: $OPENAI_API_MODEL_NAME"
+    echo "OPENAI_API_CONTEXT_LENGTH: $OPENAI_API_CONTEXT_LENGTH"
   fi
 fi
 
@@ -321,7 +325,7 @@ if [ ! -d "models" ] || [ ! -d "models/embed" ] || [ ! -d "models/rerank" ] || [
   d_start_time=$(date +%s)
   # 判断是否存在lfs，不存在建议使用sudo apt-get install git-lfs安装
   if ! command -v git-lfs &> /dev/null; then
-    echo "Error: git-lfs 命令不存在，请使用 sudo apt-get install git-lfs 安装。或参考 https://git-lfs.com/ 页面安装，再重新启动"
+    echo "Error: git-lfs 命令不存在，请使用 sudo apt update && sudo apt-get install git-lfs 安装。或参考 https://git-lfs.com/ 页面安装，再重新启动"
     exit 1
   fi
 
@@ -343,7 +347,7 @@ if [ ! -d "models" ] || [ ! -d "models/embed" ] || [ ! -d "models/rerank" ] || [
   # 解压模型文件
   # 判断是否存在unzip，不存在建议使用sudo apt-get install unzip安装
   if ! command -v unzip &> /dev/null; then
-    echo "Error: unzip 命令不存在，请使用 sudo apt-get install unzip 安装，再重新启动"
+    echo "Error: unzip 命令不存在，请使用 sudo apt update && sudo apt-get install unzip 安装，再重新启动"
     exit 1
   fi
 
