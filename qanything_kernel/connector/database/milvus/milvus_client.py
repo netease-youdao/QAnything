@@ -6,7 +6,7 @@ from functools import partial
 import time
 import copy
 from datetime import datetime
-from qanything_kernel.configs.model_config import MILVUS_HOST_LOCAL, MILVUS_HOST_ONLINE, MILVUS_PORT, CHUNK_SIZE, VECTOR_SEARCH_TOP_K
+from qanything_kernel.configs.model_config import MILVUS_HOST_LOCAL, MILVUS_HOST_ONLINE, MILVUS_PORT, MILVUS_USER, MILVUS_PASSWORD, MILVUS_DB_NAME, CHUNK_SIZE, VECTOR_SEARCH_TOP_K
 from qanything_kernel.utils.custom_log import debug_logger
 from langchain.docstore.document import Document
 import math
@@ -28,6 +28,9 @@ class MilvusClient:
         else:
             self.host = MILVUS_HOST_ONLINE
         self.port = MILVUS_PORT
+        self.user = MILVUS_USER
+        self.password = MILVUS_PASSWORD
+        self.db_name = MILVUS_DB_NAME
         self.client_timeout = client_timeout
         self.threshold = threshold
         self.sess: Collection = None
@@ -79,7 +82,8 @@ class MilvusClient:
 
     def init(self):
         try:
-            connections.connect(host=self.host, port=self.port)  # timeout=3 [cannot set]
+            connections.connect(host=self.host, port=self.port, user=self.user,
+                                password=self.password, db_name=self.db_name)  # timeout=3 [cannot set]
             if utility.has_collection(self.user_id):
                 self.sess = Collection(self.user_id)
                 debug_logger.info(f'collection {self.user_id} exists')
