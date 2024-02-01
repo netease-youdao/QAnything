@@ -132,8 +132,6 @@ if [ "$runtime_backend" = "default" ]; then
         CUDA_VISIBLE_DEVICES=$gpuid1 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble --http-port=10000 --grpc-port=10001 --metrics-port=10002 --log-verbose=1 >  /workspace/qanything_local/logs/debug_logs/llm_embed_rerank_tritonserver.log 2>&1 &
         update_or_append_to_env "RERANK_PORT" "10001"
         update_or_append_to_env "EMBED_PORT" "10001"
-        # echo "RERANK_PORT=10001" >> /workspace/qanything_local/.env
-        # echo "EMBED_PORT=10001" >> /workspace/qanything_local/.env
     else
         echo "The triton server will start on $gpuid1 and $gpuid2 GPUs"
 
@@ -141,8 +139,6 @@ if [ "$runtime_backend" = "default" ]; then
         CUDA_VISIBLE_DEVICES=$gpuid2 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_embed_rerank --http-port=9000 --grpc-port=9001 --metrics-port=9002 --log-verbose=1 > /workspace/qanything_local/logs/debug_logs/embed_rerank_tritonserver.log 2>&1 &
         update_or_append_to_env "RERANK_PORT" "9001"
         update_or_append_to_env "EMBED_PORT" "9001"
-        # echo "RERANK_PORT=9001" >> /workspace/qanything_local/.env
-        # echo "EMBED_PORT=9001" >> /workspace/qanything_local/.env
     fi
 
     cd /workspace/qanything_local/qanything_kernel/dependent_server/llm_for_local_serve || exit
@@ -154,8 +150,6 @@ else
     CUDA_VISIBLE_DEVICES=$gpuid2 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_embed_rerank --http-port=9000 --grpc-port=9001 --metrics-port=9002 --log-verbose=1 > /workspace/qanything_local/logs/debug_logs/embed_rerank_tritonserver.log 2>&1 &
     update_or_append_to_env "RERANK_PORT" "9001"
     update_or_append_to_env "EMBED_PORT" "9001"
-    # echo "RERANK_PORT=9001" >> /workspace/qanything_local/.env
-    # echo "EMBED_PORT=9001" >> /workspace/qanything_local/.env
 
     LLM_API_SERVE_CONV_TEMPLATE="$conv_template"
     LLM_API_SERVE_MODEL="$model_name"
@@ -165,11 +159,7 @@ else
     update_or_append_to_env "LLM_API_SERVE_PORT" "7802"
     update_or_append_to_env "LLM_API_SERVE_MODEL" "$LLM_API_SERVE_MODEL"
     update_or_append_to_env "LLM_API_SERVE_CONV_TEMPLATE" "$LLM_API_SERVE_CONV_TEMPLATE"
-    # echo "LLM_API_SERVE_PORT=7802" >> /workspace/qanything_local/.env
-    # echo "LLM_API_SERVE_MODEL=$LLM_API_SERVE_MODEL" >> /workspace/qanything_local/.env
-    # echo "LLM_API_SERVE_CONV_TEMPLATE=$LLM_API_SERVE_CONV_TEMPLATE" >> /workspace/qanything_local/.env
 
-    # mkdir -p /workspace/qanything_local/qanything_logs/fastchat_logs && cd /workspace/qanything_local/qanything_logs/fastchat_logs
     mkdir -p /workspace/qanything_local/logs/debug_logs/fastchat_logs && cd /workspace/qanything_local/logs/debug_logs/fastchat_logs
     nohup python3 -m fastchat.serve.controller --host 0.0.0.0 --port 7800 > /workspace/qanything_local/logs/debug_logs/fastchat_logs/fschat_controller_7800.log 2>&1 &
     nohup python3 -m fastchat.serve.openai_api_server --host 0.0.0.0 --port 7802 --controller-address http://0.0.0.0:7800 > /workspace/qanything_local/logs/debug_logs/fastchat_logs/fschat_openai_api_server_7802.log 2>&1 &

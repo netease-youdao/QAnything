@@ -127,8 +127,6 @@ CUDA_VISIBLE_DEVICES=$gpuid1 nohup /opt/tritonserver/bin/tritonserver --model-st
 
 update_or_append_to_env "EMBED_PORT" "9001"
 update_or_append_to_env "RERANK_PORT" "9001"
-# echo "RERANK_PORT=9001" >> /workspace/qanything_local/.env
-# echo "EMBED_PORT=9001" >> /workspace/qanything_local/.env
 
 cd /workspace/qanything_local || exit
 nohup python3 -u qanything_kernel/dependent_server/rerank_for_local_serve/rerank_server.py > /workspace/qanything_local/logs/debug_logs/rerank_server.log 2>&1 &

@@ -51,6 +51,40 @@ Note: You can choose the most suitable Service Startup Command based on your own
   exit 1
 }
 
+# 检查master分支是否有新代码
+# 定义颜色
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# 定义醒目的提示信息
+print_important_notice() {
+    echo -e "${YELLOW}====================================================${NC}"
+    echo -e "${YELLOW}******************** 重要提示 ********************${NC}"
+    echo -e "${YELLOW}====================================================${NC}"
+    echo
+    echo -e "${RED}检测到master分支有新的代码更新，请执行 git pull 来同步最新的代码。${NC}"
+    echo
+    sleep 5
+}
+
+# 获取最新的远程仓库信息
+git fetch origin master
+
+# 获取本地master分支的最新提交
+LOCAL=$(git rev-parse master)
+# 获取远程master分支的最新提交
+REMOTE=$(git rev-parse origin/master)
+
+if [ $LOCAL != $REMOTE ]; then
+    # 本地分支与远程分支不一致，需要更新
+    print_important_notice
+else
+    echo -e "${GREEN}当前master分支已是最新，无需更新。${NC}"
+fi
+
+
 llm_api="local"
 device_id="0"
 runtime_backend="default"
@@ -109,8 +143,6 @@ if ! [[ $gpu_id1 =~ ^[0-9]+$ ]] || ! [[ $gpu_id2 =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 
-# echo "GPUID1=${gpu_id1}" >> .env
-# echo "GPUID2=${gpu_id2}" >> .env
 update_or_append_to_env "GPUID1" "$gpu_id1"
 update_or_append_to_env "GPUID2" "$gpu_id2"
 
@@ -286,15 +318,6 @@ echo "model_name is set to [$model_name]"
 echo "conv_template is set to [$conv_template]"
 echo "tensor_parallel is set to [$tensor_parallel]"
 echo "gpu_memory_utilization is set to [$gpu_memory_utilization]"
-
-# 写入环境变量.env文件
-#echo "LLM_API=${llm_api}" >> .env
-#echo "DEVICE_ID=$device_id" >> .env
-#echo "RUNTIME_BACKEND=$runtime_backend" >> .env
-#echo "MODEL_NAME=$model_name" >> .env
-#echo "CONV_TEMPLATE=$conv_template" >> .env
-#echo "TP=$tensor_parallel" >> .env
-#echo "GPU_MEM_UTILI=$gpu_memory_utilization" >> .env
 
 update_or_append_to_env "LLM_API" "$llm_api"
 update_or_append_to_env "DEVICE_ID" "$device_id"
