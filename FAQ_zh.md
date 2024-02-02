@@ -61,3 +61,12 @@ We recommend to activate the WSL integration in Docker Desktop settings.
 
 ## 执行run.sh时拉取镜像失败： ⠼ error getting credentials - err: exit status 1, out: `error getting credentials - err: exit status 1, out: `A specified logon session does not exist. It may already have been terminated.``
 - 解决方案：尝试手动拉取镜像，如执行：docker pull milvusdb/milvus:v2.3.4，然后再重新执行bash run.sh
+
+
+## 执行run.sh时报错：Illegal instruction (core dumped)，或OCR服务无法启动
+- 原因：cpu不支持avx指令集，而PaddleOCR依赖avx指令集，导致无法启动OCR服务
+- 解决方案：可进入容器后执行"cat /proc/cpuinfo | grep -i avx"，如果没有输出，则说明cpu不支持avx指令集，可参考paddle官网的解决办法，在容器内重装paddleocr：https://www.paddlepaddle.org.cn/en/install/quick?docurl=/documentation/docs/en/install/pip/linux-pip_en.html#old-version-anchor-5-Choose%20CPU%2FGPU
+```
+# If you want to install the Paddle package with avx and openblas, you can use the following command to download the wheel package to the local, and then use python3 -m pip install [name].whl to install locally ([name] is the name of the wheel package):
+python3 -m pip download paddlepaddle==2.6.0 -f https://www.paddlepaddle.org.cn/whl/linux/openblas/avx/stable.html --no-index --no-deps
+```

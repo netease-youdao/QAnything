@@ -174,7 +174,6 @@ else
     OCR_USE_GPU="False"
 fi
 echo "OCR_USE_GPU=$OCR_USE_GPU because $compute_capability >= 7.5"
-# echo "OCR_USE_GPU=$OCR_USE_GPU" >> .env
 update_or_append_to_env "OCR_USE_GPU" "$OCR_USE_GPU"
 
 # 使用nvidia-smi命令获取GPU的显存大小（以MiB为单位）
@@ -185,6 +184,22 @@ echo "===================================================="
 echo "******************** 重要提示 ********************"
 echo "===================================================="
 echo ""
+
+# 使用默认后端且model_size_num不为0
+if [ "$runtime_backend" = "default" ] && [ "$model_size_num" -ne 0 ]; then
+    if [ -z "$gpu_series" ]; then  # 不是Nvidia 30系列或40系列
+        echo "您的显卡型号 $gpu_model 部署默认后端FasterTransformer需要Nvidia RTX 30系列或40系列显卡，将自动为您切换后端："
+        # 如果显存大于等于24GB且计算力大于等于8.6，则可以使用vllm后端
+        if [ "$GPU1_MEMORY_SIZE" -ge 24000 ] && [ $(echo "$compute_capability >= 8.6" | bc) -eq 1 ]; then
+            echo "根据匹配算法，已自动为您切换为vllm后端（推荐）"
+            runtime_backend="vllm"
+        else
+            # 自动切换huggingface后端
+            echo "根据匹配算法，已自动为您切换为huggingface后端"
+            runtime_backend="hf"
+        fi
+    fi
+fi
 
 if [ "$GPU1_MEMORY_SIZE" -lt 8000 ]; then  # 显存小于8GB
     # 显存小于8GB，仅推荐使用在线的OpenAI API
@@ -261,7 +276,6 @@ elif [ "$GPU1_MEMORY_SIZE" -gt 25000 ]; then  # 显存大于24GB
     OFFCUT_TOKEN=0
 fi
 
-# echo "OFFCUT_TOKEN=$OFFCUT_TOKEN" >> .env
 update_or_append_to_env "OFFCUT_TOKEN" "$OFFCUT_TOKEN"
 
 if [ $llm_api = 'cloud' ]; then
@@ -426,22 +440,26 @@ if [[ -f "$user_file" ]]; then
     read -p "Do you want to use the previous host: $host? (yes/no) 是否使用上次的host: $host？(yes/no) 回车默认选yes，请输入:" use_previous
     use_previous=${use_previous:-yes}
     if [[ $use_previous != "yes" && $use_previous != "是" ]]; then
-        read -p "Are you running the code on a cloud server or on your local machine? (cloud/local) 您是在云服务器上还是本地机器上启动代码？(cloud/local) " answer
+        read -p "Are you running the code on a remote server or on your local machine? (remote/local) 您是在远程服务器上还是本地机器上启动代码？(remote/local) " answer
         if [[ $answer == "local" || $answer == "本地" ]]; then
             host="localhost"
         else
-            read -p "Please enter the server IP address 请输入服务器IP地址(示例：10.234.10.144): " host
+            read -p "Please enter the server IP address 请输入服务器公网IP地址(示例：10.234.10.144): " host
+            echo "当前设置的远程服务器IP地址为 $host, QAnything启动后，本地前端服务（浏览器打开[http://$user_ip:5052/qanything/]）将远程访问[http://$host:8777]上的后端服务，请知悉！"
+            sleep 5
         fi
         # 保存新的配置到用户文件
         echo "$host" > "$user_file"
     fi
 else
     # 如果用户文件不存在，询问用户并保存配置
-    read -p "Are you running the code on a cloud server or on your local machine? (cloud/local) 您是在云服务器上还是本地机器上启动代码？(cloud/local) " answer
+    read -p "Are you running the code on a remote server or on your local machine? (remotelocal) 您是在云服务器上还是本地机器上启动代码？(remote/local) " answer
     if [[ $answer == "local" || $answer == "本地" ]]; then
         host="localhost"
     else
-        read -p "Please enter the server IP address 请输入服务器IP地址(示例：10.234.10.144): " host
+        read -p "Please enter the server IP address 请输入服务器公网IP地址(示例：10.234.10.144): " host
+        echo "当前设置的远程服务器IP地址为 $host, QAnything启动后，本地前端服务（浏览器打开[http://$user_ip:5052/qanything/]）将远程访问[http://$host:8777]上的后端服务，请知悉！"
+        sleep 5
     fi
     # 保存配置到用户文件
     echo "$host" > "$user_file"

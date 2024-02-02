@@ -142,8 +142,6 @@ echo "The qanything backend service is ready! (4/8)"
 echo "qanything后端服务已就绪! (4/8)"
 
 
-timeout_time=300  # npm下载超时时间300秒，triton_server启动超时时间600秒
-
 env_file="/workspace/qanything_local/front_end/.env.production"
 user_file="/workspace/qanything_local/user.config"
 user_ip=$(cat "$user_file")
@@ -163,11 +161,11 @@ cd /workspace/qanything_local/front_end || exit
 # 安装依赖
 echo "Waiting for [npm run install]（5/8)"
 npm config set registry https://registry.npmmirror.com
-timeout $timeout_time npm install
+timeout 180 npm install
 if [ $? -eq 0 ]; then
     echo "[npm run install] Installed successfully（5/8)"
 elif [ $? -eq 124 ]; then
-    echo "npm install 下载超时，可能是网络问题，请修改 npm 代理。"
+    echo "npm install 下载超时(180秒)，可能是网络问题，请修改 npm 代理。"
     exit 1
 else
     echo "Failed to install npm dependencies."
@@ -176,9 +174,12 @@ fi
 
 # 构建前端项目
 echo "Waiting for [npm run build](6/8)"
-npm run build
+timeout 180 npm run build
 if [ $? -eq 0 ]; then
     echo "[npm run build] build successfully(6/8)"
+elif [ $? -eq 124 ]; then
+    echo "npm run build 编译超时(180秒)，请查看上面的输出。"
+    exit 1
 else
     echo "Failed to build the front end."
     exit 1
@@ -188,7 +189,7 @@ fi
 nohup npm run serve 1>/workspace/qanything_local/logs/debug_logs/npm_server.log 2>&1 &
 
 # 监听前端页面服务
-tail -f npm_server.log &
+tail -f /workspace/qanything_local/logs/debug_logs/npm_server.log &
 
 front_end_start_time=$(date +%s)
 
@@ -210,40 +211,77 @@ done
 echo "The front-end service is ready!...(7/8)"
 echo "前端服务已就绪!...(7/8)"
 
-current_time=$(date +%s)
-elapsed=$((current_time - start_time))  # 计算经过的时间（秒）
-echo "Time elapsed: ${elapsed} seconds."
-echo "已耗时: ${elapsed} 秒."
+embed_rerank_log_file="/workspace/qanything_local/logs/debug_logs/embed_rerank_tritonserver.log"
 
+tail -f $embed_rerank_log_file &  # 后台输出日志文件
+tail_pid=$!  # 获取tail命令的进程ID
+
+now_time=$(date +%s)
 while true; do
+    current_time=$(date +%s)
+    elapsed_time=$((current_time - now_time))
+
     if [ "$runtime_backend" = "default" ]; then
         response_embed_rerank=$(curl -s -w "%{http_code}" http://localhost:9000/v2/health/ready -o /dev/null)
         echo "health response_embed_rerank = $response_embed_rerank"
 
-        if [ "$response_embed_rerank" -eq 200 ]; then
-            echo "The llm service is ready!, now you can use the qanything service. (8/8)"
-            echo "LLM 服务已准备就绪！现在您可以使用qanything服务。（8/8)"
-            break
-        else
-            echo "The llm service is starting up, it can be long... you have time to make a coffee :)"
-            echo "LLM 服务正在启动，可能需要一段时间...你有时间去冲杯咖啡 :)"
+        # 检查是否超时
+        if [ $elapsed_time -ge 60 ]; then
+            kill $tail_pid  # 关闭后台的tail命令
+            echo "启动 embedding and rerank 服务超时，自动检查 $embed_rerank_log_file 中是否存在Error..."
 
-            current_time=$(date +%s)
-            elapsed_time=$((current_time - start_time))
-
-            # 检查是否超时
-            if [ $elapsed_time -ge $((timeout_time * 2)) ]; then
-                echo "启动 LLM 服务超时，请检查项目根目录下 logs/debug_logs/embed_rerank_tritonserver.log 以获取更多信息。"
-                exit 1
+            # 检查日志文件中是否有错误信息
+            if grep -C 5 "Error" $embed_rerank_log_file; then
+                echo "检测到错误信息，请查看上面的输出。"
+            else
+                echo "日志中未检测到明确的Error信息。请排查 $embed_rerank_log_file 以获取更多信息。"
             fi
-            sleep 5
+
+            exit 1
         fi
+
+        if [ "$response_embed_rerank" -eq 200 ]; then
+            kill $tail_pid  # 关闭后台的tail命令
+            echo "The embedding and rerank service is ready!, now you can use the qanything service. (8/8)"
+            echo "Embedding 和 Rerank 服务已准备就绪！现在您可以使用qanything服务。（8/8)"
+            break
+        fi
+
+        echo "The embedding and rerank service is starting up, it can be long... you have time to make a coffee :)"
+        echo "Embedding and Rerank 服务正在启动，可能需要一段时间...你有时间去冲杯咖啡 :)"
+
     else
         # cloud版本runtime只支持default
         echo "runtime_backend only support default in cloud version."
         exit 1
     fi
 done
+
+function check_log_errors() {
+    local log_file=$1  # 将第一个参数赋值给变量log_file，表示日志文件的路径
+
+    # 检查日志文件是否存在
+    if [[ ! -f "$log_file" ]]; then
+        echo "指定的日志文件不存在: $log_file"
+        return 1
+    fi
+
+    # 使用grep命令检查"core dumped"或"Error"的存在
+    # -C 5表示打印匹配行的前后各5行
+    local pattern="core dumped\|Error"
+    if grep -E -C 5 "$pattern" "$log_file"; then
+        echo "检测到错误信息，请查看上面的输出。"
+        exit 1
+    else
+        echo "$log_file 中未检测到明确的错误信息。"
+    fi
+}
+
+echo "开始检查日志文件中的错误信息..."
+# 调用函数并传入日志文件路径
+check_log_errors "/workspace/qanything_local/logs/debug_logs/rerank_server.log"
+check_log_errors "/workspace/qanything_local/logs/debug_logs/ocr_server.log"
+check_log_errors "/workspace/qanything_local/logs/debug_logs/sanic_api.log"
 
 current_time=$(date +%s)
 elapsed=$((current_time - start_time))  # 计算经过的时间（秒）
