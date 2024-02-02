@@ -157,7 +157,6 @@ git clone https://github.com/netease-youdao/QAnything.git
 * [📖 QAnything_Startup_Usage](docs/QAnything_Startup_Usage_README.md)
 * 执行 ```bash ./run.sh -h``` 获取详细的LLM服务配置方法 
   
-如果在Windows系统下请先进入**WSL**环境
 ```shell
 cd QAnything
 bash run.sh  # 默认在0号GPU上启动
@@ -180,6 +179,40 @@ huggingfase: https://huggingface.co/netease-youdao/QAnything
 ```shell
 cd QAnything
 bash ./run.sh -c local -i 0 -b default # 指定0号GPU启动 GPU编号从0开始 windows机器一般只有一张卡，所以只能指定0号GPU
+```
+</details>
+
+<details>
+<summary>（可选）指定单GPU启动 - 推荐 Windows10/Windows11 WSL2 用户使用此方式运行 QAnything</summary>
+
+```shell
+# 注意: Windows系统请先进入**WSL2**环境
+# Step 1. 下载开源 LLM 模型 (e.g., Qwen-7B-QAnything) 并保存在路径 "/path/to/QAnything/assets/custom_models"
+# (可选) 从 ModelScope 下载 Qwen-7B-QAnything: https://www.modelscope.cn/models/netease-youdao/Qwen-7B-QAnything
+# (可选) 从 Huggingface 下载 Qwen-7B-QAnything: https://huggingface.co/netease-youdao/Qwen-7B-QAnything
+cd QAnything/assets/custom_models
+git clone https://huggingface.co/netease-youdao/Qwen-7B-QAnything
+
+# Step 2. 执行启动命令，其中"-b hf"表示指定使用 Huggingface transformers 后端运行 LLM.
+cd ../../
+bash ./run.sh -c local -i 0 -b hf -m Qwen-7B-QAnything -t qwen-7b-qanything
+```
+</details>
+
+<details>
+<summary>（可选）指定单GPU启动 - 推荐 GPU Compute Capability >= 8.6 && VRAM >= 24GB 使用此方式运行 QAnything</summary>
+
+```shell
+# 查看 GPU 算力 GPU Compute Capability: https://developer.nvidia.com/cuda-gpus
+# Step 1. 下载开源 LLM 模型 (e.g., Qwen-7B-QAnything) 并保存在路径 "/path/to/QAnything/assets/custom_models"
+# (可选) 从 ModelScope 下载 Qwen-7B-QAnything: https://www.modelscope.cn/models/netease-youdao/Qwen-7B-QAnything
+# (可选) 从 Huggingface 下载 Qwen-7B-QAnything: https://huggingface.co/netease-youdao/Qwen-7B-QAnything
+cd QAnything/assets/custom_models
+git clone https://huggingface.co/netease-youdao/Qwen-7B-QAnything
+
+# Step 2. 执行启动命令，其中"-b vllm"表示指定使用 vllm 后端运行 LLM.
+cd ../../
+bash ./run.sh -c local -i 0 -b vllm -m Qwen-7B-QAnything -t qwen-7b-qanything -p 1 -r 0.85
 ```
 </details>
 

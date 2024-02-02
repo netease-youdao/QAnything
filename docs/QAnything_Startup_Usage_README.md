@@ -61,6 +61,8 @@ Note: You can choose the most suitable Service Startup Command based on your own
 #### 1.1 Run Qwen-7B-QAnything
 ```bash
 ## Step 1. Download the public LLM model (e.g., Qwen-7B-QAnything) and save to "/path/to/QAnything/assets/custom_models"
+## (Optional) Download Qwen-7B-QAnything from ModelScope: https://www.modelscope.cn/models/netease-youdao/Qwen-7B-QAnything
+## (Optional) Download Qwen-7B-QAnything from Huggingface: https://huggingface.co/netease-youdao/Qwen-7B-QAnything
 cd /path/to/QAnything/assets/custom_models
 git clone https://huggingface.co/netease-youdao/Qwen-7B-QAnything
 
@@ -88,10 +90,12 @@ bash ./run.sh -c local -i 0 -b hf -m MiniChat-2-3B -t minichat
 #### 2.1 Run Qwen-7B-QAnything
 ```bash
 ## Step 1. Download the public LLM model (e.g., Qwen-7B-QAnything) and save to "/path/to/QAnything/assets/custom_models"
+## (Optional) Download Qwen-7B-QAnything from ModelScope: https://www.modelscope.cn/models/netease-youdao/Qwen-7B-QAnything
+## (Optional) Download Qwen-7B-QAnything from Huggingface: https://huggingface.co/netease-youdao/Qwen-7B-QAnything
 cd /path/to/QAnything/assets/custom_models
 git clone https://huggingface.co/netease-youdao/Qwen-7B-QAnything
 
-## Step 2. Execute the service startup command.  Here we use "-b vllm" to specify the Huggingface transformers backend.
+## Step 2. Execute the service startup command.  Here we use "-b vllm" to specify the vllm backend.
 ## Here we use "-b vllm" to specify the vllm backend that will do bf16 inference as default.
 ## Note you should adjust the gpu_memory_utilization yourself according to the model size to avoid out of memory (e.g., gpu_memory_utilization=0.81 is set default for 7B. Here, gpu_memory_utilization is set to 0.85 by "-r 0.85").
 cd /path/to/QAnything

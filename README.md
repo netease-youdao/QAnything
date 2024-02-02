@@ -166,9 +166,7 @@ git clone https://github.com/netease-youdao/QAnything.git
 ### step2: Enter the project root directory and execute the startup script.
 * [📖 QAnything_Startup_Usage](docs/QAnything_Startup_Usage_README.md)
 * Get detailed usage of LLM interface by ```bash ./run.sh -h```
-  
 
-If you are in the Windows11 system: Need to enter the **WSL** environment.
 ```shell
 cd QAnything
 bash run.sh  # Start on GPU 0 by default.
@@ -186,11 +184,45 @@ huggingfase: https://huggingface.co/netease-youdao/QAnything
 </details>
 
 <details>
-<summary>(Optional) Specify GPU startup</summary>
+<summary>(Optional) Specify GPU startup </summary>
 
 ```shell
 cd QAnything
 bash ./run.sh -c local -i 0 -b default  # gpu id 0
+```
+</details>
+
+<details>
+<summary>(Optional) Specify GPU startup - Recommended for Windows10/Windows11 WSL2 User</summary>
+
+```shell
+# For Windows OS: Need to enter the **WSL2** environment.
+# Step 1. Download the public LLM model (e.g., Qwen-7B-QAnything) and save to "/path/to/QAnything/assets/custom_models"
+# (Optional) Download Qwen-7B-QAnything from ModelScope: https://www.modelscope.cn/models/netease-youdao/Qwen-7B-QAnything
+# (Optional) Download Qwen-7B-QAnything from Huggingface: https://huggingface.co/netease-youdao/Qwen-7B-QAnything
+cd QAnything/assets/custom_models
+git clone https://huggingface.co/netease-youdao/Qwen-7B-QAnything
+
+# Step 2. Execute the service startup command. Here we use "-b hf" to specify the Huggingface transformers backend.
+cd ../../
+bash ./run.sh -c local -i 0 -b hf -m Qwen-7B-QAnything -t qwen-7b-qanything
+```
+</details>
+
+<details>
+<summary>(Optional) Specify GPU startup - Recommended for GPU Compute Capability >= 8.6 and VRAM >= 24GB</summary>
+
+```shell
+# GPU Compute Capability: https://developer.nvidia.com/cuda-gpus
+# Step 1. Download the public LLM model (e.g., Qwen-7B-QAnything) and save to "/path/to/QAnything/assets/custom_models"
+# (Optional) Download Qwen-7B-QAnything from ModelScope: https://www.modelscope.cn/models/netease-youdao/Qwen-7B-QAnything
+# (Optional) Download Qwen-7B-QAnything from Huggingface: https://huggingface.co/netease-youdao/Qwen-7B-QAnything
+cd QAnything/assets/custom_models
+git clone https://huggingface.co/netease-youdao/Qwen-7B-QAnything
+
+# Step 2. Execute the service startup command. Here we use "-b vllm" to specify the vllm backend.
+cd ../../
+bash ./run.sh -c local -i 0 -b vllm -m Qwen-7B-QAnything -t qwen-7b-qanything -p 1 -r 0.85
 ```
 </details>
 
