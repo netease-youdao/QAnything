@@ -64,7 +64,7 @@ print_important_notice() {
     echo -e "${YELLOW}******************** 重要提示 ********************${NC}"
     echo -e "${YELLOW}====================================================${NC}"
     echo
-    echo -e "${RED}检测到master分支有新的代码更新，请执行 git pull 来同步最新的代码。${NC}"
+    echo -e "${RED}检测到master分支有新的代码更新，如需体验最新的功能，可以手动执行 git pull 来同步最新的代码。${NC}"
     echo
     sleep 5
 }
@@ -450,7 +450,7 @@ if [[ -f "$user_file" ]]; then
             host="localhost"
         else
             read -p "Please enter the server IP address 请输入服务器公网IP地址(示例：10.234.10.144): " host
-            echo "当前设置的远程服务器IP地址为 $host, QAnything启动后，本地前端服务（浏览器打开[http://$user_ip:5052/qanything/]）将远程访问[http://$host:8777]上的后端服务，请知悉！"
+            echo "当前设置的远程服务器IP地址为 $host, QAnything启动后，本地前端服务（浏览器打开[http://$host:5052/qanything/]）将远程访问[http://$host:8777]上的后端服务，请知悉！"
             sleep 5
         fi
         # 保存新的配置到用户文件
@@ -463,7 +463,7 @@ else
         host="localhost"
     else
         read -p "Please enter the server IP address 请输入服务器公网IP地址(示例：10.234.10.144): " host
-        echo "当前设置的远程服务器IP地址为 $host, QAnything启动后，本地前端服务（浏览器打开[http://$user_ip:5052/qanything/]）将远程访问[http://$host:8777]上的后端服务，请知悉！"
+        echo "当前设置的远程服务器IP地址为 $host, QAnything启动后，本地前端服务（浏览器打开[http://$host:5052/qanything/]）将远程访问[http://$host:8777]上的后端服务，请知悉！"
         sleep 5
     fi
     # 保存配置到用户文件
