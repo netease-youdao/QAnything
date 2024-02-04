@@ -62,6 +62,9 @@ ZH_TITLE_ENHANCE = False
 MILVUS_HOST_LOCAL = 'milvus-standalone-local'
 MILVUS_HOST_ONLINE = 'milvus-standalone-local'
 MILVUS_PORT = 19530
+MILVUS_USER = ''
+MILVUS_PASSWORD = ''
+MILVUS_DB_NAME = ''
 
 MYSQL_HOST_LOCAL = 'mysql-container-local'
 MYSQL_HOST_ONLINE = 'mysql-container-local'
