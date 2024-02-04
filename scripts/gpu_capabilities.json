@@ -46,6 +46,7 @@
     "NVIDIA H100": 9.0,
     "NVIDIA L4": 8.9,
     "NVIDIA L40": 8.9,
+    "NVIDIA A800": 8.0,
     "NVIDIA A100": 8.0,
     "NVIDIA A40": 8.6,
     "NVIDIA A30": 8.0,
