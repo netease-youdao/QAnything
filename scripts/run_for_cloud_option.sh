@@ -26,7 +26,7 @@ function check_log_errors() {
 
     # 使用grep命令检查"core dumped"或"Error"的存在
     # -C 5表示打印匹配行的前后各5行
-    local pattern="core dumped\|Error\|ERROR"
+    local pattern="core dumped|Error|error"
     if grep -E -C 5 "$pattern" "$log_file"; then
         echo "检测到错误信息，请查看上面的输出。"
         exit 1

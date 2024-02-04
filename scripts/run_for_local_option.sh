@@ -26,7 +26,7 @@ function check_log_errors() {
 
     # 使用grep命令检查"core dumped"或"Error"的存在
     # -C 5表示打印匹配行的前后各5行
-    local pattern="core dumped\|Error\|ERROR"
+    local pattern="core dumped|Error|error"
     if grep -E -C 5 "$pattern" "$log_file"; then
         echo "检测到错误信息，请查看上面的输出。"
         exit 1
@@ -307,20 +307,14 @@ echo "前端服务已就绪!...(7/8)"
 if [ "$runtime_backend" = "default" ]; then
     if [ $gpuid1 -eq $gpuid2 ]; then
         llm_log_file="/workspace/qanything_local/logs/debug_logs/llm_embed_rerank_tritonserver.log"
-        llm_response=$(curl -s -w "%{http_code}" http://localhost:10000/v2/health/ready -o /dev/null)
         embed_rerank_log_file=" /workspace/qanything_local/logs/debug_logs/llm_embed_rerank_tritonserver.log"
-        embed_rerank_response=$(curl -s -w "%{http_code}" http://localhost:10000/v2/health/ready -o /dev/null)
     else
         llm_log_file="/workspace/qanything_local/logs/debug_logs/llm_tritonserver.log"
-        llm_response=$(curl -s -w "%{http_code}" http://localhost:10000/v2/health/ready -o /dev/null)
         embed_rerank_log_file="/workspace/qanything_local/logs/debug_logs/embed_rerank_tritonserver.log"
-        embed_rerank_response=$(curl -s -w "%{http_code}" http://localhost:9000/v2/health/ready -o /dev/null)
     fi
 else
     llm_log_file="/workspace/qanything_local/logs/debug_logs/fastchat_logs/fschat_model_worker_7801.log"
-    llm_response=$(curl --request POST --url http://localhost:7800/list_models)
     embed_rerank_log_file="/workspace/qanything_local/logs/debug_logs/embed_rerank_tritonserver.log"
-    embed_rerank_response=$(curl -s -w "%{http_code}" http://localhost:9000/v2/health/ready -o /dev/null)
 fi
 
 tail -f $embed_rerank_log_file &  # 后台输出日志文件
@@ -330,6 +324,16 @@ now_time=$(date +%s)
 while true; do
     current_time=$(date +%s)
     elapsed_time=$((current_time - now_time))
+
+    if [ "$runtime_backend" = "default" ]; then
+        if [ $gpuid1 -eq $gpuid2 ]; then
+            embed_rerank_response=$(curl -s -w "%{http_code}" http://localhost:10000/v2/health/ready -o /dev/null)
+        else
+            embed_rerank_response=$(curl -s -w "%{http_code}" http://localhost:9000/v2/health/ready -o /dev/null)
+        fi
+    else
+        embed_rerank_response=$(curl -s -w "%{http_code}" http://localhost:9000/v2/health/ready -o /dev/null)
+    fi
 
     # 检查是否超时
     if [ $elapsed_time -ge 60 ]; then
@@ -369,6 +373,13 @@ while true; do
         check_log_errors "$llm_log_file"
 
         exit 1
+    fi
+
+
+    if [ "$runtime_backend" = "default" ]; then
+        llm_response=$(curl -s -w "%{http_code}" http://localhost:10000/v2/health/ready -o /dev/null)
+    else
+        llm_response=$(curl --request POST --url http://localhost:7800/list_models)
     fi
 
     if [ "$runtime_backend" = "default" ]; then
