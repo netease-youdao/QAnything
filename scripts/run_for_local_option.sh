@@ -366,7 +366,7 @@ while true; do
     elapsed_time=$((current_time - now_time))
 
     # 检查是否超时
-    if [ $elapsed_time -ge 60 ]; then
+    if [ $elapsed_time -ge 120 ]; then
         kill $tail_pid  # 关闭后台的tail命令
         echo "启动 LLM 服务超时，自动检查 $llm_log_file 中是否存在Error..."
 
