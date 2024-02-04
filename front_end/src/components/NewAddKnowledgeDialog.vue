@@ -46,14 +46,19 @@
             <div class="before-upload">
               <div class="upload-text-box">
                 <SvgIcon name="upload" />
-                <p>
+                <p v-if="language === 'zh'">
                   <span class="upload-text"
-                    >将文件拖到此处，或<span class="blue">点击上传</span></span
+                    >{{ common.dragUrl }}<span class="blue">{{ common.click }}</span></span
+                  >
+                </p>
+                <p v-else>
+                  <span class="upload-text"
+                    ><span class="blue">{{ common.click }}&nbsp;</span>{{ common.dragUrl }}</span
                   >
                 </p>
               </div>
               <p class="desc">
-                可批量上传，支持文件格式doc、docx、ppt、pptx、xls、xlsx、pdf、md、JPG、JPEG、PNG、BMP、txt、eml,单个文档小于30M,单张图片小于5M
+                {{ common.updesc2 }}
               </p>
             </div>
           </div>
@@ -93,7 +98,7 @@
         </div>
       </div>
       <div v-show="showUpload" class="line-url">
-        <span class="label mt9">添加网址</span>
+        <span class="label mt9">{{ common.addUrl }}</span>
         <UPloadInput :kb-id="newId"></UPloadInput>
       </div>
     </a-modal>
@@ -110,6 +115,11 @@ import { getStatus, resultControl } from '@/utils/utils';
 import { IFileListItem } from '@/utils/types';
 import urlResquest from '@/services/urlConfig';
 import { message } from 'ant-design-vue';
+import { getLanguage } from '@/language/index';
+import { useLanguage } from '@/store/useLanguage';
+
+const { language } = storeToRefs(useLanguage());
+const common = getLanguage().common;
 
 const { $reset, setKnowledgeName } = useKnowledgeModal();
 const { modalVisible, modalTitle, fileList, urlList, knowledgeName } = storeToRefs(
@@ -344,7 +354,7 @@ const addKnowledge = async () => {
       newId.value = res.kbId;
     }
   } catch (e) {
-    message.error(e.msg || '请求失败');
+    message.error(e.msg || common.error);
   }
 };
 

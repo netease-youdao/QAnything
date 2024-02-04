@@ -28,7 +28,7 @@
           :loading="confirmLoading"
           @click="handleOk"
         >
-          确定
+          {{ common.confirm }}
         </a-button>
       </template>
     </a-modal>
@@ -40,7 +40,9 @@ import { useKnowledgeBase } from '@/store/useKnowledgeBase';
 import UploadInput from '@/components/UploadInput.vue';
 import urlResquest from '@/services/urlConfig';
 import { useOptiionList } from '@/store/useOptiionList';
+import { getLanguage } from '@/language/index';
 
+const common = getLanguage().common;
 const { setKnowledgeName } = useKnowledgeModal();
 const { urlModalVisible, modalTitle, urlList } = storeToRefs(useKnowledgeModal());
 const { currentId, currentKbName } = storeToRefs(useKnowledgeBase());

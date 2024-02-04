@@ -4,14 +4,14 @@
       <a-input
         v-model:value="inputVal"
         :status="status"
-        placeholder="请输入网址"
+        :placeholder="common.urlPlaceholder"
         @change="setStatus()"
       >
         <template #suffix>
           <SvgIcon name="add" class="mt3" @click="add"></SvgIcon>
         </template>
       </a-input>
-      <span v-show="status === 'error'" class="red-text">输入内容不能为空</span>
+      <span v-show="status === 'error'" class="red-text">{{ common.errTip }}</span>
     </div>
     <a-form :label-col="labelCol" :wrapper-col="wrapperCol">
       <a-form-item
@@ -21,7 +21,7 @@
         @mouseenter="changeStatus(index, 'hover')"
         @mouseleave="changeStatus(index, 'default')"
       >
-        <a-input v-model:value="item.text" placeholder="请输入网址">
+        <a-input v-model:value="item.text" :placeholder="common.urlPlaceholder">
           <template #suffix>
             <span v-if="item.status === 'hover'" class="mt3">
               <!-- <SvgIcon name="card-confirm" class="mr20" @click="parsing(index)"></SvgIcon>
@@ -52,7 +52,9 @@ import { IUrlListItem } from '@/utils/types';
 // import urlResquest from '@/services/urlConfig';
 // import { message } from 'ant-design-vue';
 // import { resultControl } from '@/utils/utils';
+import { getLanguage } from '@/language/index';
 
+const common = getLanguage().common;
 const labelCol = { span: 10 };
 const wrapperCol = { span: 10 };
 const percentRef = ref(null);

@@ -10,15 +10,18 @@
   <div class="upload-box">
     <div class="tips" @click="upload">
       <img class="icon-file" src="../assets/home/icon-file.png" alt="图标" />
-      <p class="title">上传文档 发起提问</p>
+      <p class="title">{{ home.startDec }}</p>
       <div class="desc-content">
-        <p class="desc">支持md、txt、pdf、jpg、png、jpeg、docx、xlsx、pptx、eml、csv</p>
-        <p class="desc">可批量上传，单文件不超过20mb/100万字</p>
+        <p class="desc">{{ home.updesc2 }}</p>
+        <p class="desc">{{ home.require1 }}</p>
       </div>
     </div>
   </div>
 </template>
 <script lang="ts" setup>
+import { getLanguage } from '@/language/index';
+
+const home = getLanguage().home;
 // const props = defineProps({
 //   show: {
 //     require: true,

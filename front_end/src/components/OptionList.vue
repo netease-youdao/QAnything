@@ -12,17 +12,17 @@
       <div class="options">
         <div class="to-chat" @click="goChat">
           <img src="../assets/home/icon-back.png" alt="back" />
-          <span>返回对话</span>
+          <span>{{ home.conversation }}</span>
         </div>
         <p class="kb-name">{{ currentKbName }}</p>
-        <div class="upload" @click="showFileUpload">上传文档</div>
-        <div class="add-link" @click="showUrlUpload">添加网址</div>
+        <div class="upload" @click="showFileUpload">{{ home.upload }}</div>
+        <div class="add-link" @click="showUrlUpload">{{ home.addUrl }}</div>
       </div>
       <div class="table">
         <a-table :data-source="dataSource" :columns="columns" :pagination="false">
           <template #headerCell="{ column }">
             <template v-if="column.key === 'status'">
-              <span>文档状态</span
+              <span>{{ home.documentStatus }}</span
               ><span
                 class="small"
                 style="
@@ -61,12 +61,12 @@
               <a-popconfirm
                 overlay-class-name="del-pop"
                 placement="topRight"
-                title="确认删除文档吗？"
-                ok-text="确认"
-                cancel-text="取消"
+                :title="common.deleteTitle"
+                :ok-text="common.confirm"
+                :cancel-text="common.cancel"
                 @confirm="confirm"
               >
-                <span class="delete-item" @click="deleteItem(record)">删除</span>
+                <span class="delete-item" @click="deleteItem(record)">{{ common.delete }}</span>
               </a-popconfirm>
             </template>
           </template>
@@ -88,48 +88,52 @@ const { setModalVisible, setUrlModalVisible, setModalTitle } = useKnowledgeModal
 import { useOptiionList } from '@/store/useOptiionList';
 const { getDetails } = useOptiionList();
 const { dataSource, timer } = storeToRefs(useOptiionList());
+import { getLanguage } from '@/language/index';
+
+const common = getLanguage().common;
+const home = getLanguage().home;
 
 const columns = [
   {
-    title: '文档ID',
+    title: home.documentId,
     dataIndex: 'id',
     key: 'id',
-    width: '10%',
+    width: '11%',
   },
   {
-    title: '文档名称',
+    title: home.documentName,
     dataIndex: 'file_name',
     key: 'file_name',
     width: '20%',
     ellipsis: true,
   },
   {
-    title: '文档状态(解析成功后可问答)',
+    title: home.documentStatus,
     dataIndex: 'status',
     key: 'status',
     width: '15%',
     ellipsis: true,
   },
   {
-    title: '文件大小',
+    title: home.fileSize,
     dataIndex: 'bytes',
     key: 'bytes',
     width: '10%',
   },
   {
-    title: '创建日期',
+    title: home.creationDate,
     dataIndex: 'createtime',
     key: 'createtime',
     width: '10%',
   },
   {
-    title: '备注',
+    title: home.remark,
     dataIndex: 'errortext',
     key: 'errortext',
     width: '15%',
   },
   {
-    title: '操作',
+    title: home.operate,
     key: 'options',
     width: '10%',
   },
@@ -158,22 +162,22 @@ const goChat = () => {
 
 const showFileUpload = () => {
   setModalVisible(true);
-  setModalTitle('上传文档');
+  setModalTitle(home.upload);
 };
 
 const showUrlUpload = () => {
   setUrlModalVisible(true);
-  setModalTitle('添加网址');
+  setModalTitle(common.addUrl);
 };
 
 const parseStatus = status => {
-  let str = '解析失败';
+  let str = common.failed;
   switch (status) {
     case 'gray':
-      str = '解析中';
+      str = common.parsing;
       break;
     case 'green':
-      str = '解析成功';
+      str = common.succeeded;
       break;
     default:
       break;

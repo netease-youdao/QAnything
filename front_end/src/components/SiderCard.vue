@@ -21,15 +21,15 @@
           <ul>
             <li @click="manage(item)">
               <SvgIcon class="edit" name="icon-manage"></SvgIcon>
-              <span class="tool-name">管理</span>
+              <span class="tool-name">{{ common.manage }}</span>
             </li>
             <li @click="editKnowledgeBase(item)">
               <SvgIcon class="edit" name="edit"></SvgIcon>
-              <span class="tool-name">重命名</span>
+              <span class="tool-name">{{ common.rename }}</span>
             </li>
             <li @click="deleteKnowledgeBase(item)">
               <SvgIcon class="delete" name="delete"></SvgIcon>
-              <span class="tool-name">删除</span>
+              <span class="tool-name">{{ common.delete }}</span>
             </li>
           </ul>
         </div>
@@ -62,6 +62,9 @@ import urlResquest from '@/services/urlConfig';
 import { resultControl } from '@/utils/utils';
 import { message } from 'ant-design-vue';
 import { pageStatus } from '@/utils/enum';
+import { getLanguage } from '@/language/index';
+
+const common = getLanguage().common;
 // import { useDebounceFn } from '@vueuse/core';
 const { setShowDeleteModal, setCurrentId, setCurrentKbName, setDefault } = useKnowledgeBase();
 const { showDeleteModal, selectList } = storeToRefs(useKnowledgeBase());
@@ -136,9 +139,9 @@ const ok = async (item: IKnowledgeItem) => {
     );
     oldValue.value = '';
     item.edit = !item.edit;
-    message.success('重命名成功');
+    message.success(common.renameSucceeded);
   } catch (err) {
-    message.error(err.msg || '重命名失败');
+    message.error(err.msg || common.renameFailed);
   }
 };
 //取消修改
