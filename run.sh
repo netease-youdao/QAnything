@@ -201,7 +201,12 @@ if [ "$runtime_backend" = "default" ] && [ "$model_size_num" -ne 0 ]; then
     fi
 fi
 
-if [ "$GPU1_MEMORY_SIZE" -lt 8000 ]; then  # 显存小于8GB
+if [ "$GPU1_MEMORY_SIZE" -lt 4000 ]; then # 显存小于4GB
+    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 不足以部署本项目，建议升级到GTX 1050Ti或以上级别的显卡"
+    exit 1
+elif [ "$model_size_num" -eq 0 ]; then  # 模型大小为0B, 表示使用openai api，4G显存就够了
+    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 可以使用在线的OpenAI API"
+elif [ "$GPU1_MEMORY_SIZE" -lt 8000 ]; then  # 显存小于8GB
     # 显存小于8GB，仅推荐使用在线的OpenAI API
     echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 仅推荐使用在线的OpenAI API"
     if [ "$model_size_num" -gt 0 ]; then  # 模型大小大于0B
