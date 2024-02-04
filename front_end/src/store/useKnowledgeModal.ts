@@ -3,6 +3,10 @@ import { IUrlListItem, IFileListItem } from '@/utils/types';
 import urlResquest from '@/services/urlConfig';
 import message from 'ant-design-vue/es/message';
 import { getStatus } from '@/utils/utils';
+import { getLanguage } from '@/language/index';
+
+const home = getLanguage().home;
+const common = getLanguage().common;
 export const useKnowledgeModal = defineStore('knowledgeModal', () => {
   //是否展示弹窗
   const modalVisible = ref(false);
@@ -17,7 +21,7 @@ export const useKnowledgeModal = defineStore('knowledgeModal', () => {
   };
 
   //弹窗标题
-  const modalTitle = ref('上传文档');
+  const modalTitle = ref(home.upload);
   const setModalTitle = (title: string) => {
     modalTitle.value = title;
   };
@@ -53,14 +57,14 @@ export const useKnowledgeModal = defineStore('knowledgeModal', () => {
       }
     } catch (e) {
       console.log(e);
-      message.error(e.msg || '请求失败');
+      message.error(e.msg || common.error);
     }
   };
 
   //重置内容
   const $reset = () => {
     modalVisible.value = false;
-    modalTitle.value = '上传文档';
+    modalTitle.value = home.upload;
     knowledgeName.value = '';
     fileList.value = [];
     urlList.value = [];

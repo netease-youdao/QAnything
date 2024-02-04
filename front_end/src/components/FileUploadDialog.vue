@@ -30,14 +30,19 @@
             <div class="before-upload">
               <div class="upload-text-box">
                 <SvgIcon name="upload" />
-                <p>
+                <p v-if="language === 'zh'">
                   <span class="upload-text"
-                    >将文件拖到此处，或<span class="blue">点击上传</span></span
+                    >{{ common.dragUrl }}<span class="blue">{{ common.click }}</span></span
+                  >
+                </p>
+                <p v-else>
+                  <span class="upload-text"
+                    ><span class="blue">{{ common.click }}&nbsp;</span>{{ common.dragUrl }}</span
                   >
                 </p>
               </div>
               <p v-if="!showUploadList" class="desc">
-                支持文件格式md、txt、pdf、jpg、png、jpeg、docx、xlsx、pptx、eml、csv、单个文档小于30M,单张图片小于5M,单次上传小于400M
+                {{ common.updesc1 }}
               </p>
             </div>
           </div>
@@ -67,7 +72,7 @@
                 </ul>
               </template>
             </UploadList>
-            <div class="note">注：上传失败的文件不在管理页显示</div>
+            <div class="note">{{ common.errorTip }}</div>
           </div>
         </div>
       </div>
@@ -79,7 +84,7 @@
           :disabled="!canSubmit"
           @click="handleOk"
         >
-          确定
+          {{ common.confirm }}
         </a-button>
       </template>
     </a-modal>
@@ -96,7 +101,11 @@ import { pageStatus } from '@/utils/enum';
 import { IFileListItem } from '@/utils/types';
 import { message } from 'ant-design-vue';
 import { userId } from '@/services/urlConfig';
+import { getLanguage } from '@/language/index';
+import { useLanguage } from '@/store/useLanguage';
 
+const { language } = storeToRefs(useLanguage());
+const common = getLanguage().common;
 const { setKnowledgeName, setModalVisible } = useKnowledgeModal();
 const { setDefault } = useKnowledgeBase();
 const { getDetails } = useOptiionList();
@@ -157,7 +166,7 @@ const beforeFileUpload = async (file, index) => {
         file_name: file.name,
         file: file,
         status: 'loading',
-        text: '上传中',
+        text: common.uploading,
         file_id: '',
         order: uploadFileList.value.length,
       });
@@ -258,20 +267,20 @@ const uplolad = async () => {
             status = 'error';
           }
           uploadFileList.value[item.order].status = status;
-          uploadFileList.value[item.order].text = '上传成功';
+          uploadFileList.value[item.order].errorText = common.upSucceeded;
         });
       } else {
         message.error(data.msg || '出错了');
         list.forEach(item => {
           uploadFileList.value[item.order].status = 'error';
-          uploadFileList.value[item.order].errorText = data?.msg || '上传失败';
+          uploadFileList.value[item.order].errorText = data?.msg || common.upFailed;
         });
       }
     })
     .catch(error => {
       list.forEach(item => {
         uploadFileList.value[item.order].status = 'error';
-        uploadFileList.value[item.order].errorText = error?.msg || '上传失败';
+        uploadFileList.value[item.order].errorText = error?.msg || common.upFailed;
       });
       message.error(JSON.stringify(error?.msg) || '出错了');
     });
@@ -468,6 +477,7 @@ onBeforeUnmount(() => {
     font-weight: normal;
     margin-top: 12px;
     color: #999999;
+    width: 330px;
   }
 }
 

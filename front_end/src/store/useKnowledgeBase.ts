@@ -13,6 +13,9 @@ import { pageStatus } from '@/utils/enum';
 import message from 'ant-design-vue/es/message';
 
 import urlResquest from '@/services/urlConfig';
+import { getLanguage } from '@/language/index';
+
+const common = getLanguage().common;
 
 export const useKnowledgeBase = defineStore('knowledgeBase', () => {
   // 当前操作的知识库id
@@ -68,7 +71,7 @@ export const useKnowledgeBase = defineStore('knowledgeBase', () => {
         }
       }
     } catch (e) {
-      message.error(e.msg || '请求失败');
+      message.error(e.msg || common.error);
     }
   };
 

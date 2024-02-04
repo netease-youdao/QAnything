@@ -15,11 +15,13 @@
         centered
         width="480px"
         wrap-class-name="private-modal"
+        :ok-text="common.confirm"
+        :cancel-text="common.cancel"
         @ok="handleOk"
       >
         <template #title>
           <div class="private-title">
-            <SvgIcon class="info" name="info"></SvgIcon>确认删除该该知识库？删除后无法恢复
+            <SvgIcon class="info" name="info"></SvgIcon>{{ common.deleteDec }}
           </div>
         </template>
       </a-modal>
@@ -30,6 +32,9 @@
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
 import urlResquest from '@/services/urlConfig';
 import { message } from 'ant-design-vue';
+import { getLanguage } from '@/language/index';
+
+const common = getLanguage().common;
 // import { resultControl } from '@/utils/utils';
 const { showDeleteModal, currentId, selectList } = storeToRefs(useKnowledgeBase());
 const { setShowDeleteModal, getList } = useKnowledgeBase();

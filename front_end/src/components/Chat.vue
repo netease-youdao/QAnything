@@ -27,7 +27,7 @@
                   class="data-source"
                 >
                   <p v-show="sourceItem.file_name" class="control">
-                    <span class="tips">数据来源{{ sourceIndex + 1 }}:</span
+                    <span class="tips">{{ common.dataSource }}{{ sourceIndex + 1 }}:</span
                     ><span class="file">{{ sourceItem.file_name }}</span>
                     <SvgIcon
                       v-show="sourceItem.showDetailDataSource"
@@ -46,7 +46,10 @@
                         v-show="sourceItem.showDetailDataSource"
                         v-html="sourceItem.content.replaceAll('\n', '<br/>')"
                       ></p>
-                      <p class="score"><span class="tips">相关性：</span>{{ sourceItem.score }}</p>
+                      <p class="score">
+                        <span class="tips">{{ common.correlation }}</span
+                        >{{ sourceItem.score }}
+                      </p>
                     </div>
                   </Transition>
                 </div>
@@ -54,7 +57,7 @@
               <div v-if="item.showTools" class="feed-back">
                 <div class="reload-box" @click="reAnswer(item)">
                   <SvgIcon name="reload"></SvgIcon>
-                  <span class="reload-text">重新生成</span>
+                  <span class="reload-text">{{ common.regenerate }}</span>
                 </div>
                 <div class="tools">
                   <SvgIcon
@@ -88,7 +91,7 @@
         <a-button v-show="showLoading" @click="stopChat">
           <template #icon>
             <SvgIcon name="stop" :class="showLoading ? 'loading' : ''"></SvgIcon> </template
-          >停止</a-button
+          >{{ common.stop }}</a-button
         >
       </div>
       <div class="question-box">
@@ -102,7 +105,7 @@
           <a-input
             v-model:value="question"
             max-length="200"
-            placeholder="请输入问题"
+            :placeholder="common.problemPlaceholder"
             @keyup.enter="send"
           >
             <template #suffix>
@@ -132,6 +135,9 @@ import { Typewriter } from '@/utils/typewriter';
 import DefaultModal from './DefaultModal.vue';
 import html2canvas from 'html2canvas';
 import { userId } from '@/services/urlConfig';
+import { getLanguage } from '@/language/index';
+
+const common = getLanguage().common;
 
 const typewriter = new Typewriter((str: string) => {
   if (str) {
@@ -189,14 +195,14 @@ const myCopy = (item: IChatItem) => {
   copy(item.answer)
     .then(() => {
       item.copied = !item.copied;
-      message.success('拷贝成功', 1);
+      message.success(common.copySuccess, 1);
       const timer = setTimeout(() => {
         clearTimeout(timer);
         item.copied = !item.copied;
       }, 1000);
     })
     .catch(() => {
-      message.error('拷贝失败', 1);
+      message.error(common.copyFailed, 1);
     });
 };
 
@@ -236,7 +242,7 @@ const send = () => {
     return;
   }
   if (!selectList.value.length) {
-    return message.warning('请至少选择一个知识库');
+    return message.warning(common.chooseError);
   }
   const q = question.value;
   question.value = '';
@@ -346,13 +352,13 @@ const type = ref('');
 const downloadChat = () => {
   type.value = 'download';
   showModal.value = true;
-  content.value = '是否将会话保存为图片';
+  content.value = common.saveTip;
 };
 
 const deleteChat = () => {
   type.value = 'delete';
   showModal.value = true;
-  content.value = '清空会话？';
+  content.value = common.clearTip;
 };
 
 const confirm = async () => {

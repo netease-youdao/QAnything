@@ -20,11 +20,11 @@
       @cancel="handleCancel"
     >
       <div class="kb-name">
-        <span class="label"><span class="red">*</span> 知识库名称</span>
+        <span class="label"><span class="red">*</span> {{ common.newPlaceholder }}</span>
         <a-input
           v-model:value.trim="knowledgeName"
           :disabled="true"
-          placeholder="请输入知识库名称"
+          :placeholder="common.newPlaceholder"
         >
           <template #suffix>
             <SvgIcon
@@ -36,7 +36,7 @@
         </a-input>
       </div>
       <div v-show="showUpload" class="file">
-        <span class="label"><span class="red">*</span> 上传文件</span>
+        <span class="label"><span class="red">*</span> {{ common.uploadFile }}</span>
         <div class="box">
           <div class="before-upload-box" :class="showUploadList ? 'uploading' : ''">
             <input
@@ -50,14 +50,19 @@
             <div class="before-upload">
               <div class="upload-text-box">
                 <SvgIcon name="upload" />
-                <p>
+                <p v-if="language === 'zh'">
                   <span class="upload-text"
-                    >将文件拖到此处，或<span class="blue">点击上传</span></span
+                    >{{ common.dragUrl }}<span class="blue">{{ common.click }}</span></span
+                  >
+                </p>
+                <p v-else>
+                  <span class="upload-text"
+                    ><span class="blue">{{ common.click }}&nbsp;</span>{{ common.dragUrl }}</span
                   >
                 </p>
               </div>
               <p class="desc">
-                可批量上传，支持文件格式doc、docx、ppt、pptx、xls、xlsx、pdf、md、JPG、JPEG、PNG、BMP、txt、eml,单个文档小于30M,单张图片小于5M
+                {{ common.updesc2 }}
               </p>
             </div>
           </div>
@@ -97,7 +102,7 @@
         </div>
       </div>
       <div v-show="showUpload" class="line-url">
-        <span class="label mt9">添加网址</span>
+        <span class="label mt9">{{ common.addUrl }}</span>
         <UPloadInput :kb-id="newId"></UPloadInput>
       </div>
     </a-modal>
@@ -114,6 +119,11 @@ import { getStatus, resultControl } from '@/utils/utils';
 import { IFileListItem } from '@/utils/types';
 import urlResquest from '@/services/urlConfig';
 import { message } from 'ant-design-vue';
+import { getLanguage } from '@/language/index';
+import { useLanguage } from '@/store/useLanguage';
+
+const { language } = storeToRefs(useLanguage());
+const common = getLanguage().common;
 
 const { $reset, setKnowledgeName } = useKnowledgeModal();
 const { modalVisible, modalTitle, fileList, urlList, knowledgeName } = storeToRefs(
@@ -243,11 +253,11 @@ const uplolad = () => {
           fileList.value[index].file_id = res.data[0].file_id;
         } else {
           fileList.value[index].status = res.data[0].status;
-          fileList.value[index].errorText = '上传失败';
+          fileList.value[index].errorText = common.upFailed;
         }
       } catch (e) {
         fileList.value[index].status = 'red';
-        fileList.value[index].errorText = '上传失败';
+        fileList.value[index].errorText = common.upFailed;
       }
     }
   });
@@ -266,14 +276,14 @@ const deleteFile = async (item: IFileListItem, index: number) => {
         await urlResquest.deleteFile({ fileIds: [item.file_id], kbId: newId.value })
       );
       fileList.value.splice(index, 1);
-      message.success('删除成功');
+      message.success(common.successTip);
     } catch (e) {
-      message.error(e.msg || '删除失败');
+      message.error(e.msg || common.faileTip);
     }
   } else {
     //上传失败的 没有fileId  直接从filelist删除
     fileList.value.splice(index, 1);
-    message.success('删除成功');
+    message.success(common.successTip);
   }
 };
 
@@ -325,7 +335,7 @@ const handleCancel = () => {
 //新建知识库
 const addKnowledge = async () => {
   if (!knowledgeName.value.length) {
-    message.error('请输入知识库名称');
+    message.error(common.errorKnowledge);
     return;
   }
   //获取到知识库id后  赋值给newId
@@ -338,7 +348,7 @@ const addKnowledge = async () => {
       newId.value = res.kbId;
     }
   } catch (e) {
-    message.error(e.msg || '请求失败');
+    message.error(e.msg || common.error);
   }
 };
 

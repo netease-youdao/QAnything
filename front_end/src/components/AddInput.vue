@@ -7,9 +7,9 @@
  * @Description: 
 -->
 <template>
-  <a-input v-model:value="kb_name" class="add-input" placeholder="请输入知识库名称">
+  <a-input v-model:value="kb_name" class="add-input" :placeholder="common.newPlaceholder">
     <template #suffix>
-      <div class="add-button" @click="addKb">新建</div>
+      <div class="add-button" @click="addKb">{{ common.new }}</div>
     </template>
   </a-input>
 </template>
@@ -25,11 +25,15 @@ import { pageStatus } from '@/utils/enum';
 const { setModalVisible } = useKnowledgeModal();
 const { modalVisible } = storeToRefs(useKnowledgeModal());
 const kb_name = ref('');
+import { getLanguage } from '@/language/index';
+
+const common = getLanguage().common;
+
 // const emits = defineEmits(['add']);
 
 const addKb = async () => {
   if (!kb_name.value.length) {
-    message.error('请输入知识库名称');
+    message.error(common.errorKnowledge);
     return;
   }
 
@@ -45,7 +49,7 @@ const addKb = async () => {
     setDefault(pageStatus.optionlist);
   } catch (e) {
     console.log(e);
-    message.error(e.msg || '请求失败');
+    message.error(e.msg || common.error);
   }
 };
 </script>

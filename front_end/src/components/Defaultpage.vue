@@ -1,8 +1,12 @@
 <template>
   <div class="default">
     <div class="box">
-      <p class="title"><span>QAnything</span> <span class="color">知识库问答</span></p>
-      <p class="desc">构建文档知识库，高效检索文档信息，准确回答专业问题</p>
+      <p class="title">
+        <span>{{ home.homeTitle1 }}</span
+        ><span>&nbsp;</span><span class="color">{{ home.homeTitle2 }}</span>
+      </p>
+      <p class="desc">{{ home.defaultDec }}</p>
+
       <UploadDom :accept-list="acceptList" @update="update" />
     </div>
   </div>
@@ -14,6 +18,9 @@ import { message } from 'ant-design-vue';
 import { useKnowledgeModal } from '@/store/useKnowledgeModal';
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
 import urlResquest from '@/services/urlConfig';
+import { getLanguage } from '@/language/index';
+
+const home = getLanguage().home;
 const { setFileList } = useKnowledgeModal();
 const { setModalVisible } = useKnowledgeModal();
 const { setCurrentId, getList, setCurrentKbName } = useKnowledgeBase();
@@ -43,7 +50,7 @@ const newId = ref('');
 const update = async () => {
   console.log('updata');
   try {
-    const res: any = await urlResquest.createKb({ kb_name: '默认知识库' });
+    const res: any = await urlResquest.createKb({ kb_name: home.defaultName });
     if (+res.code === 200) {
       newId.value = res.data.kb_id;
       setCurrentId(res.data.kb_id);
