@@ -15,6 +15,26 @@ update_or_append_to_env() {
   fi
 }
 
+function check_log_errors() {
+    local log_file=$1  # 将第一个参数赋值给变量log_file，表示日志文件的路径
+
+    # 检查日志文件是否存在
+    if [[ ! -f "$log_file" ]]; then
+        echo "指定的日志文件不存在: $log_file"
+        return 1
+    fi
+
+    # 使用grep命令检查"core dumped"或"Error"的存在
+    # -C 5表示打印匹配行的前后各5行
+    local pattern="core dumped\|Error\|ERROR"
+    if grep -E -C 5 "$pattern" "$log_file"; then
+        echo "检测到错误信息，请查看上面的输出。"
+        exit 1
+    else
+        echo "$log_file 中未检测到明确的错误信息。请手动排查 $log_file 以获取更多信息。"
+    fi
+}
+
 script_name=$(basename "$0")
 
 usage() {
@@ -230,12 +250,7 @@ while true; do
             kill $tail_pid  # 关闭后台的tail命令
             echo "启动 embedding and rerank 服务超时，自动检查 $embed_rerank_log_file 中是否存在Error..."
 
-            # 检查日志文件中是否有错误信息
-            if grep -C 5 "Error" $embed_rerank_log_file; then
-                echo "检测到错误信息，请查看上面的输出。"
-            else
-                echo "日志中未检测到明确的Error信息。请排查 $embed_rerank_log_file 以获取更多信息。"
-            fi
+            check_log_errors $embed_rerank_log_file
 
             exit 1
         fi
@@ -249,6 +264,7 @@ while true; do
 
         echo "The embedding and rerank service is starting up, it can be long... you have time to make a coffee :)"
         echo "Embedding and Rerank 服务正在启动，可能需要一段时间...你有时间去冲杯咖啡 :)"
+        sleep 10
 
     else
         # cloud版本runtime只支持default
@@ -256,26 +272,6 @@ while true; do
         exit 1
     fi
 done
-
-function check_log_errors() {
-    local log_file=$1  # 将第一个参数赋值给变量log_file，表示日志文件的路径
-
-    # 检查日志文件是否存在
-    if [[ ! -f "$log_file" ]]; then
-        echo "指定的日志文件不存在: $log_file"
-        return 1
-    fi
-
-    # 使用grep命令检查"core dumped"或"Error"的存在
-    # -C 5表示打印匹配行的前后各5行
-    local pattern="core dumped\|Error"
-    if grep -E -C 5 "$pattern" "$log_file"; then
-        echo "检测到错误信息，请查看上面的输出。"
-        exit 1
-    else
-        echo "$log_file 中未检测到明确的错误信息。"
-    fi
-}
 
 echo "开始检查日志文件中的错误信息..."
 # 调用函数并传入日志文件路径
