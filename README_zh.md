@@ -36,6 +36,8 @@
 - [什么是QAnything](#什么是QAnything)
   - [特点](#特点)
   - [架构](#架构)
+- [开始之前](#开始之前)
+- [最近更新](#-最近更新-)
 - [开始](#开始)
   - [必要条件](#必要条件)
   - [下载安装](#下载安装)
@@ -127,6 +129,12 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 * [📚 在线试用有道速读](https://read.youdao.com)
 * [🛠️ 想只使用BCEmbedding(embedding & rerank)](https://github.com/netease-youdao/BCEmbedding)
 * [📖 常见问题](FAQ_zh.md)
+
+## 🚀 最近更新 
+
+- ***2024-01-29***: **支持自定义大模型，包括OpenAI API和其他开源大模型，GPU需求最低降至GTX 1050Ti，极大提升部署，调试等方面的用户体验** - 详见👉 [v1.2.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.2.0)
+- ***2024-01-23***: **默认开启rerank，修复在windows上启动时存在的各类问题** - 详见👉 [v1.1.1](https://github.com/netease-youdao/QAnything/releases/tag/v1.1.1)
+- ***2024-01-18***: **支持一键启动，支持windows部署，提升pdf，xlsx，html解析效果** - 详见👉 [v1.1.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.1.0)
 
 ## 开始
 

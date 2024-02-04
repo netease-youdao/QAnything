@@ -51,6 +51,40 @@ Note: You can choose the most suitable Service Startup Command based on your own
   exit 1
 }
 
+# 检查master分支是否有新代码
+# 定义颜色
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# 定义醒目的提示信息
+print_important_notice() {
+    echo -e "${YELLOW}====================================================${NC}"
+    echo -e "${YELLOW}******************** 重要提示 ********************${NC}"
+    echo -e "${YELLOW}====================================================${NC}"
+    echo
+    echo -e "${RED}检测到master分支有新的代码更新，请执行 git pull 来同步最新的代码。${NC}"
+    echo
+    sleep 5
+}
+
+# 获取最新的远程仓库信息
+git fetch origin master
+
+# 获取本地master分支的最新提交
+LOCAL=$(git rev-parse master)
+# 获取远程master分支的最新提交
+REMOTE=$(git rev-parse origin/master)
+
+if [ $LOCAL != $REMOTE ]; then
+    # 本地分支与远程分支不一致，需要更新
+    print_important_notice
+else
+    echo -e "${GREEN}当前master分支已是最新，无需更新。${NC}"
+fi
+
+
 llm_api="local"
 device_id="0"
 runtime_backend="default"
@@ -109,8 +143,6 @@ if ! [[ $gpu_id1 =~ ^[0-9]+$ ]] || ! [[ $gpu_id2 =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 
-# echo "GPUID1=${gpu_id1}" >> .env
-# echo "GPUID2=${gpu_id2}" >> .env
 update_or_append_to_env "GPUID1" "$gpu_id1"
 update_or_append_to_env "GPUID2" "$gpu_id2"
 
@@ -142,7 +174,6 @@ else
     OCR_USE_GPU="False"
 fi
 echo "OCR_USE_GPU=$OCR_USE_GPU because $compute_capability >= 7.5"
-# echo "OCR_USE_GPU=$OCR_USE_GPU" >> .env
 update_or_append_to_env "OCR_USE_GPU" "$OCR_USE_GPU"
 
 # 使用nvidia-smi命令获取GPU的显存大小（以MiB为单位）
@@ -154,7 +185,28 @@ echo "******************** 重要提示 ********************"
 echo "===================================================="
 echo ""
 
-if [ "$GPU1_MEMORY_SIZE" -lt 8000 ]; then  # 显存小于8GB
+# 使用默认后端且model_size_num不为0
+if [ "$runtime_backend" = "default" ] && [ "$model_size_num" -ne 0 ]; then
+    if [ -z "$gpu_series" ]; then  # 不是Nvidia 30系列或40系列
+        echo "您的显卡型号 $gpu_model 部署默认后端FasterTransformer需要Nvidia RTX 30系列或40系列显卡，将自动为您切换后端："
+        # 如果显存大于等于24GB且计算力大于等于8.6，则可以使用vllm后端
+        if [ "$GPU1_MEMORY_SIZE" -ge 24000 ] && [ $(echo "$compute_capability >= 8.6" | bc) -eq 1 ]; then
+            echo "根据匹配算法，已自动为您切换为vllm后端（推荐）"
+            runtime_backend="vllm"
+        else
+            # 自动切换huggingface后端
+            echo "根据匹配算法，已自动为您切换为huggingface后端"
+            runtime_backend="hf"
+        fi
+    fi
+fi
+
+if [ "$GPU1_MEMORY_SIZE" -lt 4000 ]; then # 显存小于4GB
+    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 不足以部署本项目，建议升级到GTX 1050Ti或以上级别的显卡"
+    exit 1
+elif [ "$model_size_num" -eq 0 ]; then  # 模型大小为0B, 表示使用openai api，4G显存就够了
+    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 可以使用在线的OpenAI API"
+elif [ "$GPU1_MEMORY_SIZE" -lt 8000 ]; then  # 显存小于8GB
     # 显存小于8GB，仅推荐使用在线的OpenAI API
     echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 仅推荐使用在线的OpenAI API"
     if [ "$model_size_num" -gt 0 ]; then  # 模型大小大于0B
@@ -229,7 +281,6 @@ elif [ "$GPU1_MEMORY_SIZE" -gt 25000 ]; then  # 显存大于24GB
     OFFCUT_TOKEN=0
 fi
 
-# echo "OFFCUT_TOKEN=$OFFCUT_TOKEN" >> .env
 update_or_append_to_env "OFFCUT_TOKEN" "$OFFCUT_TOKEN"
 
 if [ $llm_api = 'cloud' ]; then
@@ -286,15 +337,6 @@ echo "model_name is set to [$model_name]"
 echo "conv_template is set to [$conv_template]"
 echo "tensor_parallel is set to [$tensor_parallel]"
 echo "gpu_memory_utilization is set to [$gpu_memory_utilization]"
-
-# 写入环境变量.env文件
-#echo "LLM_API=${llm_api}" >> .env
-#echo "DEVICE_ID=$device_id" >> .env
-#echo "RUNTIME_BACKEND=$runtime_backend" >> .env
-#echo "MODEL_NAME=$model_name" >> .env
-#echo "CONV_TEMPLATE=$conv_template" >> .env
-#echo "TP=$tensor_parallel" >> .env
-#echo "GPU_MEM_UTILI=$gpu_memory_utilization" >> .env
 
 update_or_append_to_env "LLM_API" "$llm_api"
 update_or_append_to_env "DEVICE_ID" "$device_id"
@@ -403,22 +445,26 @@ if [[ -f "$user_file" ]]; then
     read -p "Do you want to use the previous host: $host? (yes/no) 是否使用上次的host: $host？(yes/no) 回车默认选yes，请输入:" use_previous
     use_previous=${use_previous:-yes}
     if [[ $use_previous != "yes" && $use_previous != "是" ]]; then
-        read -p "Are you running the code on a cloud server or on your local machine? (cloud/local) 您是在云服务器上还是本地机器上启动代码？(cloud/local) " answer
+        read -p "Are you running the code on a remote server or on your local machine? (remote/local) 您是在远程服务器上还是本地机器上启动代码？(remote/local) " answer
         if [[ $answer == "local" || $answer == "本地" ]]; then
             host="localhost"
         else
-            read -p "Please enter the server IP address 请输入服务器IP地址(示例：10.234.10.144): " host
+            read -p "Please enter the server IP address 请输入服务器公网IP地址(示例：10.234.10.144): " host
+            echo "当前设置的远程服务器IP地址为 $host, QAnything启动后，本地前端服务（浏览器打开[http://$user_ip:5052/qanything/]）将远程访问[http://$host:8777]上的后端服务，请知悉！"
+            sleep 5
         fi
         # 保存新的配置到用户文件
         echo "$host" > "$user_file"
     fi
 else
     # 如果用户文件不存在，询问用户并保存配置
-    read -p "Are you running the code on a cloud server or on your local machine? (cloud/local) 您是在云服务器上还是本地机器上启动代码？(cloud/local) " answer
+    read -p "Are you running the code on a remote server or on your local machine? (remotelocal) 您是在云服务器上还是本地机器上启动代码？(remote/local) " answer
     if [[ $answer == "local" || $answer == "本地" ]]; then
         host="localhost"
     else
-        read -p "Please enter the server IP address 请输入服务器IP地址(示例：10.234.10.144): " host
+        read -p "Please enter the server IP address 请输入服务器公网IP地址(示例：10.234.10.144): " host
+        echo "当前设置的远程服务器IP地址为 $host, QAnything启动后，本地前端服务（浏览器打开[http://$user_ip:5052/qanything/]）将远程访问[http://$host:8777]上的后端服务，请知悉！"
+        sleep 5
     fi
     # 保存配置到用户文件
     echo "$host" > "$user_file"

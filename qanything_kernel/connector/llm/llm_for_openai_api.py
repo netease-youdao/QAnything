@@ -151,7 +151,7 @@ class OpenAILLM(BaseAnswer, ABC):
                     top_p=self.top_p,
                     stop=[self.stop_words] if self.stop_words is not None else None,
                 )
-
+                logging.info(f"OPENAI RES: {response}")
                 for event in response:
                     if not isinstance(event, dict):
                         event = event.model_dump()
