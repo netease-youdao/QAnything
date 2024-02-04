@@ -267,7 +267,7 @@ const uplolad = async () => {
             status = 'error';
           }
           uploadFileList.value[item.order].status = status;
-          uploadFileList.value[item.order].text = common.upSucceeded;
+          uploadFileList.value[item.order].errorText = common.upSucceeded;
         });
       } else {
         message.error(data.msg || '出错了');

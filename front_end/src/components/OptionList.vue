@@ -19,7 +19,12 @@
         <div class="add-link" @click="showUrlUpload">{{ home.addUrl }}</div>
       </div>
       <div class="table">
-        <a-table :data-source="dataSource" :columns="columns" :pagination="false">
+        <a-table
+          :data-source="dataSource"
+          :columns="columns"
+          :pagination="false"
+          :locale="{ emptyText: home.emptyText }"
+        >
           <template #headerCell="{ column }">
             <template v-if="column.key === 'status'">
               <span>{{ home.documentStatus }}</span

@@ -6,6 +6,7 @@ import { getStatus } from '@/utils/utils';
 import { getLanguage } from '@/language/index';
 
 const home = getLanguage().home;
+const common = getLanguage().common;
 export const useKnowledgeModal = defineStore('knowledgeModal', () => {
   //是否展示弹窗
   const modalVisible = ref(false);
@@ -56,7 +57,7 @@ export const useKnowledgeModal = defineStore('knowledgeModal', () => {
       }
     } catch (e) {
       console.log(e);
-      message.error(e.msg || '请求失败');
+      message.error(e.msg || common.error);
     }
   };
 

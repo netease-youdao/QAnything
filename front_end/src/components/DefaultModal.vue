@@ -15,6 +15,8 @@
         centered
         width="480px"
         wrap-class-name="private-modal"
+        :ok-text="common.confirm"
+        :cancel-text="common.cancel"
         @ok="handleOk"
       >
         <template #title>
@@ -26,6 +28,9 @@
 </template>
 <script lang="ts" setup>
 import { useChat } from '@/store/useChat';
+import { getLanguage } from '@/language/index';
+
+const common = getLanguage().common;
 const { showModal } = storeToRefs(useChat());
 const emits = defineEmits(['ok']);
 defineProps({
