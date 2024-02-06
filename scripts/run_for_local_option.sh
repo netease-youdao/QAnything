@@ -98,14 +98,14 @@ echo "checksum $checksum"
 echo "default_checksum $default_checksum"
 # 检查两个校验和是否相等，如果不相等则表示 third_party/FastChat/fastchat/conversation.py 注册了新的 conv_template, 则需重新安装依赖
 if [ "$default_checksum" != "$checksum" ]; then
-    cd /workspace/qanything_local/third_party/FastChat && pip install transformers==4.36.0 vllm==0.2.7 transformers-stream-generator==0.0.4 einops==0.6.0 accelerate==0.21.0 && pip install -e . 
+    cd /workspace/qanything_local/third_party/FastChat && pip install -e .
     checksum=$(find /workspace/qanything_local/third_party/FastChat -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | awk '{print $1}') && echo "$checksum" > /workspace/qanything_local/third_party/checksum.config
 fi
 
 install_deps=$(pip list | grep vllm)
 if [[ "$install_deps" != *"vllm"* ]]; then
     echo "vllm deps not found"
-    cd /workspace/qanything_local/third_party/FastChat && pip install transformers==4.36.0 vllm==0.2.7 transformers-stream-generator==0.0.4 einops==0.6.0 accelerate==0.21.0 && pip install -e . 
+    cd /workspace/qanything_local/third_party/FastChat && pip install -e .
     checksum=$(find /workspace/qanything_local/third_party/FastChat -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | awk '{print $1}') && echo "$checksum" > /workspace/qanything_local/third_party/checksum.config
 fi
 
