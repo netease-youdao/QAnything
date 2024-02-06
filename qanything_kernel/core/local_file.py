@@ -18,8 +18,8 @@ from sanic.request import File
 import os
 
 text_splitter = RecursiveCharacterTextSplitter(
-    separators=["\n", ".", "。", "!", "！", "?", "？"],
-    chunk_size=800,
+    separators=["\n", "|", ".", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " "],
+    chunk_size=400,
     length_function=num_tokens,
 )
 
