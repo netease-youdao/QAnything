@@ -91,27 +91,6 @@ check_folder_existence() {
 
 start_time=$(date +%s)  # 记录开始时间 
 
-# 获取默认的 MD5 校验和
-default_checksum=$(cat /workspace/qanything_local/third_party/checksum.config)
-
-# 计算FastChat文件夹下所有文件的 MD5 校验和
-checksum=$(find /workspace/qanything_local/third_party/FastChat -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | awk '{print $1}')
-
-echo "checksum $checksum"
-echo "default_checksum $default_checksum"
-# 检查两个校验和是否相等，如果不相等则表示 third_party/FastChat/fastchat/conversation.py 注册了新的 conv_template, 则需重新安装依赖
-if [ "$default_checksum" != "$checksum" ]; then
-    cd /workspace/qanything_local/third_party/FastChat && pip install transformers==4.36.0 vllm==0.2.7 transformers-stream-generator==0.0.4 einops==0.6.0 accelerate==0.21.0 && pip install -e .
-    checksum=$(find /workspace/qanything_local/third_party/FastChat -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | awk '{print $1}') && echo "$checksum" > /workspace/qanything_local/third_party/checksum.config
-fi
-
-install_deps=$(pip list | grep vllm)
-if [[ "$install_deps" != *"vllm"* ]]; then
-    echo "vllm deps not found"
-    cd /workspace/qanything_local/third_party/FastChat && pip install transformers==4.36.0 vllm==0.2.7 transformers-stream-generator==0.0.4 einops==0.6.0 accelerate==0.21.0 && pip install -e . 
-    checksum=$(find /workspace/qanything_local/third_party/FastChat -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum | awk '{print $1}') && echo "$checksum" > /workspace/qanything_local/third_party/checksum.config
-fi
-
 mkdir -p /model_repos/QAEnsemble_embed_rerank && mkdir -p /workspace/qanything_local/logs/debug_logs && mkdir -p /workspace/qanything_local/logs/qa_logs
 
 if [ ! -L "/model_repos/QAEnsemble_embed_rerank/rerank" ]; then
