@@ -188,7 +188,7 @@ echo ""
 # 使用默认后端且model_size_num不为0
 if [ "$runtime_backend" = "default" ] && [ "$model_size_num" -ne 0 ]; then
     if [ -z "$gpu_series" ]; then  # 不是Nvidia 30系列或40系列
-        echo "您的显卡型号 $gpu_model 部署默认后端FasterTransformer需要Nvidia RTX 30系列或40系列显卡，将自动为您切换后端："
+        echo "默认后端为FasterTransformer，仅支持Nvidia RTX 30系列或40系列显卡，您的显卡型号为： $gpu_model, 不在支持列表中，将自动为您切换后端："
         # 如果显存大于等于24GB且计算力大于等于8.6，则可以使用vllm后端
         if [ "$GPU1_MEMORY_SIZE" -ge 24000 ] && [ $(echo "$compute_capability >= 8.6" | bc) -eq 1 ]; then
             echo "根据匹配算法，已自动为您切换为vllm后端（推荐）"
