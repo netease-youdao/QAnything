@@ -72,10 +72,10 @@ class MilvusClient:
                                          "file_name": cand.entity.get('file_name'),
                                          "chunk_id": cand.entity.get('chunk_id')})
                 new_cands.append(doc)
-            # csv文件不做expand_cand_docs
+            # csv和xlsx文件不做expand_cand_docs
             need_expand, not_need_expand = [], []
             for doc in new_cands:
-                if doc.metadata['file_name'].lower().endswith('.csv'):
+                if doc.metadata['file_name'].lower().split('.')[-1] in ['csv', 'xlsx']:
                     doc.metadata["kernel"] = doc.page_content
                     not_need_expand.append(doc)
                 else:
