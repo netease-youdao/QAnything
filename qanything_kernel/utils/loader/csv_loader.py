@@ -97,12 +97,23 @@ class CSVLoader(BaseLoader):
                 raise ValueError(
                     f"Source column '{self.source_column}' not found in CSV file."
                 )
+
+            # 初始化一个字典，用于存储每一列最后一次的非空值
+            last_non_empty_values = {}
+            line_contents = []
+            for k, v in row.items():
+                if k in self.metadata_columns:
+                    continue
+                line_contents.append(f"{k.strip()}: {v.strip() if v is not None else last_non_empty_values.get(k, v)}")
+                if v is not None:
+                    last_non_empty_values[k] = v
             content = '------------------------\n'
-            content += " & ".join(
-                f"{k.strip()}: {v.strip() if v is not None else v}"
-                for k, v in row.items()
-                if k not in self.metadata_columns
-            )
+            # content += " & ".join(
+            #     f"{k.strip()}: {v.strip() if v is not None else v}"
+            #     for k, v in row.items()
+            #     if k not in self.metadata_columns
+            # )
+            content += ' & '.join(line_contents)
             content += '\n------------------------'
 
             metadata = {"source": source, "row": i}
