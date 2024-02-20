@@ -86,6 +86,8 @@ class CSVLoader(BaseLoader):
     def __read_file(self, csvfile: TextIOWrapper) -> List[Document]:
         docs = []
         csv_reader = csv.DictReader(csvfile, **self.csv_args)  # type: ignore
+        # 初始化一个字典，用于存储每一列最后一次的非空值
+        last_non_empty_values = {}
         for i, row in enumerate(csv_reader):
             try:
                 source = (
@@ -98,14 +100,12 @@ class CSVLoader(BaseLoader):
                     f"Source column '{self.source_column}' not found in CSV file."
                 )
 
-            # 初始化一个字典，用于存储每一列最后一次的非空值
-            last_non_empty_values = {}
             line_contents = []
             for k, v in row.items():
                 if k in self.metadata_columns:
                     continue
-                line_contents.append(f"{k.strip()}: {v.strip() if v is not None else last_non_empty_values.get(k, v)}")
-                if v is not None:
+                line_contents.append(f"{k.strip()}: {v.strip() if v else last_non_empty_values.get(k, v)}")
+                if v:
                     last_non_empty_values[k] = v
             content = '------------------------\n'
             # content += " & ".join(
