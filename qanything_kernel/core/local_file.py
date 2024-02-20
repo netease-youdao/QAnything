@@ -8,7 +8,7 @@ from langchain.document_loaders import UnstructuredWordDocumentLoader
 from langchain.document_loaders import UnstructuredExcelLoader
 from langchain.document_loaders import UnstructuredEmailLoader
 from langchain.document_loaders import UnstructuredPowerPointLoader
-from langchain.document_loaders import CSVLoader
+from qanything_kernel.utils.loader.csv_loader import CSVLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from qanything_kernel.utils.splitter import ChineseTextSplitter
@@ -18,7 +18,7 @@ from sanic.request import File
 import os
 
 text_splitter = RecursiveCharacterTextSplitter(
-    separators=["\n", "|", ".", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " "],
+    separators=["\n", ".", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " "],
     chunk_size=400,
     length_function=num_tokens,
 )
@@ -91,7 +91,7 @@ class LocalFile:
             loader = UnstructuredEmailLoader(self.file_path, mode="elements")
             docs = loader.load()
         elif self.file_path.lower().endswith(".csv"):
-            loader = CSVLoader(self.file_path)
+            loader = CSVLoader(self.file_path, csv_args={"delimiter": ",", "quotechar": '"'})
             docs = loader.load()
         else:
             raise TypeError("文件类型不支持，目前仅支持：[md,txt,pdf,jpg,png,jpeg,docx,xlsx,pptx,eml,csv]")
