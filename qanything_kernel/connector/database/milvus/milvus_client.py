@@ -76,6 +76,7 @@ class MilvusClient:
             need_expand, not_need_expand = [], []
             for doc in new_cands:
                 if doc.metadata['file_name'].lower().endswith('.csv'):
+                    doc.metadata["kernel"] = doc.page_content
                     not_need_expand.append(doc)
                 else:
                     need_expand.append(doc)
