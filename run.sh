@@ -253,6 +253,35 @@ if [ -e /proc/version ]; then
   if grep -qi microsoft /proc/version || grep -qi MINGW /proc/version; then
     if grep -qi microsoft /proc/version; then
         echo "Running under WSL"
+        if [-z "${WIN_VERSION}"]; then
+            read -p "请输入Windows版本（WIN11/WIN10）回车默认选WIN11，请输入：" win_version
+            if [[ $win_version == "WIN11" || $win_version == "WIN10" ]]; then
+                update_or_append_to_env "WIN_VERSION" "$win_version"
+            else
+                echo "目前只支持WIN11和WIN10，请选择其一输入"
+                exit 1
+            fi
+        fi
+        # 如果是win10系统且runtime_backend为default且llm_api是local，则提示win10不支持default后端
+        if [[ $runtime_backend == "default" && $llm_api == "local" && $WIN_VERSION == "WIN10" ]]; then
+            echo "Windows 10系统不支持default后端，请重新下载定制的Qwen-7B-QAnything模型，并选择hf或vllm后端："
+            echo """
+# 算力查询：请对照/path/to/QAnything/scripts/gpu_capabilities.json
+# 高算力卡（>=8.0）推荐vllm后端：
+cd /path/to/QAnything/assets/custom_models
+git lfs install
+git clone https://huggingface.co/netease-youdao/Qwen-7B-QAnything
+cd - 
+bash run.sh -c local -i 0 -b vllm -m Qwen-7B-QAnything -t qwen-7b-qanything -p 1 -r 0.85
+# 低算力高显存卡推荐hf后端：
+cd assets/custom_models
+git lfs install
+git clone https://huggingface.co/netease-youdao/Qwen-7B-QAnything
+cd - 
+bash run.sh -c local -i 0 -b hf -m Qwen-7B-QAnything -t qwen-7b-qanything'
+            """
+            exit 1
+        fi
     else
         echo "Running under git bash"
     fi
