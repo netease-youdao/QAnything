@@ -5,6 +5,7 @@ from typing import List
 from tritonclient import grpc as grpcclient
 from qanything_kernel.configs.model_config import LOCAL_RERANK_SERVICE_URL, LOCAL_RERANK_MAX_LENGTH, LOCAL_RERANK_MODEL_NAME, \
     LOCAL_RERANK_BATCH
+import numpy as np
 
 
 class LocalRerankBackend:
@@ -42,7 +43,10 @@ class LocalRerankBackend:
         result_data = response.as_numpy(output_name)
         print('rerank res:', result_data, flush=True)
 
-        return result_data.reshape(-1).tolist()
+        # 应用sigmoid函数
+        sigmoid_scores = 1 / (1 + np.exp(-result_data))
+
+        return sigmoid_scores.reshape(-1).tolist()
 
     def merge_inputs(self, chunk1_raw, chunk2):
         chunk1 = deepcopy(chunk1_raw)
