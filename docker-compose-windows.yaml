@@ -78,7 +78,7 @@ services:
 
   qanything_local:
     container_name: qanything-container-local
-    image: freeren/qanything-win:v1.1.1
+    image: freeren/qanything-win:v1.2.1
     # runtime: nvidia
     deploy:
       resources:
@@ -101,6 +101,8 @@ services:
       - NCCL_LAUNCH_MODE=PARALLEL
       - GPUID1=${GPUID1:-0}
       - GPUID2=${GPUID2:-0}
+      - MODEL_SIZE=${MODEL_SIZE:-0B}
+      - USER_IP=${USER_IP:-localhost}
     depends_on:
       - "standalone"
       - "mysql"

@@ -15,7 +15,7 @@ update_or_append_to_env() {
   fi
 }
 
-function check_log_errors() {
+check_log_errors() {
     local log_file=$1  # 将第一个参数赋值给变量log_file，表示日志文件的路径
 
     # 检查日志文件是否存在
@@ -33,6 +33,14 @@ function check_log_errors() {
     else
         echo "$log_file 中未检测到明确的错误信息。请手动排查 $log_file 以获取更多信息。"
     fi
+}
+
+check_folder_existence() {
+  if [ ! -d "/model_repos/CustomLLM/$1" ]; then
+    echo "The $1 folder does not exist under QAnything/assets/custom_models/. Please check your setup."
+    echo "在QAnything/assets/custom_models/下不存在$1文件夹。请检查您的模型文件。"
+    exit 1
+  fi
 }
 
 script_name=$(basename "$0")
@@ -81,14 +89,6 @@ echo "conv_template is set to [$conv_template]"
 echo "tensor_parallel is set to [$tensor_parallel]"
 echo "gpu_memory_utilization is set to [$gpu_memory_utilization]"
 
-check_folder_existence() {
-  if [ ! -d "/model_repos/CustomLLM/$1" ]; then
-    echo "The $1 folder does not exist under QAnything/assets/custom_models/. Please check your setup."
-    echo "在QAnything/assets/custom_models/下不存在$1文件夹。请检查您的模型文件。"
-    exit 1
-  fi
-}
-
 start_time=$(date +%s)  # 记录开始时间 
 
 mkdir -p /model_repos/QAEnsemble_embed_rerank && mkdir -p /workspace/qanything_local/logs/debug_logs && mkdir -p /workspace/qanything_local/logs/qa_logs
@@ -107,22 +107,49 @@ default_gpu_id2=0
 
 # 检查环境变量GPUID1是否存在，并读取其值或使用默认值
 if [ -z "${GPUID1}" ]; then
-    gpuid1=$default_gpu_id1
+    gpu_id1=$default_gpu_id1
 else
-    gpuid1=${GPUID1}
+    gpu_id1=${GPUID1}
 fi
 
 # 检查环境变量GPUID2是否存在，并读取其值或使用默认值
 if [ -z "${GPUID2}" ]; then
-    gpuid2=$default_gpu_id2
+    gpu_id2=$default_gpu_id2
 else
-    gpuid2=${GPUID2}
+    gpu_id2=${GPUID2}
 fi
-echo "GPU ID: $gpuid1, $gpuid2"
+echo "GPU ID: $gpu_id1, $gpu_id2"
 
-echo "The triton server will start on $gpuid1 GPU"
+# 判断硬件条件与启动参数是否匹配
+# 获取显卡型号
+gpu_model=$(nvidia-smi --query-gpu=gpu_name --format=csv,noheader,nounits -i $gpu_id1)
+compute_capability=$(jq -r ".[\"$gpu_model\"]" /workspace/qanything_local/scripts/gpu_capabilities.json)
+# 如果compute_capability为空，则说明显卡型号不在gpu_capabilities.json中
+if [ -z "$compute_capability" ]; then
+    echo "您的显卡型号 $gpu_model 不在支持列表中，请联系技术支持。"
+    exit 1
+fi
+echo "GPU1 Model: $gpu_model"
+echo "Compute Capability: $compute_capability"
 
-CUDA_VISIBLE_DEVICES=$gpuid1 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_embed_rerank --http-port=9000 --grpc-port=9001 --metrics-port=9002 --log-verbose=1 > /workspace/qanything_local/logs/debug_logs/embed_rerank_tritonserver.log 2>&1 &
+if [ $(echo "$compute_capability >= 7.5" | bc) -eq 1 ]; then
+    OCR_USE_GPU="True"
+else
+    OCR_USE_GPU="False"
+fi
+echo "OCR_USE_GPU=$OCR_USE_GPU because $compute_capability >= 7.5"
+update_or_append_to_env "OCR_USE_GPU" "$OCR_USE_GPU"
+
+# 使用nvidia-smi命令获取GPU的显存大小（以MiB为单位）
+GPU1_MEMORY_SIZE=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits -i $gpu_id1)
+if [ "$GPU1_MEMORY_SIZE" -lt 4000 ]; then # 显存小于4GB
+    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 不足以部署本项目，建议升级到4G显存及以上的显卡"
+    exit 1
+fi
+
+
+echo "The embed and rerank model will start on $gpu_id1 GPU"
+CUDA_VISIBLE_DEVICES=$gpu_id1 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_embed_rerank --http-port=9000 --grpc-port=9001 --metrics-port=9002 --log-verbose=1 > /workspace/qanything_local/logs/debug_logs/embed_rerank_tritonserver.log 2>&1 &
 
 update_or_append_to_env "EMBED_PORT" "9001"
 update_or_append_to_env "RERANK_PORT" "9001"
@@ -132,7 +159,8 @@ nohup python3 -u qanything_kernel/dependent_server/rerank_for_local_serve/rerank
 echo "The rerank service is ready! (2/8)"
 echo "rerank服务已就绪! (2/8)"
 
-CUDA_VISIBLE_DEVICES=$gpuid2 nohup python3 -u qanything_kernel/dependent_server/ocr_serve/ocr_server.py > /workspace/qanything_local/logs/debug_logs/ocr_server.log 2>&1 &
+echo "The paddleocr model will start on $gpu_id2 GPU"
+CUDA_VISIBLE_DEVICES=$gpu_id2 nohup python3 -u qanything_kernel/dependent_server/ocr_serve/ocr_server.py > /workspace/qanything_local/logs/debug_logs/ocr_server.log 2>&1 &
 echo "The ocr service is ready! (3/8)"
 echo "OCR服务已就绪! (3/8)"
 
@@ -142,8 +170,7 @@ echo "qanything后端服务已就绪! (4/8)"
 
 
 env_file="/workspace/qanything_local/front_end/.env.production"
-user_file="/workspace/qanything_local/user.config"
-user_ip=$(cat "$user_file")
+user_ip=$USER_IP
 # 读取env_file的第一行
 current_host=$(grep VITE_APP_API_HOST "$env_file")
 user_host="VITE_APP_API_HOST=http://$user_ip:8777"
@@ -157,19 +184,8 @@ fi
 
 # 转到 front_end 目录
 cd /workspace/qanything_local/front_end || exit
-# 安装依赖
-echo "Waiting for [npm run install]（5/8)"
-npm config set registry https://registry.npmmirror.com
-timeout 180 npm install
-if [ $? -eq 0 ]; then
-    echo "[npm run install] Installed successfully（5/8)"
-elif [ $? -eq 124 ]; then
-    echo "npm install 下载超时(180秒)，可能是网络问题，请修改 npm 代理。"
-    exit 1
-else
-    echo "Failed to install npm dependencies."
-    exit 1
-fi
+ln -s /root/node_modules node_modules
+echo "Dependencies related to npm are obtained. (5/8)"
 
 # 构建前端项目
 echo "Waiting for [npm run build](6/8)"
