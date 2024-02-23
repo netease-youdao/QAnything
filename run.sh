@@ -253,8 +253,9 @@ if [ -e /proc/version ]; then
   if grep -qi microsoft /proc/version || grep -qi MINGW /proc/version; then
     if grep -qi microsoft /proc/version; then
         echo "Running under WSL"
-        if [-z "${WIN_VERSION}"]; then
+        if [ -z "${WIN_VERSION}" ]; then
             read -p "请输入Windows版本（WIN11/WIN10）回车默认选WIN11，请输入：" win_version
+            win_version=${win_version:-WIN11}
             if [[ $win_version == "WIN11" || $win_version == "WIN10" ]]; then
                 update_or_append_to_env "WIN_VERSION" "$win_version"
             else
