@@ -164,7 +164,10 @@ class OpenAICustomLLM(BaseAnswer, ABC):
             history[-1] = [prompt, complete_answer]
             answer_result = AnswerResult()
             answer_result.history = history
-            answer_result.llm_output = {"answer": response_text}
+            if streaming:
+                answer_result.llm_output = {"answer": response_text}
+            else:
+                answer_result.llm_output = {"answer": complete_answer}
             answer_result.prompt = prompt
             yield answer_result
 
