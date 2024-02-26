@@ -96,6 +96,15 @@
       </div>
       <div class="question-box">
         <div class="question">
+          <a-popover placement="topLeft">
+            <template #content>
+              <p v-if="control">退出多轮对话</p>
+              <p v-else>开启多轮对话</p>
+            </template>
+            <span :class="['control', `control-${control}`]">
+              <SvgIcon name="chat-control" @click="controlChat" />
+            </span>
+          </a-popover>
           <span class="download" @click="downloadChat">
             <SvgIcon name="chat-download" />
           </span>
@@ -151,6 +160,9 @@ const { copy } = useClipboard();
 declare module _czc {
   const push: (array: any) => void;
 }
+
+//当前是否多轮对话
+const control = ref(true);
 
 //当前问的问题
 const question = ref('');
@@ -262,7 +274,7 @@ const send = () => {
     body: JSON.stringify({
       user_id: userId,
       kb_ids: selectList.value,
-      history: history.value,
+      history: control.value ? history.value : [],
       question: q,
       streaming: true,
     }),
@@ -353,6 +365,10 @@ const downloadChat = () => {
   type.value = 'download';
   showModal.value = true;
   content.value = common.saveTip;
+};
+
+const controlChat = () => {
+  control.value = !control.value;
 };
 
 const deleteChat = () => {
@@ -599,7 +615,8 @@ scrollBottom();
     align-items: center;
 
     .download,
-    .delete {
+    .delete,
+    .control {
       cursor: pointer;
       padding: 12px;
       display: flex;
@@ -617,6 +634,14 @@ scrollBottom();
       svg {
         width: 24px;
         height: 24px;
+      }
+      &.control-true {
+        border: 1px solid #5a47e5;
+        color: #5a47e5;
+      }
+      &.control-false {
+        border: 1px solid #e5e5e5;
+        color: #666666;
       }
     }
 
