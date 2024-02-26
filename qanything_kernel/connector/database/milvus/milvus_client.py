@@ -72,7 +72,16 @@ class MilvusClient:
                                          "file_name": cand.entity.get('file_name'),
                                          "chunk_id": cand.entity.get('chunk_id')})
                 new_cands.append(doc)
-            new_cands = self.expand_cand_docs(new_cands)
+            # csv和xlsx文件不做expand_cand_docs
+            need_expand, not_need_expand = [], []
+            for doc in new_cands:
+                if doc.metadata['file_name'].lower().split('.')[-1] in ['csv', 'xlsx']:
+                    doc.metadata["kernel"] = doc.page_content
+                    not_need_expand.append(doc)
+                else:
+                    need_expand.append(doc)
+            expand_res = self.expand_cand_docs(need_expand)
+            new_cands = not_need_expand + expand_res
             new_result.append(new_cands)
         return new_result
 
@@ -194,6 +203,7 @@ class MilvusClient:
 
     def process_group(self, group):
         new_cands = []
+        # 对每个分组按照chunk_id进行排序
         group.sort(key=lambda x: int(x.metadata['chunk_id'].split('_')[-1]))
         id_set = set()
         file_id = group[0].metadata['file_id']
@@ -256,7 +266,6 @@ class MilvusClient:
 
         with ThreadPoolExecutor(max_workers=10) as executor:
             futures = []
-            # 对每个分组按照chunk_id进行排序
             for group in m_grouped:
                 if not group:
                     continue

@@ -15,7 +15,7 @@ update_or_append_to_env() {
   fi
 }
 
-function check_log_errors() {
+check_log_errors() {
     local log_file=$1  # 将第一个参数赋值给变量log_file，表示日志文件的路径
 
     # 检查日志文件是否存在
@@ -33,6 +33,14 @@ function check_log_errors() {
     else
         echo "$log_file 中未检测到明确的错误信息。请手动排查 $log_file 以获取更多信息。"
     fi
+}
+
+check_folder_existence() {
+  if [ ! -d "/model_repos/CustomLLM/$1" ]; then
+    echo "The $1 folder does not exist under QAnything/assets/custom_models/. Please check your setup."
+    echo "在QAnything/assets/custom_models/下不存在$1文件夹。请检查您的模型文件。"
+    exit 1
+  fi
 }
 
 script_name=$(basename "$0")
@@ -81,14 +89,6 @@ echo "conv_template is set to [$conv_template]"
 echo "tensor_parallel is set to [$tensor_parallel]"
 echo "gpu_memory_utilization is set to [$gpu_memory_utilization]"
 
-check_folder_existence() {
-  if [ ! -d "/model_repos/CustomLLM/$1" ]; then
-    echo "The $1 folder does not exist under QAnything/assets/custom_models/. Please check your setup."
-    echo "在QAnything/assets/custom_models/下不存在$1文件夹。请检查您的模型文件。"
-    exit 1
-  fi
-}
-
 
 # 获取默认的 MD5 校验和
 default_checksum=$(cat /workspace/qanything_local/third_party/checksum.config)
@@ -122,24 +122,168 @@ if [ ! -L "/model_repos/QAEnsemble_embed_rerank/embed" ]; then
   cd /model_repos/QAEnsemble_embed_rerank && ln -s /model_repos/QAEnsemble/embed .
 fi
 
+cd /workspace/qanything_local
+
 # 设置默认值
 default_gpu_id1=0
 default_gpu_id2=0
 
 # 检查环境变量GPUID1是否存在，并读取其值或使用默认值
 if [ -z "${GPUID1}" ]; then
-    gpuid1=$default_gpu_id1
+    gpu_id1=$default_gpu_id1
 else
-    gpuid1=${GPUID1}
+    gpu_id1=${GPUID1}
 fi
 
 # 检查环境变量GPUID2是否存在，并读取其值或使用默认值
 if [ -z "${GPUID2}" ]; then
-    gpuid2=$default_gpu_id2
+    gpu_id2=$default_gpu_id2
 else
-    gpuid2=${GPUID2}
+    gpu_id2=${GPUID2}
 fi
-echo "GPU ID: $gpuid1, $gpuid2"
+echo "GPU ID: $gpu_id1, $gpu_id2"
+
+# 判断硬件条件与启动参数是否匹配
+# 获取显卡型号
+gpu_model=$(nvidia-smi --query-gpu=gpu_name --format=csv,noheader,nounits -i $gpu_id1)
+# nvidia RTX 30系列或40系列
+gpu_series=$(echo $gpu_model | grep -oP 'RTX\s*(30|40)')
+if ! command -v jq &> /dev/null; then
+    echo "Error: jq 命令不存在，请使用 sudo apt update && sudo apt-get install jq 安装，再重新启动。"
+    exit 1
+fi
+compute_capability=$(jq -r ".[\"$gpu_model\"]" /workspace/qanything_local/scripts/gpu_capabilities.json)
+# 如果compute_capability为空，则说明显卡型号不在gpu_capabilities.json中
+if [ -z "$compute_capability" ]; then
+    echo "您的显卡型号 $gpu_model 不在支持列表中，请联系技术支持。"
+    exit 1
+fi
+echo "GPU1 Model: $gpu_model"
+echo "Compute Capability: $compute_capability"
+
+if ! command -v bc &> /dev/null; then
+    echo "Error: bc 命令不存在，请使用 sudo apt update && sudo apt-get install bc 安装，再重新启动。"
+    exit 1
+fi
+
+if [ $(echo "$compute_capability >= 7.5" | bc) -eq 1 ]; then
+    OCR_USE_GPU="True"
+else
+    OCR_USE_GPU="False"
+fi
+echo "OCR_USE_GPU=$OCR_USE_GPU because $compute_capability >= 7.5"
+update_or_append_to_env "OCR_USE_GPU" "$OCR_USE_GPU"
+
+# 使用nvidia-smi命令获取GPU的显存大小（以MiB为单位）
+GPU1_MEMORY_SIZE=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits -i $gpu_id1)
+
+OFFCUT_TOKEN=0
+echo "===================================================="
+echo "******************** 重要提示 ********************"
+echo "===================================================="
+echo ""
+
+model_size=${MODEL_SIZE}
+model_size_num=$(echo $model_size | grep -oP '^[0-9]+(\.[0-9]+)?')
+
+# 使用默认后端且model_size_num不为0
+if [ "$runtime_backend" = "default" ] && [ "$model_size_num" -ne 0 ]; then
+    if [ -z "$gpu_series" ]; then  # 不是Nvidia 30系列或40系列
+        echo "默认后端为FasterTransformer，仅支持Nvidia RTX 30系列或40系列显卡，您的显卡型号为： $gpu_model, 不在支持列表中，将自动为您切换后端："
+        # 如果显存大于等于24GB且计算力大于等于8.6，则可以使用vllm后端
+        if [ "$GPU1_MEMORY_SIZE" -ge 24000 ] && [ $(echo "$compute_capability >= 8.6" | bc) -eq 1 ]; then
+            echo "根据匹配算法，已自动为您切换为vllm后端（推荐）"
+            runtime_backend="vllm"
+        else
+            # 自动切换huggingface后端
+            echo "根据匹配算法，已自动为您切换为huggingface后端"
+            runtime_backend="hf"
+        fi
+    fi
+fi
+
+if [ "$GPU1_MEMORY_SIZE" -lt 4000 ]; then # 显存小于4GB
+    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 不足以部署本项目，建议升级到GTX 1050Ti或以上级别的显卡"
+    exit 1
+elif [ "$model_size_num" -eq 0 ]; then  # 模型大小为0B, 表示使用openai api，4G显存就够了
+    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 可以使用在线的OpenAI API"
+elif [ "$GPU1_MEMORY_SIZE" -lt 8000 ]; then  # 显存小于8GB
+    # 显存小于8GB，仅推荐使用在线的OpenAI API
+    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 仅推荐使用在线的OpenAI API"
+    if [ "$model_size_num" -gt 0 ]; then  # 模型大小大于0B
+        echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
+        exit 1
+    fi
+elif [ "$GPU1_MEMORY_SIZE" -ge 8000 ] && [ "$GPU1_MEMORY_SIZE" -le 10000 ]; then  # 显存[8GB-10GB)
+    # 8GB显存，推荐部署1.8B的大模型
+    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 推荐部署1.8B的大模型，包括在线的OpenAI API"
+    if [ "$model_size_num" -gt 2 ]; then  # 模型大小大于2B
+        echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
+        exit 1
+    fi
+elif [ "$GPU1_MEMORY_SIZE" -ge 10000 ] && [ "$GPU1_MEMORY_SIZE" -le 16000 ]; then  # 显存[10GB-16GB)
+    # 10GB, 11GB, 12GB显存，推荐部署3B及3B以下的模型
+    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB，推荐部署3B及3B以下的模型，包括在线的OpenAI API"
+    if [ "$model_size_num" -gt 3 ]; then  # 模型大小大于3B
+        echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
+        exit 1
+    fi
+elif [ "$GPU1_MEMORY_SIZE" -ge 16000 ] && [ "$GPU1_MEMORY_SIZE" -le 22000 ]; then  # 显存[16-22GB)
+    # 16GB显存
+    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 推荐部署小于等于7B的大模型"
+    if [ "$model_size_num" -gt 7 ]; then  # 模型大小大于7B
+        echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
+        exit 1
+    fi
+    if [ "$runtime_backend" = "default" ]; then  # 默认使用Qwen-7B-QAnything+FasterTransformer
+        if [ -n "$gpu_series" ]; then
+            # Nvidia 30系列或40系列
+            if [ $gpu_id1 -eq $gpu_id2 ]; then
+                echo "为了防止显存溢出，tokens上限默认设置为2700"
+                OFFCUT_TOKEN=1400
+            else
+                echo "tokens上限默认设置为4096"
+                OFFCUT_TOKEN=0
+            fi
+        else
+            echo "您的显卡型号 $gpu_model 不支持部署Qwen-7B-QAnything模型"
+            exit 1
+        fi
+    elif [ "$runtime_backend" = "hf" ]; then  # 使用Huggingface Transformers后端
+        if [ "$model_size_num" -le 7 ] && [ "$model_size_num" -gt 3 ]; then  # 模型大小大于3B，小于等于7B
+            if [ $gpu_id1 -eq $gpu_id2 ]; then
+                echo "为了防止显存溢出，tokens上限默认设置为1400"
+                OFFCUT_TOKEN=2700
+            else
+                echo "为了防止显存溢出，tokens上限默认设置为2300"
+                OFFCUT_TOKEN=1800
+            fi
+        else
+            echo "tokens上限默认设置为4096"
+            OFFCUT_TOKEN=0
+        fi
+    elif [ "$runtime_backend" = "vllm" ]; then  # 使用VLLM后端
+        if [ "$model_size_num" -gt 3 ]; then  # 模型大小大于3B
+            echo "您的显存不足以使用vllm后端部署 $model_size 模型"
+            exit 1
+        else
+            echo "tokens上限默认设置为4096"
+            OFFCUT_TOKEN=0
+        fi
+    fi
+elif [ "$GPU1_MEMORY_SIZE" -ge 22000 ] && [ "$GPU1_MEMORY_SIZE" -le 25000 ]; then  # [22GB, 24GB]
+    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 推荐部署7B模型"
+    if [ "$model_size_num" -gt 7 ]; then  # 模型大小大于7B
+        echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
+        exit 1
+    fi
+    OFFCUT_TOKEN=0
+elif [ "$GPU1_MEMORY_SIZE" -gt 25000 ]; then  # 显存大于24GB
+    OFFCUT_TOKEN=0
+fi
+
+update_or_append_to_env "OFFCUT_TOKEN" "$OFFCUT_TOKEN"
+
 
 
 start_time=$(date +%s)  # 记录开始时间
@@ -148,16 +292,16 @@ if [ "$runtime_backend" = "default" ]; then
     echo "Executing default FastTransformer runtime_backend"
     # start llm server
     # 判断一下，如果gpu_id1和gpu_id2相同，则只启动一个triton_server
-    if [ $gpuid1 -eq $gpuid2 ]; then
-        echo "The triton server will start on $gpuid1 GPU"
-        CUDA_VISIBLE_DEVICES=$gpuid1 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble --http-port=10000 --grpc-port=10001 --metrics-port=10002 --log-verbose=1 >  /workspace/qanything_local/logs/debug_logs/llm_embed_rerank_tritonserver.log 2>&1 &
+    if [ $gpu_id1 -eq $gpu_id2 ]; then
+        echo "The triton server will start on $gpu_id1 GPU"
+        CUDA_VISIBLE_DEVICES=$gpu_id1 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble --http-port=10000 --grpc-port=10001 --metrics-port=10002 --log-verbose=1 >  /workspace/qanything_local/logs/debug_logs/llm_embed_rerank_tritonserver.log 2>&1 &
         update_or_append_to_env "RERANK_PORT" "10001"
         update_or_append_to_env "EMBED_PORT" "10001"
     else
-        echo "The triton server will start on $gpuid1 and $gpuid2 GPUs"
+        echo "The triton server will start on $gpu_id1 and $gpu_id2 GPUs"
 
-        CUDA_VISIBLE_DEVICES=$gpuid1 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_base --http-port=10000 --grpc-port=10001 --metrics-port=10002 --log-verbose=1 > /workspace/qanything_local/logs/debug_logs/llm_tritonserver.log 2>&1 &
-        CUDA_VISIBLE_DEVICES=$gpuid2 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_embed_rerank --http-port=9000 --grpc-port=9001 --metrics-port=9002 --log-verbose=1 > /workspace/qanything_local/logs/debug_logs/embed_rerank_tritonserver.log 2>&1 &
+        CUDA_VISIBLE_DEVICES=$gpu_id1 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_base --http-port=10000 --grpc-port=10001 --metrics-port=10002 --log-verbose=1 > /workspace/qanything_local/logs/debug_logs/llm_tritonserver.log 2>&1 &
+        CUDA_VISIBLE_DEVICES=$gpu_id2 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_embed_rerank --http-port=9000 --grpc-port=9001 --metrics-port=9002 --log-verbose=1 > /workspace/qanything_local/logs/debug_logs/embed_rerank_tritonserver.log 2>&1 &
         update_or_append_to_env "RERANK_PORT" "9001"
         update_or_append_to_env "EMBED_PORT" "9001"
     fi
@@ -167,8 +311,8 @@ if [ "$runtime_backend" = "default" ]; then
     echo "The llm transfer service is ready! (1/8)"
     echo "大模型中转服务已就绪! (1/8)"
 else
-    echo "The triton server for embedding and reranker will start on $gpuid2 GPUs"
-    CUDA_VISIBLE_DEVICES=$gpuid2 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_embed_rerank --http-port=9000 --grpc-port=9001 --metrics-port=9002 --log-verbose=1 > /workspace/qanything_local/logs/debug_logs/embed_rerank_tritonserver.log 2>&1 &
+    echo "The triton server for embedding and reranker will start on $gpu_id2 GPUs"
+    CUDA_VISIBLE_DEVICES=$gpu_id2 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_embed_rerank --http-port=9000 --grpc-port=9001 --metrics-port=9002 --log-verbose=1 > /workspace/qanything_local/logs/debug_logs/embed_rerank_tritonserver.log 2>&1 &
     update_or_append_to_env "RERANK_PORT" "9001"
     update_or_append_to_env "EMBED_PORT" "9001"
 
@@ -187,9 +331,9 @@ else
 
     gpus=$tensor_parallel
     if [ $tensor_parallel -eq 2 ]; then
-        gpus="$gpuid1,$gpuid2"
+        gpus="$gpu_id1,$gpu_id2"
     else
-        gpus="$gpuid1"
+        gpus="$gpu_id1"
     fi
 
     case $runtime_backend in
@@ -225,57 +369,84 @@ nohup python3 -u qanything_kernel/dependent_server/rerank_for_local_serve/rerank
 echo "The rerank service is ready! (2/8)"
 echo "rerank服务已就绪! (2/8)"
 
-CUDA_VISIBLE_DEVICES=$gpuid2 nohup python3 -u qanything_kernel/dependent_server/ocr_serve/ocr_server.py > /workspace/qanything_local/logs/debug_logs/ocr_server.log 2>&1 &
+CUDA_VISIBLE_DEVICES=$gpu_id2 nohup python3 -u qanything_kernel/dependent_server/ocr_serve/ocr_server.py > /workspace/qanything_local/logs/debug_logs/ocr_server.log 2>&1 &
 echo "The ocr service is ready! (3/8)"
 echo "OCR服务已就绪! (3/8)"
 
 nohup python3 -u qanything_kernel/qanything_server/sanic_api.py --mode "local" > /workspace/qanything_local/logs/debug_logs/sanic_api.log 2>&1 &
+
+# 监听后端服务启动
+backend_start_time=$(date +%s)
+
+while ! grep -q "Starting worker" /workspace/qanything_local/logs/debug_logs/sanic_api.log; do
+    echo "Waiting for the backend service to start..."
+    echo "等待启动后端服务"
+    sleep 1
+
+    # 获取当前时间并计算经过的时间
+    current_time=$(date +%s)
+    elapsed_time=$((current_time - backend_start_time))
+
+    # 检查是否超时
+    if [ $elapsed_time -ge 60 ]; then
+        echo "启动后端服务超时，请检查日志文件 /workspace/qanything_local/logs/debug_logs/sanic_api.log 获取更多信息。"
+        exit 1
+    fi
+    sleep 5
+done
+
 echo "The qanything backend service is ready! (4/8)"
 echo "qanything后端服务已就绪! (4/8)"
 
+# 转到 front_end 目录
+cd /workspace/qanything_local/front_end || exit
+# 如果node_modules不存在，就创建一个符号链接
+if [ ! -d "node_modules" ]; then
+    ln -s /root/node_modules node_modules
+fi
+echo "Dependencies related to npm are obtained. (5/8)"
 
 env_file="/workspace/qanything_local/front_end/.env.production"
-user_file="/workspace/qanything_local/user.config"
-user_ip=$(cat "$user_file")
+user_ip=$USER_IP
 # 读取env_file的第一行
 current_host=$(grep VITE_APP_API_HOST "$env_file")
 user_host="VITE_APP_API_HOST=http://$user_ip:8777"
 # 检查current_host与user_host是否相同
 if [ "$current_host" != "$user_host" ]; then
-   # 使用 sed 命令更新 VITE_APP_API_HOST 的值
-   sed -i "s|VITE_APP_API_HOST=.*|$user_host|" "$env_file"
-   echo "The file $env_file has been updated with the following configuration:"
-   grep "VITE_APP_API_HOST" "$env_file"
+    # 使用 sed 命令更新 VITE_APP_API_HOST 的值
+    sed -i "s|VITE_APP_API_HOST=.*|$user_host|" "$env_file"
+    echo "The file $env_file has been updated with the following configuration:"
+    grep "VITE_APP_API_HOST" "$env_file"
+
+    echo ".env.production 文件已更新，需重新构建前端项目。"
+    # 构建前端项目
+    echo "Waiting for [npm run build](6/8)"
+    timeout 180 npm run build
+    if [ $? -eq 0 ]; then
+        echo "[npm run build] build successfully(6/8)"
+    elif [ $? -eq 124 ]; then
+        echo "npm run build 编译超时(180秒)，请查看上面的输出。"
+        exit 1
+    else
+        echo "Failed to build the front end."
+        exit 1
+    fi
+elif [ -d "dist" ]; then
+    echo "The front_end/dist folder already exists, no need to build the front end again.(6/8)"
+else
+    echo "Waiting for [npm run build](6/8)"
+    timeout 180 npm run build
+    if [ $? -eq 0 ]; then
+        echo "[npm run build] build successfully(6/8)"
+    elif [ $? -eq 124 ]; then
+        echo "npm run build 编译超时(180秒)，请查看上面的输出。"
+        exit 1
+    else
+        echo "Failed to build the front end."
+        exit 1
+    fi
 fi
 
-# 转到 front_end 目录
-cd /workspace/qanything_local/front_end || exit
-# 安装依赖
-echo "Waiting for [npm run install]（5/8)"
-npm config set registry https://registry.npmmirror.com
-timeout 180 npm install
-if [ $? -eq 0 ]; then
-    echo "[npm run install] Installed successfully（5/8)"
-elif [ $? -eq 124 ]; then
-    echo "npm install 下载超时(180秒)，可能是网络问题，请修改 npm 代理。"
-    exit 1
-else
-    echo "Failed to install npm dependencies."
-    exit 1
-fi
-
-# 构建前端项目
-echo "Waiting for [npm run build](6/8)"
-timeout 180 npm run build
-if [ $? -eq 0 ]; then
-    echo "[npm run build] build successfully(6/8)"
-elif [ $? -eq 124 ]; then
-    echo "npm run build 编译超时(180秒)，请查看上面的输出。"
-    exit 1
-else
-    echo "Failed to build the front end."
-    exit 1
-fi
 
 # 启动前端页面服务
 nohup npm run serve 1>/workspace/qanything_local/logs/debug_logs/npm_server.log 2>&1 &
@@ -288,7 +459,6 @@ front_end_start_time=$(date +%s)
 while ! grep -q "Local:" /workspace/qanything_local/logs/debug_logs/npm_server.log; do
     echo "Waiting for the front-end service to start..."
     echo "等待启动前端服务"
-    sleep 1
 
     # 获取当前时间并计算经过的时间
     current_time=$(date +%s)
@@ -296,16 +466,17 @@ while ! grep -q "Local:" /workspace/qanything_local/logs/debug_logs/npm_server.l
 
     # 检查是否超时
     if [ $elapsed_time -ge 120 ]; then
-        echo "启动前端服务超时，请检查日志文件 /workspace/qanything_local/logs/debug_logs/npm_server.log 获取更多信息。"
+        echo "启动前端服务超时，请尝试手动删除front_end/dist文件夹，再重新启动run.sh，或检查日志文件 /workspace/qanything_local/logs/debug_logs/npm_server.log 获取更多信息。"
         exit 1
     fi
+    sleep 5
 done
 echo "The front-end service is ready!...(7/8)"
 echo "前端服务已就绪!...(7/8)"
 
 
 if [ "$runtime_backend" = "default" ]; then
-    if [ $gpuid1 -eq $gpuid2 ]; then
+    if [ $gpu_id1 -eq $gpu_id2 ]; then
         llm_log_file="/workspace/qanything_local/logs/debug_logs/llm_embed_rerank_tritonserver.log"
         embed_rerank_log_file=" /workspace/qanything_local/logs/debug_logs/llm_embed_rerank_tritonserver.log"
     else
@@ -326,7 +497,7 @@ while true; do
     elapsed_time=$((current_time - now_time))
 
     if [ "$runtime_backend" = "default" ]; then
-        if [ $gpuid1 -eq $gpuid2 ]; then
+        if [ $gpu_id1 -eq $gpu_id2 ]; then
             embed_rerank_response=$(curl -s -w "%{http_code}" http://localhost:10000/v2/health/ready -o /dev/null)
         else
             embed_rerank_response=$(curl -s -w "%{http_code}" http://localhost:9000/v2/health/ready -o /dev/null)
@@ -354,7 +525,7 @@ while true; do
 
     echo "The embedding and rerank service is starting up, it can be long... you have time to make a coffee :)"
     echo "Embedding and Rerank 服务正在启动，可能需要一段时间...你有时间去冲杯咖啡 :)"
-
+    sleep 10
 done
 
 tail -f $llm_log_file &  # 后台输出日志文件

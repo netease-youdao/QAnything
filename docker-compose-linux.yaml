@@ -78,7 +78,7 @@ services:
 
   qanything_local:
     container_name: qanything-container-local
-    image: freeren/qanything:v1.1.1
+    image: freeren/qanything:v1.2.1
     # runtime: nvidia
     deploy:
       resources:
@@ -93,7 +93,6 @@ services:
     privileged: true
     shm_size: '8gb'
     volumes:
-      - ${DOCKER_VOLUME_DIRECTORY:-.}/models:/model_repos/QAEnsemble
       - ${DOCKER_VOLUME_DIRECTORY:-.}/assets/custom_models:/model_repos/CustomLLM
       - ${DOCKER_VOLUME_DIRECTORY:-.}/:/workspace/qanything_local/
     ports:
@@ -103,6 +102,8 @@ services:
       - NCCL_LAUNCH_MODE=PARALLEL
       - GPUID1=${GPUID1:-0}
       - GPUID2=${GPUID2:-0}
+      - MODEL_SIZE=${MODEL_SIZE:-0B}
+      - USER_IP=${USER_IP:-localhost}
     depends_on:
       - "standalone"
       - "mysql"
