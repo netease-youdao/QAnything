@@ -263,26 +263,12 @@ if [ -e /proc/version ]; then
                 exit 1
             fi
         fi
-        # 如果是win10系统且runtime_backend为default且llm_api是local，则提示win10不支持default后端
-        if [[ $runtime_backend == "default" && $llm_api == "local" && $WIN_VERSION == "WIN10" ]]; then
-            echo """
-Windows 10系统不支持default后端，请重新下载定制的Qwen-7B-QAnything模型，并选择hf或vllm后端，具体操作如下：
-
-# 算力查询：请对照/path/to/QAnything/scripts/gpu_capabilities.json
-# 高算力卡（>=8.0）推荐vllm后端：
-cd /path/to/QAnything/assets/custom_models
-git lfs install
-git clone https://huggingface.co/netease-youdao/Qwen-7B-QAnything
-cd - 
-bash run.sh -c local -i 0 -b vllm -m Qwen-7B-QAnything -t qwen-7b-qanything -p 1 -r 0.85
-# 低算力高显存卡推荐hf后端：
-cd assets/custom_models
-git lfs install
-git clone https://huggingface.co/netease-youdao/Qwen-7B-QAnything
-cd - 
-bash run.sh -c local -i 0 -b hf -m Qwen-7B-QAnything -t qwen-7b-qanything'
-            """
-            exit 1
+        # win10系统不支持qanything-7b模型
+        if [[ $win_version == "WIN10" ]]; then
+          if [[ $runtime_backend == "default" && $llm_api == "local" ]] || [[ $model_name == "Qwen-7B-QAnything" ]]; then
+              echo "当前系统为Windows 10，不支持Qwen-7B-QAnything模型，请重新选择其他模型，可参考：docs/QAnything_Startup_Usage_README.md"
+              exit 1
+          fi
         fi
     else
         echo "Running under git bash"
