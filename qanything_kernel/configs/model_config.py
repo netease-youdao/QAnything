@@ -73,6 +73,8 @@ MYSQL_USER = 'root'
 MYSQL_PASSWORD = '123456'
 MYSQL_DATABASE = 'qanything'
 
+SQLITE_DATABASE = os.path.join(root_path, "QANY_DB", "qanything.db")
+
 llm_api_serve_model = os.getenv('LLM_API_SERVE_MODEL')
 llm_api_serve_port = os.getenv('LLM_API_SERVE_PORT')
 rerank_port = os.getenv('RERANK_PORT')
