@@ -265,8 +265,9 @@ if [ -e /proc/version ]; then
         fi
         # 如果是win10系统且runtime_backend为default且llm_api是local，则提示win10不支持default后端
         if [[ $runtime_backend == "default" && $llm_api == "local" && $WIN_VERSION == "WIN10" ]]; then
-            echo "Windows 10系统不支持default后端，请重新下载定制的Qwen-7B-QAnything模型，并选择hf或vllm后端："
             echo """
+Windows 10系统不支持default后端，请重新下载定制的Qwen-7B-QAnything模型，并选择hf或vllm后端，具体操作如下：
+
 # 算力查询：请对照/path/to/QAnything/scripts/gpu_capabilities.json
 # 高算力卡（>=8.0）推荐vllm后端：
 cd /path/to/QAnything/assets/custom_models
