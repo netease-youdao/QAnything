@@ -91,7 +91,6 @@ services:
     privileged: true
     shm_size: '8gb'
     volumes:
-      - ${DOCKER_VOLUME_DIRECTORY:-.}/models:/model_repos/QAEnsemble
       - ${DOCKER_VOLUME_DIRECTORY:-.}/assets/custom_models:/model_repos/CustomLLM
       - ${DOCKER_VOLUME_DIRECTORY:-.}/:/workspace/qanything_local/
     ports:
