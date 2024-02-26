@@ -264,7 +264,7 @@ if [ -e /proc/version ]; then
             fi
         fi
         # win10系统不支持qanything-7b模型
-        if [[ $win_version == "WIN10" ]]; then
+        if [[ $WIN_VERSION == "WIN10" ]]; then
           if [[ $runtime_backend == "default" && $llm_api == "local" ]] || [[ $model_name == "Qwen-7B-QAnything" ]]; then
               echo "当前系统为Windows 10，不支持Qwen-7B-QAnything模型，请重新选择其他模型，可参考：docs/QAnything_Startup_Usage_README.md"
               exit 1
