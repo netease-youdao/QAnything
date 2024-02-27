@@ -3,11 +3,11 @@ from typing import List, Union, Callable
 from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, SENTENCE_SIZE, ZH_TITLE_ENHANCE
 from langchain.docstore.document import Document
 from qanything_kernel.utils.loader.my_recursive_url_loader import MyRecursiveUrlLoader
-from langchain.document_loaders import UnstructuredFileLoader, TextLoader
-from langchain.document_loaders import UnstructuredWordDocumentLoader
-from langchain.document_loaders import UnstructuredExcelLoader
-from langchain.document_loaders import UnstructuredEmailLoader
-from langchain.document_loaders import UnstructuredPowerPointLoader
+from langchain_community.document_loaders import UnstructuredFileLoader, TextLoader
+from langchain_community.document_loaders import UnstructuredWordDocumentLoader
+from langchain_community.document_loaders import UnstructuredExcelLoader
+from langchain_community.document_loaders import UnstructuredEmailLoader
+from langchain_community.document_loaders import UnstructuredPowerPointLoader
 from qanything_kernel.utils.loader.csv_loader import CSVLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger
