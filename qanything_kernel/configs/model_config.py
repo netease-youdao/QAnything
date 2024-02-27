@@ -59,21 +59,22 @@ VECTOR_SEARCH_SCORE_THRESHOLD = 1.1
 ZH_TITLE_ENHANCE = False
 
 # MILVUS向量数据库地址
-MILVUS_HOST_LOCAL = 'milvus-standalone-local'
+MILVUS_HOST_LOCAL = '127.0.0.1'
 MILVUS_HOST_ONLINE = 'milvus-standalone-local'
 MILVUS_PORT = 19530
 MILVUS_USER = ''
 MILVUS_PASSWORD = ''
 MILVUS_DB_NAME = ''
 
-MYSQL_HOST_LOCAL = 'mysql-container-local'
-MYSQL_HOST_ONLINE = 'mysql-container-local'
-MYSQL_PORT = 3306
-MYSQL_USER = 'root'
-MYSQL_PASSWORD = '123456'
-MYSQL_DATABASE = 'qanything'
+# MYSQL_HOST_LOCAL = 'mysql-container-local'
+# MYSQL_HOST_ONLINE = 'mysql-container-local'
+# MYSQL_PORT = 3306
+# MYSQL_USER = 'root'
+# MYSQL_PASSWORD = '123456'
+# MYSQL_DATABASE = 'qanything'
 
 SQLITE_DATABASE = os.path.join(root_path, "QANY_DB", "qanything.db")
+MILVUS_LITE_LOCATION = os.path.join(root_path, "QANY_DB", "milvus")
 
 llm_api_serve_model = os.getenv('LLM_API_SERVE_MODEL')
 llm_api_serve_port = os.getenv('LLM_API_SERVE_PORT')

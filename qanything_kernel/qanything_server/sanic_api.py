@@ -16,8 +16,10 @@ root_dir = os.path.dirname(parent_dir)
 # 将项目根目录添加到sys.path
 sys.path.append(root_dir)
 
+from milvus import default_server
 from handler import *
 from qanything_kernel.core.local_doc_qa import LocalDocQA
+from qanything_kernel.configs.model_config import MILVUS_LITE_LOCATION
 from sanic import Sanic
 from sanic import response as sanic_response
 import argparse
@@ -41,6 +43,14 @@ app.config.REQUEST_MAX_SIZE = 400 * 1024 * 1024
 
 # 将 /static 路径映射到 static 文件夹
 app.static('/static', './static')
+
+# 启动Milvus Lite服务
+@app.main_process_start
+async def start_milvus_lite(app, loop):
+    default_server.set_base_dir(MILVUS_LITE_LOCATION)
+    default_server.start()
+    print(f"Milvus Lite started at {MILVUS_LITE_LOCATION}", flush=True)
+
 
 # CORS中间件，用于在每个响应中添加必要的头信息
 @app.middleware("response")
