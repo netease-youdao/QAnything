@@ -210,14 +210,16 @@ class MilvusClient:
         file_name = group[0].metadata['file_name']
         group_scores_map = {}
         # 先找出该文件所有需要搜索的chunk_id
-        cand_chunks = []
+        cand_chunks_set = set()  # 使用集合而不是列表
         for cand_doc in group:
             current_chunk_id = int(cand_doc.metadata['chunk_id'].split('_')[-1])
             group_scores_map[current_chunk_id] = cand_doc.metadata['score']
-            for i in range(current_chunk_id - 200, current_chunk_id + 200):
-                need_search_id = file_id + '_' + str(i)
-                if need_search_id not in cand_chunks:
-                    cand_chunks.append(need_search_id)
+            # 使用 set comprehension 一次性生成区间内所有可能的 chunk_id
+            chunk_ids = {file_id + '_' + str(i) for i in range(current_chunk_id - 200, current_chunk_id + 200)}
+            # 更新 cand_chunks_set 集合
+            cand_chunks_set.update(chunk_ids)
+
+        cand_chunks = list(cand_chunks_set)
 
         group_relative_chunks = self.query_expr_async(expr=f"file_id == \"{file_id}\" and chunk_id in {cand_chunks}",
                                                       output_fields=["chunk_id", "content"])
