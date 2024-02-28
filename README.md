@@ -283,27 +283,61 @@ If you are in the Windows11 system: Need to enter the WSL environment.
 bash close.sh
 ```
 
-### OFFLINE USAGE
-If you want to use QAnything offline, you can use the following command to start the service.
+## offline install
+If you want to install QAnything offline, you can start the service using the following command.
+### install offline for  windows 
 ```shell 
-# On a machine that can access the official Docker repository
+# Download the docker image on a networked machine
 docker pull quay.io/coreos/etcd:v3.5.5
 docker pull minio/minio:RELEASE.2023-03-20T20-16-18Z
 docker pull milvusdb/milvus:v2.3.4
 docker pull mysql:latest
-# If you are a Windows computer, including the WSL environment 
-docker pull freeren/qanything-win:v1.2.1  # docker pull freeren/qanything:v1.2.1 for Linux
+docker pull freeren/qanything-win:v1.2.1
+
+# pack image
 docker save quay.io/coreos/etcd:v3.5.5 minio/minio:RELEASE.2023-03-20T20-16-18Z milvusdb/milvus:v2.3.4 mysql:latest freeren/qanything-win:v1.2.1 -o qanything_offline.tar
-# Download the QAnything code
+
+# download QAnything code
 wget https://github.com/netease-youdao/QAnything/archive/refs/heads/master.zip
-# Copy code and image to offline machine.
+
+# Copy the image qanything_offline.tar and the code qany-master.zip to the offline machine
 cp QAnything-master.zip qanything_offline.tar /path/to/your/offline/machine
+
+# Load the image on the disconnected machine
 docker load -i qanything_offline.tar
+
+# Unzip the code and run it
 unzip QAnything-master.zip
 cd QAnything-master
 bash run.sh
 ```
 
+### install offline for  linux
+```shell 
+# Download the docker image on a networked machine
+docker pull quay.io/coreos/etcd:v3.5.5
+docker pull minio/minio:RELEASE.2023-03-20T20-16-18Z
+docker pull milvusdb/milvus:v2.3.4
+docker pull mysql:latest
+docker pull freeren/qanything:v1.2.1
+
+# pack image
+docker save quay.io/coreos/etcd:v3.5.5 minio/minio:RELEASE.2023-03-20T20-16-18Z milvusdb/milvus:v2.3.4 mysql:latest freeren/qanything:v1.2.1 -o qanything_offline.tar
+
+# download QAnything code
+wget https://github.com/netease-youdao/QAnything/archive/refs/heads/master.zip
+
+# Copy the image qanything_offline.tar and the code qany-master.zip to the offline machine
+cp QAnything-master.zip qanything_offline.tar /path/to/your/offline/machine
+
+# Load the image on the disconnected machine
+docker load -i qanything_offline.tar
+
+# Unzip the code and run it
+unzip QAnything-master.zip
+cd QAnything-master
+bash run.sh
+```
 
 ## FAQ
 [FAQ](FAQ_zh.md)
