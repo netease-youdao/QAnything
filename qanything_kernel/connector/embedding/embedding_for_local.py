@@ -2,17 +2,14 @@
 from typing import List
 
 from qanything_kernel.connector.embedding.embedding_client import EmbeddingClient
-from qanything_kernel.configs.model_config import LOCAL_EMBED_SERVICE_URL, LOCAL_EMBED_MODEL_NAME, LOCAL_EMBED_MAX_LENGTH, LOCAL_EMBED_BATCH
+from qanything_kernel.configs.model_config import LOCAL_EMBED_MODEL_PATH, LOCAL_EMBED_MAX_LENGTH, LOCAL_EMBED_BATCH, LOCAL_EMBED_CONFIG_PATH
 from qanything_kernel.utils.custom_log import debug_logger
 import concurrent.futures
 from tqdm import tqdm 
 
 embedding_client = EmbeddingClient(
-    server_url=LOCAL_EMBED_SERVICE_URL,
-    model_name=LOCAL_EMBED_MODEL_NAME,
-    model_version='1',
-    resp_wait_s=120,
-    tokenizer_path='qanything_kernel/connector/embedding/embedding_model_0630')
+    model_path=LOCAL_EMBED_MODEL_PATH,
+    tokenizer_path=LOCAL_EMBED_CONFIG_PATH)
 
 
 class YouDaoLocalEmbeddings:

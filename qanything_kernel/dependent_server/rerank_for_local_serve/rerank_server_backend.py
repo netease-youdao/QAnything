@@ -1,51 +1,45 @@
+import onnxruntime
 import time
 from transformers import AutoTokenizer
 from copy import deepcopy
 from typing import List
-from tritonclient import grpc as grpcclient
-from qanything_kernel.configs.model_config import LOCAL_RERANK_SERVICE_URL, LOCAL_RERANK_MAX_LENGTH, LOCAL_RERANK_MODEL_NAME, \
-    LOCAL_RERANK_BATCH
+from qanything_kernel.configs.model_config import LOCAL_RERANK_MODEL_PATH, LOCAL_RERANK_MAX_LENGTH, LOCAL_RERANK_MODEL_NAME, \
+    LOCAL_RERANK_BATCH, LOCAL_RERANK_CONFIG_PATH
+from qanything_kernel.utils.custom_log import debug_logger
 import numpy as np
 
 
 class LocalRerankBackend:
     def __init__(self):
-        tokenizer_path = 'qanything_kernel/dependent_server/rerank_for_local_serve/reranker_model_yd_1225'
-        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+        self.tokenizer = AutoTokenizer.from_pretrained(LOCAL_RERANK_CONFIG_PATH)
         self.overlap_tokens = 80
         self.spe_id = self.tokenizer.sep_token_id
 
         self.batch_size = LOCAL_RERANK_BATCH
         self.max_length = LOCAL_RERANK_MAX_LENGTH
         self.model_name = LOCAL_RERANK_MODEL_NAME
-        # 创建Triton客户端实例
-        self.triton_client = grpcclient.InferenceServerClient(url=LOCAL_RERANK_SERVICE_URL)
+        # 加载ONNX模型
+        # 创建一个ONNX Runtime会话设置，使用GPU执行
+        sess_options = onnxruntime.SessionOptions()
+        sess_options.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_ENABLE_ALL
+        providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+        self.session = onnxruntime.InferenceSession(LOCAL_RERANK_MODEL_PATH, sess_options, providers=providers)
 
-    def inference(self, serialized_inputs):
+    def inference(self, batch):
         # 准备输入数据
-        inputs = []
-        for input_name, data in serialized_inputs.items():
-            infer_input = grpcclient.InferInput(input_name, data.shape, grpcclient.np_to_triton_dtype(data.dtype))
-            infer_input.set_data_from_numpy(data)
-            inputs.append(infer_input)
+        inputs = {self.session.get_inputs()[0].name: batch['input_ids'],
+                  self.session.get_inputs()[1].name: batch['attention_mask']}
 
-        # 准备输出
-        outputs = []
-        output_name = "logits"
-        outputs.append(grpcclient.InferRequestedOutput(output_name))
-
-        # 发送推理请求
-        start_time = time.time()
-        response = self.triton_client.infer(self.model_name, inputs, outputs=outputs)
-        print('local rerank infer time: {} s'.format(time.time() - start_time), flush=True)
-
-        # 获取响应数据
-        result_data = response.as_numpy(output_name)
-        print('rerank res:', result_data, flush=True)
-
+        if 'token_type_ids' in batch:
+            inputs[self.session.get_inputs()[2].name] = batch['token_type_ids']
+        
+        # 执行推理 输出为logits
+        result = self.session.run(None, inputs)  # None表示获取所有输出
+        # debug_logger.info(f"rerank result: {result}")
+        
         # 应用sigmoid函数
-        sigmoid_scores = 1 / (1 + np.exp(-result_data))
-
+        sigmoid_scores = 1 / (1 + np.exp(-np.array(result[0])))
+        
         return sigmoid_scores.reshape(-1).tolist()
 
     def merge_inputs(self, chunk1_raw, chunk2):
