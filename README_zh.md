@@ -273,27 +273,62 @@ bash ./run.sh -c local -i 0,1 -b default  # 指定0,1号GPU启动，请确认有
 bash close.sh
 ```
 
-### 离线使用
-如果您想要离线使用QAnything，您可以使用以下命令启动服务。
+## 断网安装
+### windows断网安装
+如果您想要断网安装QAnything，您可以使用以下命令启动服务。
 ```shell 
-# On a machine that can access the official Docker repository
+# 先在联网机器上下载docker镜像
 docker pull quay.io/coreos/etcd:v3.5.5
 docker pull minio/minio:RELEASE.2023-03-20T20-16-18Z
 docker pull milvusdb/milvus:v2.3.4
 docker pull mysql:latest
-# If you are a Windows computer, including the WSL environment 
-docker pull freeren/qanything-win:v1.2.1  # docker pull freeren/qanything:v1.2.1 for Linux
+docker pull freeren/qanything-win:v1.2.1
+
+# 打包镜像
 docker save quay.io/coreos/etcd:v3.5.5 minio/minio:RELEASE.2023-03-20T20-16-18Z milvusdb/milvus:v2.3.4 mysql:latest freeren/qanything-win:v1.2.1 -o qanything_offline.tar
-# Download the QAnything code
+
+# 下载QAnything代码
 wget https://github.com/netease-youdao/QAnything/archive/refs/heads/master.zip
-# Copy code and image to offline machine.
+
+# 把镜像qanything_offline.tar和代码QAnything-master.zip拷贝到断网机器上
 cp QAnything-master.zip qanything_offline.tar /path/to/your/offline/machine
+
+# 在断网机器上加载镜像
 docker load -i qanything_offline.tar
+
+# 解压代码，运行
 unzip QAnything-master.zip
 cd QAnything-master
 bash run.sh
 ```
 
+### Linux断网安装
+如果您想要断网安装QAnything，您可以使用以下命令启动服务。
+```shell 
+# 先在联网机器上下载docker镜像
+docker pull quay.io/coreos/etcd:v3.5.5
+docker pull minio/minio:RELEASE.2023-03-20T20-16-18Z
+docker pull milvusdb/milvus:v2.3.4
+docker pull mysql:latest
+docker pull freeren/qanything:v1.2.1
+
+# 打包镜像
+docker save quay.io/coreos/etcd:v3.5.5 minio/minio:RELEASE.2023-03-20T20-16-18Z milvusdb/milvus:v2.3.4 mysql:latest freeren/qanything:v1.2.1 -o qanything_offline.tar
+
+# 下载QAnything代码
+wget https://github.com/netease-youdao/QAnything/archive/refs/heads/master.zip
+
+# 把镜像qanything_offline.tar和代码QAnything-master.zip拷贝到断网机器上
+cp QAnything-master.zip qanything_offline.tar /path/to/your/offline/machine
+
+# 在断网机器上加载镜像
+docker load -i qanything_offline.tar
+
+# 解压代码，运行
+unzip QAnything-master.zip
+cd QAnything-master
+bash run.sh
+```
 
 ## 常见问题
 [常见问题](FAQ_zh.md)
