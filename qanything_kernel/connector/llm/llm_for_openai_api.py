@@ -7,12 +7,11 @@ from typing import Optional, List
 import sys
 import json
 import requests
-import logging
+from qanything_kernel.utils.custom_log import debug_logger
 sys.path.append("../../../")
 from qanything_kernel.connector.llm.base import (BaseAnswer, AnswerResult)
 
 load_dotenv()
-logging.basicConfig(level=logging.INFO)
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_API_BASE = os.getenv("OPENAI_API_BASE")
@@ -20,8 +19,8 @@ OPENAI_API_MODEL_NAME = os.getenv("OPENAI_API_MODEL_NAME")
 OPENAI_API_CONTEXT_LENGTH = os.getenv("OPENAI_API_CONTEXT_LENGTH")
 if isinstance(OPENAI_API_CONTEXT_LENGTH, str) and OPENAI_API_CONTEXT_LENGTH != '':
     OPENAI_API_CONTEXT_LENGTH = int(OPENAI_API_CONTEXT_LENGTH)
-logging.info(f"OPENAI_API_BASE = {OPENAI_API_BASE}")
-logging.info(f"OPENAI_API_MODEL_NAME = {OPENAI_API_MODEL_NAME}")
+debug_logger.info(f"OPENAI_API_BASE = {OPENAI_API_BASE}")
+debug_logger.info(f"OPENAI_API_MODEL_NAME = {OPENAI_API_MODEL_NAME}")
 
 
 class OpenAILLM(BaseAnswer, ABC):
@@ -54,7 +53,7 @@ class OpenAILLM(BaseAnswer, ABC):
     # 定义函数 num_tokens_from_messages，该函数返回由一组消息所使用的token数
     def num_tokens_from_messages(self, messages, model=None):
         """Return the number of tokens used by a list of messages. From https://github.com/DjangoPeng/openai-quickstart/blob/main/openai_api/count_tokens_with_tiktoken.ipynb"""
-        # logging.info(f"[debug] num_tokens_from_messages<model, self.model> = {model, self.model}")
+        # debug_logger.info(f"[debug] num_tokens_from_messages<model, self.model> = {model, self.model}")
         if model is None:
             model = self.model
         # 尝试获取模型的编码
@@ -62,7 +61,7 @@ class OpenAILLM(BaseAnswer, ABC):
             encoding = tiktoken.encoding_for_model(model)
         except KeyError:
             # 如果模型没有找到，使用 cl100k_base 编码并给出警告
-            logging.info("Warning: model not found. Using cl100k_base encoding.")
+            debug_logger.info("Warning: model not found. Using cl100k_base encoding.")
             encoding = tiktoken.get_encoding("cl100k_base")
         # 针对不同的模型设置token数量
         if model in {
@@ -83,11 +82,11 @@ class OpenAILLM(BaseAnswer, ABC):
             tokens_per_name = -1  # 如果有名字，角色会被省略
         elif "gpt-3.5-turbo" in model:
             # 对于 gpt-3.5-turbo 模型可能会有更新，此处返回假设为 gpt-3.5-turbo-0613 的token数量，并给出警告
-            logging.info("Warning: gpt-3.5-turbo may update over time. Returning num tokens assuming gpt-3.5-turbo-0613.")
+            debug_logger.info("Warning: gpt-3.5-turbo may update over time. Returning num tokens assuming gpt-3.5-turbo-0613.")
             return self.num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613")
         elif "gpt-4" in model:
             # 对于 gpt-4 模型可能会有更新，此处返回假设为 gpt-4-0613 的token数量，并给出警告
-            logging.info("Warning: gpt-4 may update over time. Returning num tokens assuming gpt-4-0613.")
+            debug_logger.info("Warning: gpt-4 may update over time. Returning num tokens assuming gpt-4-0613.")
             return self.num_tokens_from_messages(messages, model="gpt-4-0613")
 
         else:
@@ -122,7 +121,7 @@ class OpenAILLM(BaseAnswer, ABC):
             encoding = tiktoken.encoding_for_model(self.model)
         except KeyError:
             # 如果模型没有找到，使用 cl100k_base 编码并给出警告
-            logging.info("Warning: model not found. Using cl100k_base encoding.")
+            debug_logger.info("Warning: model not found. Using cl100k_base encoding.")
             encoding = tiktoken.get_encoding("cl100k_base")
 
         num_tokens = 0
@@ -137,7 +136,7 @@ class OpenAILLM(BaseAnswer, ABC):
             messages.append({"role": "user", "content": question})
             messages.append({"role": "assistant", "content": answer})
         messages.append({"role": "user", "content": prompt})
-        logging.info(messages)
+        # debug_logger.info(messages)
 
         try:
 
@@ -151,7 +150,7 @@ class OpenAILLM(BaseAnswer, ABC):
                     top_p=self.top_p,
                     stop=[self.stop_words] if self.stop_words is not None else None,
                 )
-                logging.info(f"OPENAI RES: {response}")
+                debug_logger.info(f"OPENAI RES: {response}")
                 for event in response:
                     if not isinstance(event, dict):
                         event = event.model_dump()
@@ -159,7 +158,7 @@ class OpenAILLM(BaseAnswer, ABC):
                     if isinstance(event['choices'], List) and len(event['choices']) > 0 :
                         event_text = event["choices"][0]['delta']['content']
                         if isinstance(event_text, str) and event_text != "":
-                            # logging.info(f"[debug] event_text = [{event_text}]")
+                            # debug_logger.info(f"[debug] event_text = [{event_text}]")
                             delta = {'answer': event_text}
                             yield "data: " + json.dumps(delta, ensure_ascii=False)
 
@@ -174,18 +173,18 @@ class OpenAILLM(BaseAnswer, ABC):
                     stop=[self.stop_words] if self.stop_words is not None else None,
                 )
                 
-                # logging.info(f"[debug] response.choices = [{response.choices}]")
+                # debug_logger.info(f"[debug] response.choices = [{response.choices}]")
                 event_text = response.choices[0].message.content if response.choices else ""
                 delta = {'answer': event_text}
                 yield "data: " + json.dumps(delta, ensure_ascii=False)
 
         except Exception as e:
-            logging.info(f"Error calling OpenAI API: {e}")
+            debug_logger.info(f"Error calling OpenAI API: {e}")
             delta = {'answer': f"{e}"}
             yield "data: " + json.dumps(delta, ensure_ascii=False)
 
         finally:
-            # logging.info("[debug] try-finally")
+            # debug_logger.info("[debug] try-finally")
             yield f"data: [DONE]\n\n"
 
     def generatorAnswer(self, prompt: str,
@@ -194,10 +193,10 @@ class OpenAILLM(BaseAnswer, ABC):
 
         if history is None or len(history) == 0:
             history = [[]]
-        logging.info(f"history_len: {self.history_len}")
-        logging.info(f"prompt: {prompt}")
-        logging.info(f"prompt tokens: {self.num_tokens_from_messages([{'content': prompt}])}")
-        logging.info(f"streaming: {streaming}")
+        debug_logger.info(f"history_len: {self.history_len}")
+        debug_logger.info(f"prompt: {prompt}")
+        debug_logger.info(f"prompt tokens: {self.num_tokens_from_messages([{'content': prompt}])}")
+        debug_logger.info(f"streaming: {streaming}")
                 
         response = self._call(prompt, history[:-1], streaming)
         complete_answer = ""
@@ -238,6 +237,6 @@ if __name__ == "__main__":
         resp = answer_result.llm_output["answer"]
         if "DONE" not in resp:
             final_result += json.loads(resp[6:])["answer"]
-        logging.info(resp)
+        debug_logger.info(resp)
 
-    logging.info(f"final_result = {final_result}")
+    debug_logger.info(f"final_result = {final_result}")

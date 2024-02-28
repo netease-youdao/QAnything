@@ -74,3 +74,6 @@ qa_handler.setFormatter(formatter)
 # 将 handler 添加到 logger 中，这样 logger 就可以使用这个 handler 来记录日志了
 qa_logger.addHandler(qa_handler)
 print(debug_logger, qa_logger)
+
+qa_logger.propagate = False  # 关闭日志传播
+debug_logger.propagate = False  # 关闭日志传播
