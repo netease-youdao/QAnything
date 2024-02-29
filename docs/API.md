@@ -451,7 +451,6 @@ def send_request():
         start_time = time.time()
         response = requests.post(url=url, headers=headers, json=data, timeout=60)
         end_time = time.time()
-        response_times.append(end_time - start_time)
         res = response.json()
         print(res['response'])
         print(f"响应状态码: {response.status_code}, 响应时间: {end_time - start_time}秒")
