@@ -48,13 +48,17 @@ body:
           - **OS**: Ubuntu 20.04 / Windows 11 WSL2
           - **NVIDIA Driver**: 525.105.17
           - **CUDA**: 12.0
-          - **Docker Compose**: 1.27.4
+          - **docker**: 20.10.5
+          - **docker-compose**: 2.23.3
+          - **NVIDIA GPU**: GeForce RTX 3080 Ti
           - **NVIDIA GPU Memory**: 16GB
       value: |
         - OS:
         - NVIDIA Driver:
         - CUDA:
-        - Docker Compose:
+        - docker:
+        - docker-compose:
+        - NVIDIA GPU:
         - NVIDIA GPU Memory:
       render: Markdown
     validations:
