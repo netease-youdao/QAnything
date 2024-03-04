@@ -5,7 +5,7 @@ import uuid
 
 
 class KnowledgeBaseManager:
-    def __init__(self, mode):
+    def __init__(self):
         self.database = SQLITE_DATABASE
         self.create_tables_()
         debug_logger.info("[SUCCESS] 数据库{}连接成功".format(self.database))

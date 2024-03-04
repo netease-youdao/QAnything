@@ -1,13 +1,11 @@
 tqdm==4.66.1
 concurrent-log-handler==0.9.25
 numpy==1.23.4
-torch==2.2.0
 sentencepiece==0.2.0
-transformers==4.31.0
+transformers==4.36.2
 tiktoken==0.4.0
-pynvml==11.5.0
-sanic==23.12.1
-sanic_ext==23.12.0
+sanic==23.6.0
+sanic_ext==23.6.0
 milvus==2.3.5
 pymilvus==2.3.6
 langchain==0.1.9
@@ -17,5 +15,5 @@ pypinyin==0.50.0
 unstructured==0.12.4
 unstructured[pptx]==0.12.4
 unstructured[md]==0.12.4
---extra-index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple
-onnxruntime-gpu==1.17.1
+accelerate==0.21.0
+vllm==0.2.7

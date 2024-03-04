@@ -1,5 +1,6 @@
 import sys
 import os
+import threading
 
 # 获取当前脚本的绝对路径
 current_script_path = os.path.abspath(__file__)
@@ -17,24 +18,17 @@ root_dir = os.path.dirname(parent_dir)
 sys.path.append(root_dir)
 
 from milvus import default_server
-from handler import *
+from .handler import *
 from qanything_kernel.core.local_doc_qa import LocalDocQA
-from qanything_kernel.configs.model_config import MILVUS_LITE_LOCATION
+from qanything_kernel.configs.model_config import MILVUS_LITE_LOCATION, CUDA_DEVICE
 from sanic import Sanic
 from sanic import response as sanic_response
-import argparse
+# import argparse
 from sanic.worker.manager import WorkerManager
 
-WorkerManager.THRESHOLD = 6000
+os.environ["CUDA_VISIBLE_DEVICES"] = CUDA_DEVICE
 
-# 接收外部参数mode
-parser = argparse.ArgumentParser()
-# mode必须是local或online
-parser.add_argument('--mode', type=str, default='local', help='local or online')
-# 检查是否是local或online，不是则报错
-args = parser.parse_args()
-if args.mode not in ['local', 'online']:
-    raise ValueError('mode must be local or online')
+WorkerManager.THRESHOLD = 6000
 
 app = Sanic("QAnything")
 # 设置请求体最大为 400MB
@@ -46,10 +40,16 @@ app.static('/static', './static')
 
 # 启动Milvus Lite服务
 @app.main_process_start
-async def start_milvus_lite(app, loop):
+async def start_dependent_services(app, loop):
     default_server.set_base_dir(MILVUS_LITE_LOCATION)
     default_server.start()
     print(f"Milvus Lite started at {MILVUS_LITE_LOCATION}", flush=True)
+
+
+# 关闭依赖的服务
+@app.main_process_stop
+async def end_dependent_services(app, loop):
+    default_server.stop()
 
 
 # CORS中间件，用于在每个响应中添加必要的头信息
@@ -78,8 +78,7 @@ async def handle_options_request(request):
 @app.before_server_start
 async def init_local_doc_qa(app, loop):
     local_doc_qa = LocalDocQA()
-    local_doc_qa.init_cfg(mode=args.mode)
-    print(f'init local_doc_qa in {args.mode}', flush=True)
+    local_doc_qa.init_cfg(mode='local')
     app.ctx.local_doc_qa = local_doc_qa
 
 
@@ -96,5 +95,7 @@ app.add_route(delete_docs, "/api/local_doc_qa/delete_files", methods=['POST'])  
 app.add_route(delete_knowledge_base, "/api/local_doc_qa/delete_knowledge_base", methods=['POST'])  # tags=["删除知识库"] 
 app.add_route(rename_knowledge_base, "/api/local_doc_qa/rename_knowledge_base", methods=['POST'])  # tags=["重命名知识库"] 
 
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8777, workers=10, access_log=False)
+
+class LocalDocQAServer:
+    def start(self):
+        app.run(host='0.0.0.0', port=8777, workers=1, access_log=False)

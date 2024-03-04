@@ -352,7 +352,7 @@ async def local_doc_chat(req: request):
 
             async def generate_answer(response):
                 debug_logger.info("start generate...")
-                for resp, next_history in local_doc_qa.get_knowledge_based_answer(
+                async for resp, next_history in local_doc_qa.get_knowledge_based_answer(
                         query=question, milvus_kb=milvus_kb, chat_history=history, streaming=True, rerank=rerank
                 ):
                     chunk_data = resp["result"]
@@ -405,7 +405,7 @@ async def local_doc_chat(req: request):
             return response_stream
 
         else:
-            for resp, history in local_doc_qa.get_knowledge_based_answer(
+            async for resp, history in local_doc_qa.get_knowledge_based_answer(
                     query=question, milvus_kb=milvus_kb, chat_history=history, streaming=False, rerank=rerank
             ):
                 pass

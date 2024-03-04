@@ -136,7 +136,7 @@ class OpenAILLM(BaseAnswer, ABC):
             messages.append({"role": "user", "content": question})
             messages.append({"role": "assistant", "content": answer})
         messages.append({"role": "user", "content": prompt})
-        # debug_logger.info(messages)
+        debug_logger.info(messages)
 
         try:
 
@@ -173,7 +173,7 @@ class OpenAILLM(BaseAnswer, ABC):
                     stop=[self.stop_words] if self.stop_words is not None else None,
                 )
                 
-                # debug_logger.info(f"[debug] response.choices = [{response.choices}]")
+                debug_logger.info(f"[debug] response.choices = [{response.choices}]")
                 event_text = response.choices[0].message.content if response.choices else ""
                 delta = {'answer': event_text}
                 yield "data: " + json.dumps(delta, ensure_ascii=False)

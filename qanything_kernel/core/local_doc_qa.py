@@ -4,16 +4,20 @@ from typing import List
 from qanything_kernel.connector.embedding.embedding_for_online import YouDaoEmbeddings
 from qanything_kernel.connector.embedding.embedding_for_local import YouDaoLocalEmbeddings
 import time
-from qanything_kernel.connector.llm import OpenAILLM, ZiyueLLM
+from qanything_kernel.connector.llm import OpenAILLM, OpenAICustomLLM
 from langchain.schema import Document
 from qanything_kernel.connector.database.mysql.mysql_client import KnowledgeBaseManager
 from qanything_kernel.connector.database.milvus.milvus_client import MilvusClient
+from qanything_kernel.dependent_server.rerank_for_local_serve.rerank_server_backend import LocalRerankBackend
+from paddleocr import PaddleOCR
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from .local_file import LocalFile
 from qanything_kernel.utils.general_utils import get_time
 import requests
 import traceback
 import logging
+import base64
+import numpy as np
 
 logging.basicConfig(level=logging.INFO)
 
@@ -35,23 +39,32 @@ class LocalDocQA:
         self.score_threshold: int = VECTOR_SEARCH_SCORE_THRESHOLD
         self.milvus_kbs: List[MilvusClient] = []
         self.milvus_summary: KnowledgeBaseManager = None
+        self.local_rerank_backend: LocalRerankBackend = None 
+        self.ocr_engine: PaddleOCR = None
         self.mode: str = None
-        self.local_rerank_service_url = "http://0.0.0.0:8776"
-        self.ocr_url = 'http://0.0.0.0:8010/ocr'
+        # self.local_rerank_service_url = "http://0.0.0.0:8776/rerank"
+        # self.ocr_url = 'http://0.0.0.0:8010/ocr'
 
-    def get_ocr_result(self, image_data: dict):
-        response = requests.post(self.ocr_url, json=image_data)
-        response.raise_for_status()  # 如果请求返回了错误状态码，将会抛出异常
-        return response.json()['results']
+    def get_ocr_result(self, input: dict):
+        img_file = input['img64']
+        height = input['height']
+        width = input['width']
+        channels = input['channels']
+        binary_data = base64.b64decode(img_file)
+        img_array = np.frombuffer(binary_data, dtype=np.uint8).reshape((height, width, channels))
+        res = self.ocr_engine.ocr(img_array)
+        return res
 
     def init_cfg(self, mode='local'):
         self.mode = mode
         self.embeddings = YouDaoLocalEmbeddings()
         if self.mode == 'local':
-            self.llm: ZiyueLLM = ZiyueLLM()
+            self.llm: OpenAICustomLLM = OpenAICustomLLM()
         else:
             self.llm: OpenAILLM = OpenAILLM()
-        self.milvus_summary = KnowledgeBaseManager(self.mode)
+        self.milvus_summary = KnowledgeBaseManager()
+        self.local_rerank_backend = LocalRerankBackend()
+        self.ocr_engine = PaddleOCR(use_angle_cls=True, lang="ch", use_gpu=True, show_log=False)
 
     def create_milvus_collection(self, user_id, kb_id, kb_name):
         milvus_kb = MilvusClient(self.mode, user_id, [kb_id])
@@ -152,7 +165,6 @@ class LocalDocQA:
         history_token_num = self.llm.num_tokens_from_messages([x for sublist in history for x in sublist])
         template_token_num = self.llm.num_tokens_from_messages([prompt_template])
 
-        # logging.info(f"<self.llm.token_window, self.llm.max_token, self.llm.offcut_token, query_token_num, history_token_num, template_token_num>, types = {type(self.llm.token_window), type(self.llm.max_token), type(self.llm.offcut_token), type(query_token_num), type(history_token_num), type(template_token_num)}, values = {query_token_num, history_token_num, template_token_num}")
         limited_token_nums = self.llm.token_window - self.llm.max_token - self.llm.offcut_token - query_token_num - history_token_num - template_token_num
         new_source_docs = []
         total_token_num = 0
@@ -190,27 +202,34 @@ class LocalDocQA:
         return prompt
 
     def rerank_documents(self, query, source_documents):
-        return self.rerank_documents_for_local(query, source_documents)
-
-    def rerank_documents_for_local(self, query, source_documents):
         if len(query) > 300:  # tokens数量超过300时不使用local rerank
             return source_documents
-        try:
-            response = requests.post(f"{self.local_rerank_service_url}/rerank",
-                                     json={"passages": [doc.page_content for doc in source_documents], "query": query})
-            scores = response.json()
-            for idx, score in enumerate(scores):
+
+        scores = self.local_rerank_backend.predict(query, [doc.page_content for doc in source_documents])
+        debug_logger.info(f"rerank scores: {scores}")
+        for idx, score in enumerate(scores):
                 source_documents[idx].metadata['score'] = score
-
-            source_documents = sorted(source_documents, key=lambda x: x.metadata['score'], reverse=True)
-        except Exception as e:
-            debug_logger.error("rerank error: %s", traceback.format_exc())
-            debug_logger.warning("rerank error, use origin retrieval docs")
-
+        source_documents = sorted(source_documents, key=lambda x: x.metadata['score'], reverse=True)
         return source_documents
 
-    @get_time
-    def get_knowledge_based_answer(self, query, milvus_kb, chat_history=None, streaming: bool = STREAMING,
+    # def rerank_documents(self, query, source_documents):
+    #     if len(query) > 300:  # tokens数量超过300时不使用local rerank
+    #         return source_documents
+    #     try:
+    #         response = requests.post(self.local_rerank_service_url,
+    #                                  json={"passages": [doc.page_content for doc in source_documents], "query": query})
+    #         scores = response.json()
+    #         for idx, score in enumerate(scores):
+    #             source_documents[idx].metadata['score'] = score
+
+    #         source_documents = sorted(source_documents, key=lambda x: x.metadata['score'], reverse=True)
+    #     except Exception as e:
+    #         debug_logger.error("rerank error: %s", traceback.format_exc())
+    #         debug_logger.warning("rerank error, use origin retrieval docs")
+
+    #     return source_documents
+
+    async def get_knowledge_based_answer(self, query, milvus_kb, chat_history=None, streaming: bool = STREAMING,
                                    rerank: bool = False):
         if chat_history is None:
             chat_history = []
@@ -232,14 +251,13 @@ class LocalDocQA:
                                       source_docs=source_documents,
                                       prompt_template=PROMPT_TEMPLATE)
         t1 = time.time()
-        for answer_result in self.llm.generatorAnswer(prompt=prompt,
+        async for answer_result in self.llm.generatorAnswer(prompt=prompt,
                                                       history=chat_history,
                                                       streaming=streaming):
             resp = answer_result.llm_output["answer"]
             prompt = answer_result.prompt
             history = answer_result.history
 
-            # logging.info(f"[debug] get_knowledge_based_answer history = {history}")
             history[-1][0] = query
             response = {"query": query,
                         "prompt": prompt,
