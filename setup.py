@@ -9,8 +9,9 @@ setup(
     version='0.1',
     packages=find_packages(),
     install_requires=required,
+    python_requires='>=3.10, <=3.12',  # 这里限定了Python的版本
     package_data={
-        # 如果有需要包含在内的数据文件，可以在这里指定
+        'qanything_kernel': ['onnx_models/*.onnx'],
     },
     include_package_data=True,  # 包含所有的非.py文件
     entry_points={

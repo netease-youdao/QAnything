@@ -7,9 +7,13 @@ import os
 import logging
 import re
 import tiktoken
+import requests
+from tqdm import tqdm
+import pkg_resources
 
 __all__ = ['write_check_file', 'isURL', 'format_source_documents', 'get_time', 'safe_get', 'truncate_filename',
-           'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens']
+           'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens', 'download_file', 
+           'check_onnx_version']
 
 
 def get_invalid_user_id_msg(user_id):
@@ -147,3 +151,33 @@ def num_tokens(text: str, model: str = 'gpt-3.5-turbo-0613') -> int:
     """Return the number of tokens in a string."""
     encoding = tiktoken.encoding_for_model(model)
     return len(encoding.encode(text))
+
+
+
+def download_file(url, filename):
+    response = requests.get(url, stream=True)
+    total_size_in_bytes = int(response.headers.get('content-length', 0))
+    progress_bar = tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
+
+    with open(filename, 'wb') as file:
+        for data in response.iter_content(chunk_size=1024):
+            progress_bar.update(len(data))
+            file.write(data)
+
+    progress_bar.close()
+    if total_size_in_bytes != 0 and progress_bar.n != total_size_in_bytes:
+        print("ERROR, something went wrong")
+
+
+def check_onnx_version(version):
+    try:
+        onnx_version = pkg_resources.get_distribution("onnxruntime-gpu").version
+        if onnx_version == version:
+            print(f"onnxruntime-gpu {version} 已经安装。")
+            return True
+        else:
+            print(f"onnxruntime-gpu 版本过低，当前版本为 {onnx_version}，需要安装 {version} 版本。")
+            return False
+    except pkg_resources.DistributionNotFound:
+        print(f"onnxruntime-gpu {version} 未安装。")
+    return False

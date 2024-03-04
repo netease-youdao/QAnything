@@ -89,47 +89,6 @@ class OpenAICustomLLM(BaseAnswer, ABC):
             yield "data: " + json.dumps(delta, ensure_ascii=False)
 
         yield f"data: [DONE]\n\n"
-        # try:
-
-        #     if streaming:
-        #         # response = self.client.chat.completions.create(
-        #         #     model=self.model,
-        #         #     messages=messages,
-        #         #     stream=True,
-        #         #     max_tokens=self.max_token,
-        #         #     # temperature=self.temperature,
-        #         #     stop=[self.stop_words] if self.stop_words is not None else None,
-        #         # )
-
-        #         # for event in response:
-        #         #     if not isinstance(event, dict):
-        #         #         event = event.model_dump()
-
-        #         #     event_text = event["choices"][0]['delta']['content']
-        #         #     if isinstance(event_text, str) and event_text != "":
-        #         #         # debug_logger.info(f"[debug] event_text = [{event_text}]")
-        #         #         delta = {'answer': event_text}
-        #         #         yield "data: " + json.dumps(delta, ensure_ascii=False)
-
-        #         results_generator = self.engine.generate(prompt, self.sampling_params, request_id=random_uuid())
-        #         for request_output in results_generator:
-        #             delta = {"answer": request_output.outputs[0].text}
-        #             yield "data: " + json.dumps(delta, ensure_ascii=False)
-
-        #     else:
-        #         outputs = self.llm.generate([prompt], self.sampling_params)
-        #         delta = {'answer': outputs[0].outputs[0].text}
-
-        #         yield "data: " + json.dumps(delta, ensure_ascii=False)
-
-        # except Exception as e:
-        #     debug_logger.info(f"Error calling API: {e}")
-        #     delta = {'answer': f"{e}"}
-        #     yield "data: " + json.dumps(delta, ensure_ascii=False)
-
-        # finally:
-        #     # debug_logger.info("[debug] try-finally")
-        #     yield f"data: [DONE]\n\n"
 
     async def generatorAnswer(self, prompt: str,
                         history: List[List[str]] = [],
@@ -158,44 +117,3 @@ class OpenAICustomLLM(BaseAnswer, ABC):
             answer_result.llm_output = {"answer": response_text}
             answer_result.prompt = prompt
             yield answer_result
-
-
-if __name__ == "__main__":
-
-    base_url = f"http://{LOCAL_LLM_SERVICE_URL}/api/v1/token_check" 
-    headers = {"Content-Type": "application/json"}
-    query = "hello"
-    response = requests.post(
-        base_url, 
-        data=json.dumps(
-            {'prompts': [{'model': LOCAL_LLM_MODEL_NAME, 'prompt': query, 'max_tokens': 512}]}
-        ),
-        headers=headers)
-
-    # {'prompts': [{'fits': True, 'tokenCount': 317, 'contextLength': 8192}]}
-    result = response.json()
-    debug_logger.info(f"[debug] result = {result}")
-
-
-    llm = OpenAICustomLLM()
-    streaming = True
-    chat_history = []
-    prompt = "你是谁"
-    prompt = """参考信息：
-中央纪委国家监委网站讯 据山西省纪委监委消息：山西转型综合改革示范区党工委副书记、管委会副主任董良涉嫌严重违纪违法，目前正接受山西省纪委监委纪律审查和监察调查。\\u3000\\u3000董良简历\\u3000\\u3000董良，男，汉族，1964年8月生，河南鹿邑人，在职研究生学历，邮箱random@xxx.com，联系电话131xxxxx909，1984年3月加入中国共产党，1984年8月参加工作\\u3000\\u3000历任太原经济技术开发区管委会副主任、太原武宿综合保税区专职副主任，山西转型综合改革示范区党工委委员、管委会副主任。2021年8月，任山西转型综合改革示范区党工委副书记、管委会副主任。(山西省纪委监委)
----
-我的问题或指令：
-帮我提取上述人物的中文名，英文名，性别，国籍，现任职位，最高学历，毕业院校，邮箱，电话
----
-请根据上述参考信息回答我的问题或回复我的指令。前面的参考信息可能有用，也可能没用，你需要从我给出的参考信息中选出与我的问题最相关的那些，来为你的回答提供依据。回答一定要忠于原文，简洁但不丢信息，不要胡乱编造。我的问题或指令是什么语种，你就用什么语种回复,
-你的回复："""
-    final_result = ""
-    for answer_result in llm.generatorAnswer(prompt=prompt,
-                                                      history=chat_history,
-                                                      streaming=streaming):
-        resp = answer_result.llm_output["answer"]
-        if "DONE" not in resp:
-            final_result += json.loads(resp[6:])["answer"]
-        # debug_logger.info(resp)
-
-    debug_logger.info(f"final_result = {final_result}")

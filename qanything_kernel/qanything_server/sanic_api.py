@@ -19,8 +19,9 @@ sys.path.append(root_dir)
 from milvus import default_server
 from .handler import *
 from qanything_kernel.core.local_doc_qa import LocalDocQA
-from qanything_kernel.configs.model_config import MILVUS_LITE_LOCATION, CUDA_DEVICE, VW_MODEL_PATH
+from qanything_kernel.configs.model_config import MILVUS_LITE_LOCATION, CUDA_DEVICE, VM_3B_MODEL, VM_7B_MODEL
 from qanything_kernel.utils.custom_log import debug_logger
+from qanything_kernel.utils.general_utils import download_file, check_onnx_version
 from sanic import Sanic
 from sanic import response as sanic_response
 from argparse import ArgumentParser, Action
@@ -29,11 +30,19 @@ import signal
 from vllm.engine.arg_utils import AsyncEngineArgs
 import time
 import requests
+import platform
+import torch
+import math 
 
 parser = ArgumentParser()
 parser = AsyncEngineArgs.add_cli_args(parser)
 parser.add_argument('--host', dest='host', default='0.0.0.0', help='set host for qanything server')
 parser.add_argument('--port', dest='port', default=8777, type=int, help='set port for qanything server')
+#  必填参数
+parser.add_argument('--model_size', dest='model_size', default=
+'3B', help='set LLM model size for qanything server')
+# --model "GeneZC/MiniChat-2-3B"
+# --gpu-memory-utilization 0.5
 
 os.environ["CUDA_VISIBLE_DEVICES"] = CUDA_DEVICE
 
@@ -88,15 +97,8 @@ async def handle_options_request(request):
         }
         return sanic_response.text("", headers=headers)
 
-
 @app.before_server_start
 async def init_local_doc_qa(app, loop):
-    debug_logger.info(f"default_server: {default_server.running}")
-    if not default_server.running:
-        start = time.time() 
-        default_server.set_base_dir(MILVUS_LITE_LOCATION)
-        default_server.start()
-        debug_logger.info(f"Milvus Lite started at {default_server.listen_port} in {time.time() - start} seconds.")
     start = time.time()
     local_doc_qa = LocalDocQA()
     local_doc_qa.init_cfg(mode='local', parser=parser)
@@ -142,8 +144,75 @@ class LocalDocQAServer:
         debug_logger.info(f"Stop qanything server: {res.text}")
 
 
+def downloads_onnxruntime_gpu_for_cuda12():
+    # 检查cuda版本，小于12.0报错：
+    cuda_version = torch.version.cuda
+    if cuda_version is None:
+        raise ValueError("CUDA is not installed.")
+    elif float(cuda_version) < 12:
+        raise ValueError("CUDA version must be 12.0 or higher.")
+    python_version = platform.python_version()
+    # 获取python3版本数字：310，311，312
+    python3_version = python_version.split('.')[1]
+    os_system = platform.system()
+    system_name = None
+    if os_system == "Windows":
+        system_name = 'win_amd64'
+    elif system_name == "Linux":
+        system_name = 'manylinux_2_28_x86_64'
+    if system_name is not None:
+        if check_onnx_version("1.17.1"):
+            return
+        download_url = f"https://aiinfra.pkgs.visualstudio.com/PublicPackages/_apis/packaging/feeds/9387c3aa-d9ad-4513-968c-383f6f7f53b8/pypi/packages/onnxruntime-gpu/versions/1.17.1/onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl/content"
+        whl_name = f'onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl'
+        download_file(download_url, whl_name)
+        # 下载whl文件，并通过pip install安装
+        os.system(f"pip install {whl_name}")
+    else:
+        raise ValueError(f"Unsupported system: {os_system}")
+    
+
+def get_gpu_memory_utilization(model_size):
+    if not torch.cuda.is_available():
+        raise ValueError("CUDA is not available: torch.cuda.is_available(): return False")
+    gpu_memory = torch.cuda.get_device_properties(int(CUDA_DEVICE)).total_memory
+    gpu_memory_in_GB = math.ceil(gpu_memory / (1024 ** 3))  # 将字节转换为GB
+    debug_logger.info(f"GPU memory: {gpu_memory_in_GB} GB")
+    if model_size == '3B':
+        if gpu_memory_in_GB < 10:  # 显存最低需要10GB
+            raise ValueError(f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 10GB is required with 3B Model.")
+        gpu_memory_utilization = round(7 / gpu_memory_in_GB, 2)
+    elif model_size == '7B':
+        if gpu_memory_in_GB < 20:  # 显存最低需要20GB
+            raise ValueError(f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 20GB is required with 7B Model.")
+        gpu_memory_utilization = round(16 / gpu_memory_in_GB, 2)
+    else:
+        raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 7B")
+    return gpu_memory_utilization
+
+
 def main():
+    debug_logger.info(f"default_server: {default_server.running}")
+    if not default_server.running:
+        start = time.time() 
+        default_server.set_base_dir(MILVUS_LITE_LOCATION)
+        default_server.start()
+        debug_logger.info(f"Milvus Lite started at {default_server.listen_port} in {time.time() - start} seconds.")
+
+
     args = parser.parse_args()
+    model_size = args.model_size
+    
+    args.gpu_memory_utilization = get_gpu_memory_utilization(model_size)
+    if model_size == '3B':
+        args.model = VM_3B_MODEL
+    elif model_size == '7B':
+        args.model = VM_7B_MODEL
+    else:
+        raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 7B")
+    
+    downloads_onnxruntime_gpu_for_cuda12()
+    
     # 根据命令行参数启动服务器
     qanything_server = LocalDocQAServer(host=args.host, port=args.port)
 
