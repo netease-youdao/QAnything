@@ -7,7 +7,6 @@ with open('requirements.txt') as f:
 setup(
     name='qanything',
     version='0.1',
-    # packages=find_packages(include=['qanything_kernel*', 'third_party/FastChat/fastchat*']),
     packages=find_packages(),
     install_requires=required,
     package_data={
@@ -15,20 +14,18 @@ setup(
     },
     include_package_data=True,  # 包含所有的非.py文件
     entry_points={
-        # 'console_scripts': [
-        #     'fastchat-controller=fastchat.serve.controller:main',
-        #     'fastchat-api-server=fastchat.serve.openai_api_server:main',
-        #     'fastchat-vllm-worker=fastchat.serve.vllm_worker:main',
-        # ],
+        'console_scripts': [
+            'qanything-server=qanything_kernel.qanything_server.sanic_api:main'
+        ],
     },
     description='A QA server',
-    author='Your Name',
-    author_email='your.email@example.com',
+    author='Junxiong Liu',
+    author_email='xixihahaliu01@gmail.com',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
     ],
-    keywords='qa server',
+    keywords='qanything server',
 )

@@ -16,7 +16,6 @@ from vllm.engine.async_llm_engine import AsyncLLMEngine
 from vllm.utils import random_uuid
 from qanything_kernel.configs.conversation import get_conv_template
 from qanything_kernel.utils.custom_log import debug_logger
-import argparse
 
 load_dotenv()
 
@@ -31,11 +30,11 @@ class OpenAICustomLLM(BaseAnswer, ABC):
     history: List[List[str]] = []
     history_len: int = 2
 
-    def __init__(self):
+    def __init__(self, parser):
         super().__init__()
         # self.llm = LLM(model=VW_MODEL_PATH)
-        parser = argparse.ArgumentParser()
-        parser = AsyncEngineArgs.add_cli_args(parser)
+        # parser = argparse.ArgumentParser()
+        # parser = AsyncEngineArgs.add_cli_args(parser)
         args = parser.parse_args()
         args.model = VW_MODEL_PATH
         args.gpu_memory_utilization = 0.5

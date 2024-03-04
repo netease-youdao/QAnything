@@ -43,7 +43,15 @@ class MilvusClient:
         else:
             self.create_params = {"metric_type": "L2", "index_type": "GPU_IVF_FLAT", "params": {"nlist": 2048}}
         self.last_init_ts = time.time() - 100  # 减去100保证最初的init不会被拒绝
-        self.init()
+        # self.init()
+        for i in range(4):
+            if self.init():
+                break
+            else:
+                if i == 3:
+                    raise MilvusFailed('Milvus init failed!')
+                time.sleep(1)
+        
 
     @property
     def fields(self):
@@ -107,8 +115,10 @@ class MilvusClient:
             self.partitions = [Partition(self.sess, kb_id) for kb_id in self.kb_ids]
             debug_logger.info('partitions: %s', self.kb_ids)
             self.sess.load()
+            return True
         except Exception as e:
             debug_logger.error(e)
+            return False
 
     def __search_emb_sync(self, embs, expr='', top_k=None, client_timeout=None):
         if not top_k:

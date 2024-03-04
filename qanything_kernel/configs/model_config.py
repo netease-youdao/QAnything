@@ -77,13 +77,6 @@ MILVUS_LITE_LOCATION = os.path.join(root_path, "QANY_DB", "milvus")
 
 llm_api_serve_model = os.getenv('LLM_API_SERVE_MODEL', 'MiniChat-2-3B')
 llm_api_serve_port = os.getenv('LLM_API_SERVE_PORT', 7802)
-# rerank_port = os.getenv('RERANK_PORT')
-# embed_port = os.getenv('EMBED_PORT')
-
-print("llm_api_serve_port:", llm_api_serve_port)
-# print("rerank_port:", rerank_port)
-# print("embed_port:", embed_port)
-
 
 LOCAL_LLM_SERVICE_URL = f"localhost:{llm_api_serve_port}"
 LOCAL_LLM_MODEL_NAME = llm_api_serve_model
@@ -91,7 +84,7 @@ LOCAL_LLM_MAX_LENGTH = 4096
 
 # LOCAL_RERANK_SERVICE_URL = f"localhost:{rerank_port}"
 LOCAL_RERANK_MODEL_PATH = os.path.join(root_path, "onnx_models", "rerank.onnx")
-LOCAL_RERANK_CONFIG_PATH = os.path.join(root_path, 'qanything_kernel/dependent_server/rerank_for_local_serve', 'rerank_model_configs_v0.0.1')
+LOCAL_RERANK_CONFIG_PATH = os.path.join(root_path, 'qanything_kernel/connector/rerank', 'rerank_model_configs_v0.0.1')
 LOCAL_RERANK_MODEL_NAME = 'rerank'
 LOCAL_RERANK_MAX_LENGTH = 512
 LOCAL_RERANK_BATCH = 16

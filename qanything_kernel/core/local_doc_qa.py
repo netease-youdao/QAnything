@@ -1,14 +1,13 @@
 from qanything_kernel.configs.model_config import VECTOR_SEARCH_TOP_K, CHUNK_SIZE, VECTOR_SEARCH_SCORE_THRESHOLD, \
     PROMPT_TEMPLATE, STREAMING
 from typing import List
-from qanything_kernel.connector.embedding.embedding_for_online import YouDaoEmbeddings
 from qanything_kernel.connector.embedding.embedding_for_local import YouDaoLocalEmbeddings
 import time
 from qanything_kernel.connector.llm import OpenAILLM, OpenAICustomLLM
 from langchain.schema import Document
 from qanything_kernel.connector.database.mysql.mysql_client import KnowledgeBaseManager
 from qanything_kernel.connector.database.milvus.milvus_client import MilvusClient
-from qanything_kernel.dependent_server.rerank_for_local_serve.rerank_server_backend import LocalRerankBackend
+from qanything_kernel.connector.rerank.rerank_server_backend import LocalRerankBackend
 from paddleocr import PaddleOCR
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from .local_file import LocalFile
@@ -26,7 +25,6 @@ def _embeddings_hash(self):
 
 
 YouDaoLocalEmbeddings.__hash__ = _embeddings_hash
-YouDaoEmbeddings.__hash__ = _embeddings_hash
 
 
 class LocalDocQA:
@@ -42,8 +40,6 @@ class LocalDocQA:
         self.local_rerank_backend: LocalRerankBackend = None 
         self.ocr_engine: PaddleOCR = None
         self.mode: str = None
-        # self.local_rerank_service_url = "http://0.0.0.0:8776/rerank"
-        # self.ocr_url = 'http://0.0.0.0:8010/ocr'
 
     def get_ocr_result(self, input: dict):
         img_file = input['img64']
@@ -55,11 +51,11 @@ class LocalDocQA:
         res = self.ocr_engine.ocr(img_array)
         return res
 
-    def init_cfg(self, mode='local'):
+    def init_cfg(self, mode='local', parser=None):
         self.mode = mode
         self.embeddings = YouDaoLocalEmbeddings()
         if self.mode == 'local':
-            self.llm: OpenAICustomLLM = OpenAICustomLLM()
+            self.llm: OpenAICustomLLM = OpenAICustomLLM(parser)
         else:
             self.llm: OpenAILLM = OpenAILLM()
         self.milvus_summary = KnowledgeBaseManager()
@@ -211,23 +207,6 @@ class LocalDocQA:
                 source_documents[idx].metadata['score'] = score
         source_documents = sorted(source_documents, key=lambda x: x.metadata['score'], reverse=True)
         return source_documents
-
-    # def rerank_documents(self, query, source_documents):
-    #     if len(query) > 300:  # tokens数量超过300时不使用local rerank
-    #         return source_documents
-    #     try:
-    #         response = requests.post(self.local_rerank_service_url,
-    #                                  json={"passages": [doc.page_content for doc in source_documents], "query": query})
-    #         scores = response.json()
-    #         for idx, score in enumerate(scores):
-    #             source_documents[idx].metadata['score'] = score
-
-    #         source_documents = sorted(source_documents, key=lambda x: x.metadata['score'], reverse=True)
-    #     except Exception as e:
-    #         debug_logger.error("rerank error: %s", traceback.format_exc())
-    #         debug_logger.warning("rerank error, use origin retrieval docs")
-
-    #     return source_documents
 
     async def get_knowledge_based_answer(self, query, milvus_kb, chat_history=None, streaming: bool = STREAMING,
                                    rerank: bool = False):
