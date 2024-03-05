@@ -168,10 +168,11 @@ fi
 
 if [ $(echo "$compute_capability >= 7.5" | bc) -eq 1 ]; then
     OCR_USE_GPU="True"
+    echo "OCR_USE_GPU=$OCR_USE_GPU because $compute_capability >= 7.5"
 else
     OCR_USE_GPU="False"
+    echo "OCR_USE_GPU=$OCR_USE_GPU because $compute_capability < 7.5"
 fi
-echo "OCR_USE_GPU=$OCR_USE_GPU because $compute_capability >= 7.5"
 update_or_append_to_env "OCR_USE_GPU" "$OCR_USE_GPU"
 
 # 使用nvidia-smi命令获取GPU的显存大小（以MiB为单位）
