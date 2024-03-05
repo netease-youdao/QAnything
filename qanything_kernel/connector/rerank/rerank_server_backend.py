@@ -4,14 +4,19 @@ from transformers import AutoTokenizer
 from copy import deepcopy
 from typing import List
 from qanything_kernel.configs.model_config import LOCAL_RERANK_MODEL_PATH, LOCAL_RERANK_MAX_LENGTH, LOCAL_RERANK_MODEL_NAME, \
-    LOCAL_RERANK_BATCH, LOCAL_RERANK_CONFIG_PATH
+    LOCAL_RERANK_BATCH, LOCAL_RERANK_PATH, LOCAL_RERANK_REPO 
 from qanything_kernel.utils.custom_log import debug_logger
 import numpy as np
+from huggingface_hub import snapshot_download
+import os
 
+# 如果模型不存在, 下载模型
+if not os.path.exists(LOCAL_RERANK_MODEL_PATH):
+    snapshot_download(repo_id=LOCAL_RERANK_REPO, local_dir=LOCAL_RERANK_PATH, local_dir_use_symlinks="auto")
 
 class LocalRerankBackend:
     def __init__(self):
-        self.tokenizer = AutoTokenizer.from_pretrained(LOCAL_RERANK_CONFIG_PATH)
+        self.tokenizer = AutoTokenizer.from_pretrained(LOCAL_RERANK_PATH)
         self.overlap_tokens = 80
         self.spe_id = self.tokenizer.sep_token_id
 

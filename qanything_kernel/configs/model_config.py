@@ -75,14 +75,16 @@ MILVUS_LITE_LOCATION = os.path.join(root_path, "QANY_DB", "milvus")
 # LOCAL_LLM_MODEL_NAME = llm_api_serve_model
 # LOCAL_LLM_MAX_LENGTH = 4096
 
-LOCAL_RERANK_MODEL_PATH = os.path.join(root_path, "qanything_kernel/onnx_models", "rerank.onnx")
-LOCAL_RERANK_CONFIG_PATH = os.path.join(root_path, 'qanything_kernel/connector/rerank', 'rerank_model_configs_v0.0.1')
+LOCAL_RERANK_REPO = "netease-youdao/rerank"
+LOCAL_RERANK_PATH = os.path.join(root_path, 'qanything_kernel/connector/rerank', 'rerank_model_configs_v0.0.1')
+LOCAL_RERANK_MODEL_PATH = os.path.join(LOCAL_RERANK_PATH, "rerank.onnx")
 LOCAL_RERANK_MODEL_NAME = 'rerank'
 LOCAL_RERANK_MAX_LENGTH = 512
 LOCAL_RERANK_BATCH = 16
 
-LOCAL_EMBED_MODEL_PATH = os.path.join(root_path, "qanything_kernel/onnx_models", "embed.onnx")
-LOCAL_EMBED_CONFIG_PATH = os.path.join(root_path, 'qanything_kernel/connector/embedding', 'embedding_model_configs_v0.0.1')
+LOCAL_EMBED_REPO = "netease-youdao/embed"
+LOCAL_EMBED_PATH = os.path.join(root_path, 'qanything_kernel/connector/embedding', 'embedding_model_configs_v0.0.1')
+LOCAL_EMBED_MODEL_PATH = os.path.join(LOCAL_EMBED_PATH, "embed.onnx")
 LOCAL_EMBED_MODEL_NAME = 'embed'
 LOCAL_EMBED_MAX_LENGTH = 512
 LOCAL_EMBED_BATCH = 16

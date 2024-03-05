@@ -16,10 +16,10 @@ root_dir = os.path.dirname(parent_dir)
 # 将项目根目录添加到sys.path
 sys.path.append(root_dir)
 
+from qanything_kernel.configs.model_config import MILVUS_LITE_LOCATION, CUDA_DEVICE, VM_3B_MODEL, VM_7B_MODEL 
 from milvus import default_server
 from .handler import *
 from qanything_kernel.core.local_doc_qa import LocalDocQA
-from qanything_kernel.configs.model_config import MILVUS_LITE_LOCATION, CUDA_DEVICE, VM_3B_MODEL, VM_7B_MODEL
 from qanything_kernel.utils.custom_log import debug_logger
 from qanything_kernel.utils.general_utils import download_file, check_onnx_version
 from sanic import Sanic
@@ -144,34 +144,6 @@ class LocalDocQAServer:
         debug_logger.info(f"Stop qanything server: {res.text}")
 
 
-def downloads_onnxruntime_gpu_for_cuda12():
-    # 检查cuda版本，小于12.0报错：
-    cuda_version = torch.version.cuda
-    if cuda_version is None:
-        raise ValueError("CUDA is not installed.")
-    elif float(cuda_version) < 12:
-        raise ValueError("CUDA version must be 12.0 or higher.")
-    python_version = platform.python_version()
-    # 获取python3版本数字：310，311，312
-    python3_version = python_version.split('.')[1]
-    os_system = platform.system()
-    system_name = None
-    if os_system == "Windows":
-        system_name = 'win_amd64'
-    elif system_name == "Linux":
-        system_name = 'manylinux_2_28_x86_64'
-    if system_name is not None:
-        if check_onnx_version("1.17.1"):
-            return
-        download_url = f"https://aiinfra.pkgs.visualstudio.com/PublicPackages/_apis/packaging/feeds/9387c3aa-d9ad-4513-968c-383f6f7f53b8/pypi/packages/onnxruntime-gpu/versions/1.17.1/onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl/content"
-        whl_name = f'onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl'
-        download_file(download_url, whl_name)
-        # 下载whl文件，并通过pip install安装
-        os.system(f"pip install {whl_name}")
-    else:
-        raise ValueError(f"Unsupported system: {os_system}")
-    
-
 def get_gpu_memory_utilization(model_size):
     if not torch.cuda.is_available():
         raise ValueError("CUDA is not available: torch.cuda.is_available(): return False")
@@ -210,8 +182,6 @@ def main():
         args.model = VM_7B_MODEL
     else:
         raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 7B")
-    
-    downloads_onnxruntime_gpu_for_cuda12()
     
     # 根据命令行参数启动服务器
     qanything_server = LocalDocQAServer(host=args.host, port=args.port)

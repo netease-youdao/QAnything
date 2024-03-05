@@ -2,14 +2,13 @@ from abc import ABC
 import tiktoken
 import os
 from dotenv import load_dotenv
-from openai import OpenAI
 from typing import Optional, List
 import sys
 import json
 import requests
 sys.path.append("../../../")
 from qanything_kernel.connector.llm.base import (BaseAnswer, AnswerResult)
-from qanything_kernel.configs.model_config import LOCAL_LLM_SERVICE_URL, LOCAL_LLM_MODEL_NAME, LOCAL_LLM_MAX_LENGTH, VW_MODEL_PATH, VW_CONV_TEMPLATE
+from qanything_kernel.configs.model_config import VW_CONV_3B_TEMPLATE, VW_CONV_7B_TEMPLATE
 from vllm import LLM, SamplingParams
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.engine.async_llm_engine import AsyncLLMEngine
@@ -20,13 +19,6 @@ from qanything_kernel.utils.custom_log import debug_logger
 load_dotenv()
 
 class OpenAICustomLLM(BaseAnswer, ABC):
-    model: str = LOCAL_LLM_MODEL_NAME
-    token_window: int = LOCAL_LLM_MAX_LENGTH
-    max_token: int = 512
-    offcut_token: int = 50
-    truncate_len: int = 50
-    temperature: float = 0
-    stop_words: str = None
     history: List[List[str]] = []
     history_len: int = 2
 
@@ -36,11 +28,13 @@ class OpenAICustomLLM(BaseAnswer, ABC):
         # parser = argparse.ArgumentParser()
         # parser = AsyncEngineArgs.add_cli_args(parser)
         args = parser.parse_args()
-        args.model = VW_MODEL_PATH
-        args.gpu_memory_utilization = 0.5
         engine_args = AsyncEngineArgs.from_cli_args(args)
         self.engine = AsyncLLMEngine.from_engine_args(engine_args)
         self.sampling_params = SamplingParams(temperature=0.8, top_p=0.95)
+        if args.model_size == '3B':
+            self.conv_template = VW_CONV_3B_TEMPLATE
+        else:
+            self.conv_template = VW_CONV_7B_TEMPLATE
 
     @property
     def _llm_type(self) -> str:
@@ -78,7 +72,7 @@ class OpenAICustomLLM(BaseAnswer, ABC):
         messages.append({"role": "user", "content": prompt})
         debug_logger.info(messages)
 
-        conv = get_conv_template(VW_CONV_TEMPLATE)
+        conv = get_conv_template(self.conv_template)
         for message in messages:
             conv.append_message(message['role'], message['content'])
         prompt = conv.get_prompt()

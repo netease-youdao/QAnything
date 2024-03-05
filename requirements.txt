@@ -1,7 +1,11 @@
+huggingface_hub==0.19.4
+openai==1.12.0
+vllm==0.2.7
+paddleocr==2.7.0.3
+paddlepaddle-gpu==2.6.0
 tqdm==4.66.1
 concurrent-log-handler==0.9.25
-numpy==1.23.4
-sentencepiece==0.2.0
+sentencepiece==0.1.99
 transformers==4.36.2
 tiktoken==0.4.0
 sanic==23.6.0
@@ -9,11 +13,8 @@ sanic_ext==23.6.0
 milvus==2.3.5
 pymilvus==2.3.6
 langchain==0.1.9
-paddleocr==2.7.0.3
-paddlepaddle-gpu==2.5.2
 pypinyin==0.50.0
 unstructured==0.12.4
 unstructured[pptx]==0.12.4
 unstructured[md]==0.12.4
 accelerate==0.21.0
-vllm==0.2.7
