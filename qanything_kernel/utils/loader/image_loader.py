@@ -32,12 +32,12 @@ class UnstructuredPaddleImageLoader(UnstructuredFileLoader):
             h, w, c = img_np.shape
             img_data = {"img64": base64.b64encode(img_np).decode("utf-8"), "height": h, "width": w, "channels": c}
             result = self.ocr_engine(img_data)
-            result = [line for line in result if line]
-
-            ocr_result = [i[1][0] for line in result for i in line]
+            # result = [line for line in result if line]
+            # ocr_result = [i[1][0] for line in result for i in line]
+            
             txt_file_path = os.path.join(full_dir_path, "%s.txt" % (filename))
             with open(txt_file_path, 'w', encoding='utf-8') as fout:
-                fout.write("\n".join(ocr_result))
+                fout.write("\n".join(result))
             return txt_file_path
 
         txt_file_path = image_ocr_txt(self.file_path)

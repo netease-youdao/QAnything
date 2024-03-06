@@ -8,7 +8,8 @@ from langchain.schema import Document
 from qanything_kernel.connector.database.mysql.mysql_client import KnowledgeBaseManager
 from qanything_kernel.connector.database.milvus.milvus_client import MilvusClient
 from qanything_kernel.connector.rerank.rerank_server_backend import LocalRerankBackend
-from paddleocr import PaddleOCR
+import easyocr
+from easyocr import Reader
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from .local_file import LocalFile
 from qanything_kernel.utils.general_utils import get_time
@@ -38,7 +39,7 @@ class LocalDocQA:
         self.milvus_kbs: List[MilvusClient] = []
         self.milvus_summary: KnowledgeBaseManager = None
         self.local_rerank_backend: LocalRerankBackend = None 
-        self.ocr_engine: PaddleOCR = None
+        self.ocr_reader: Reader = None
         self.mode: str = None
 
     def get_ocr_result(self, input: dict):
@@ -48,19 +49,20 @@ class LocalDocQA:
         channels = input['channels']
         binary_data = base64.b64decode(img_file)
         img_array = np.frombuffer(binary_data, dtype=np.uint8).reshape((height, width, channels))
-        res = self.ocr_engine.ocr(img_array)
+        ocr_res = self.ocr_reader.readtext(img_array, detail=0)
+        res = [line.replace(' ', '') for line in ocr_res if line]
         return res
 
-    def init_cfg(self, mode='local', parser=None):
+    def init_cfg(self, mode='local', args=None):
         self.mode = mode
         self.embeddings = YouDaoLocalEmbeddings()
         if self.mode == 'local':
-            self.llm: OpenAICustomLLM = OpenAICustomLLM(parser)
+            self.llm: OpenAICustomLLM = OpenAICustomLLM(args)
         else:
             self.llm: OpenAILLM = OpenAILLM()
         self.milvus_summary = KnowledgeBaseManager()
         self.local_rerank_backend = LocalRerankBackend()
-        self.ocr_engine = PaddleOCR(use_angle_cls=True, lang="ch", use_gpu=True, show_log=False)
+        self.ocr_reader = easyocr.Reader(['ch_sim', 'en'])
 
     def create_milvus_collection(self, user_id, kb_id, kb_name):
         milvus_kb = MilvusClient(self.mode, user_id, [kb_id])

@@ -19,15 +19,20 @@ from qanything_kernel.utils.custom_log import debug_logger
 load_dotenv()
 
 class OpenAICustomLLM(BaseAnswer, ABC):
+    token_window: int = 4096 
+    max_token: int = 512
+    offcut_token: int = 50
+    truncate_len: int = 50
+    temperature: float = 0
+    stop_words: str = None
     history: List[List[str]] = []
     history_len: int = 2
 
-    def __init__(self, parser):
+    def __init__(self, args):
         super().__init__()
         # self.llm = LLM(model=VW_MODEL_PATH)
         # parser = argparse.ArgumentParser()
         # parser = AsyncEngineArgs.add_cli_args(parser)
-        args = parser.parse_args()
         engine_args = AsyncEngineArgs.from_cli_args(args)
         self.engine = AsyncLLMEngine.from_engine_args(engine_args)
         self.sampling_params = SamplingParams(temperature=0.8, top_p=0.95)

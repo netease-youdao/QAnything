@@ -10,10 +10,12 @@ import tiktoken
 import requests
 from tqdm import tqdm
 import pkg_resources
+import torch
+import math
 
 __all__ = ['write_check_file', 'isURL', 'format_source_documents', 'get_time', 'safe_get', 'truncate_filename',
            'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens', 'download_file', 
-           'check_onnx_version']
+           'check_onnx_version', 'get_gpu_memory_utilization']
 
 
 def get_invalid_user_id_msg(user_id):
@@ -181,3 +183,21 @@ def check_onnx_version(version):
     except pkg_resources.DistributionNotFound:
         print(f"onnxruntime-gpu {version} 未安装。")
     return False
+
+
+def get_gpu_memory_utilization(model_size, device_id):
+    if not torch.cuda.is_available():
+        raise ValueError("CUDA is not available: torch.cuda.is_available(): return False")
+    gpu_memory = torch.cuda.get_device_properties(int(device_id)).total_memory
+    gpu_memory_in_GB = math.ceil(gpu_memory / (1024 ** 3))  # 将字节转换为GB
+    if model_size == '3B':
+        if gpu_memory_in_GB < 10:  # 显存最低需要10GB
+            raise ValueError(f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 10GB is required with 3B Model.")
+        gpu_memory_utilization = round(8 / gpu_memory_in_GB, 2)
+    elif model_size == '7B':
+        if gpu_memory_in_GB < 20:  # 显存最低需要20GB
+            raise ValueError(f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 20GB is required with 7B Model.")
+        gpu_memory_utilization = round(16 / gpu_memory_in_GB, 2)
+    else:
+        raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 7B")
+    return gpu_memory_utilization
