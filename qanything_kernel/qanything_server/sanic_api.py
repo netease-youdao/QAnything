@@ -20,6 +20,7 @@ sys.path.append(root_dir)
 from qanything_kernel.configs.model_config import MILVUS_LITE_LOCATION, VM_3B_MODEL, VM_7B_MODEL 
 import qanything_kernel.configs.model_config as model_config
 from milvus import default_server
+import torch
 from .handler import *
 from qanything_kernel.core.local_doc_qa import LocalDocQA
 from qanything_kernel.utils.custom_log import debug_logger
@@ -158,8 +159,12 @@ class LocalDocQAServer:
         debug_logger.info(f"Stop qanything server: {res.text}")
 
 
-
 def main():
+    cuda_version = torch.version.cuda
+    if cuda_version is None:
+        raise ValueError("CUDA is not installed.")
+    elif float(cuda_version) < 12:
+        raise ValueError("CUDA version must be 12.0 or higher.")
     default_server.set_base_dir(MILVUS_LITE_LOCATION)
     start = time.time() 
     with default_server:
@@ -177,6 +182,7 @@ def main():
             print('Wait for qanything server started timeout.')
         except RuntimeError:
             print('QAnything server already stopped.')
+
 
 if __name__ == "__main__":
     main()

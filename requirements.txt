@@ -1,4 +1,5 @@
 huggingface_hub==0.19.4
+onnxruntime-gpu==1.17.1
 easyocr==1.7.1
 vllm==0.3.3
 openai==1.12.0

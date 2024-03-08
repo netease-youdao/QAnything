@@ -155,7 +155,6 @@ def num_tokens(text: str, model: str = 'gpt-3.5-turbo-0613') -> int:
     return len(encoding.encode(text))
 
 
-
 def download_file(url, filename):
     response = requests.get(url, stream=True)
     total_size_in_bytes = int(response.headers.get('content-length', 0))
@@ -169,20 +168,6 @@ def download_file(url, filename):
     progress_bar.close()
     if total_size_in_bytes != 0 and progress_bar.n != total_size_in_bytes:
         print("ERROR, something went wrong")
-
-
-def check_onnx_version(version):
-    try:
-        onnx_version = pkg_resources.get_distribution("onnxruntime-gpu").version
-        if onnx_version == version:
-            print(f"onnxruntime-gpu {version} 已经安装。")
-            return True
-        else:
-            print(f"onnxruntime-gpu 版本过低，当前版本为 {onnx_version}，需要安装 {version} 版本。")
-            return False
-    except pkg_resources.DistributionNotFound:
-        print(f"onnxruntime-gpu {version} 未安装。")
-    return False
 
 
 def get_gpu_memory_utilization(model_size, device_id):
