@@ -24,7 +24,7 @@ import torch
 from .handler import *
 from qanything_kernel.core.local_doc_qa import LocalDocQA
 from qanything_kernel.utils.custom_log import debug_logger
-from qanything_kernel.utils.general_utils import download_file, check_onnx_version, get_gpu_memory_utilization
+from qanything_kernel.utils.general_utils import download_file, get_gpu_memory_utilization
 from sanic import Sanic
 from sanic import response as sanic_response
 from argparse import ArgumentParser, Action

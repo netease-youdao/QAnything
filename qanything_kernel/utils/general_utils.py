@@ -15,7 +15,7 @@ import math
 
 __all__ = ['write_check_file', 'isURL', 'format_source_documents', 'get_time', 'safe_get', 'truncate_filename',
            'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens', 'download_file', 
-           'check_onnx_version', 'get_gpu_memory_utilization']
+           'get_gpu_memory_utilization']
 
 
 def get_invalid_user_id_msg(user_id):
