@@ -17,19 +17,20 @@ root_dir = os.path.dirname(parent_dir)
 # 将项目根目录添加到sys.path
 sys.path.append(root_dir)
 
-from qanything_kernel.configs.model_config import MILVUS_LITE_LOCATION, VW_3B_MODEL_PATH, VW_7B_MODEL_PATH, VW_3B_MODEL, VW_7B_MODEL
+from qanything_kernel.configs.model_config import MILVUS_LITE_LOCATION, VW_3B_MODEL_PATH, VW_7B_MODEL_PATH, VW_3B_MODEL, VW_7B_MODEL, root_path
 import qanything_kernel.configs.model_config as model_config
 from milvus import default_server
 import torch
 from .handler import *
 from qanything_kernel.core.local_doc_qa import LocalDocQA
 from qanything_kernel.utils.custom_log import debug_logger
-from qanything_kernel.utils.general_utils import download_file, get_gpu_memory_utilization
+from qanything_kernel.utils.general_utils import download_file, get_gpu_memory_utilization, check_onnx_version
 from sanic import Sanic
 from sanic import response as sanic_response
 from argparse import ArgumentParser, Action
 from sanic.worker.manager import WorkerManager
 import signal
+import platform
 from vllm.engine.arg_utils import AsyncEngineArgs
 import requests
 from modelscope import snapshot_download
@@ -178,7 +179,23 @@ def main():
     elif float(cuda_version) < 12:
         raise ValueError("CUDA version must be 12.0 or higher.")
 
-
+    qanything_path = os.path.join(root_path, 'qanything_kernel')
+    python_version = platform.python_version()
+    python3_version = python_version.split('.')[1]
+    os_system = platform.system()
+    system_name = None
+    if os_system == "Windows":
+        system_name = 'win_amd64'
+    elif os_system == "Linux":
+        system_name = 'manylinux_2_28_x86_64'
+    if system_name is not None:
+        if not check_onnx_version("1.17.1"):
+            download_url = f"https://aiinfra.pkgs.visualstudio.com/PublicPackages/_apis/packaging/feeds/9387c3aa-d9ad-4513-968c-383f6f7f53b8/pypi/packages/onnxruntime-gpu/versions/1.17.1/onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl/content"
+            whl_name = f'onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl'
+            download_file(download_url, os.path.join(qanything_path, whl_name))
+            os.system(f"pip install {whl_name}")
+    else:
+        raise ValueError(f"Unsupported system: {os_system}")
 
     default_server.set_base_dir(MILVUS_LITE_LOCATION)
     start = time.time() 
