@@ -17,7 +17,7 @@ root_dir = os.path.dirname(parent_dir)
 # 将项目根目录添加到sys.path
 sys.path.append(root_dir)
 
-from qanything_kernel.configs.model_config import MILVUS_LITE_LOCATION, VM_3B_MODEL, VM_7B_MODEL 
+from qanything_kernel.configs.model_config import MILVUS_LITE_LOCATION, VW_3B_MODEL_PATH, VW_7B_MODEL_PATH, VW_3B_MODEL, VW_7B_MODEL
 import qanything_kernel.configs.model_config as model_config
 from milvus import default_server
 import torch
@@ -32,6 +32,8 @@ from sanic.worker.manager import WorkerManager
 import signal
 from vllm.engine.arg_utils import AsyncEngineArgs
 import requests
+from modelscope import snapshot_download
+import subprocess
 
 parser = ArgumentParser()
 parser = AsyncEngineArgs.add_cli_args(parser)
@@ -51,11 +53,21 @@ model_size = args.model_size
 args.gpu_memory_utilization = get_gpu_memory_utilization(model_size, args.device_id)
 debug_logger.info(f"GPU memory utilization: {args.gpu_memory_utilization}")
 if model_size == '3B':
-    args.model = VM_3B_MODEL
+    args.model = VW_3B_MODEL_PATH
 elif model_size == '7B':
-    args.model = VM_7B_MODEL
+    args.model = VW_7B_MODEL_PATH
 else:
     raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 7B")
+
+# 如果模型不存在, 下载模型
+if not os.path.exists(args.model):
+    model_id = VW_3B_MODEL if model_size == '3b' else VW_7B_MODEL
+    debug_logger.info(f'开始下载大模型：{model_id}')
+    cache_dir = snapshot_download(model_id=model_id)
+    output = subprocess.check_output(['ln', '-s', cache_dir, args.model], text=True)
+    debug_logger.info(f'模型下载完毕！cache地址：{cache_dir}, 软链接地址：{args.model}')
+else:
+    debug_logger.info(f'{args.model}路径已存在，不再重复下载大模型（如果下载出错可手动删除此目录）')
 
 debug_logger.info(f"CUDA_DEVICE: {model_config.CUDA_DEVICE}")
 
@@ -165,6 +177,9 @@ def main():
         raise ValueError("CUDA is not installed.")
     elif float(cuda_version) < 12:
         raise ValueError("CUDA version must be 12.0 or higher.")
+
+
+
     default_server.set_base_dir(MILVUS_LITE_LOCATION)
     start = time.time() 
     with default_server:

@@ -75,14 +75,16 @@ MILVUS_LITE_LOCATION = os.path.join(root_path, "QANY_DB", "milvus")
 # LOCAL_LLM_MODEL_NAME = llm_api_serve_model
 # LOCAL_LLM_MAX_LENGTH = 4096
 
-LOCAL_RERANK_REPO = "netease-youdao/rerank"
+# LOCAL_RERANK_REPO = "netease-youdao/rerank"
+LOCAL_RERANK_REPO = "netease-youdao/bce-reranker-base_v1"
 LOCAL_RERANK_PATH = os.path.join(root_path, 'qanything_kernel/connector/rerank', 'rerank_model_configs_v0.0.1')
 LOCAL_RERANK_MODEL_PATH = os.path.join(LOCAL_RERANK_PATH, "rerank.onnx")
 LOCAL_RERANK_MODEL_NAME = 'rerank'
 LOCAL_RERANK_MAX_LENGTH = 512
 LOCAL_RERANK_BATCH = 16
 
-LOCAL_EMBED_REPO = "netease-youdao/embed"
+# LOCAL_EMBED_REPO = "netease-youdao/embed"
+LOCAL_EMBED_REPO = "netease-youdao/bce-embedding-base_v1"
 LOCAL_EMBED_PATH = os.path.join(root_path, 'qanything_kernel/connector/embedding', 'embedding_model_configs_v0.0.1')
 LOCAL_EMBED_MODEL_PATH = os.path.join(LOCAL_EMBED_PATH, "embed.onnx")
 LOCAL_EMBED_MODEL_NAME = 'embed'
@@ -90,9 +92,11 @@ LOCAL_EMBED_MAX_LENGTH = 512
 LOCAL_EMBED_BATCH = 16
 
 # VLLM PARAMS
-VW_MODEL_PATH = os.path.join(root_path, "assets", "custom_models", "MiniChat-2-3B")
-VM_3B_MODEL = "GeneZC/MiniChat-2-3B"
-VM_7B_MODEL = "netease-youdao/Qwen-7B-QAnything" 
+VW_3B_MODEL_PATH = os.path.join(root_path, "assets", "custom_models", "MiniChat-2-3B")
+VW_7B_MODEL_PATH = os.path.join(root_path, "assets", "custom_models", "Qwen-7B-QAnything")
+# VM_3B_MODEL = "GeneZC/MiniChat-2-3B"
+VW_3B_MODEL = "netease-youdao/MiniChat-2-3B"
+VW_7B_MODEL = "netease-youdao/Qwen-7B-QAnything"
 VW_CONV_3B_TEMPLATE = "minichat"
 VW_CONV_7B_TEMPLATE = "qwen-7b-qanything"
 
