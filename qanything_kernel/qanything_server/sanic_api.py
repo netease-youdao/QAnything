@@ -17,20 +17,45 @@ root_dir = os.path.dirname(parent_dir)
 # 将项目根目录添加到sys.path
 sys.path.append(root_dir)
 
-from qanything_kernel.configs.model_config import MILVUS_LITE_LOCATION, VW_3B_MODEL_PATH, VW_7B_MODEL_PATH, VW_3B_MODEL, VW_7B_MODEL, root_path
+from qanything_kernel.configs.model_config import MILVUS_LITE_LOCATION, VW_3B_MODEL_PATH, VW_7B_MODEL_PATH, VW_3B_MODEL, VW_7B_MODEL
 import qanything_kernel.configs.model_config as model_config
-from milvus import default_server
-import torch
-from .handler import *
-from qanything_kernel.core.local_doc_qa import LocalDocQA
 from qanything_kernel.utils.custom_log import debug_logger
 from qanything_kernel.utils.general_utils import download_file, get_gpu_memory_utilization, check_onnx_version
+import torch
+import platform
+
+cuda_version = torch.version.cuda
+if cuda_version is None:
+    raise ValueError("CUDA is not installed.")
+elif float(cuda_version) < 12:
+    raise ValueError("CUDA version must be 12.0 or higher.")
+
+python_version = platform.python_version()
+python3_version = python_version.split('.')[1]
+os_system = platform.system()
+system_name = None
+if os_system == "Windows":
+    system_name = 'win_amd64'
+elif os_system == "Linux":
+    system_name = 'manylinux_2_28_x86_64'
+if system_name is not None:
+    if not check_onnx_version("1.17.1"):
+        download_url = f"https://aiinfra.pkgs.visualstudio.com/PublicPackages/_apis/packaging/feeds/9387c3aa-d9ad-4513-968c-383f6f7f53b8/pypi/packages/onnxruntime-gpu/versions/1.17.1/onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl/content"
+        debug_logger.info(f'开始从{download_url}下载onnxruntime，也可以手动下载并通过pip install *.whl安装')
+        whl_name = f'onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl'
+        download_file(download_url, whl_name)
+        os.system(f"pip install {whl_name}")
+else:
+    raise ValueError(f"Unsupported system: {os_system}")
+
+from milvus import default_server
+from .handler import *
+from qanything_kernel.core.local_doc_qa import LocalDocQA
 from sanic import Sanic
 from sanic import response as sanic_response
 from argparse import ArgumentParser, Action
 from sanic.worker.manager import WorkerManager
 import signal
-import platform
 from vllm.engine.arg_utils import AsyncEngineArgs
 import requests
 from modelscope import snapshot_download
@@ -51,18 +76,20 @@ model_config.CUDA_DEVICE = args.device_id
 os.environ["CUDA_VISIBLE_DEVICES"] = args.device_id
 
 model_size = args.model_size
+model_id = None
 args.gpu_memory_utilization = get_gpu_memory_utilization(model_size, args.device_id)
 debug_logger.info(f"GPU memory utilization: {args.gpu_memory_utilization}")
 if model_size == '3B':
     args.model = VW_3B_MODEL_PATH
+    model_id = VW_3B_MODEL
 elif model_size == '7B':
     args.model = VW_7B_MODEL_PATH
+    model_id = VW_7B_MODEL
 else:
     raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 7B")
 
 # 如果模型不存在, 下载模型
 if not os.path.exists(args.model):
-    model_id = VW_3B_MODEL if model_size == '3b' else VW_7B_MODEL
     debug_logger.info(f'开始下载大模型：{model_id}')
     cache_dir = snapshot_download(model_id=model_id)
     output = subprocess.check_output(['ln', '-s', cache_dir, args.model], text=True)
