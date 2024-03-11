@@ -1,6 +1,9 @@
 # huggingface_hub==0.19.4
 modelscope==1.13.0
-onnxruntime-gpu==1.17.1
+# onnxruntime-gpu==1.17.1
+Pillow==10.2.0
+numpy==1.24.3
+PyMuPDF==1.23.22
 easyocr==1.7.1
 vllm==0.3.3
 openai==1.12.0
