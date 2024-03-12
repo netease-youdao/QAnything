@@ -92,8 +92,12 @@ LOCAL_EMBED_MAX_LENGTH = 512
 LOCAL_EMBED_BATCH = 16
 
 # VLLM PARAMS
-VW_3B_MODEL_PATH = os.path.join(root_path, "assets", "custom_models", "MiniChat-2-3B")
-VW_7B_MODEL_PATH = os.path.join(root_path, "assets", "custom_models", "Qwen-7B-QAnything")
+model_path = os.path.join(root_path, "assets", "custom_models")
+VW_3B_MODEL_PATH = os.path.join(model_path, "MiniChat-2-3B")
+VW_7B_MODEL_PATH = os.path.join(model_path, "Qwen-7B-QAnything")
+# 检查目录是否存在，如果不存在则创建
+if not os.path.exists(model_path):
+    os.makedirs(model_path)
 # VM_3B_MODEL = "GeneZC/MiniChat-2-3B"
 VW_3B_MODEL = "netease-youdao/MiniChat-2-3B"
 VW_7B_MODEL = "netease-youdao/Qwen-7B-QAnything"
