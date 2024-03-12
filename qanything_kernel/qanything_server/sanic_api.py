@@ -200,29 +200,6 @@ class LocalDocQAServer:
 
 
 def main():
-    cuda_version = torch.version.cuda
-    if cuda_version is None:
-        raise ValueError("CUDA is not installed.")
-    elif float(cuda_version) < 12:
-        raise ValueError("CUDA version must be 12.0 or higher.")
-
-    python_version = platform.python_version()
-    python3_version = python_version.split('.')[1]
-    os_system = platform.system()
-    system_name = None
-    if os_system == "Windows":
-        system_name = 'win_amd64'
-    elif os_system == "Linux":
-        system_name = 'manylinux_2_28_x86_64'
-    if system_name is not None:
-        if not check_onnx_version("1.17.1"):
-            download_url = f"https://aiinfra.pkgs.visualstudio.com/PublicPackages/_apis/packaging/feeds/9387c3aa-d9ad-4513-968c-383f6f7f53b8/pypi/packages/onnxruntime-gpu/versions/1.17.1/onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl/content"
-            whl_name = f'onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl'
-            download_file(download_url, whl_name)
-            os.system(f"pip install {whl_name}")
-    else:
-        raise ValueError(f"Unsupported system: {os_system}")
-
     default_server.set_base_dir(MILVUS_LITE_LOCATION)
     start = time.time() 
     with default_server:
