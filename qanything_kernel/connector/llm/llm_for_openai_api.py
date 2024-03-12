@@ -129,7 +129,7 @@ class OpenAILLM(BaseAnswer, ABC):
             num_tokens += len(encoding.encode(doc.page_content, disallowed_special=()))
         return num_tokens
 
-    def _call(self, prompt: str, history: List[List[str]], streaming: bool=False) -> str:
+    async def _call(self, prompt: str, history: List[List[str]], streaming: bool=False) -> str:
         messages = []
         for pair in history:
             question, answer = pair
@@ -187,7 +187,7 @@ class OpenAILLM(BaseAnswer, ABC):
             # debug_logger.info("[debug] try-finally")
             yield f"data: [DONE]\n\n"
 
-    def generatorAnswer(self, prompt: str,
+    async def generatorAnswer(self, prompt: str,
                         history: List[List[str]] = [],
                         streaming: bool = False) -> AnswerResult:
 
@@ -200,7 +200,7 @@ class OpenAILLM(BaseAnswer, ABC):
                 
         response = self._call(prompt, history[:-1], streaming)
         complete_answer = ""
-        for response_text in response:
+        async for response_text in response:
 
             if response_text:
                 chunk_str = response_text[6:]
