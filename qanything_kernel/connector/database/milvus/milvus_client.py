@@ -255,7 +255,7 @@ class MilvusClient:
                 else:
                     doc.page_content += " " + group_chunk_map[id]
             doc_score = min([group_scores_map[id] for id in id_seq if id in group_scores_map])
-            doc.metadata["score"] = format(1 - doc_score / math.sqrt(2), '.4f')
+            doc.metadata["score"] = float(format(1 - doc_score / math.sqrt(2), '.4f'))
             doc.metadata["kernel"] = '|'.join([group_chunk_map[id] for id in id_seq if id in group_scores_map])
             new_cands.append(doc)
         return new_cands
