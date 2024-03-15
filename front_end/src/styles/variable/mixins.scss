@@ -1,0 +1,86 @@
+@mixin redBtn {
+  cursor: pointer;
+  &:hover {
+    background-color: $blue1-hover;
+  }
+  &:active {
+    background-color: $blue1-hover;
+  }
+}
+@mixin grid($size: 165px) {
+  display: grid;
+  justify-content: space-between;
+  grid-template-columns: repeat(auto-fill, $size);
+}
+/** 常用flex **/
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+}
+@mixin flex-center-column {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+@mixin flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+/** 宽高简写 **/
+@mixin size($size) {
+  width: $size;
+  height: $size;
+}
+@mixin size-diff($w, $h) {
+  width: $w;
+  height: $h;
+}
+/** 背景图片 **/
+// @mixin background($url, $bwidth: 100%, $bheight: 100%) {
+//   background: url($url) center center no-repeat;
+//   background-size: $bwidth $bheight;
+// }
+/** css居中 **/
+@mixin css-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+/** absolute **/
+@mixin absolute($top: 0, $right: 0, $bottom: 0, $left: 0) {
+  position: absolute;
+  top: $top;
+  right: $right;
+  bottom: $bottom;
+  left: $left;
+}
+/** css单行省略 **/
+@mixin ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@mixin input-focus {
+  border: 2px solid $other2;
+  background: #fff;
+  box-shadow: 0px 4px 12px rgba(58, 136, 255, 0.1);
+  caret-color: $other2;
+  border-right-width: 2px !important;
+}
+
+/* z-index规范 */
+$zindex-under: 1; // 在下方
+$zindex-over: 2; // 在上方
+$zindex-affix: 200; // 固定在页面某个位置
+$zindex-fixed: 400; // 吸顶/吸底
+$zindex-shadow-model: 500; // 遮盖层
+$zindex-loading: 700; // 等待（层级最高展示）
