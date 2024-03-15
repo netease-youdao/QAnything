@@ -2,6 +2,7 @@
 .vscode
 .idea
 .env
+.DS_Store
 user.config
 venv
 __pycache__

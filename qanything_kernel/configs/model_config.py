@@ -1,6 +1,5 @@
 import os
-import logging
-import uuid
+import nltk
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -13,6 +12,11 @@ current_script_path = os.path.abspath(__file__)
 root_path = os.path.dirname(os.path.dirname(os.path.dirname(current_script_path)))
 UPLOAD_ROOT_PATH = os.path.join(root_path, "QANY_DB", "content")
 print("LOCAL DATA PATH:", UPLOAD_ROOT_PATH)
+
+nltk_data_path = os.path.join(root_path, 'qanything_kernel/nltk_data')
+
+# 将你的本地路径添加到nltk的数据路径中
+nltk.data.path.append(nltk_data_path)
 
 # LLM streaming reponse
 STREAMING = True
