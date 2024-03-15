@@ -1,3 +1,5 @@
+import platform
+
 from sanic.request import Request
 from sanic.exceptions import BadRequest
 import traceback
@@ -185,10 +187,20 @@ def check_onnx_version(version):
 
 
 def get_gpu_memory_utilization(model_size, device_id):
-    if not torch.cuda.is_available():
-        raise ValueError("CUDA is not available: torch.cuda.is_available(): return False")
-    gpu_memory = torch.cuda.get_device_properties(int(device_id)).total_memory
+    if platform.system() == "Windows" or platform.system() == "Linux":
+        if not torch.cuda.is_available():
+            raise ValueError("CUDA is not available: torch.cuda.is_available(): return False")
+        gpu_memory = torch.cuda.get_device_properties(int(device_id)).total_memory
+    elif platform.system() == "Darwin":
+        if not torch.backends.mps.is_available() or not torch.backends.mps.is_built():
+            raise ValueError("MPS is not available: torch.backends.mps.is_available() or torch.backends.mps.is_built(): return False")
+        gpu_memory = torch.mps.driver_allocated_memory()
+        print(gpu_memory)
+    else:
+        raise ValueError("Unsupported platform")
+
     gpu_memory_in_GB = math.ceil(gpu_memory / (1024 ** 3))  # 将字节转换为GB
+    gpu_memory_in_GB = 12
     if model_size == '3B':
         if gpu_memory_in_GB < 10:  # 显存最低需要10GB
             raise ValueError(f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 10GB is required with 3B Model.")

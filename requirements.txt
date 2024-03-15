@@ -5,14 +5,15 @@ Pillow==10.2.0
 numpy==1.24.3
 PyMuPDF==1.23.22
 easyocr==1.7.1
-vllm==0.3.3
+transformers==4.38.2
+# vllm==0.3.3
 openai==1.12.0
 concurrent-log-handler==0.9.25
 sentencepiece==0.1.99
 tiktoken==0.4.0
 sanic==23.6.0
 sanic_ext==23.6.0
-milvus==2.3.5
+milvus==2.3.8
 pymilvus==2.3.6
 langchain==0.1.9
 pypinyin==0.50.0

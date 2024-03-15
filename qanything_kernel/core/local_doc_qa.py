@@ -3,7 +3,7 @@ from qanything_kernel.configs.model_config import VECTOR_SEARCH_TOP_K, CHUNK_SIZ
 from typing import List
 from qanything_kernel.connector.embedding.embedding_for_local import YouDaoLocalEmbeddings
 import time
-from qanything_kernel.connector.llm import OpenAILLM, OpenAICustomLLM
+from qanything_kernel.connector.llm import OpenAILLM, LlamaCPPCustomLLM
 from langchain.schema import Document
 from qanything_kernel.connector.database.mysql.mysql_client import KnowledgeBaseManager
 from qanything_kernel.connector.database.milvus.milvus_client import MilvusClient
@@ -57,7 +57,7 @@ class LocalDocQA:
         self.mode = mode
         self.embeddings = YouDaoLocalEmbeddings()
         if self.mode == 'local':
-            self.llm: OpenAICustomLLM = OpenAICustomLLM(args)
+            self.llm: LlamaCPPCustomLLM = LlamaCPPCustomLLM()
         else:
             self.llm: OpenAILLM = OpenAILLM()
         self.milvus_summary = KnowledgeBaseManager()

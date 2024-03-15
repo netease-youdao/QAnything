@@ -13,10 +13,10 @@ from qanything_kernel.connector.llm.base import (BaseAnswer, AnswerResult)
 
 load_dotenv()
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_API_BASE = os.getenv("OPENAI_API_BASE")
-OPENAI_API_MODEL_NAME = os.getenv("OPENAI_API_MODEL_NAME")
-OPENAI_API_CONTEXT_LENGTH = os.getenv("OPENAI_API_CONTEXT_LENGTH")
+OPENAI_API_KEY = 'sk-bxV8EyoVQTGsdw6pgv2nIRdfUakDOLXxt4WkDHGJ9dk1N0ld'
+OPENAI_API_BASE = 'https://aigc-api.hz.netease.com/openai/v1'
+OPENAI_API_MODEL_NAME = 'gpt-3.5-turbo-0613'
+OPENAI_API_CONTEXT_LENGTH = '4096'
 if isinstance(OPENAI_API_CONTEXT_LENGTH, str) and OPENAI_API_CONTEXT_LENGTH != '':
     OPENAI_API_CONTEXT_LENGTH = int(OPENAI_API_CONTEXT_LENGTH)
 debug_logger.info(f"OPENAI_API_BASE = {OPENAI_API_BASE}")
@@ -129,7 +129,7 @@ class OpenAILLM(BaseAnswer, ABC):
             num_tokens += len(encoding.encode(doc.page_content, disallowed_special=()))
         return num_tokens
 
-    def _call(self, prompt: str, history: List[List[str]], streaming: bool=False) -> str:
+    async def _call(self, prompt: str, history: List[List[str]], streaming: bool=False) -> str:
         messages = []
         for pair in history:
             question, answer = pair
@@ -187,7 +187,7 @@ class OpenAILLM(BaseAnswer, ABC):
             # debug_logger.info("[debug] try-finally")
             yield f"data: [DONE]\n\n"
 
-    def generatorAnswer(self, prompt: str,
+    async def generatorAnswer(self, prompt: str,
                         history: List[List[str]] = [],
                         streaming: bool = False) -> AnswerResult:
 
@@ -200,7 +200,7 @@ class OpenAILLM(BaseAnswer, ABC):
                 
         response = self._call(prompt, history[:-1], streaming)
         complete_answer = ""
-        for response_text in response:
+        async for response_text in response:
 
             if response_text:
                 chunk_str = response_text[6:]
