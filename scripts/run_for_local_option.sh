@@ -154,7 +154,7 @@ if ! command -v jq &> /dev/null; then
 fi
 compute_capability=$(jq -r ".[\"$gpu_model\"]" /workspace/qanything_local/scripts/gpu_capabilities.json)
 # 如果compute_capability为空，则说明显卡型号不在gpu_capabilities.json中
-if [ -z "$compute_capability" ]; then
+if [ "$compute_capability" == "null" ]; then
     echo "您的显卡型号 $gpu_model 不在支持列表中，请联系技术支持。"
     exit 1
 fi
