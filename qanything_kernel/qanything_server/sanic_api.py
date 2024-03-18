@@ -65,6 +65,15 @@ parser = ArgumentParser()
 parser = AsyncEngineArgs.add_cli_args(parser)
 parser.add_argument('--host', dest='host', default='0.0.0.0', help='set host for qanything server')
 parser.add_argument('--port', dest='port', default=8777, type=int, help='set port for qanything server')
+# 是否使用GPU
+parser.add_argument('--use_gpu', dest='use_gpu', default=True, type=bool, help='use gpu or not')
+parser.add_argument('--use_openai_api', dest='use_openai_api', default=True, type=bool, help='use openai api or not')
+# OPENAI_API_KEY = 'your-api-key-here'
+# OPENAI_API_BASE = 'https://api.openai.com/v1'
+# OPENAI_API_MODEL_NAME = 'gpt-3.5-turbo'
+# OPENAI_API_CONTEXT_LENGTH = 4096
+parser.add_argument('--openai_api_base', dest='openai_api_base', default='https://api.openai.com/v1', type=str, help='openai api base url')
+parser.add_argument('--openai_api_key', dest='openai_api_key', default='your-api-key-here', type=str, help='openai api key')
 #  必填参数
 parser.add_argument('--model_size', dest='model_size', default=
 '3B', help='set LLM model size for qanything server')

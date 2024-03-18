@@ -24,7 +24,7 @@ if not os.path.exists(LOCAL_RERANK_MODEL_PATH):
 
 
 class LocalRerankBackend:
-    def __init__(self):
+    def __init__(self, use_gpu):
         self.tokenizer = AutoTokenizer.from_pretrained(LOCAL_RERANK_PATH)
         self.overlap_tokens = 80
         self.spe_id = self.tokenizer.sep_token_id
@@ -36,7 +36,10 @@ class LocalRerankBackend:
         # 创建一个ONNX Runtime会话设置，使用GPU执行
         sess_options = onnxruntime.SessionOptions()
         sess_options.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_ENABLE_ALL
-        providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+        if use_gpu:
+            providers = ['CUDAExecutionProvider']
+        else:
+            providers = ['CPUExecutionProvider']
         self.session = onnxruntime.InferenceSession(LOCAL_RERANK_MODEL_PATH, sess_options, providers=providers)
 
     def inference(self, batch):

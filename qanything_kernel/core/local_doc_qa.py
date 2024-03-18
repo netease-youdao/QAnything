@@ -41,6 +41,7 @@ class LocalDocQA:
         self.local_rerank_backend: LocalRerankBackend = None 
         self.ocr_reader: Reader = None
         self.mode: str = None
+        self.use_gpu: bool = True
 
     def get_ocr_result(self, input: dict):
         img_file = input['img64']
@@ -55,14 +56,15 @@ class LocalDocQA:
 
     def init_cfg(self, mode='local', args=None):
         self.mode = mode
-        self.embeddings = YouDaoLocalEmbeddings()
+        self.use_gpu = args.use_gpu
+        self.embeddings = YouDaoLocalEmbeddings(self.use_gpu)
         if self.mode == 'local':
             self.llm: OpenAICustomLLM = OpenAICustomLLM(args)
         else:
             self.llm: OpenAILLM = OpenAILLM()
         self.milvus_summary = KnowledgeBaseManager()
-        self.local_rerank_backend = LocalRerankBackend()
-        self.ocr_reader = easyocr.Reader(['ch_sim', 'en'])
+        self.local_rerank_backend = LocalRerankBackend(self.use_gpu)
+        self.ocr_reader = easyocr.Reader(['ch_sim', 'en'], gpu=self.use_gpu)
 
     def create_milvus_collection(self, user_id, kb_id, kb_name):
         milvus_kb = MilvusClient(self.mode, user_id, [kb_id])

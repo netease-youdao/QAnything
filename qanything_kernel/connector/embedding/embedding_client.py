@@ -12,12 +12,17 @@ class EmbeddingClient:
         self,
         model_path: str,
         tokenizer_path: str,
+        use_gpu: bool
     ):
         self._model_path = model_path
         self._tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
         sess_options = SessionOptions()
         sess_options.graph_optimization_level = GraphOptimizationLevel.ORT_ENABLE_ALL
-        self._session = InferenceSession(model_path, sess_options=sess_options, providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+        if use_gpu:
+            providers = ['CUDAExecutionProvider']
+        else:
+            providers = ['CPUExecutionProvider']
+        self._session = InferenceSession(model_path, sess_options=sess_options, providers=providers)
         debug_logger.info(f"EmbeddingClient: model_path: {model_path}, tokenizer_path: {tokenizer_path}")
 
     def get_embedding(self, sentences, max_length=512):

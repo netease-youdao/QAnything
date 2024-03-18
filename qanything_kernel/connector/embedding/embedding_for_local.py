@@ -23,18 +23,12 @@ if not os.path.exists(LOCAL_EMBED_MODEL_PATH):
     debug_logger.info(f"模型下载完毕！cache地址：{cache_dir}, 软链接地址：{LOCAL_EMBED_PATH}")
 
 
-
-embedding_client = EmbeddingClient(
-    model_path=LOCAL_EMBED_MODEL_PATH,
-    tokenizer_path=LOCAL_EMBED_PATH)
-
-
 class YouDaoLocalEmbeddings:
-    def __init__(self):
-        pass
+    def __init__(self, use_gpu):
+        self.embedding_client = EmbeddingClient(model_path=LOCAL_EMBED_MODEL_PATH, tokenizer_path=LOCAL_EMBED_PATH, use_gpu=use_gpu)
 
     def _get_embedding(self, queries):
-        embeddings = embedding_client.get_embedding(queries, max_length=LOCAL_EMBED_MAX_LENGTH)
+        embeddings = self.embedding_client.get_embedding(queries, max_length=LOCAL_EMBED_MAX_LENGTH)
         return embeddings
 
     def _get_len_safe_embeddings(self, texts: List[str]) -> List[List[float]]:
@@ -55,4 +49,4 @@ class YouDaoLocalEmbeddings:
 
     @property
     def embed_version(self):
-        return embedding_client.getModelVersion()
+        return self.embedding_client.getModelVersion()
