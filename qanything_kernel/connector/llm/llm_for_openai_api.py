@@ -13,19 +13,19 @@ from qanything_kernel.connector.llm.base import (BaseAnswer, AnswerResult)
 
 load_dotenv()
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_API_BASE = os.getenv("OPENAI_API_BASE")
-OPENAI_API_MODEL_NAME = os.getenv("OPENAI_API_MODEL_NAME")
-OPENAI_API_CONTEXT_LENGTH = os.getenv("OPENAI_API_CONTEXT_LENGTH")
-if isinstance(OPENAI_API_CONTEXT_LENGTH, str) and OPENAI_API_CONTEXT_LENGTH != '':
-    OPENAI_API_CONTEXT_LENGTH = int(OPENAI_API_CONTEXT_LENGTH)
-debug_logger.info(f"OPENAI_API_BASE = {OPENAI_API_BASE}")
-debug_logger.info(f"OPENAI_API_MODEL_NAME = {OPENAI_API_MODEL_NAME}")
+# OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# OPENAI_API_BASE = os.getenv("OPENAI_API_BASE")
+# OPENAI_API_MODEL_NAME = os.getenv("OPENAI_API_MODEL_NAME")
+# OPENAI_API_CONTEXT_LENGTH = os.getenv("OPENAI_API_CONTEXT_LENGTH")
+# if isinstance(OPENAI_API_CONTEXT_LENGTH, str) and OPENAI_API_CONTEXT_LENGTH != '':
+#     OPENAI_API_CONTEXT_LENGTH = int(OPENAI_API_CONTEXT_LENGTH)
+# debug_logger.info(f"OPENAI_API_BASE = {OPENAI_API_BASE}")
+# debug_logger.info(f"OPENAI_API_MODEL_NAME = {OPENAI_API_MODEL_NAME}")
 
 
 class OpenAILLM(BaseAnswer, ABC):
-    model: str = OPENAI_API_MODEL_NAME
-    token_window: int = OPENAI_API_CONTEXT_LENGTH
+    model: str = None
+    token_window: int = None
     max_token: int = 512
     offcut_token: int = 50
     truncate_len: int = 50
@@ -35,9 +35,15 @@ class OpenAILLM(BaseAnswer, ABC):
     history: List[List[str]] = []
     history_len: int = 2
 
-    def __init__(self):
+    def __init__(self, args):
         super().__init__()
-        self.client = OpenAI(base_url=OPENAI_API_BASE, api_key=OPENAI_API_KEY)
+        base_url = args.openai_api_base
+        api_key = args.openai_api_key
+        self.client = OpenAI(base_url=base_url, api_key=api_key)
+        self.model = args.openai_api_model_name
+        self.token_window = int(args.openai_api_context_length)
+        debug_logger.info(f"OPENAI_API_BASE = {base_url}")
+        debug_logger.info(f"OPENAI_API_MODEL_NAME = {self.model}")
 
     @property
     def _llm_type(self) -> str:

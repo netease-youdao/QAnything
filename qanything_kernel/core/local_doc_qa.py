@@ -54,14 +54,13 @@ class LocalDocQA:
         res = [line.replace(' ', '') for line in ocr_res if line]
         return res
 
-    def init_cfg(self, mode='local', args=None):
-        self.mode = mode
+    def init_cfg(self, args=None):
         self.use_gpu = args.use_gpu
         self.embeddings = YouDaoLocalEmbeddings(self.use_gpu)
-        if self.mode == 'local':
-            self.llm: OpenAICustomLLM = OpenAICustomLLM(args)
+        if args.use_openai_api:
+            self.llm: OpenAILLM = OpenAILLM(args)
         else:
-            self.llm: OpenAILLM = OpenAILLM()
+            self.llm: OpenAICustomLLM = OpenAICustomLLM(args)
         self.milvus_summary = KnowledgeBaseManager()
         self.local_rerank_backend = LocalRerankBackend(self.use_gpu)
         self.ocr_reader = easyocr.Reader(['ch_sim', 'en'], gpu=self.use_gpu)

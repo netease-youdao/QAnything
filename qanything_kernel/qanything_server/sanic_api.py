@@ -67,19 +67,23 @@ parser.add_argument('--host', dest='host', default='0.0.0.0', help='set host for
 parser.add_argument('--port', dest='port', default=8777, type=int, help='set port for qanything server')
 # 是否使用GPU
 parser.add_argument('--use_gpu', dest='use_gpu', default=True, type=bool, help='use gpu or not')
-parser.add_argument('--use_openai_api', dest='use_openai_api', default=True, type=bool, help='use openai api or not')
+parser.add_argument('--use_openai_api', dest='use_openai_api', default=False, type=bool, help='use openai api or not')
 # OPENAI_API_KEY = 'your-api-key-here'
 # OPENAI_API_BASE = 'https://api.openai.com/v1'
 # OPENAI_API_MODEL_NAME = 'gpt-3.5-turbo'
 # OPENAI_API_CONTEXT_LENGTH = 4096
 parser.add_argument('--openai_api_base', dest='openai_api_base', default='https://api.openai.com/v1', type=str, help='openai api base url')
 parser.add_argument('--openai_api_key', dest='openai_api_key', default='your-api-key-here', type=str, help='openai api key')
+parser.add_argument('--openai_api_model', dest='openai_api_model', default='gpt-3.5-turbo-1106', type=str, help='openai api model')
+parser.add_argument('--openai_api_content_length', dest='openai_api_content_length', default='4096', type=str, help='openai api content length')
 #  必填参数
 parser.add_argument('--model_size', dest='model_size', default=
 '3B', help='set LLM model size for qanything server')
 parser.add_argument('--device_id', dest='device_id', default=
 '0', help='cuda device id for qanything server')
 args = parser.parse_args()
+
+print('use_openai_api:', args.use_openai_api)
 
 model_config.CUDA_DEVICE = args.device_id
 os.environ["CUDA_VISIBLE_DEVICES"] = args.device_id
@@ -98,7 +102,7 @@ else:
     raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 7B")
 
 # 如果模型不存在, 下载模型
-if not os.path.exists(args.model):
+if not args.use_openai_api and not os.path.exists(args.model):
     debug_logger.info(f'开始下载大模型：{model_id}')
     cache_dir = snapshot_download(model_id=model_id)
     output = subprocess.check_output(['ln', '-s', cache_dir, args.model], text=True)
@@ -164,7 +168,7 @@ async def handle_options_request(request):
 async def init_local_doc_qa(app, loop):
     start = time.time()
     local_doc_qa = LocalDocQA()
-    local_doc_qa.init_cfg(mode='local', args=args)
+    local_doc_qa.init_cfg(args=args)
     debug_logger.info(f"LocalDocQA started in {time.time() - start} seconds.")
     app.ctx.local_doc_qa = local_doc_qa
 
