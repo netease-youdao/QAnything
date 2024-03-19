@@ -74,8 +74,8 @@ parser.add_argument('--use_openai_api', dest='use_openai_api', default=False, ty
 # OPENAI_API_CONTEXT_LENGTH = 4096
 parser.add_argument('--openai_api_base', dest='openai_api_base', default='https://api.openai.com/v1', type=str, help='openai api base url')
 parser.add_argument('--openai_api_key', dest='openai_api_key', default='your-api-key-here', type=str, help='openai api key')
-parser.add_argument('--openai_api_model', dest='openai_api_model', default='gpt-3.5-turbo-1106', type=str, help='openai api model')
-parser.add_argument('--openai_api_content_length', dest='openai_api_content_length', default='4096', type=str, help='openai api content length')
+parser.add_argument('--openai_api_model_name', dest='openai_api_model_name', default='gpt-3.5-turbo-1106', type=str, help='openai api model name')
+parser.add_argument('--openai_api_context_length', dest='openai_api_context_length', default='4096', type=str, help='openai api content length')
 #  必填参数
 parser.add_argument('--model_size', dest='model_size', default=
 '3B', help='set LLM model size for qanything server')
@@ -88,29 +88,33 @@ print('use_openai_api:', args.use_openai_api)
 model_config.CUDA_DEVICE = args.device_id
 os.environ["CUDA_VISIBLE_DEVICES"] = args.device_id
 
-model_size = args.model_size
 model_id = None
-args.gpu_memory_utilization = get_gpu_memory_utilization(model_size, args.device_id)
-debug_logger.info(f"GPU memory utilization: {args.gpu_memory_utilization}")
-if model_size == '3B':
-    args.model = VW_3B_MODEL_PATH
-    model_id = VW_3B_MODEL
-elif model_size == '7B':
-    args.model = VW_7B_MODEL_PATH
-    model_id = VW_7B_MODEL
-else:
-    raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 7B")
+if not args.use_openai_api:
+    model_size = args.model_size
+    args.gpu_memory_utilization = get_gpu_memory_utilization(model_size, args.device_id)
+    debug_logger.info(f"GPU memory utilization: {args.gpu_memory_utilization}")
+    if model_size == '3B':
+        args.model = VW_3B_MODEL_PATH
+        model_id = VW_3B_MODEL
+    elif model_size == '7B':
+        args.model = VW_7B_MODEL_PATH
+        model_id = VW_7B_MODEL
+    else:
+        raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 7B")
 
 # 如果模型不存在, 下载模型
-if not args.use_openai_api and not os.path.exists(args.model):
+if args.use_openai_api:
+    debug_logger.info(f'使用openai api {args.openai_api_model_name} 无需下载大模型')
+elif not os.path.exists(args.model):
     debug_logger.info(f'开始下载大模型：{model_id}')
     cache_dir = snapshot_download(model_id=model_id)
     output = subprocess.check_output(['ln', '-s', cache_dir, args.model], text=True)
     debug_logger.info(f'模型下载完毕！cache地址：{cache_dir}, 软链接地址：{args.model}')
+    debug_logger.info(f"CUDA_DEVICE: {model_config.CUDA_DEVICE}")
 else:
     debug_logger.info(f'{args.model}路径已存在，不再重复下载大模型（如果下载出错可手动删除此目录）')
+    debug_logger.info(f"CUDA_DEVICE: {model_config.CUDA_DEVICE}")
 
-debug_logger.info(f"CUDA_DEVICE: {model_config.CUDA_DEVICE}")
 
 
 WorkerManager.THRESHOLD = 6000
