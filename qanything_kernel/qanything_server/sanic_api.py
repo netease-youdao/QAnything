@@ -66,12 +66,8 @@ parser = AsyncEngineArgs.add_cli_args(parser)
 parser.add_argument('--host', dest='host', default='0.0.0.0', help='set host for qanything server')
 parser.add_argument('--port', dest='port', default=8777, type=int, help='set port for qanything server')
 # 是否使用GPU
-parser.add_argument('--use_gpu', dest='use_gpu', default=True, type=bool, help='use gpu or not')
-parser.add_argument('--use_openai_api', dest='use_openai_api', default=False, type=bool, help='use openai api or not')
-# OPENAI_API_KEY = 'your-api-key-here'
-# OPENAI_API_BASE = 'https://api.openai.com/v1'
-# OPENAI_API_MODEL_NAME = 'gpt-3.5-turbo'
-# OPENAI_API_CONTEXT_LENGTH = 4096
+parser.add_argument('--use_gpu', dest='use_gpu', action='store_true', help='use gpu')
+parser.add_argument('--use_openai_api', dest='use_openai_api', action='store_true', help='use openai api')
 parser.add_argument('--openai_api_base', dest='openai_api_base', default='https://api.openai.com/v1', type=str, help='openai api base url')
 parser.add_argument('--openai_api_key', dest='openai_api_key', default='your-api-key-here', type=str, help='openai api key')
 parser.add_argument('--openai_api_model_name', dest='openai_api_model_name', default='gpt-3.5-turbo-1106', type=str, help='openai api model name')
@@ -83,10 +79,12 @@ parser.add_argument('--device_id', dest='device_id', default=
 '0', help='cuda device id for qanything server')
 args = parser.parse_args()
 
-print('use_openai_api:', args.use_openai_api)
+print('use_gpu:', args.use_gpu, flush=True)
+print('use_openai_api:', args.use_openai_api, flush=True)
 
-model_config.CUDA_DEVICE = args.device_id
-os.environ["CUDA_VISIBLE_DEVICES"] = args.device_id
+if args.use_gpu:
+    model_config.CUDA_DEVICE = args.device_id
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.device_id
 
 model_id = None
 if not args.use_openai_api:

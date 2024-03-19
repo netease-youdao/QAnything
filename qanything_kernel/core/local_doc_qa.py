@@ -12,8 +12,6 @@ import easyocr
 from easyocr import Reader
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from .local_file import LocalFile
-from qanything_kernel.utils.general_utils import get_time
-import requests
 import traceback
 import logging
 import base64

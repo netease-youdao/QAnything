@@ -15,11 +15,15 @@ class UnstructuredPaddleImageLoader(UnstructuredFileLoader):
             self,
             file_path: Union[str, List[str]],
             ocr_engine: Callable,
+            use_gpu: bool = True,
             mode: str = "single",
             **unstructured_kwargs: Any,
     ):
         """Initialize with file path."""
         self.ocr_engine = ocr_engine
+        self.use_gpu = use_gpu
+        if not self.use_gpu:
+            os.environ["CUDA_VISIBLE_DEVICES"] = ""
         super().__init__(file_path=file_path, mode=mode, **unstructured_kwargs)
 
     def _get_elements(self) -> List:

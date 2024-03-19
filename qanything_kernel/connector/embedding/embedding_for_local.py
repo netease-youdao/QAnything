@@ -25,7 +25,9 @@ if not os.path.exists(LOCAL_EMBED_MODEL_PATH):
 
 class YouDaoLocalEmbeddings:
     def __init__(self, use_gpu):
-        self.embedding_client = EmbeddingClient(model_path=LOCAL_EMBED_MODEL_PATH, tokenizer_path=LOCAL_EMBED_PATH, use_gpu=use_gpu)
+        self.use_gpu = use_gpu
+        self.embedding_client = EmbeddingClient(model_path=LOCAL_EMBED_MODEL_PATH, tokenizer_path=LOCAL_EMBED_PATH,
+                                                use_gpu=self.use_gpu)
 
     def _get_embedding(self, queries):
         embeddings = self.embedding_client.get_embedding(queries, max_length=LOCAL_EMBED_MAX_LENGTH)
