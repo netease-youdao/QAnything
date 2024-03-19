@@ -1,11 +1,8 @@
-import os
 import json
 import requests
-import time
-import random
-import string
-import argparse
+import sys
 
+kb_id = sys.argv[1]
 def stream_requests(data_raw):
     url = 'http://0.0.0.0:8777/api/local_doc_qa/local_doc_chat'
     response = requests.post(
@@ -20,7 +17,7 @@ def stream_requests(data_raw):
 
 def test():
     data_raw = {
-      "kb_ids": ["KBccd94e086e8d458fa1ed6ca3a93655d9"],
+      "kb_ids": [kb_id],
       "question": "韦小宝身份证号？",
       "user_id": "zzp",
       "streaming": True,
