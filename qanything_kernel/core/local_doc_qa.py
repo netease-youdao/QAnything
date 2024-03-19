@@ -1,3 +1,5 @@
+import platform
+
 from qanything_kernel.configs.model_config import VECTOR_SEARCH_TOP_K, CHUNK_SIZE, VECTOR_SEARCH_SCORE_THRESHOLD, \
     PROMPT_TEMPLATE, STREAMING
 from typing import List
@@ -7,7 +9,6 @@ from qanything_kernel.connector.llm import OpenAILLM, LlamaCPPCustomLLM
 from langchain.schema import Document
 from qanything_kernel.connector.database.mysql.mysql_client import KnowledgeBaseManager
 from qanything_kernel.connector.database.milvus.milvus_client import MilvusClient
-from qanything_kernel.connector.rerank.rerank_server_backend import LocalRerankBackend
 import easyocr
 from easyocr import Reader
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger
@@ -18,6 +19,13 @@ import traceback
 import logging
 import base64
 import numpy as np
+
+if platform.system() == 'Linux':
+    from qanything_kernel.connector.rerank.rerank_client_onnx import RerankONNXBackend
+elif platform.system() == 'Darwin':
+    from qanything_kernel.connector.rerank.rerank_client_torch import RerankTorchBackend
+else:
+    raise NotImplementedError('Unsupported operating system: {}'.format(platform.system()))
 
 logging.basicConfig(level=logging.INFO)
 
@@ -38,7 +46,7 @@ class LocalDocQA:
         self.score_threshold: int = VECTOR_SEARCH_SCORE_THRESHOLD
         self.milvus_kbs: List[MilvusClient] = []
         self.milvus_summary: KnowledgeBaseManager = None
-        self.local_rerank_backend: LocalRerankBackend = None 
+        self.local_rerank_backend: object = None
         self.ocr_reader: Reader = None
         self.mode: str = None
 
@@ -57,11 +65,17 @@ class LocalDocQA:
         self.mode = mode
         self.embeddings = YouDaoLocalEmbeddings()
         if self.mode == 'local':
-            self.llm: LlamaCPPCustomLLM = LlamaCPPCustomLLM()
+            if platform.system() == 'Linux':
+                self.llm: OpenAICustomLLM = OpenAICustomLLM()
+                self.local_rerank_backend = RerankONNXBackend()
+            elif platform.system() == 'Darwin':
+                self.llm: LlamaCPPCustomLLM = LlamaCPPCustomLLM()
+                self.local_rerank_backend = RerankTorchBackend()
+            else:
+                raise NotImplementedError('Unsupported platform')
         else:
             self.llm: OpenAILLM = OpenAILLM()
         self.milvus_summary = KnowledgeBaseManager()
-        self.local_rerank_backend = LocalRerankBackend()
         self.ocr_reader = easyocr.Reader(['ch_sim', 'en'])
 
     def create_milvus_collection(self, user_id, kb_id, kb_name):

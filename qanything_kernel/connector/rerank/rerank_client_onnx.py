@@ -1,6 +1,7 @@
 import onnxruntime
 import time
 from transformers import AutoTokenizer
+from .base import RerankBase
 from copy import deepcopy
 from typing import List
 from qanything_kernel.configs.model_config import LOCAL_RERANK_MODEL_PATH, LOCAL_RERANK_MAX_LENGTH, LOCAL_RERANK_MODEL_NAME, \
@@ -23,8 +24,9 @@ if not os.path.exists(LOCAL_RERANK_MODEL_PATH):
     debug_logger.info(f"模型下载完毕！cache地址：{cache_dir}, 软链接地址：{LOCAL_RERANK_PATH}")
 
 
-class LocalRerankBackend:
+class RerankONNXBackend(RerankBase):
     def __init__(self):
+        super().__init__()
         self.tokenizer = AutoTokenizer.from_pretrained(LOCAL_RERANK_PATH)
         self.overlap_tokens = 80
         self.spe_id = self.tokenizer.sep_token_id
@@ -48,24 +50,15 @@ class LocalRerankBackend:
             inputs[self.session.get_inputs()[2].name] = batch['token_type_ids']
         
         # 执行推理 输出为logits
+        start_time = time.time()
         result = self.session.run(None, inputs)  # None表示获取所有输出
+        debug_logger.info(f"rerank infer time: {time.time() - start_time}")
         # debug_logger.info(f"rerank result: {result}")
         
         # 应用sigmoid函数
         sigmoid_scores = 1 / (1 + np.exp(-np.array(result[0])))
         
         return sigmoid_scores.reshape(-1).tolist()
-
-    def merge_inputs(self, chunk1_raw, chunk2):
-        chunk1 = deepcopy(chunk1_raw)
-        chunk1['input_ids'].extend(chunk2['input_ids'])
-        chunk1['input_ids'].append(self.spe_id)
-        chunk1['attention_mask'].extend(chunk2['attention_mask'])
-        chunk1['attention_mask'].append(chunk2['attention_mask'][0])
-        if 'token_type_ids' in chunk1:
-            token_type_ids = [1 for _ in range(len(chunk2['token_type_ids']) + 1)]
-            chunk1['token_type_ids'].extend(token_type_ids)
-        return chunk1
 
     def tokenize_preproc(self,
                          query: str,

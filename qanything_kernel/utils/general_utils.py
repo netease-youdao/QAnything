@@ -200,15 +200,17 @@ def get_gpu_memory_utilization(model_size, device_id):
         raise ValueError("Unsupported platform")
 
     gpu_memory_in_GB = math.ceil(gpu_memory / (1024 ** 3))  # 将字节转换为GB
-    gpu_memory_in_GB = 12
-    if model_size == '3B':
-        if gpu_memory_in_GB < 10:  # 显存最低需要10GB
-            raise ValueError(f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 10GB is required with 3B Model.")
-        gpu_memory_utilization = round(8 / gpu_memory_in_GB, 2)
-    elif model_size == '7B':
-        if gpu_memory_in_GB < 20:  # 显存最低需要20GB
-            raise ValueError(f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 20GB is required with 7B Model.")
-        gpu_memory_utilization = round(16 / gpu_memory_in_GB, 2)
-    else:
-        raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 7B")
+    gpu_memory_utilization = 0
+
+    if platform.system() == "Windows" or platform.system() == "Linux":
+        if model_size == '3B':
+            if gpu_memory_in_GB < 10:  # 显存最低需要10GB
+                raise ValueError(f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 10GB is required with 3B Model.")
+            gpu_memory_utilization = round(8 / gpu_memory_in_GB, 2)
+        elif model_size == '7B':
+            if gpu_memory_in_GB < 20:  # 显存最低需要20GB
+                raise ValueError(f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 20GB is required with 7B Model.")
+            gpu_memory_utilization = round(16 / gpu_memory_in_GB, 2)
+        else:
+            raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 7B")
     return gpu_memory_utilization
