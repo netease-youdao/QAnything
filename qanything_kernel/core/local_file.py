@@ -19,7 +19,7 @@ import pandas as pd
 import os
 
 text_splitter = RecursiveCharacterTextSplitter(
-    separators=["\n", ".", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " "],
+    separators=["\n\n", "\n", ".", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
     chunk_size=400,
     length_function=num_tokens,
 )
@@ -33,6 +33,7 @@ class LocalFile:
         self.docs: List[Document] = []
         self.embs = []
         self.emb_infer = embedding
+        self.use_gpu = embedding.use_gpu
         self.url = None
         self.in_milvus = in_milvus
         self.file_name = file_name
@@ -70,12 +71,12 @@ class LocalFile:
             texts_splitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
             docs = loader.load_and_split(texts_splitter)
         elif self.file_path.lower().endswith(".pdf"):
-            loader = UnstructuredPaddlePDFLoader(self.file_path, ocr_engine)
+            loader = UnstructuredPaddlePDFLoader(self.file_path, ocr_engine, self.use_gpu, mode="elements")
             texts_splitter = ChineseTextSplitter(pdf=True, sentence_size=sentence_size)
             docs = loader.load_and_split(texts_splitter)
         elif self.file_path.lower().endswith(".jpg") or self.file_path.lower().endswith(
                 ".png") or self.file_path.lower().endswith(".jpeg"):
-            loader = UnstructuredPaddleImageLoader(self.file_path, ocr_engine, mode="elements")
+            loader = UnstructuredPaddleImageLoader(self.file_path, ocr_engine, self.use_gpu, mode="elements")
             texts_splitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
             docs = loader.load_and_split(text_splitter=texts_splitter)
         elif self.file_path.lower().endswith(".docx"):
@@ -106,9 +107,10 @@ class LocalFile:
 
         # 重构docs，如果doc的文本长度大于800tokens，则利用text_splitter将其拆分成多个doc
         # text_splitter: RecursiveCharacterTextSplitter
-        debug_logger.info(f"before 2nd split doc lens: {len(docs)}")
-        docs = text_splitter.split_documents(docs)
-        debug_logger.info(f"after 2nd split doc lens: {len(docs)}")
+        if not self.file_path.lower().endswith(".csv") and not self.file_path.lower().endswith(".xlsx"):
+            debug_logger.info(f"before 2nd split doc lens: {len(docs)}")
+            docs = text_splitter.split_documents(docs)
+            debug_logger.info(f"after 2nd split doc lens: {len(docs)}")
 
         # 这里给每个docs片段的metadata里注入file_id
         for doc in docs:
