@@ -125,8 +125,9 @@ elif not os.path.exists(args.model):
         cache_dir = model_file_download(**model_download_params)
     else:
         cache_dir = snapshot_download(**model_download_params)
-    output = subprocess.check_output(['ln', '-s', cache_dir, args.model], text=True)
-    debug_logger.info(f'模型下载完毕！cache地址：{cache_dir}, 软链接地址：{args.model}')
+    # output = subprocess.check_output(['ln', '-s', cache_dir, args.model], text=True)
+    # debug_logger.info(f'模型下载完毕！cache地址：{cache_dir}, 软链接地址：{args.model}')
+    debug_logger.info(f'模型下载完毕！{cache_dir}')
     debug_logger.info(f"CUDA_DEVICE: {model_config.CUDA_DEVICE}")
 else:
     debug_logger.info(f'{args.model}路径已存在，不再重复下载大模型（如果下载出错可手动删除此目录）')
