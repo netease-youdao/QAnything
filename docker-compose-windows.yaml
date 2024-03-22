@@ -122,6 +122,7 @@ services:
     depends_on:
       - "standalone"
       - "mysql"
+      - "elasticsearch"
     tty: true
     stdin_open: true
 
