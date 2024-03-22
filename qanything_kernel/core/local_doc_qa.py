@@ -44,23 +44,26 @@ class LocalDocQA:
 
     def init_cfg(self, args=None):
         self.use_cpu = args.use_cpu
-        if args.use_openai_api:
-            self.llm: OpenAILLM = OpenAILLM(args)
-        else:
-            if platform.system() == 'Linux':
+        if platform.system() == 'Linux':
+            if args.use_openai_api:
+                self.llm: OpenAILLM = OpenAILLM(args)
+            else:
                 from qanything_kernel.connector.llm import OpenAICustomLLM
-                from qanything_kernel.connector.rerank.rerank_onnx_backend import RerankOnnxBackend
-                from qanything_kernel.connector.embedding.embedding_onnx_backend import EmbeddingOnnxBackend
                 self.llm: OpenAICustomLLM = OpenAICustomLLM(args)
-                self.local_rerank_backend: RerankOnnxBackend = RerankOnnxBackend(self.use_cpu)
-                self.embeddings: EmbeddingOnnxBackend = EmbeddingOnnxBackend(self.use_cpu)
+            from qanything_kernel.connector.rerank.rerank_onnx_backend import RerankOnnxBackend
+            from qanything_kernel.connector.embedding.embedding_onnx_backend import EmbeddingOnnxBackend
+            self.local_rerank_backend: RerankOnnxBackend = RerankOnnxBackend(self.use_cpu)
+            self.embeddings: EmbeddingOnnxBackend = EmbeddingOnnxBackend(self.use_cpu)
+        else:
+            if args.use_openai_api:
+                self.llm: OpenAILLM = OpenAILLM(args)
             else:
                 from qanything_kernel.connector.llm import LlamaCPPCustomLLM
-                from qanything_kernel.connector.rerank.rerank_torch_backend import RerankTorchBackend
-                from qanything_kernel.connector.embedding.embedding_torch_backend import EmbeddingTorchBackend
                 self.llm: LlamaCPPCustomLLM = LlamaCPPCustomLLM(args)
-                self.local_rerank_backend: RerankTorchBackend = RerankTorchBackend(self.use_cpu)
-                self.embeddings: EmbeddingTorchBackend = EmbeddingTorchBackend(self.use_cpu)
+            from qanything_kernel.connector.rerank.rerank_torch_backend import RerankTorchBackend
+            from qanything_kernel.connector.embedding.embedding_torch_backend import EmbeddingTorchBackend
+            self.local_rerank_backend: RerankTorchBackend = RerankTorchBackend(self.use_cpu)
+            self.embeddings: EmbeddingTorchBackend = EmbeddingTorchBackend(self.use_cpu)
         self.milvus_summary = KnowledgeBaseManager()
         self.ocr_reader = easyocr.Reader(['ch_sim', 'en'], gpu=not self.use_cpu)
 

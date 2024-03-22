@@ -42,8 +42,11 @@ class OpenAILLM(BaseAnswer, ABC):
         self.client = OpenAI(base_url=base_url, api_key=api_key)
         self.model = args.openai_api_model_name
         self.token_window = int(args.openai_api_context_length)
+        debug_logger.info(f"OPENAI_API_KEY = {api_key}")
         debug_logger.info(f"OPENAI_API_BASE = {base_url}")
         debug_logger.info(f"OPENAI_API_MODEL_NAME = {self.model}")
+        debug_logger.info(f"OPENAI_API_CONTEXT_LENGTH = {self.token_window}")
+
 
     @property
     def _llm_type(self) -> str:

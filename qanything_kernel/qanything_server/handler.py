@@ -380,8 +380,8 @@ async def local_doc_chat(req: request):
                             "code": 200,
                             "msg": "success",
                             "question": question,
-                            "response":next_history[-1][1],
-                            # "response": "",
+                            # "response":next_history[-1][1],
+                            "response": "",
                             "history": next_history,
                             "source_documents": source_documents,
                         }
