@@ -33,7 +33,7 @@ class LocalFile:
         self.docs: List[Document] = []
         self.embs = []
         self.emb_infer = embedding
-        self.use_gpu = embedding.use_gpu
+        self.use_cpu = embedding.use_cpu
         self.url = None
         self.in_milvus = in_milvus
         self.file_name = file_name
@@ -71,12 +71,12 @@ class LocalFile:
             texts_splitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
             docs = loader.load_and_split(texts_splitter)
         elif self.file_path.lower().endswith(".pdf"):
-            loader = UnstructuredPaddlePDFLoader(self.file_path, ocr_engine, self.use_gpu, mode="elements")
+            loader = UnstructuredPaddlePDFLoader(self.file_path, ocr_engine, self.use_cpu, mode="elements")
             texts_splitter = ChineseTextSplitter(pdf=True, sentence_size=sentence_size)
             docs = loader.load_and_split(texts_splitter)
         elif self.file_path.lower().endswith(".jpg") or self.file_path.lower().endswith(
                 ".png") or self.file_path.lower().endswith(".jpeg"):
-            loader = UnstructuredPaddleImageLoader(self.file_path, ocr_engine, self.use_gpu, mode="elements")
+            loader = UnstructuredPaddleImageLoader(self.file_path, ocr_engine, self.use_cpu, mode="elements")
             texts_splitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
             docs = loader.load_and_split(text_splitter=texts_splitter)
         elif self.file_path.lower().endswith(".docx"):
@@ -124,4 +124,4 @@ class LocalFile:
         self.docs = docs
 
     def create_embedding(self):
-        self.embs = self.emb_infer._get_len_safe_embeddings([doc.page_content for doc in self.docs])
+        self.embs = self.emb_infer.get_len_safe_embeddings([doc.page_content for doc in self.docs])

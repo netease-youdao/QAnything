@@ -12,10 +12,13 @@ from tqdm import tqdm
 import pkg_resources
 import torch
 import math
+import packaging.version
+import platform
+from qanything_kernel.utils.custom_log import debug_logger
 
 __all__ = ['write_check_file', 'isURL', 'format_source_documents', 'get_time', 'safe_get', 'truncate_filename',
            'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens', 'download_file', 
-           'get_gpu_memory_utilization', 'check_onnx_version']
+           'get_gpu_memory_utilization', 'check_package_version']
 
 
 def get_invalid_user_id_msg(user_id):
@@ -170,17 +173,17 @@ def download_file(url, filename):
         print("ERROR, something went wrong")
 
 
-def check_onnx_version(version):
+def check_package_version(package_name, version):
     try:
-        onnx_version = pkg_resources.get_distribution("onnxruntime-gpu").version
-        if onnx_version == version:
-            print(f"onnxruntime-gpu {version} 已经安装。")
+        package_version = pkg_resources.get_distribution(package_name).version
+        if packaging.version.parse(package_version) >= packaging.version.parse(version):
+            print(f"{package_name} {package_version} 已经安装。")
             return True
         else:
-            print(f"onnxruntime-gpu 版本过低，当前版本为 {onnx_version}，需要安装 {version} 版本。")
+            print(f"{package_name} 版本过低，当前版本为 {package_version}，需要安装 {version} 版本。")
             return False
     except pkg_resources.DistributionNotFound:
-        print(f"onnxruntime-gpu {version} 未安装。")
+        print(f"{package_name} 未安装。")
     return False
 
 
@@ -189,6 +192,7 @@ def get_gpu_memory_utilization(model_size, device_id):
         raise ValueError("CUDA is not available: torch.cuda.is_available(): return False")
     gpu_memory = torch.cuda.get_device_properties(int(device_id)).total_memory
     gpu_memory_in_GB = math.ceil(gpu_memory / (1024 ** 3))  # 将字节转换为GB
+    debug_logger.info(f"GPU memory: {gpu_memory_in_GB}GB")
     if model_size == '3B':
         if gpu_memory_in_GB < 10:  # 显存最低需要10GB
             raise ValueError(f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 10GB is required with 3B Model.")

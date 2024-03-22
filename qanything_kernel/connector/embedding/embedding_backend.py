@@ -1,14 +1,14 @@
 """Wrapper around YouDao embedding models."""
 from typing import List
-
-from qanything_kernel.connector.embedding.embedding_client import EmbeddingClient
-from qanything_kernel.configs.model_config import LOCAL_EMBED_MODEL_PATH, LOCAL_EMBED_MAX_LENGTH, LOCAL_EMBED_BATCH, LOCAL_EMBED_PATH, LOCAL_EMBED_REPO
+from qanything_kernel.configs.model_config import LOCAL_EMBED_MODEL_PATH, LOCAL_EMBED_MAX_LENGTH, LOCAL_EMBED_BATCH, \
+    LOCAL_EMBED_PATH, LOCAL_EMBED_REPO
 from qanything_kernel.utils.custom_log import debug_logger
+from transformers import AutoTokenizer
 import concurrent.futures
-from tqdm import tqdm 
-# from huggingface_hub import snapshot_download
+from tqdm import tqdm
 from modelscope import snapshot_download
 import subprocess
+from abc import ABC, abstractmethod
 
 import os
 
@@ -23,17 +23,18 @@ if not os.path.exists(LOCAL_EMBED_MODEL_PATH):
     debug_logger.info(f"模型下载完毕！cache地址：{cache_dir}, 软链接地址：{LOCAL_EMBED_PATH}")
 
 
-class YouDaoLocalEmbeddings:
-    def __init__(self, use_gpu):
-        self.use_gpu = use_gpu
-        self.embedding_client = EmbeddingClient(model_path=LOCAL_EMBED_MODEL_PATH, tokenizer_path=LOCAL_EMBED_PATH,
-                                                use_gpu=self.use_gpu)
+class EmbeddingBackend(ABC):
+    embed_version = "local_v0.0.1_20230525_6d4019f1559aef84abc2ab8257e1ad4c"
 
-    def _get_embedding(self, queries):
-        embeddings = self.embedding_client.get_embedding(queries, max_length=LOCAL_EMBED_MAX_LENGTH)
-        return embeddings
+    def __init__(self, use_cpu):
+        self.use_cpu = use_cpu
+        self._tokenizer = AutoTokenizer.from_pretrained(LOCAL_EMBED_PATH)
 
-    def _get_len_safe_embeddings(self, texts: List[str]) -> List[List[float]]:
+    @abstractmethod
+    def get_embedding(self, sentences, max_length) -> List:
+        pass
+
+    def get_len_safe_embeddings(self, texts: List[str]) -> List[List[float]]:
         all_embeddings = []
         batch_size = LOCAL_EMBED_BATCH
 
@@ -41,7 +42,7 @@ class YouDaoLocalEmbeddings:
             futures = []
             for i in range(0, len(texts), batch_size):
                 batch = texts[i:i + batch_size]
-                future = executor.submit(self._get_embedding, batch)
+                future = executor.submit(self.get_embedding, batch, LOCAL_EMBED_MAX_LENGTH)
                 futures.append(future)
             debug_logger.info(f'embedding number: {len(futures)}')
             for future in tqdm(futures):
@@ -50,5 +51,5 @@ class YouDaoLocalEmbeddings:
         return all_embeddings
 
     @property
-    def embed_version(self):
-        return self.embedding_client.getModelVersion()
+    def getModelVersion(self):
+        return self.embed_version

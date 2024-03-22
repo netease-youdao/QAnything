@@ -75,5 +75,5 @@ qa_handler.setFormatter(formatter)
 qa_logger.addHandler(qa_handler)
 print(debug_logger, qa_logger)
 
-# qa_logger.propagate = False  # 关闭日志传播
-# debug_logger.propagate = False  # 关闭日志传播
+qa_logger.propagate = False  # 关闭日志传播
+debug_logger.propagate = False  # 关闭日志传播

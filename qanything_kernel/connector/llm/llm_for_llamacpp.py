@@ -1,26 +1,14 @@
-from abc import ABC
-import tiktoken
-import os
-from dotenv import load_dotenv
-from typing import Optional, List
-import sys
-import json
-import requests
-
-sys.path.append("../../../")
 from qanything_kernel.connector.llm.base import (BaseAnswer, AnswerResult)
-from qanything_kernel.configs.model_config import VW_CONV_4B_TEMPLATE, VW_CONV_7B_TEMPLATE
-from vllm import LLM, SamplingParams
-from vllm.engine.arg_utils import AsyncEngineArgs
-from vllm.engine.async_llm_engine import AsyncLLMEngine
-from vllm.utils import random_uuid
-from qanything_kernel.configs.conversation import get_conv_template
 from qanything_kernel.utils.custom_log import debug_logger
+from llama_cpp import Llama
+from abc import ABC
+from typing import List
+import json
 
-load_dotenv()
 
-
-class OpenAICustomLLM(BaseAnswer, ABC):
+class LlamaCPPCustomLLM(BaseAnswer, ABC):
+    n_gpu_layers: int = -1
+    n_ctx: int = 4096
     token_window: int = 4096
     max_token: int = 512
     offcut_token: int = 50
@@ -28,24 +16,19 @@ class OpenAICustomLLM(BaseAnswer, ABC):
     temperature: float = 0
     stop_words: str = None
     history: List[List[str]] = []
-    history_len: int = 2
+    history_len: int = 3
 
     def __init__(self, args):
         super().__init__()
-        # self.llm = LLM(model=VW_MODEL_PATH)
-        # parser = argparse.ArgumentParser()
-        # parser = AsyncEngineArgs.add_cli_args(parser)
-        engine_args = AsyncEngineArgs.from_cli_args(args)
-        self.engine = AsyncLLMEngine.from_engine_args(engine_args)
-        self.sampling_params = SamplingParams(temperature=0.8, top_p=0.95)
-        if args.model_size == '4B':
-            self.conv_template = VW_CONV_4B_TEMPLATE
-        else:
-            self.conv_template = VW_CONV_7B_TEMPLATE
+        self.llm = Llama(
+            model_path=args.model,
+            n_gpu_layers=self.n_gpu_layers,
+            n_ctx=self.n_ctx
+        )
 
     @property
     def _llm_type(self) -> str:
-        return "CustomLLM using FastChat w/ huggingface transformers or vllm backend"
+        return "CustomLLM using LlamaCPP backend"
 
     @property
     def _history_len(self) -> int:
@@ -54,20 +37,16 @@ class OpenAICustomLLM(BaseAnswer, ABC):
     def set_history_len(self, history_len: int = 10) -> None:
         self.history_len = history_len
 
-    def token_check(self, query: str) -> int:
-        encoding = tiktoken.encoding_for_model("gpt-3.5-turbo-0613")
-        return len(encoding.encode(query, disallowed_special=()))
-
     def num_tokens_from_messages(self, message_texts):
         num_tokens = 0
         for message in message_texts:
-            num_tokens += self.token_check(message)
+            num_tokens += len(self.llm.tokenizer().encode(message, add_bos=False, special=False))
         return num_tokens
 
     def num_tokens_from_docs(self, docs):
         num_tokens = 0
         for doc in docs:
-            num_tokens += self.token_check(doc.page_content)
+            num_tokens += len(self.llm.tokenizer().encode(doc.page_content, add_bos=False, special=False))
         return num_tokens
 
     async def _call(self, prompt: str, history: List[List[str]], streaming: bool = False) -> str:
@@ -79,15 +58,31 @@ class OpenAICustomLLM(BaseAnswer, ABC):
         messages.append({"role": "user", "content": prompt})
         debug_logger.info(messages)
 
-        conv = get_conv_template(self.conv_template)
-        for message in messages:
-            conv.append_message(message['role'], message['content'])
-        prompt = conv.get_prompt()
+        if streaming:
 
-        results_generator = self.engine.generate(prompt, self.sampling_params, request_id=random_uuid())
-        async for request_output in results_generator:
-            delta = {"answer": request_output.outputs[0].text}
-            yield "data: " + json.dumps(delta, ensure_ascii=False)
+            results = self.llm.create_chat_completion(messages=messages,
+                                                      max_tokens=self.max_token,
+                                                      stream=True)
+
+            for chunk in results:
+                if isinstance(chunk['choices'], List) and len(chunk['choices']) > 0:
+                    if 'content' in chunk['choices'][0]['delta']:
+                        chunk_text = chunk['choices'][0]['delta']['content']
+                        if isinstance(chunk_text, str) and chunk_text != "":
+                            # debug_logger.info(f"[debug] event_text = [{event_text}]")
+                            delta = {'answer': chunk_text}
+                            yield "data: " + json.dumps(delta, ensure_ascii=False)
+
+        else:
+            results = self.llm.create_chat_completion(messages=messages,
+                                                      max_tokens=self.max_token,
+                                                      stream=False)
+            if isinstance(results['choices'], List) and len(results['choices']) > 0:
+                text = results['choices'][0]['message']['content']
+                if isinstance(text, str) and text != "":
+                    # debug_logger.info(f"[debug] event_text = [{event_text}]")
+                    delta = {'answer': text}
+                    yield "data: " + json.dumps(delta, ensure_ascii=False)
 
         yield f"data: [DONE]\n\n"
 
@@ -99,13 +94,11 @@ class OpenAICustomLLM(BaseAnswer, ABC):
             history = [[]]
         debug_logger.info(f"history_len: {self.history_len}")
         debug_logger.info(f"prompt: {prompt}")
-        debug_logger.info(f"prompt tokens: {self.num_tokens_from_messages([prompt])}")
         debug_logger.info(f"streaming: {streaming}")
 
         response = self._call(prompt, history[:-1], streaming)
         complete_answer = ""
         async for response_text in response:
-
             if response_text:
                 chunk_str = response_text[6:]
                 if not chunk_str.startswith("[DONE]"):
@@ -118,3 +111,4 @@ class OpenAICustomLLM(BaseAnswer, ABC):
             answer_result.llm_output = {"answer": response_text}
             answer_result.prompt = prompt
             yield answer_result
+

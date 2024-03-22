@@ -1,29 +1,19 @@
 from qanything_kernel.configs.model_config import VECTOR_SEARCH_TOP_K, CHUNK_SIZE, VECTOR_SEARCH_SCORE_THRESHOLD, \
     PROMPT_TEMPLATE, STREAMING
 from typing import List
-from qanything_kernel.connector.embedding.embedding_for_local import YouDaoLocalEmbeddings
 import time
-from qanything_kernel.connector.llm import OpenAILLM, OpenAICustomLLM
+from qanything_kernel.connector.llm import OpenAILLM
 from langchain.schema import Document
 from qanything_kernel.connector.database.mysql.mysql_client import KnowledgeBaseManager
 from qanything_kernel.connector.database.milvus.milvus_client import MilvusClient
-from qanything_kernel.connector.rerank.rerank_server_backend import LocalRerankBackend
 import easyocr
 from easyocr import Reader
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from .local_file import LocalFile
 import traceback
-import logging
 import base64
 import numpy as np
-
-logging.basicConfig(level=logging.INFO)
-
-def _embeddings_hash(self):
-    return hash(self.model_name)
-
-
-YouDaoLocalEmbeddings.__hash__ = _embeddings_hash
+import platform
 
 
 class LocalDocQA:
@@ -39,7 +29,7 @@ class LocalDocQA:
         self.local_rerank_backend: LocalRerankBackend = None 
         self.ocr_reader: Reader = None
         self.mode: str = None
-        self.use_gpu: bool = True
+        self.use_cpu: bool = True
 
     def get_ocr_result(self, input: dict):
         img_file = input['img64']
@@ -53,15 +43,26 @@ class LocalDocQA:
         return res
 
     def init_cfg(self, args=None):
-        self.use_gpu = args.use_gpu
-        self.embeddings = YouDaoLocalEmbeddings(self.use_gpu)
+        self.use_cpu = args.use_cpu
         if args.use_openai_api:
             self.llm: OpenAILLM = OpenAILLM(args)
         else:
-            self.llm: OpenAICustomLLM = OpenAICustomLLM(args)
+            if platform.system() == 'Linux':
+                from qanything_kernel.connector.llm import OpenAICustomLLM
+                from qanything_kernel.connector.rerank.rerank_onnx_backend import RerankOnnxBackend
+                from qanything_kernel.connector.embedding.embedding_onnx_backend import EmbeddingOnnxBackend
+                self.llm: OpenAICustomLLM = OpenAICustomLLM(args)
+                self.local_rerank_backend: RerankOnnxBackend = RerankOnnxBackend(self.use_cpu)
+                self.embeddings: EmbeddingOnnxBackend = EmbeddingOnnxBackend(self.use_cpu)
+            else:
+                from qanything_kernel.connector.llm import LlamaCPPCustomLLM
+                from qanything_kernel.connector.rerank.rerank_torch_backend import RerankTorchBackend
+                from qanything_kernel.connector.embedding.embedding_torch_backend import EmbeddingTorchBackend
+                self.llm: LlamaCPPCustomLLM = LlamaCPPCustomLLM(args)
+                self.local_rerank_backend: RerankTorchBackend = RerankTorchBackend(self.use_cpu)
+                self.embeddings: EmbeddingTorchBackend = EmbeddingTorchBackend(self.use_cpu)
         self.milvus_summary = KnowledgeBaseManager()
-        self.local_rerank_backend = LocalRerankBackend(self.use_gpu)
-        self.ocr_reader = easyocr.Reader(['ch_sim', 'en'], gpu=self.use_gpu)
+        self.ocr_reader = easyocr.Reader(['ch_sim', 'en'], gpu=not self.use_cpu)
 
     def create_milvus_collection(self, user_id, kb_id, kb_name):
         milvus_kb = MilvusClient(self.mode, user_id, [kb_id])
@@ -138,7 +139,7 @@ class LocalDocQA:
         if not top_k:
             top_k = self.top_k
         source_documents = []
-        embs = self.embeddings._get_len_safe_embeddings(queries)
+        embs = self.embeddings.get_len_safe_embeddings(queries)
         t1 = time.time()
         batch_result = milvus_kb.search_emb_async(embs=embs, top_k=top_k)
         t2 = time.time()
