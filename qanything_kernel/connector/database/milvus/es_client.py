@@ -2,7 +2,7 @@
 @Description: 
 @Author: shenlei
 @Date: 2024-03-20 14:16:48
-@LastEditTime: 2024-03-22 14:16:56
+@LastEditTime: 2024-03-22 15:12:44
 @LastEditors: shenlei
 '''
 import numpy as np
@@ -83,7 +83,7 @@ class ElasticsearchClient:
                         "similarity": {
                             "custom_bm25": {
                                 "type": "BM25",
-                                "k1": "1.5",
+                                "k1": "1.3",
                                 "b": "0.6"
                             }
                         }
@@ -188,8 +188,6 @@ class ElasticsearchClient:
 
                 score = (1-float(1/(1 + np.exp(-hit['_score']/8))))*1.414
                 search_item = {'index': hit['_index'], 'id': hit['_id'], 'score': score}
-
-                debug_logger.info(f"##ES## - bm25 score: {hit['_score']}; cos score: {float(1/(1 + np.exp(-hit['_score']/8)))}")
                 
                 for f in fields:
                     search_item[f] = hit["_source"][f]

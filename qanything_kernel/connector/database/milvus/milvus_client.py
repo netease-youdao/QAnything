@@ -228,7 +228,6 @@ class MilvusClient:
         # 混合检索
         if self.hybrid_search:
             debug_logger.info(f'now inser_file for es: {file_name}')
-            batch_size = 1000
             for batch_start in range(0, num_docs, batch_size):
                 batch_end = min(batch_start + batch_size, num_docs)
                 data_es = []
@@ -295,7 +294,6 @@ class MilvusClient:
                     delete_index_ids[record['index']] = []
                 delete_index_ids[record['index']].append(record['id'])
             
-            loop = asyncio.get_running_loop()
             for index, ids in delete_index_ids.items():
                 self.client.delete_chunks(index_name=index, ids=ids)
             debug_logger.info(f"##ES## - success delete files_id: {files_id}")

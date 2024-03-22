@@ -68,15 +68,15 @@ MILVUS_DB_NAME = ''
 
 # ES bm25检索相关配置
 HYBRID_SEARCH = True  # 是否启用es的BM25检索
-ES_BM25_SEARCH_SIZE = 20  # 20
+ES_BM25_SEARCH_SIZE = 50
 
-ES_HOST_LOCAL = 'http://10.55.162.135:9200'
+ES_HOST_LOCAL = 'http://localhost:9200/'
 ES_CLOUD_ID = None
 ES_USER = None
 ES_PASSWORD = None
 ES_API_KEY = None
 ES_CONNECT_PARAMS = None
-ES_SIGNATURE = 'qanything/bm25_v240320'  # 混合检索的签名
+ES_SIGNATURE = 'qanything/bm25_v240320'
 
 
 MYSQL_HOST_LOCAL = 'mysql-container-local'
