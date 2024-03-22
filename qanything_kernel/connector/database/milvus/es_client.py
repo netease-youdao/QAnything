@@ -2,7 +2,7 @@
 @Description: 
 @Author: shenlei
 @Date: 2024-03-20 14:16:48
-@LastEditTime: 2024-03-22 15:12:44
+@LastEditTime: 2024-03-22 15:23:59
 @LastEditors: shenlei
 '''
 import numpy as np
@@ -203,9 +203,9 @@ class ElasticsearchClient:
         index_name = [index.lower() for index in index_name]
         try:
             self.client.indices.delete(index=index_name, ignore_unavailable=True)
-            return f"##ES## - success to delete index: {index_name}"
+            debug_logger.info(f"##ES## - success to delete index: {index_name}")
         except Exception as e:
-            return f"##ES## - fail to delete: {index_name}\nERROR: {e}"
+            debug_logger.error(f"##ES## - fail to delete: {index_name}\nERROR: {e}")
     
     def delete_chunks(self, index_name=None, ids=None):
         if index_name is None or ids is None:
@@ -224,6 +224,6 @@ class ElasticsearchClient:
             )
             debug_logger.info(f"##ES## - success to delete chunks ids: {ids}\nfrom index: {index_name}")
         except Exception as e:
-            return f"Error delete chunks: {e}"
+            debug_logger.error(f"Error delete chunks: {e}")
         
-        return f"success to delete chunks: {ids} in index: {index_name}"
+        debug_logger.info(f"success to delete chunks: {ids} in index: {index_name}")
