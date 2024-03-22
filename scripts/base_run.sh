@@ -103,35 +103,12 @@ else
     use_openai_api_option=""
 fi
 
+echo -e "即将启动后端服务，启动成功后请复制[\033[32mhttp://0.0.0.0:$qanything_port/qanything/\033[0m]到浏览器进行测试。"
+sleep 5
 # 启动qanything-server服务
-backend_start_time=$(date +%s)
-nohup qanything-server --host 0.0.0.0 --port $qanything_port --model_size $model_size \
+qanything-server --host 0.0.0.0 --port $qanything_port --model_size $model_size \
     $use_cpu_option $use_openai_api_option \
     ${openai_api_base:+--openai_api_base "$openai_api_base"} \
     ${openai_api_key:+--openai_api_key "$openai_api_key"} \
     ${openai_api_model_name:+--openai_api_model_name "$openai_api_model_name"} \
-    ${openai_api_context_length:+--openai_api_context_length "$openai_api_context_length"} \
-    1>qanything_server.log 2>&1 &
-
-tail -f qanything_server.log &
-
-while ! grep -q "Starting worker" qanything_server.log; do
-    echo "Waiting for the backend service to start..."
-    echo "等待启动后端服务"
-    sleep 1
-
-    # 获取当前时间并计算经过的时间
-    current_time=$(date +%s)
-    elapsed_time=$((current_time - backend_start_time))
-
-    # 检查是否超时
-    if [ $elapsed_time -ge 120 ]; then
-        echo "启动后端服务超时，请检查日志文件 /workspace/qanything_local/logs/debug_logs/sanic_api.log 获取更多信息。"
-        exit 1
-    fi
-    sleep 5
-done
-echo "后端服务已启动。"
-
-
-
+    ${openai_api_context_length:+--openai_api_context_length "$openai_api_context_length"}
