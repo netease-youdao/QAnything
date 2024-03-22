@@ -77,6 +77,26 @@ if [ "$system" = "LinuxOrWSL" ]; then
         need_start_milvus=true
     fi
 else
+    # 检查 xcode-select 命令是否存在
+    if ! command -v xcode-select &> /dev/null; then
+        echo "xcode-select 命令不存在。请前往App Store下载Xcode。"
+        # 结束脚本执行
+        exit 1
+    fi
+
+    # 执行 xcode-select -p 获取当前Xcode路径
+    xcode_path=$(xcode-select -p)
+
+    # 检查 xcode-select 的输出是否以 /Applications 开头
+    if [[ $xcode_path != /Applications* ]]; then
+        echo "当前Xcode路径不是以 /Applications 开头。"
+        echo "请确保你已从App Store下载了Xcode，如果已经下载，请执行以下命令："
+        echo "sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer"
+        exit 1
+    else
+        echo "Xcode 已正确安装在路径：$xcode_path"
+    fi
+
     if lsof -i :19530 >/dev/null; then
         echo "端口$milvus_port 正在被监听。Milvus-Lite服务已启动。"
     else
