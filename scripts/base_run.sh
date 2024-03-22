@@ -72,41 +72,23 @@ fi
 need_start_milvus=false
 if [ "$system" = "LinuxOrWSL" ]; then
     if ss -tuln | grep ":$milvus_port" > /dev/null; then
-        echo "端口$milvus_port正在被监听。Milvus-Lite服务已启动。"
+        echo "端口$milvus_port 正在被监听。Milvus-Lite服务已启动。"
     else
         need_start_milvus=true
     fi
 else
-    if ss -tuln | grep ":$milvus_port" > /dev/null; then
-        echo "端口$milvus_port正在被监听。Milvus-Lite服务已启动。"
+    if lsof -i :19530 >/dev/null; then
+        echo "端口$milvus_port 正在被监听。Milvus-Lite服务已启动。"
     else
         need_start_milvus=true
     fi
 fi
 
-backend_start_time=$(date +%s)
 if [ "$need_start_milvus" = true ]; then
-    echo "端口$milvus_port没有被监听。"
-    # 启动milvus服务
+    echo "端口$milvus_port 没有被监听。"
+    echo "启动Milvus-Lite服务：milvus-server --data milvus_data --proxy-port $milvus_port"
     nohup milvus-server --data milvus_data --proxy-port $milvus_port 1>milvus_server.log 2>&1 &
-    tail -f milvus_server.log &
-    while ! grep -q "Welcome to use Milvus!" milvus_server.log; do
-        echo "Waiting for the Milvus-Lite service to start..."
-        echo "等待启动Mivus-Lite服务"
-        sleep 1
-
-        # 获取当前时间并计算经过的时间
-        current_time=$(date +%s)
-        elapsed_time=$((current_time - backend_start_time))
-
-        # 检查是否超时
-        if [ $elapsed_time -ge 120 ]; then
-            echo "启动Mivus-Lite服务超时，请检查日志文件milvus_server.log 获取更多信息。"
-            exit 1
-        fi
-        sleep 5
-    done
-    echo "Milvus-Lite服务已启动。"
+    sleep 10
 fi
 
 if [ "$use_cpu" = true ]; then
@@ -131,8 +113,7 @@ nohup qanything-server --host 0.0.0.0 --port $qanything_port --model_size $model
     ${openai_api_context_length:+--openai_api_context_length "$openai_api_context_length"} \
     1>qanything_server.log 2>&1 &
 
-sleep 5
-tail -f logs/debug.log/debug.log &
+tail -f qanything_server.log &
 
 while ! grep -q "Starting worker" qanything_server.log; do
     echo "Waiting for the backend service to start..."
@@ -151,5 +132,6 @@ while ! grep -q "Starting worker" qanything_server.log; do
     sleep 5
 done
 echo "后端服务已启动。"
+
 
 

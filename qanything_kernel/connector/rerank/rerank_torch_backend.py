@@ -10,7 +10,7 @@ class RerankTorchBackend(RerankBackend):
     def __init__(self, use_cpu: bool = False):
         super().__init__(use_cpu)
         self.return_tensors = "pt"
-        self.model = AutoModelForSequenceClassification.from_pretrained(LOCAL_RERANK_PATH,
+        self._model = AutoModelForSequenceClassification.from_pretrained(LOCAL_RERANK_PATH,
                                                                         return_dict=False)
         if use_cpu or not torch.backends.mps.is_available():
             self.device = torch.device('cpu')
@@ -25,7 +25,7 @@ class RerankTorchBackend(RerankBackend):
 
         # 执行推理 输出为logits
         start_time = time.time()
-        result = self.model(**inputs, return_dict=True)
+        result = self._model(**inputs, return_dict=True)
 
         debug_logger.info(f"rerank infer time: {time.time() - start_time}")
         sigmoid_scores = torch.sigmoid(result.logits.view(-1, )).cpu().detach().numpy()
