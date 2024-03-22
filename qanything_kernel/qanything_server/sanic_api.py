@@ -52,7 +52,7 @@ if os_system != 'Darwin':
         download_file(download_url, whl_name)
         os.system(f"pip install {whl_name}")
     if not check_package_version("vllm", "0.3.3"):
-        os.system(f"pip install vllm==0.3.3")
+        os.system(f"pip install vllm==0.3.3 -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn")
 
     from vllm.engine.arg_utils import AsyncEngineArgs
 
@@ -60,7 +60,7 @@ if os_system != 'Darwin':
 
 else:
     # 检查是否安装了xcode
-    os.system(f'CMAKE_ARGS="-DLLAMA_METAL_EMBED_LIBRARY=ON -DLLAMA_METAL=on" pip install -U llama-cpp-python --no-cache-dir')
+    os.system(f'CMAKE_ARGS="-DLLAMA_METAL_EMBED_LIBRARY=ON -DLLAMA_METAL=on" pip install -U llama-cpp-python --no-cache-dir -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn')
     parser.add_argument('--model', dest='model', help='LLM model path')
 
 from milvus import default_server
