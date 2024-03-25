@@ -71,11 +71,14 @@ services:
     privileged: true
     ports:
       - 9200:9200
+      - 9300:9300
     restart: on-failure
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
       - "ES_JAVA_OPTS=-Xms1024m -Xmx1024m"
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/third_party/es/plugins:/usr/share/elasticsearch/plugins
     healthcheck:
         test: curl --fail http://localhost:9200/_cat/health || exit 1
         interval: 30s

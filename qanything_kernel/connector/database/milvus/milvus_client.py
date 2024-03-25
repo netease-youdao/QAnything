@@ -109,9 +109,8 @@ class MilvusClient:
                 for cand in result[:self.top_k]:
                     milvus_records_seen.add(cand.entity.get('chunk_id'))
         
-        new_result = []
+        new_cands = []
         for es_record in es_records:
-            new_cands = []
             if es_record['id'] not in milvus_records_seen:
                 doc = Document(page_content=es_record['content'],
                                metadata={"score": es_record['score'], "file_id": es_record['file_id'],
@@ -119,17 +118,16 @@ class MilvusClient:
                                          "chunk_id": es_record['metadata']['chunk_id']})
                 new_cands.append(doc)
             
-            # csv和xlsx文件不做expand_cand_docs
-            need_expand, not_need_expand = [], []
-            for doc in new_cands:
-                if doc.metadata['file_name'].lower().split('.')[-1] in ['csv', 'xlsx']:
-                    doc.metadata["kernel"] = doc.page_content
-                    not_need_expand.append(doc)
-                else:
-                    need_expand.append(doc)
-            expand_res = self.expand_cand_docs(need_expand)
-            new_cands = not_need_expand + expand_res
-            new_result.append(new_cands)
+        # csv和xlsx文件不做expand_cand_docs
+        need_expand, not_need_expand = [], []
+        for doc in new_cands:
+            if doc.metadata['file_name'].lower().split('.')[-1] in ['csv', 'xlsx']:
+                doc.metadata["kernel"] = doc.page_content
+                not_need_expand.append(doc)
+            else:
+                need_expand.append(doc)
+        expand_res = self.expand_cand_docs(need_expand)
+        new_result = not_need_expand + expand_res
 
         return new_result
 
@@ -361,17 +359,20 @@ class MilvusClient:
         id_list = sorted(list(id_set))
         id_lists = self.seperate_list(id_list)
         for id_seq in id_lists:
-            for id in id_seq:
-                if id == id_seq[0]:
-                    doc = Document(page_content=group_chunk_map[id],
-                                   metadata={"score": 0, "file_id": file_id,
-                                             "file_name": file_name})
-                else:
-                    doc.page_content += " " + group_chunk_map[id]
-            doc_score = min([group_scores_map[id] for id in id_seq if id in group_scores_map])
-            doc.metadata["score"] = float(format(1 - doc_score / math.sqrt(2), '.4f'))
-            doc.metadata["kernel"] = '|'.join([group_chunk_map[id] for id in id_seq if id in group_scores_map])
-            new_cands.append(doc)
+            try:
+                for id in id_seq:
+                    if id == id_seq[0]:
+                        doc = Document(page_content=group_chunk_map[id],
+                                    metadata={"score": 0, "file_id": file_id,
+                                                "file_name": file_name})
+                    else:
+                        doc.page_content += " " + group_chunk_map[id]
+                doc_score = min([group_scores_map[id] for id in id_seq if id in group_scores_map])
+                doc.metadata["score"] = float(format(1 - doc_score / math.sqrt(2), '.4f'))
+                doc.metadata["kernel"] = '|'.join([group_chunk_map[id] for id in id_seq if id in group_scores_map])
+                new_cands.append(doc)
+            except Exception as e:
+                debug_logger.error(f"process_group error: {e}. maybe chunks in ES not exists in Milvus. Please delete the file and upload again.")
         return new_cands
 
     def expand_cand_docs(self, cand_docs):

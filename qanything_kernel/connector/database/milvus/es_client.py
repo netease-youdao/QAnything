@@ -2,7 +2,7 @@
 @Description: 
 @Author: shenlei
 @Date: 2024-03-20 14:16:48
-@LastEditTime: 2024-03-22 15:23:59
+@LastEditTime: 2024-03-26 00:45:09
 @LastEditors: shenlei
 '''
 import numpy as np
@@ -98,7 +98,9 @@ class ElasticsearchClient:
                         "content": {
                             "type": "text",
                             "similarity": "custom_bm25",
-                            "index": True
+                            "index": True,
+                            "analyzer": "ik_smart",
+                            "search_analyzer": "ik_smart",
                         }
                     }
                 }
@@ -112,7 +114,7 @@ class ElasticsearchClient:
         ids = [item['metadata']["chunk_id"] for item in data]
         for index_name in self.index_name:
             index_name = index_name.lower()
-            actions = []       
+            actions = []
             for item in data:
                 action = {
                         "_op_type": "index",
@@ -134,7 +136,7 @@ class ElasticsearchClient:
             except Exception as e:
                 return f"Error adding texts: {e}"
 
-        return f"success to add chunks: {ids} in index: {self.index_name}"
+        return f"success to add chunks: {ids[:5]} ... in index: {self.index_name[:5]} ..."
 
     def search(self, queries, field='content'):
         valid_index_name = []
