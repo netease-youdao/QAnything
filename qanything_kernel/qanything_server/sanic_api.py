@@ -73,11 +73,11 @@ if gpu_type == "metal":
         os.system(f'CMAKE_ARGS="-DLLAMA_METAL=on" pip install llama-cpp-python')
 elif gpu_type == "intel":
     if not check_package('intel-extension-for-pytorch'):
-        os.mkdir('./intel_tmp_whl')
+        os.makedirs('./intel_tmp_whl', exist_ok=True)
         os.chdir('./intel_tmp_whl')
-        os.system(f'wget https://github.com/Nuullll/intel-extension-for-pytorch/releases/download/v2.0.110%2Bxpu-master%2Bdll-bundle/intel_extension_for_pytorch-2.0.110+gitc6ea20b-cp310-cp310-win_amd64.whl')
-        os.system(f'wget https://github.com/Nuullll/intel-extension-for-pytorch/releases/download/v2.0.110%2Bxpu-master%2Bdll-bundle/torch-2.0.0a0+gite9ebda2-cp310-cp310-win_amd64.whl')
-        os.system(f'wget https://github.com/Nuullll/intel-extension-for-pytorch/releases/download/v2.0.110%2Bxpu-master%2Bdll-bundle/torchvision-0.15.2a0+fa99a53-cp310-cp310-win_amd64.whl')
+        os.system(f'wget https://github.com/Nuullll/intel-extension-for-pytorch/releases/download/v2.1.20%2Bmtl%2Boneapi/intel_extension_for_pytorch-2.1.20+git4849f3b-cp310-cp310-win_amd64.whl')
+        os.system(f'wget https://github.com/Nuullll/intel-extension-for-pytorch/releases/download/v2.1.20%2Bmtl%2Boneapi/torch-2.1.0a0+git7bcf7da-cp310-cp310-win_amd64.whl')
+        os.system(f'wget https://github.com/Nuullll/intel-extension-for-pytorch/releases/download/v2.1.20%2Bmtl%2Boneapi/torchvision-0.16.0+fbb4cc5-cp310-cp310-win_amd64.whl')
         os.system(f'pip install --pre --upgrade bigdl-llm[xpu] -f https://developer.intel.com/ipex-whl-stable-xpu')
         os.system(f'pip install numpy==1.24.3')
         os.system(f'pip install transformers==4.38.2')
