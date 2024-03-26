@@ -14,6 +14,8 @@ root_path = os.path.dirname(os.path.dirname(os.path.dirname(current_script_path)
 UPLOAD_ROOT_PATH = os.path.join(root_path, "QANY_DB", "content")
 print("LOCAL DATA PATH:", UPLOAD_ROOT_PATH)
 
+os.makedirs(UPLOAD_ROOT_PATH, exist_ok=True)
+
 # LLM streaming reponse
 STREAMING = True
 

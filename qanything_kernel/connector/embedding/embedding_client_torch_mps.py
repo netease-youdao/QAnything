@@ -6,7 +6,7 @@ from transformers import AutoModel, AutoTokenizer
 import os
 
 
-class EmbeddingClientTorch(EmbeddingBase):
+class EmbeddingClientTorchMPS(EmbeddingBase):
 
     def __init__(self):
         super().__init__()

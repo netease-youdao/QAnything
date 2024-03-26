@@ -1,5 +1,6 @@
 import sys
 import os
+import shutil
 import time
 
 # 获取当前脚本的绝对路径
@@ -20,53 +21,11 @@ sys.path.append(root_dir)
 from qanything_kernel.configs.model_config import MILVUS_LITE_LOCATION, VW_3B_MODEL_PATH, VW_7B_MODEL_PATH, VW_3B_MODEL, VW_7B_MODEL
 import qanything_kernel.configs.model_config as model_config
 from qanything_kernel.utils.custom_log import debug_logger
-from qanything_kernel.utils.general_utils import download_file, get_gpu_memory_utilization, check_onnx_version
+from qanything_kernel.utils.general_utils import download_file, get_gpu_memory_utilization, check_onnx_version, check_package
 import torch
 import platform
-
-os_system = platform.system()
-
-if os_system != "Darwin":
-    cuda_version = torch.version.cuda
-    if cuda_version is None:
-        raise ValueError("CUDA is not installed.")
-    elif float(cuda_version) < 12:
-        raise ValueError("CUDA version must be 12.0 or higher.")
-
-python_version = platform.python_version()
-python3_version = python_version.split('.')[1]
-
-system_name = None
-if os_system == "Windows":
-    system_name = 'win_amd64'
-elif os_system == "Linux":
-    system_name = 'manylinux_2_28_x86_64'
-elif os_system == "Darwin":
-    os.system(f"pip install onnxruntime==1.17.1")
-    os.system(f'CMAKE_ARGS="-DLLAMA_METAL=on" pip install llama-cpp-python')
-if system_name is not None:
-    if not check_onnx_version("1.17.1"):
-        download_url = f"https://aiinfra.pkgs.visualstudio.com/PublicPackages/_apis/packaging/feeds/9387c3aa-d9ad-4513-968c-383f6f7f53b8/pypi/packages/onnxruntime-gpu/versions/1.17.1/onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl/content"
-        debug_logger.info(f'开始从{download_url}下载onnxruntime，也可以手动下载并通过pip install *.whl安装')
-        whl_name = f'onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl'
-        download_file(download_url, whl_name)
-        os.system(f"pip install {whl_name}")
-else:
-    pass
-    # raise ValueError(f"Unsupported system: {os_system}")
-
-from milvus import default_server
-from .handler import *
-from qanything_kernel.core.local_doc_qa import LocalDocQA
-from sanic import Sanic
-from sanic import response as sanic_response
 from argparse import ArgumentParser, Action
-from sanic.worker.manager import WorkerManager
-import signal
-# from vllm.engine.arg_utils import AsyncEngineArgs
-import requests
-from modelscope import snapshot_download
-import subprocess
+import qanything_kernel.connector.gpuinfo.global_vars as global_vars
 
 parser = ArgumentParser()
 # parser = AsyncEngineArgs.add_cli_args(parser)
@@ -75,9 +34,72 @@ parser.add_argument('--port', dest='port', default=8777, type=int, help='set por
 #  必填参数
 parser.add_argument('--model_size', dest='model_size', default=
 '3B', help='set LLM model size for qanything server')
+parser.add_argument('--gpu_type', dest='gpu_type', default=
+'Nvidia', help='set the GPU type for qanything server, options=["nvidia", "intel", "metal"], default="nvidia"')
 parser.add_argument('--device_id', dest='device_id', default=
 '0', help='cuda device id for qanything server')
 args = parser.parse_args()
+
+os_system = platform.system()
+global_vars.set_gpu_type(args.gpu_type)
+gpu_type = global_vars.get_gpu_type()
+
+python_version = platform.python_version()
+python3_version = python_version.split('.')[1]
+
+if gpu_type == "nvidia":
+    cuda_version = torch.version.cuda
+    if cuda_version is None:
+        raise ValueError("CUDA is not installed.")
+    elif float(cuda_version) < 12:
+        raise ValueError("CUDA version must be 12.0 or higher.")
+
+    system_name = None
+    if os_system == "Windows":
+        system_name = 'win_amd64'
+    elif os_system == "Linux":
+        system_name = 'manylinux_2_28_x86_64'
+
+    if system_name is not None:
+        if not check_onnx_version("1.17.1"):
+            download_url = f"https://aiinfra.pkgs.visualstudio.com/PublicPackages/_apis/packaging/feeds/9387c3aa-d9ad-4513-968c-383f6f7f53b8/pypi/packages/onnxruntime-gpu/versions/1.17.1/onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl/content"
+            debug_logger.info(f'开始从{download_url}下载onnxruntime，也可以手动下载并通过pip install *.whl安装')
+            whl_name = f'onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl'
+            download_file(download_url, whl_name)
+            os.system(f"pip install {whl_name}")
+
+if gpu_type == "metal":
+    if not check_package('llama-cpp-python'):
+        os.system(f'CMAKE_ARGS="-DLLAMA_METAL=on" pip install llama-cpp-python')
+elif gpu_type == "intel":
+    if not check_package('intel-extension-for-pytorch'):
+        os.mkdir('./intel_tmp_whl')
+        os.chdir('./intel_tmp_whl')
+        os.system(f'wget https://github.com/Nuullll/intel-extension-for-pytorch/releases/download/v2.0.110%2Bxpu-master%2Bdll-bundle/intel_extension_for_pytorch-2.0.110+gitc6ea20b-cp310-cp310-win_amd64.whl')
+        os.system(f'wget https://github.com/Nuullll/intel-extension-for-pytorch/releases/download/v2.0.110%2Bxpu-master%2Bdll-bundle/torch-2.0.0a0+gite9ebda2-cp310-cp310-win_amd64.whl')
+        os.system(f'wget https://github.com/Nuullll/intel-extension-for-pytorch/releases/download/v2.0.110%2Bxpu-master%2Bdll-bundle/torchvision-0.15.2a0+fa99a53-cp310-cp310-win_amd64.whl')
+        os.system(f'pip install --pre --upgrade bigdl-llm[xpu] -f https://developer.intel.com/ipex-whl-stable-xpu')
+        os.system(f'pip install numpy==1.24.3')
+        os.system(f'pip install transformers==4.38.2')
+        os.system(f'pip install intel_extension_for_pytorch-2.1.20+git4849f3b-cp310-cp310-win_amd64.whl')
+        os.system(f'pip install torch-2.1.0a0+git7bcf7da-cp310-cp310-win_amd64.whl')
+        os.system(f'pip install torchvision-0.16.0+fbb4cc5-cp310-cp310-win_amd64.whl')
+        os.chdir('..')
+        shutil.rmtree('intel_tmp_whl', ignore_errors=True)
+
+
+from milvus import default_server
+from .handler import *
+from qanything_kernel.core.local_doc_qa import LocalDocQA
+from sanic import Sanic
+from sanic import response as sanic_response
+from sanic.worker.manager import WorkerManager
+import signal
+# from vllm.engine.arg_utils import AsyncEngineArgs
+import requests
+from modelscope import snapshot_download
+import subprocess
+
 
 model_config.CUDA_DEVICE = args.device_id
 os.environ["CUDA_VISIBLE_DEVICES"] = args.device_id
@@ -86,25 +108,26 @@ model_size = args.model_size
 model_id = None
 args.gpu_memory_utilization = get_gpu_memory_utilization(model_size, args.device_id)
 debug_logger.info(f"GPU memory utilization: {args.gpu_memory_utilization}")
-if model_size == '3B':
-    args.model = VW_3B_MODEL_PATH
-    model_id = VW_3B_MODEL
-elif model_size == '7B':
-    args.model = VW_7B_MODEL_PATH
-    model_id = VW_7B_MODEL
-else:
-    raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 7B")
+if gpu_type == 'nvidia':
+    if model_size == '3B':
+        args.model = VW_3B_MODEL_PATH
+        model_id = VW_3B_MODEL
+    elif model_size == '7B':
+        args.model = VW_7B_MODEL_PATH
+        model_id = VW_7B_MODEL
+    else:
+        raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 7B")
 
-# 如果模型不存在, 下载模型
-if not os.path.exists(args.model):
-    debug_logger.info(f'开始下载大模型：{model_id}')
-    cache_dir = snapshot_download(model_id=model_id)
-    output = subprocess.check_output(['ln', '-s', cache_dir, args.model], text=True)
-    debug_logger.info(f'模型下载完毕！cache地址：{cache_dir}, 软链接地址：{args.model}')
-else:
-    debug_logger.info(f'{args.model}路径已存在，不再重复下载大模型（如果下载出错可手动删除此目录）')
+    # 如果模型不存在, 下载模型
+    if not os.path.exists(args.model):
+        debug_logger.info(f'开始下载大模型：{model_id}')
+        cache_dir = snapshot_download(model_id=model_id)
+        output = subprocess.check_output(['ln', '-s', cache_dir, args.model], text=True)
+        debug_logger.info(f'模型下载完毕！cache地址：{cache_dir}, 软链接地址：{args.model}')
+    else:
+        debug_logger.info(f'{args.model}路径已存在，不再重复下载大模型（如果下载出错可手动删除此目录）')
 
-debug_logger.info(f"CUDA_DEVICE: {model_config.CUDA_DEVICE}")
+    debug_logger.info(f"CUDA_DEVICE: {model_config.CUDA_DEVICE}")
 
 
 WorkerManager.THRESHOLD = 6000

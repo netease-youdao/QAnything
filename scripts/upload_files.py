@@ -2,10 +2,10 @@ import os
 import requests
 import sys
 
-url = "http://0.0.0.0:8777/api/local_doc_qa/upload_files"
+url = "http://localhost:8777/api/local_doc_qa/upload_files"
 data = {
     "user_id": "zzp",
-    "kb_id": "KBccd94e086e8d458fa1ed6ca3a93655d9"
+    "kb_id": "KB8ee2b2ab902a4ea2b4b42b623790f3e8"
 }
 
 files = []

@@ -16,8 +16,8 @@ import torch
 import math
 
 __all__ = ['write_check_file', 'isURL', 'format_source_documents', 'get_time', 'safe_get', 'truncate_filename',
-           'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens', 'download_file', 
-           'get_gpu_memory_utilization', 'check_onnx_version']
+           'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens', 'download_file',
+           'get_gpu_memory_utilization', 'check_onnx_version', 'check_package']
 
 
 def get_invalid_user_id_msg(user_id):
@@ -186,30 +186,49 @@ def check_onnx_version(version):
     return False
 
 
+def check_package(name):
+    try:
+        version = pkg_resources.get_distribution(name).version
+        print(f"{name} {version} 已经安装。")
+        return True
+    except pkg_resources.DistributionNotFound:
+        print(f"{name} 未安装。")
+    return False
+
+
 def get_gpu_memory_utilization(model_size, device_id):
-    if platform.system() == "Windows" or platform.system() == "Linux":
+    import qanything_kernel.connector.gpuinfo.global_vars as global_vars
+    gpu_type = global_vars.get_gpu_type()
+    if gpu_type == "nvidia":
         if not torch.cuda.is_available():
             raise ValueError("CUDA is not available: torch.cuda.is_available(): return False")
         gpu_memory = torch.cuda.get_device_properties(int(device_id)).total_memory
-    elif platform.system() == "Darwin":
+    elif gpu_type == "metal":
         if not torch.backends.mps.is_available() or not torch.backends.mps.is_built():
-            raise ValueError("MPS is not available: torch.backends.mps.is_available() or torch.backends.mps.is_built(): return False")
+            raise ValueError(
+                "MPS is not available: torch.backends.mps.is_available() or torch.backends.mps.is_built(): return False")
         gpu_memory = torch.mps.driver_allocated_memory()
-        print(gpu_memory)
+    elif gpu_type == "intel":
+        import intel_extension_for_pytorch as ipex
+        if not ipex.xpu.is_available():
+            raise ValueError("XPU is not available: ipex.xpu.is_available(): return False")
+        gpu_memory = ipex.xpu.memory_reserved()
     else:
         raise ValueError("Unsupported platform")
 
     gpu_memory_in_GB = math.ceil(gpu_memory / (1024 ** 3))  # 将字节转换为GB
     gpu_memory_utilization = 0
 
-    if platform.system() == "Windows" or platform.system() == "Linux":
+    if gpu_type == "nvidia":
         if model_size == '3B':
             if gpu_memory_in_GB < 10:  # 显存最低需要10GB
-                raise ValueError(f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 10GB is required with 3B Model.")
+                raise ValueError(
+                    f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 10GB is required with 3B Model.")
             gpu_memory_utilization = round(8 / gpu_memory_in_GB, 2)
         elif model_size == '7B':
             if gpu_memory_in_GB < 20:  # 显存最低需要20GB
-                raise ValueError(f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 20GB is required with 7B Model.")
+                raise ValueError(
+                    f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 20GB is required with 7B Model.")
             gpu_memory_utilization = round(16 / gpu_memory_in_GB, 2)
         else:
             raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 7B")

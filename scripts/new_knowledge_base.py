@@ -1,7 +1,7 @@
 import requests
 import json
 
-url = "http://0.0.0.0:8777/api/local_doc_qa/new_knowledge_base"
+url = "http://localhost:8777/api/local_doc_qa/new_knowledge_base"
 headers = {
     "Content-Type": "application/json"
 }

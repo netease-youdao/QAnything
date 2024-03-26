@@ -1,4 +1,3 @@
-import onnxruntime
 import time
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from .base import RerankBase
@@ -11,7 +10,7 @@ import os
 import torch
 
 
-class RerankTorchBackend(RerankBase):
+class RerankTorchMPSBackend(RerankBase):
     def __init__(self):
         super().__init__()
         self.overlap_tokens = 80

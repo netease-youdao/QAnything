@@ -5,7 +5,8 @@ from qanything_kernel.configs.model_config import VECTOR_SEARCH_TOP_K, CHUNK_SIZ
 from typing import List
 from qanything_kernel.connector.embedding.embedding_for_local import YouDaoLocalEmbeddings
 import time
-from qanything_kernel.connector.llm import OpenAILLM, LlamaCPPCustomLLM
+from qanything_kernel.connector.llm import *
+# from qanything_kernel.connector.llm import OpenAILLM, LlamaCPPCustomLLM, BigDLCustomLLM
 from langchain.schema import Document
 from qanything_kernel.connector.database.mysql.mysql_client import KnowledgeBaseManager
 from qanything_kernel.connector.database.milvus.milvus_client import MilvusClient
@@ -19,13 +20,17 @@ import traceback
 import logging
 import base64
 import numpy as np
+import qanything_kernel.connector.gpuinfo.global_vars as global_vars
 
-if platform.system() == 'Linux':
+gpu_type = global_vars.get_gpu_type()
+if gpu_type == 'nvidia':
     from qanything_kernel.connector.rerank.rerank_client_onnx import RerankONNXBackend
-elif platform.system() == 'Darwin':
-    from qanything_kernel.connector.rerank.rerank_client_torch import RerankTorchBackend
+elif gpu_type == 'intel':
+    from qanything_kernel.connector.rerank.rerank_client_torch_xpu import RerankTorchXPUBackend
+elif gpu_type == 'metal':
+    from qanything_kernel.connector.rerank.rerank_client_torch_mps import RerankTorchMPSBackend
 else:
-    raise NotImplementedError('Unsupported operating system: {}'.format(platform.system()))
+    raise NotImplementedError('Unsupported GPU type: {}'.format(gpu_type))
 
 logging.basicConfig(level=logging.INFO)
 
@@ -65,12 +70,15 @@ class LocalDocQA:
         self.mode = mode
         self.embeddings = YouDaoLocalEmbeddings()
         if self.mode == 'local':
-            if platform.system() == 'Linux':
+            if gpu_type == 'nvidia':
                 self.llm: OpenAICustomLLM = OpenAICustomLLM()
                 self.local_rerank_backend = RerankONNXBackend()
-            elif platform.system() == 'Darwin':
+            elif gpu_type == 'intel':
+                self.llm: BigDLCustomLLM = BigDLCustomLLM()
+                self.local_rerank_backend = RerankTorchXPUBackend()
+            elif gpu_type == 'metal':
                 self.llm: LlamaCPPCustomLLM = LlamaCPPCustomLLM()
-                self.local_rerank_backend = RerankTorchBackend()
+                self.local_rerank_backend = RerankTorchMPSBackend()
             else:
                 raise NotImplementedError('Unsupported platform')
         else:

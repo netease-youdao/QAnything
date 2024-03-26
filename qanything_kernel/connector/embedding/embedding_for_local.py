@@ -4,23 +4,29 @@ from typing import List
 from qanything_kernel.configs.model_config import LOCAL_EMBED_MODEL_PATH, LOCAL_EMBED_MAX_LENGTH, LOCAL_EMBED_BATCH, LOCAL_EMBED_PATH, LOCAL_EMBED_REPO
 from qanything_kernel.utils.custom_log import debug_logger
 import concurrent.futures
-from tqdm import tqdm 
+from tqdm import tqdm
+import qanything_kernel.connector.gpuinfo.global_vars as global_vars
 # from huggingface_hub import snapshot_download
 
+gpu_type = global_vars.get_gpu_type()
 
-if platform.system() == "Linux":
+if gpu_type == "nvidia":
     from qanything_kernel.connector.embedding.embedding_client_onnx import EmbeddingClientONNX
-elif platform.system() == "Darwin":
-    from qanything_kernel.connector.embedding.embedding_client_torch import EmbeddingClientTorch
+elif gpu_type == "metal":
+    from qanything_kernel.connector.embedding.embedding_client_torch_mps import EmbeddingClientTorchMPS
+elif gpu_type == 'intel':
+    from qanything_kernel.connector.embedding.embedding_client_torch_xpu import EmbeddingClientTorchXPU
 
 
 class YouDaoLocalEmbeddings:
     def __init__(self):
-        if platform.system() == "Linux":
+        if gpu_type == "nvidia":
             self.embedding_client: EmbeddingClientONNX = EmbeddingClientONNX(model_path=LOCAL_EMBED_MODEL_PATH,
                                                                              tokenizer_path=LOCAL_EMBED_PATH)
-        elif platform.system() == "Darwin":
-            self.embedding_client: EmbeddingClientTorch = EmbeddingClientTorch()
+        elif gpu_type == "metal":
+            self.embedding_client: EmbeddingClientTorchMPS = EmbeddingClientTorchMPS()
+        elif gpu_type == 'intel':
+            self.embedding_client: EmbeddingClientTorchXPU = EmbeddingClientTorchXPU()
 
     def _get_embedding(self, queries):
         embeddings = self.embedding_client.get_embedding(queries, max_length=LOCAL_EMBED_MAX_LENGTH)
