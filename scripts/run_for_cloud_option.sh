@@ -164,6 +164,9 @@ CUDA_VISIBLE_DEVICES=$gpu_id2 nohup python3 -u qanything_kernel/dependent_server
 echo "The ocr service is ready! (3/8)"
 echo "OCR服务已就绪! (3/8)"
 
+pip install third_party/es/whl/elastic_transport-8.12.0-py3-none-any.whl
+pip install third_party/es/whl/elasticsearch-8.12.1-py3-none-any.whl
+
 nohup python3 -u qanything_kernel/qanything_server/sanic_api.py --mode "online" > /workspace/qanything_local/logs/debug_logs/sanic_api.log 2>&1 &
 
 # 监听后端服务启动
