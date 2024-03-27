@@ -2,6 +2,7 @@
 from typing import List
 from qanything_kernel.configs.model_config import LOCAL_EMBED_MODEL_PATH, LOCAL_EMBED_MAX_LENGTH, LOCAL_EMBED_BATCH, \
     LOCAL_EMBED_PATH, LOCAL_EMBED_REPO
+from qanything_kernel.utils.general_utils import get_time
 from qanything_kernel.utils.custom_log import debug_logger
 from transformers import AutoTokenizer
 import concurrent.futures
@@ -34,6 +35,7 @@ class EmbeddingBackend(ABC):
     def get_embedding(self, sentences, max_length) -> List:
         pass
 
+    @get_time
     def get_len_safe_embeddings(self, texts: List[str]) -> List[List[float]]:
         all_embeddings = []
         batch_size = LOCAL_EMBED_BATCH

@@ -25,7 +25,7 @@ class EmbeddingTorchBackend(EmbeddingBackend):
         inputs_pt = {k: v.to(self.device) for k, v in inputs_pt.items()}
         start_time = time.time()
         outputs_pt = self._model(**inputs_pt)
-        debug_logger.info(f"embedding infer time: {time.time() - start_time}")
+        debug_logger.info(f"torch embedding infer time: {time.time() - start_time}")
         embedding = outputs_pt[0][:, 0].cpu().detach().numpy()
         debug_logger.info(f'embedding shape: {embedding.shape}')
         norm_arr = np.linalg.norm(embedding, axis=1, keepdims=True)

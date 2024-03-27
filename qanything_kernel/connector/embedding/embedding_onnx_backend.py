@@ -24,7 +24,7 @@ class EmbeddingOnnxBackend(EmbeddingBackend):
         inputs_onnx = {k: v for k, v in inputs_onnx.items()}
         start_time = time.time()
         outputs_onnx = self._session.run(output_names=['output'], input_feed=inputs_onnx)
-        debug_logger.info(f"infer time: {time.time() - start_time}")
+        debug_logger.info(f"onnx infer time: {time.time() - start_time}")
         embedding = outputs_onnx[0][:,0]
         debug_logger.info(f'embedding shape: {embedding.shape}')
         norm_arr = np.linalg.norm(embedding, axis=1, keepdims=True)
