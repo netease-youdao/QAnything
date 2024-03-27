@@ -8,6 +8,7 @@ import sys
 import json
 import requests
 import logging
+import traceback
 sys.path.append("../../../")
 from qanything_kernel.connector.llm.base import (BaseAnswer, AnswerResult)
 
@@ -75,6 +76,9 @@ class OpenAILLM(BaseAnswer, ABC):
             "gpt-4-32k-0613",
             "gpt-4-32k",
             # "gpt-4-1106-preview",
+            "Qwen1.5-72B-Chat",
+            "Qwen1.5-14B-Chat",
+            "Qwen1.5-7B-Chat",
             }:
             tokens_per_message = 3
             tokens_per_name = 1
@@ -181,6 +185,7 @@ class OpenAILLM(BaseAnswer, ABC):
 
         except Exception as e:
             logging.info(f"Error calling OpenAI API: {e}")
+            traceback.print_exc()
             delta = {'answer': f"{e}"}
             yield "data: " + json.dumps(delta, ensure_ascii=False)
 
