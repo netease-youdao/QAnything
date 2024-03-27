@@ -40,8 +40,19 @@ cd -
 bash run.sh -c local -i 0 -b hf -m Qwen-7B-QAnything -t qwen-7b-qanything
 ```
 
-## 在前端页面输入问题后，返回结果是类似后面的乱码：omiteatures贶.scrollHeight㎜eaturesodo Curse.streaming pulumi窟IDI贶沤贶.scrollHeight贶贶贶eatures谜.scrollHeight她是
-- 原因：显卡型号不支持，例如V100，请使用3080，3090，4080，4090等显卡，显存需要大于16G
+## WIN10无法使用默认配置bash run.sh启动服务
+- 原因：WIN10系统下无法使用默认的Qwen-7B-QAnything模型（qwen的微调模型），可以尝试替换成qwen-7b-chat（官方qwen模型），具体步骤请查看：docs
+/QAnything_Startup_Usage_README.md
+
+## 启动前端时提示跨域问题
+- 解决方案：目前部分浏览器启动时会存在这个问题，可以在登陆时将云服务器端口映射到本地机器端口，然后使用local模式启动服务即可，映射命令如下：
+  ```
+  ssh -L 8777:localhost:8777 -L 5052:localhost:5052 root@{ip}  # ip示例 47.98.120.77
+  # 输入密码后登录
+  # 重新启动服务，当询问是否采用上次ip时选择否：Do you want to use the previous ip: $ip? (yes/no) 是否使用上次的ip: $host？(yes/no) 回车默认选yes，请输入: | 选择no
+  # 并选择在本地机器上启动：”Are you running the code on a remote server or on your local machine? (remotelocal) 您是在云服务器上还是本地机器上启动代码？(remote/local) | 选择local“
+  # 然后在本地机器上访问localhost:5052/qanything/即可访问
+  ```
 
 ## 服务启动报错，在api.log中显示：mysql.connector.errors.DatabaseError: 2003 (HY000): Can't connect to MySQL server on 'mysql-container-local:3306' (111)
 - 原因：将之前的QAnything代码拉取下来后，复制了一份代码到其他的地址，其中有一个volumes是mivlus和mysql默认的本地数据卷，复制后可能导致了mysql的数据卷冲突，导致mysql无法启动。
