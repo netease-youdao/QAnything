@@ -281,7 +281,7 @@ if [ -e /proc/version ]; then
     docker compose -p user -f docker-compose-windows.yaml logs -f qanything_local
   else
     echo "Running under native Linux"
-    if docker compose -p user -f docker compose-linux.yaml down |& tee /dev/tty | grep -q "services.qanything_local.deploy.resources.reservations value 'devices' does not match any of the regexes"; then
+    if docker compose -p user -f docker-compose-linux.yaml down |& tee /dev/tty | grep -q "services.qanything_local.deploy.resources.reservations value 'devices' does not match any of the regexes"; then
         echo "检测到 Docker Compose 版本过低，请升级到v2.23.3或更高版本。执行docker compose -v查看版本。"
     fi
     docker compose -p user -f docker-compose-linux.yaml up -d
