@@ -372,11 +372,20 @@ Welcome to the QAnything [Discord](https://discord.gg/5uNpPsEJz8) community
 
 
 
-### WeChat Group
+### WeChat
 
-Welcome to scan the QR code below and join the WeChat group.
+Welcome to follow QAnything WeChat Official Account to get the latest information.
+
+<img src="docs/images/qrcode_for_qanything.jpg" width="30%" height="auto">
+
+
+Welcome to scan the code to join the QAnything discussion group.
 
 <img src="docs/images/Wechat.jpg" width="30%" height="auto">
+
+
+
+
 
 ### Email
 If you need to contact our team privately, please reach out to us via the following email:
