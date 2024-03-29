@@ -362,9 +362,12 @@ bash run.sh
 
 
 
-### 微信群
+### 微信
+欢迎关注微信公众号，获取最新QAnything信息
 
-扫描下方二维码，加入QAnything官方微信群
+<img src="docs/images/qrcode_for_qanything.jpg" width="30%" height="auto">
+
+欢迎扫码进入QAnything交流群
 
 <img src="docs/images/Wechat.jpg" width="30%" height="auto">
 
