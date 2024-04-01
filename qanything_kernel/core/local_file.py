@@ -20,8 +20,9 @@ import os
 import re
 
 text_splitter = RecursiveCharacterTextSplitter(
-    separators=["\n\n", "\n", ".", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
+    separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
     chunk_size=400,
+    chunk_overlap=100,
     length_function=num_tokens,
 )
 
@@ -106,11 +107,19 @@ class LocalFile:
             debug_logger.info("using_zh_title_enhance %s", using_zh_title_enhance)
             docs = zh_title_enhance(docs)
 
-        # 重构docs，如果doc的文本长度大于800tokens，则利用text_splitter将其拆分成多个doc
-        # text_splitter: RecursiveCharacterTextSplitter
         if not self.file_path.lower().endswith(".csv") and not self.file_path.lower().endswith(".xlsx"):
-            debug_logger.info(f"before 2nd split doc lens: {len(docs)}")
-            docs = text_splitter.split_documents(docs)
+            new_docs = []
+            for doc in docs:
+                if not new_docs:
+                    new_docs.append(doc)
+                else:
+                    last_doc = new_docs[-1]
+                    if len(last_doc.page_content) + len(doc.page_content) < 200:
+                        last_doc.page_content += '\n' + doc.page_content
+                    else:
+                        new_docs.append(doc)
+            debug_logger.info(f"before 2nd split doc lens: {len(new_docs)}")
+            docs = text_splitter.split_documents(new_docs)
             debug_logger.info(f"after 2nd split doc lens: {len(docs)}")
 
         # 这里给每个docs片段的metadata里注入file_id
@@ -130,6 +139,3 @@ class LocalFile:
         else:
             debug_logger.info('langchain analysis docs is empty!')
         self.docs = new_docs
-
-    # def create_embedding(self):
-    #     self.embs = self.emb_infer.get_len_safe_embeddings([doc.page_content for doc in self.docs])
