@@ -39,7 +39,7 @@ class UnstructuredPaddlePDFLoader(UnstructuredFileLoader):
             with open(txt_file_path, 'w', encoding='utf-8') as fout:
                 for i in tqdm(range(doc.page_count)):
                     page = doc.load_page(i)
-                    pix = page.get_pixmap()
+                    pix = page.get_pixmap(dpi=300)
                     img = np.frombuffer(pix.samples, dtype=np.uint8).reshape((pix.h, pix.w, pix.n))
 
                     img_data = {"img64": base64.b64encode(img).decode("utf-8"), "height": pix.h, "width": pix.w,
