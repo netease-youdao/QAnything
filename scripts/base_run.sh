@@ -103,7 +103,7 @@ else
     use_openai_api_option=""
 fi
 
-echo -e "即将启动后端服务，启动成功后请复制[\033[32mhttp://0.0.0.0:$qanything_port/qanything/\033[0m]到浏览器进行测试。"
+echo -e "即将启动后端服务，启动成功后请复制[\033[32mhttp://127.0.0.1:$qanything_port/qanything/\033[0m]到浏览器进行测试。"
 echo "运行qanything-server的命令是："
 echo "qanything-server --host 0.0.0.0 --port $qanything_port --model_size $model_size $use_cpu_option $use_openai_api_option ${openai_api_base:+--openai_api_base "$openai_api_base"} ${openai_api_key:+--openai_api_key "$openai_api_key"} ${openai_api_model_name:+--openai_api_model_name "$openai_api_model_name"} ${openai_api_context_length:+--openai_api_context_length "$openai_api_context_length"}"
 

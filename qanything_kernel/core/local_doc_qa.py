@@ -40,7 +40,7 @@ class LocalDocQA:
         binary_data = base64.b64decode(img_file)
         img_array = np.frombuffer(binary_data, dtype=np.uint8).reshape((height, width, channels))
         ocr_res = self.ocr_reader.readtext(img_array, detail=0)
-        res = [line.replace(' ', '') for line in ocr_res if line]
+        res = [line for line in ocr_res if line]
         return res
 
     def init_cfg(self, args=None):
@@ -67,6 +67,7 @@ class LocalDocQA:
             self.embeddings: EmbeddingTorchBackend = EmbeddingTorchBackend(self.use_cpu)
         self.mysql_client = KnowledgeBaseManager()
         self.ocr_reader = easyocr.Reader(['ch_sim', 'en'], gpu=not self.use_cpu)
+        debug_logger.info(f"OCR DEVICE: {self.ocr_reader.device}")
         self.faiss_client = FaissClient(self.mysql_client, self.embeddings)
 
     async def insert_files_to_faiss(self, user_id, kb_id, local_files: List[LocalFile]):
@@ -114,7 +115,7 @@ class LocalDocQA:
         filter = lambda metadata: metadata['kb_id'] in kb_ids
         # filter = None
         debug_logger.info(f"query: {query}")
-        docs = await self.faiss_client.search(query, filter=filter, top_k=top_k)
+        docs = await self.faiss_client.search(kb_ids, query, filter=filter, top_k=top_k)
         debug_logger.info(f"query_docs: {len(docs)}")
         t2 = time.time()
         debug_logger.info(f"milvus search time: {t2 - t1}")

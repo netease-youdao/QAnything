@@ -79,6 +79,8 @@ SQLITE_DATABASE = os.path.join(root_path, "QANY_DB", "qanything.db")
 MILVUS_LITE_LOCATION = os.path.join(root_path, "QANY_DB", "milvus")
 FAISS_LOCATION = os.path.join(root_path, "QANY_DB", "faiss")
 FAISS_INDEX_FILE_PATH = os.path.join(FAISS_LOCATION, "faiss_index.idx")
+FAISS_INDEX_LOCAL_PATH = os.path.join(FAISS_LOCATION, "local_file")
+FAISS_CACHE_SIZE = 10
 
 # llm_api_serve_model = os.getenv('LLM_API_SERVE_MODEL', 'MiniChat-2-3B')
 # llm_api_serve_port = os.getenv('LLM_API_SERVE_PORT', 7802)
