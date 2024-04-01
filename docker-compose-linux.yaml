@@ -79,6 +79,7 @@ services:
       - "ES_JAVA_OPTS=-Xms1024m -Xmx1024m"
     volumes:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/third_party/es/plugins:/usr/share/elasticsearch/plugins
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/es/data:/usr/share/elasticsearch/data
     healthcheck:
         test: curl --fail http://localhost:9200/_cat/health || exit 1
         interval: 30s

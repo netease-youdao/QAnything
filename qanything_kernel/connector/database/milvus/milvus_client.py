@@ -244,7 +244,7 @@ class MilvusClient:
 
                 try:
                     debug_logger.info('Inserting into es ...')
-                    mr = await self.client.insert(data=data_es)
+                    mr = await self.client.insert(data=data_es, refresh=batch_end==num_docs)
                     debug_logger.info(f'{file_name} {mr}')
                 except Exception as e:
                     debug_logger.error(f'ES insert file_id: {file_id}\nfile_name: {file_name}\nfailed: {e}')

@@ -70,7 +70,7 @@ MILVUS_DB_NAME = ''
 HYBRID_SEARCH = True  # 是否启用es的BM25检索
 ES_BM25_SEARCH_SIZE = 50
 
-ES_HOST_LOCAL = 'http://localhost:9200/'
+ES_HOST_LOCAL = 'http://es-container-local:9200/'
 ES_CLOUD_ID = None
 ES_USER = None
 ES_PASSWORD = None

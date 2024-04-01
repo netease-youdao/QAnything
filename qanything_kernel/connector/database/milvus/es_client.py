@@ -2,7 +2,7 @@
 @Description: 
 @Author: shenlei
 @Date: 2024-03-20 14:16:48
-@LastEditTime: 2024-03-26 00:45:09
+@LastEditTime: 2024-04-01 15:04:05
 @LastEditors: shenlei
 '''
 import numpy as np
@@ -109,7 +109,7 @@ class ElasticsearchClient:
                 )
                 self.client.indices.create(index=index_name, mappings=mappings, settings=settings)
 
-    async def insert(self, data):
+    async def insert(self, data, refresh=False):
         self._create_index()
         ids = [item['metadata']["chunk_id"] for item in data]
         for index_name in self.index_name:
@@ -127,12 +127,15 @@ class ElasticsearchClient:
                 documents_written, errors = helpers.bulk(
                     client=self.client,
                     actions=actions,
-                    refresh="wait_for",
+                    refresh=False,
                     index=index_name,
                     stats_only=True,
                     raise_on_error=False,
                 )
                 debug_logger.info(f"##ES## - success to add: {documents_written}\nfail to add to index: {errors}")
+                if refresh:
+                    self.client.indices.refresh(index=index_name)
+                    debug_logger.info(f"##ES## - finish insert chunks!")
             except Exception as e:
                 return f"Error adding texts: {e}"
 

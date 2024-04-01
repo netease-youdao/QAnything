@@ -277,6 +277,8 @@ if [ -e /proc/version ]; then
     if docker-compose -p user -f docker-compose-windows.yaml down |& tee /dev/tty | grep -q "services.qanything_local.deploy.resources.reservations value 'devices' does not match any of the regexes"; then
         echo "检测到 Docker Compose 版本过低，请升级到v2.23.3或更高版本。执行docker-compose -v查看版本。"
     fi
+    mkdir -p volumes/es/data
+    chmod 777 -R volumes/es/data
     docker-compose -p user -f docker-compose-windows.yaml up -d
     docker-compose -p user -f docker-compose-windows.yaml logs -f qanything_local
   else
@@ -284,6 +286,8 @@ if [ -e /proc/version ]; then
     if docker-compose -p user -f docker-compose-linux.yaml down |& tee /dev/tty | grep -q "services.qanything_local.deploy.resources.reservations value 'devices' does not match any of the regexes"; then
         echo "检测到 Docker Compose 版本过低，请升级到v2.23.3或更高版本。执行docker-compose -v查看版本。"
     fi
+    mkdir -p volumes/es/data
+    chmod 777 -R volumes/es/data
     docker-compose -p user -f docker-compose-linux.yaml up -d
     docker-compose -p user -f docker-compose-linux.yaml logs -f qanything_local
     # 检查日志输出
