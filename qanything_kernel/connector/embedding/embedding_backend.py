@@ -4,6 +4,7 @@ from qanything_kernel.configs.model_config import LOCAL_EMBED_MODEL_PATH, LOCAL_
     LOCAL_EMBED_PATH, LOCAL_EMBED_REPO
 from qanything_kernel.utils.general_utils import get_time
 from qanything_kernel.utils.custom_log import debug_logger
+from langchain_core.embeddings import Embeddings
 from transformers import AutoTokenizer
 import concurrent.futures
 from tqdm import tqdm
@@ -24,7 +25,7 @@ if not os.path.exists(LOCAL_EMBED_MODEL_PATH):
     debug_logger.info(f"模型下载完毕！cache地址：{cache_dir}, 软链接地址：{LOCAL_EMBED_PATH}")
 
 
-class EmbeddingBackend(ABC):
+class EmbeddingBackend(Embeddings):
     embed_version = "local_v0.0.1_20230525_6d4019f1559aef84abc2ab8257e1ad4c"
 
     def __init__(self, use_cpu):
@@ -51,6 +52,14 @@ class EmbeddingBackend(ABC):
                 embeddings = future.result()
                 all_embeddings += embeddings
         return all_embeddings
+
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        """Embed search docs using multithreading, maintaining the original order."""
+        return self.get_len_safe_embeddings(texts)
+
+    def embed_query(self, text: str) -> List[float]:
+        """Embed query text."""
+        return self.embed_documents([text])[0]
 
     @property
     def getModelVersion(self):

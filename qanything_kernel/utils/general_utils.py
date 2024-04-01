@@ -56,7 +56,7 @@ def format_source_documents(ori_source_documents):
                        'file_name': doc.metadata['file_name'],
                        'content': doc.page_content,
                        'retrieval_query': doc.metadata['retrieval_query'],
-                       'kernel': doc.metadata['kernel'],
+                       # 'kernel': doc.metadata['kernel'],
                        'score': str(doc.metadata['score']),
                        'embed_version': doc.metadata['embed_version']}
         source_documents.append(source_info)

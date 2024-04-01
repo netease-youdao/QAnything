@@ -67,22 +67,17 @@ class KnowledgeBaseManager:
         """
         self.execute_query_(query, (), commit=True)
 
-        # 兼顾一下旧的表
-        try:
-            # timestamp 默认是197001010000
-            query = """
-                ALTER TABLE File
-                ADD COLUMN timestamp VARCHAR(255) DEFAULT '197001010000';
-            """
-            debug_logger.info('ADD COLUMN timestamp')
-            res = self.execute_query_(query, (), commit=True)
-            debug_logger.info(res)
-        except Exception as e:
-            if 'duplicate column name' in str(e):
-                debug_logger.info(e)
-            else:
-                raise e
-        
+        query = """
+            CREATE TABLE IF NOT EXISTS Document (
+                docstore_id VARCHAR(64) PRIMARY KEY,
+                chunk_id VARCHAR(64),
+                file_id VARCHAR(64),
+                file_name VARCHAR(640),
+                kb_id VARCHAR(64)
+            );
+        """
+        self.execute_query_(query, (), commit=True)
+
     def check_user_exist_(self, user_id):
         query = "SELECT user_id FROM User WHERE user_id = ?"
         result = self.execute_query_(query, (user_id,), fetch=True)
@@ -153,6 +148,20 @@ class KnowledgeBaseManager:
         query = "INSERT INTO User (user_id, user_name) VALUES (?, ?)"
         self.execute_query_(query, (user_id, user_name), commit=True)
         return user_id
+
+    def add_document(self, docstore_id, chunk_id, file_id, file_name, kb_id):
+        query = "INSERT INTO Document (docstore_id, chunk_id, file_id, file_name, kb_id) VALUES (?, ?, ?, ?, ?)"
+        self.execute_query_(query, (docstore_id, chunk_id, file_id, file_name, kb_id), commit=True)
+
+    def get_documents_by_kb_id(self, kb_id):
+        query = "SELECT docstore_id FROM Document WHERE kb_id = ?"
+        return self.execute_query_(query, (kb_id,), fetch=True)
+
+    def get_documents_by_file_ids(self, file_ids):
+        # 使用参数化查询
+        placeholders = ','.join(['?'] * len(file_ids))
+        query = "SELECT docstore_id FROM Document WHERE file_id IN ({})".format(placeholders)
+        return self.execute_query_(query, file_ids, fetch=True)
 
     def new_milvus_base(self, kb_id, user_id, kb_name, user_name=None):
         if not self.check_user_exist_(user_id):

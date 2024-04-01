@@ -17,6 +17,7 @@ from qanything_kernel.utils.splitter import zh_title_enhance
 from sanic.request import File
 import pandas as pd
 import os
+import re
 
 text_splitter = RecursiveCharacterTextSplitter(
     separators=["\n\n", "\n", ".", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
@@ -113,15 +114,22 @@ class LocalFile:
             debug_logger.info(f"after 2nd split doc lens: {len(docs)}")
 
         # 这里给每个docs片段的metadata里注入file_id
-        for doc in docs:
-            doc.metadata["file_id"] = self.file_id
-            doc.metadata["file_name"] = self.url if self.url else os.path.split(self.file_path)[-1]
-        write_check_file(self.file_path, docs)
-        if docs:
-            debug_logger.info('langchain analysis content head: %s', docs[0].page_content[:100])
+        new_docs = []
+        for idx, doc in enumerate(docs):
+            page_content = re.sub(r'[\n\t]+', '\n', doc.page_content).strip()
+            new_doc = Document(page_content=page_content)
+            new_doc.metadata["user_id"] = self.user_id
+            new_doc.metadata["kb_id"] = self.kb_id
+            new_doc.metadata["file_id"] = self.file_id
+            new_doc.metadata["file_name"] = self.url if self.url else self.file_name
+            new_doc.metadata["chunk_id"] = idx
+            new_docs.append(new_doc)
+
+        if new_docs:
+            debug_logger.info('langchain analysis content head: %s', new_docs[0].page_content[:100])
         else:
             debug_logger.info('langchain analysis docs is empty!')
-        self.docs = docs
+        self.docs = new_docs
 
-    def create_embedding(self):
-        self.embs = self.emb_infer.get_len_safe_embeddings([doc.page_content for doc in self.docs])
+    # def create_embedding(self):
+    #     self.embs = self.emb_infer.get_len_safe_embeddings([doc.page_content for doc in self.docs])

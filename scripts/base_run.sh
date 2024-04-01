@@ -91,16 +91,6 @@ if [ "$system" = "M1mac" ]; then
     fi
 fi
 
-
-if lsof -i :19530 >/dev/null; then
-    echo "端口$milvus_port 正在被监听。Milvus-Lite服务已启动。"
-else
-    echo "端口$milvus_port 没有被监听。"
-    echo "启动Milvus-Lite服务：milvus-server --data milvus_data --proxy-port $milvus_port"
-    nohup milvus-server --data milvus_data --proxy-port $milvus_port 1>milvus_server.log 2>&1 &
-    sleep 10
-fi
-
 if [ "$use_cpu" = true ]; then
     use_cpu_option="--use_cpu"
 else
