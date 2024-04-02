@@ -10,8 +10,9 @@ Requirements:
       - Windows: WSL with Ubuntu 20.04+ and GEFORCE EXPERIENCE 535.104+ (if using GPU) 
       - MacOS: M1/M2/M3 Mac with Xcode 15.0+
 
-To install the package, run:
+<span style="color:red;">Please create a clean Python virtual environment to avoid potential conflicts(Recommend Anaconda3).</span>
 
+To install the package, run: 
 ```bash
 conda create -n qanything-python python=3.10
 conda activate qanything-python
@@ -33,17 +34,28 @@ bash scripts/run_for_7B_in_Linux_or_WSL.sh
 ```
 
 ## Run With Openai API On Windows WSL or Linux，CPU Only
+
+<span style="color:red;">Fill in the API key in scripts/run_for_openai_api_with_cpu_in_Linux_or_WSL.sh</span>
+
 ```bash
-# fill in the API key in scripts/run_for_openai_api_with_cpu_in_Linux_or_WSL.sh
-vim scripts/run_for_openai_api_with_cpu_in_Linux_or_WSL.sh
+# Like: 
 bash scripts/run_for_openai_api_with_cpu_in_Linux_or_WSL.sh
 ```
 
 ## Run With Openai API On Windows WSL or Linux，GPU Only
+
+<span style="color:red;">Fill in the API key in scripts/run_for_openai_api_with_gpu_in_Linux_or_WSL.sh</span>
+
 ```bash
-# fill in the API key in scripts/run_for_openai_api_with_gpu_in_Linux_or_WSL.sh
-vim scripts/run_for_openai_api_with_gpu_in_Linux_or_WSL.sh
 bash scripts/run_for_openai_api_with_gpu_in_Linux_or_WSL.sh
+```
+
+## Run With Openai API On M1 Mac
+
+<span style="color:red;">Fill in the API key in scripts/run_for_openai_api_in_M1_mac.sh</span>
+
+```bash
+bash scripts/run_for_openai_api_in_M1_mac.sh
 ```
 
 ## Run With 4B LLM (Qwen1.5-4B-Chat-GGUF) On M1 Mac
@@ -56,17 +68,7 @@ bash scripts/run_for_4B_in_M1_mac.sh
 bash scripts/run_for_7B_in_M1_mac.sh
 ```
 
-## Run With Openai API On M1 mac，MPS Only
-```bash
-# fill in the API key in scripts/run_for_openai_api_in_M1_mac.sh
-vim scripts/run_for_openai_api_in_M1_mac.sh
-bash scripts/run_for_openai_api_in_M1_mac.sh
-```
-
 ## USE WITH WEB UI
-在浏览器中打开http://0.0.0.0:8777/qanything/，即可使用UI界面
-注意末尾的斜杠不可省略，否则会出现404错误
-
 Open http://0.0.0.0:8777/qanything/ in the browser to use the UI interface
 Note that the trailing slash cannot be omitted, otherwise a 404 error will occur
 
