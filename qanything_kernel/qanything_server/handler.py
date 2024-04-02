@@ -303,9 +303,8 @@ async def clean_files_by_status(req: request):
     debug_logger.info(f'{status} files number: {len(gray_file_names)}')
     # 删除milvus中的file
     if gray_file_ids:
-        # TODO 暂时不支持多知识库
-        local_doc_qa.faiss_client.delete_documents(kb_id=kb_ids[0], file_ids=gray_file_ids)
         for kb_id in kb_ids:
+            local_doc_qa.faiss_client.delete_documents(kb_id=kb_id, file_ids=gray_file_ids)
             local_doc_qa.mysql_client.delete_files(kb_id, gray_file_ids)
     return sanic_json({"code": 200, "msg": f"delete {status} files success", "data": gray_file_names})
 

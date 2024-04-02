@@ -6,8 +6,9 @@ from langchain_community.vectorstores.faiss import dependable_faiss_import
 from qanything_kernel.utils.custom_log import debug_logger
 from qanything_kernel.connector.database.mysql.mysql_client import KnowledgeBaseManager
 from functools import lru_cache
+import shutil
+import stat
 import os
-import time
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'  # 可能是由于是MacOS系统的原因
 
@@ -22,21 +23,29 @@ class FaissClient:
         self.mysql_client: KnowledgeBaseManager = mysql_client
         self.embeddings = embeddings
         self.faiss_client: FAISS = None
+        self.kb_ids: List[str] = []
 
-    def _init(self, kb_id):
-        faiss_index_path = os.path.join(FAISS_LOCATION, kb_id, 'faiss_index')
-        if os.path.exists(faiss_index_path):
-            self.faiss_client: FAISS = load_vector_store(faiss_index_path, self.embeddings)
-        else:
-            faiss = dependable_faiss_import()
-            index = faiss.IndexFlatL2(768)
-            docstore = InMemoryDocstore()
-            self.faiss_client: FAISS = FAISS(self.embeddings, index, docstore, index_to_docstore_id={})
+    def _load_kb_to_memory(self, kb_ids):
+        self.kb_ids = kb_ids
+        self.faiss_client = None
+        for kb_id in kb_ids:
+            faiss_index_path = os.path.join(FAISS_LOCATION, kb_id, 'faiss_index')
+            if os.path.exists(faiss_index_path):
+                faiss_client: FAISS = load_vector_store(faiss_index_path, self.embeddings)
+            else:
+                faiss = dependable_faiss_import()
+                index = faiss.IndexFlatL2(768)
+                docstore = InMemoryDocstore()
+                faiss_client: FAISS = FAISS(self.embeddings, index, docstore, index_to_docstore_id={})
+            if self.faiss_client is None:
+                self.faiss_client = faiss_client
+            else:
+                self.faiss_client.merge_from(faiss_client)
 
     async def search(self, kb_ids, query, filter: Optional[Union[Callable, Dict[str, Any]]] = None,
                      top_k=VECTOR_SEARCH_TOP_K):
-        if self.faiss_client is None:
-            self._init(kb_ids[0])  # TODO 多知识库暂未支持
+        if self.faiss_client is None or self.kb_ids != kb_ids:
+            self._load_kb_to_memory(kb_ids)
         # filter = {'page': 1}
         if filter is None:
             filter = {}
@@ -67,8 +76,8 @@ class FaissClient:
 
     async def add_document(self, docs):
         kb_id = docs[0].metadata['kb_id']
-        if self.faiss_client is None:
-            self._init(kb_id)
+        if self.faiss_client is None or self.kb_ids != [kb_id]:
+            self._load_kb_to_memory([kb_id])
         add_ids = await self.faiss_client.aadd_documents(docs)
         # doc带上id存入Document表中
         chunk_id = 0
@@ -79,19 +88,28 @@ class FaissClient:
         debug_logger.info(f'add documents number: {len(add_ids)}')
         faiss_index_path = os.path.join(FAISS_LOCATION, kb_id, 'faiss_index')
         self.faiss_client.save_local(faiss_index_path)
+        os.chmod(os.path.dirname(faiss_index_path), stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
         return add_ids
 
     def delete_documents(self, kb_id, file_ids=None):
+        if self.faiss_client is None or self.kb_ids != [kb_id]:
+            self._load_kb_to_memory([kb_id])
         doc_ids = []
         if file_ids is None:
-            doc_ids = self.mysql_client.get_documents_by_kb_id(kb_id)
+            kb_index_path = os.path.join(FAISS_LOCATION, kb_id)
+            if os.path.exists(kb_index_path):
+                shutil.rmtree(kb_index_path)
+                self.faiss_client = None
+                debug_logger.info(f'delete kb_id: {kb_id}, {kb_index_path}')
+                return
         elif file_ids:
             doc_ids = self.mysql_client.get_documents_by_file_ids(file_ids)
         doc_ids = [doc_id[0] for doc_id in doc_ids]
         if not doc_ids:
             debug_logger.info(f'no documents to delete')
             return
-        if self.faiss_client is None:
-            self._init(kb_id)
-        res = self.faiss_client.delete(doc_ids)
-        debug_logger.info(f'delete documents: {res}')
+        try:
+            res = self.faiss_client.delete(doc_ids)
+            debug_logger.info(f'delete documents: {res}')
+        except ValueError as e:
+            debug_logger.warning(f'delete documents not find docs')
