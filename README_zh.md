@@ -56,11 +56,15 @@ bash scripts/run_for_openai_api_in_M1_mac.sh
 ```
 
 ## 在M1Mac环境下使用4BLLM（Qwen1.5-4B-Chat-GGUF）
+<span style="color:red;">Mac上建议使用Openai API, Qwen 4B/7B模型效果不佳</span>
+
 ```bash
 bash scripts/run_for_4B_in_M1_mac.sh
 ```
 
 ## 在M1Mac环境下使用7BLLM（Qwen1.5-7B-Chat-GGUF）
+<span style="color:red;">Mac上建议使用Openai API, Qwen 4B/7B模型效果不佳</span>
+
 ```bash
 bash scripts/run_for_7B_in_M1_mac.sh
 ```
