@@ -21,12 +21,12 @@ cd QAnything
 pip install -e .
 ```
 
-## 在Windows WSL或Linux环境下运行4B大模型（Qwen1.5-4B-Chat）
+## 在Windows WSL或Linux环境下运行3B大模型（MiniChat-2-3B）要求显存>=10GB
 ```bash
-bash scripts/run_for_4B_in_Linux_or_WSL.sh
+bash scripts/run_for_3B_in_Linux_or_WSL.sh
 ```
 
-## 在Windows WSL或Linux环境下运行7B大模型（自研Qwen-7B-QAnything）
+## 在Windows WSL或Linux环境下运行7B大模型（自研Qwen-7B-QAnything）要求显存>=20GB
 ```bash
 bash scripts/run_for_7B_in_Linux_or_WSL.sh
 ```

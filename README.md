@@ -21,13 +21,13 @@ cd QAnything
 pip install -e .
 ```
 
-## Run With 4B LLM (Qwen1.5-4B-Chat) On Windows WSL or Linux
+## Run With 3B LLM (MiniChat-2-3B) On Windows WSL or Linux (Require GPU with >=10GB Memory)
 
 ```bash
-bash scripts/run_for_4B_in_Linux_or_WSL.sh
+bash scripts/run_for_3B_in_Linux_or_WSL.sh
 ```
 
-## Run With 7B LLM (Qwen-7B-QAnything) On Windows WSL or Linux
+## Run With 7B LLM (Qwen-7B-QAnything) On Windows WSL or Linux (Require GPU with >=20GB Memory)
 
 ```bash
 bash scripts/run_for_7B_in_Linux_or_WSL.sh
