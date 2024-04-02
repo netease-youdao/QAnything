@@ -113,7 +113,7 @@ if not args.use_openai_api:
     if model_size == '3B':
         args.model = DT_3B_MODEL_PATH
         model_download_params = DT_3B_DOWNLOAD_PARAMS
-    if model_size == '4B':
+    elif model_size == '4B':
         args.model = DT_4B_MODEL_PATH
         model_download_params = DT_4B_DOWNLOAD_PARAMS
     elif model_size == '7B':
