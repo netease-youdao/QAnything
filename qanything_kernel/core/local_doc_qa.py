@@ -44,6 +44,7 @@ class LocalDocQA:
         return res
 
     def init_cfg(self, args=None):
+        self.rerank_top_k = 4 if args.model_size == '4B' else 7
         self.use_cpu = args.use_cpu
         if platform.system() == 'Linux':
             if args.use_openai_api:
@@ -195,7 +196,7 @@ class LocalDocQA:
         retrieval_documents = sorted(deduplicated_docs, key=lambda x: x.metadata['score'], reverse=True)
         if rerank and len(retrieval_documents) > 1:
             debug_logger.info(f"use rerank, rerank docs num: {len(retrieval_documents)}")
-            retrieval_documents = self.rerank_documents(query, retrieval_documents)
+            retrieval_documents = self.rerank_documents(query, retrieval_documents)[: self.rerank_top_k]
 
         source_documents = self.reprocess_source_documents(query=query,
                                                            source_docs=retrieval_documents,

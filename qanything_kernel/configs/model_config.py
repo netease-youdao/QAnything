@@ -41,9 +41,6 @@ PROMPT_TEMPLATE = """参考信息：
 
 QUERY_PROMPT_TEMPLATE = """{question}"""
 
-# 缓存知识库数量
-CACHED_VS_NUM = 100
-
 # 文本分句长度
 SENTENCE_SIZE = 100
 
@@ -80,6 +77,7 @@ MILVUS_LITE_LOCATION = os.path.join(root_path, "QANY_DB", "milvus")
 FAISS_LOCATION = os.path.join(root_path, "QANY_DB", "faiss")
 FAISS_INDEX_FILE_PATH = os.path.join(FAISS_LOCATION, "faiss_index.idx")
 FAISS_INDEX_LOCAL_PATH = os.path.join(FAISS_LOCATION, "local_file")
+# 缓存知识库数量
 FAISS_CACHE_SIZE = 10
 
 # llm_api_serve_model = os.getenv('LLM_API_SERVE_MODEL', 'MiniChat-2-3B')
