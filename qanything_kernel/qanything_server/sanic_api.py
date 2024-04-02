@@ -18,7 +18,7 @@ root_dir = os.path.dirname(parent_dir)
 sys.path.append(root_dir)
 
 from qanything_kernel.configs.model_config import VW_4B_MODEL_PATH, VW_7B_MODEL_PATH, VM_4B_DOWNLOAD_PARAMS, \
-    VM_7B_DOWNLOAD_PARAMS
+    VM_7B_DOWNLOAD_PARAMS, VW_3B_MODEL_PATH, VW_3B_MODEL_PATH
 import qanything_kernel.configs.model_config as model_config
 from qanything_kernel.utils.custom_log import debug_logger
 from qanything_kernel.utils.general_utils import download_file, get_gpu_memory_utilization, check_package_version
@@ -110,6 +110,9 @@ if not args.use_openai_api:
     if os_system == "Linux":
         args.gpu_memory_utilization = get_gpu_memory_utilization(model_size, args.device_id)
         debug_logger.info(f"GPU memory utilization: {args.gpu_memory_utilization}")
+    if model_size == '3B':
+        args.model = VW_3B_MODEL_PATH
+        model_download_params = VM_3B_DOWNLOAD_PARAMS
     if model_size == '4B':
         args.model = VW_4B_MODEL_PATH
         model_download_params = VM_4B_DOWNLOAD_PARAMS
@@ -117,7 +120,7 @@ if not args.use_openai_api:
         args.model = VW_7B_MODEL_PATH
         model_download_params = VM_7B_DOWNLOAD_PARAMS
     else:
-        raise ValueError(f"Unsupported model size: {model_size}, supported model size: 4B, 7B")
+        raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 4B, 7B")
 
 # 如果模型不存在, 下载模型
 if args.use_openai_api:
@@ -126,11 +129,11 @@ elif not os.path.exists(args.model):
     debug_logger.info(f'开始下载大模型：{model_download_params}')
     if os_system == 'Darwin':
         cache_dir = model_file_download(**model_download_params)
+        debug_logger.info(f'模型下载完毕！{cache_dir}')
     else:
         cache_dir = snapshot_download(**model_download_params)
-    # output = subprocess.check_output(['ln', '-s', cache_dir, args.model], text=True)
-    # debug_logger.info(f'模型下载完毕！cache地址：{cache_dir}, 软链接地址：{args.model}')
-    debug_logger.info(f'模型下载完毕！{cache_dir}')
+        output = subprocess.check_output(['ln', '-s', cache_dir, args.model], text=True)
+        debug_logger.info(f'模型下载完毕！cache地址：{cache_dir}, 软链接地址：{args.model}')
     debug_logger.info(f"CUDA_DEVICE: {model_config.CUDA_DEVICE}")
 else:
     debug_logger.info(f'{args.model}路径已存在，不再重复下载大模型（如果下载出错可手动删除此目录）')
@@ -194,6 +197,11 @@ app.add_route(delete_knowledge_base, "/api/local_doc_qa/delete_knowledge_base", 
 app.add_route(rename_knowledge_base, "/api/local_doc_qa/rename_knowledge_base", methods=['POST'])  # tags=["重命名知识库"] 
 
 if __name__ == "__main__":
-    app.run(host=args.host, port=args.port, workers=args.workers, access_log=False)
+    if args.use_openai_api:
+        app.run(host=args.host, port=args.port, workers=args.workers, access_log=False)
+    else:
+        # 模型占用显存大，多个worker显存不够用
+        app.run(host=args.host, port=args.port, single_process=True, access_log=False)
+
 
 

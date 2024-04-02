@@ -123,13 +123,19 @@ if os_system == 'Darwin':
     VM_7B_DOWNLOAD_PARAMS = {'model_id': 'qwen/Qwen1.5-7B-Chat-GGUF', 'file_path': 'qwen1_5-7b-chat-q4_k_m.gguf', 'revision': 'master', 'cache_dir': model_path}
     VW_CONV_4B_TEMPLATE = "qwen-7b-chat"
     VW_CONV_7B_TEMPLATE = "qwen-7b-chat"
+    VW_3B_MODEL_PATH = ''
+    VW_3B_DOWNLOAD_PARAMS = {}
+    VW_CONV_3B_TEMPLATE = ''
 else:
-    VW_4B_MODEL_PATH = os.path.join(model_path, "Qwen1.5-4B-Chat")
+    VW_3B_MODEL_PATH = os.path.join(model_path, "MiniChat-2-3B")
     VW_7B_MODEL_PATH = os.path.join(model_path, "Qwen-7B-QAnything")
-    VM_4B_DOWNLOAD_PARAMS = {'model_id': 'qwen/Qwen1.5-4B-Chat',
-                             'revision': 'master', 'cache_dir': VW_4B_MODEL_PATH}
+    VM_3B_DOWNLOAD_PARAMS = {'model_id': 'netease-youdao/MiniChat-2-3B',
+                             'revision': 'master', 'cache_dir': model_path}
     VM_7B_DOWNLOAD_PARAMS = {'model_id': 'netease-youdao/Qwen-7B-QAnything',
-                             'revision': 'master', 'cache_dir': VW_7B_MODEL_PATH}
-    VW_CONV_4B_TEMPLATE = "qwen-7b-chat"
+                             'revision': 'master', 'cache_dir': model_path}
+    VW_CONV_3B_TEMPLATE = "minichat"
     VW_CONV_7B_TEMPLATE = "qwen-7b-qanything"
+    VW_4B_MODEL_PATH = ''
+    VW_4B_DOWNLOAD_PARAMS = {}
+    VW_CONV_4B_TEMPLATE = ''
 

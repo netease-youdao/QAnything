@@ -9,7 +9,7 @@ import requests
 
 sys.path.append("../../../")
 from qanything_kernel.connector.llm.base import (BaseAnswer, AnswerResult)
-from qanything_kernel.configs.model_config import VW_CONV_4B_TEMPLATE, VW_CONV_7B_TEMPLATE
+from qanything_kernel.configs.model_config import VW_CONV_4B_TEMPLATE, VW_CONV_7B_TEMPLATE, VW_CONV_3B_TEMPLATE
 from vllm import LLM, SamplingParams
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.engine.async_llm_engine import AsyncLLMEngine
@@ -38,6 +38,8 @@ class OpenAICustomLLM(BaseAnswer, ABC):
         engine_args = AsyncEngineArgs.from_cli_args(args)
         self.engine = AsyncLLMEngine.from_engine_args(engine_args)
         self.sampling_params = SamplingParams(temperature=0.8, top_p=0.95)
+        if args.model_size == '3B':
+            self.conv_template = VW_CONV_3B_TEMPLATE
         if args.model_size == '4B':
             self.conv_template = VW_CONV_4B_TEMPLATE
         else:

@@ -44,7 +44,7 @@ class LocalDocQA:
         return res
 
     def init_cfg(self, args=None):
-        self.rerank_top_k = 4 if args.model_size == '4B' else 7
+        self.rerank_top_k = int(args.model_size[0])
         self.use_cpu = args.use_cpu
         if platform.system() == 'Linux':
             if args.use_openai_api:
@@ -67,7 +67,10 @@ class LocalDocQA:
             self.local_rerank_backend: RerankTorchBackend = RerankTorchBackend(self.use_cpu)
             self.embeddings: EmbeddingTorchBackend = EmbeddingTorchBackend(self.use_cpu)
         self.mysql_client = KnowledgeBaseManager()
-        self.ocr_reader = easyocr.Reader(['ch_sim', 'en'], gpu=not self.use_cpu)
+        if args.model_size == '3B':  # 省显存
+            self.ocr_reader = easyocr.Reader(['ch_sim', 'en'], gpu=False)
+        else:
+            self.ocr_reader = easyocr.Reader(['ch_sim', 'en'], gpu=not self.use_cpu)
         debug_logger.info(f"OCR DEVICE: {self.ocr_reader.device}")
         self.faiss_client = FaissClient(self.mysql_client, self.embeddings)
 
