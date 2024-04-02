@@ -38,7 +38,6 @@ bash scripts/run_for_7B_in_Linux_or_WSL.sh
 <span style="color:red;">Fill in the API key in scripts/run_for_openai_api_with_cpu_in_Linux_or_WSL.sh</span>
 
 ```bash
-# Like: 
 bash scripts/run_for_openai_api_with_cpu_in_Linux_or_WSL.sh
 ```
 
