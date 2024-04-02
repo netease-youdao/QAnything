@@ -53,8 +53,8 @@ if os_system != 'Darwin':
         whl_name = f'onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl'
         download_file(download_url, whl_name)
         os.system(f"pip install {whl_name}")
-    if not check_package_version("vllm", "0.3.3"):
-        os.system(f"pip install vllm==0.3.3 -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn")
+    if not check_package_version("vllm", "0.2.7"):
+        os.system(f"pip install vllm==0.2.7 -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn")
 
     from vllm.engine.arg_utils import AsyncEngineArgs
 
