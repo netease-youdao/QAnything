@@ -6,6 +6,8 @@ from qanything_kernel.utils.loader.my_recursive_url_loader import MyRecursiveUrl
 from langchain_community.document_loaders import UnstructuredFileLoader, TextLoader
 from langchain_community.document_loaders import UnstructuredWordDocumentLoader
 from langchain_community.document_loaders import UnstructuredExcelLoader
+from langchain_community.document_loaders import UnstructuredPDFLoader
+import langchain_community.document_loaders.pdf
 from langchain_community.document_loaders import UnstructuredEmailLoader
 from langchain_community.document_loaders import UnstructuredPowerPointLoader
 from qanything_kernel.utils.loader.csv_loader import CSVLoader
@@ -25,6 +27,8 @@ text_splitter = RecursiveCharacterTextSplitter(
     chunk_overlap=100,
     length_function=num_tokens,
 )
+
+pdf_text_splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=200, length_function=num_tokens)
 
 
 class LocalFile:
@@ -66,23 +70,24 @@ class LocalFile:
             textsplitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
             docs = loader.load_and_split(text_splitter=textsplitter)
         elif self.file_path.lower().endswith(".md"):
-            loader = UnstructuredFileLoader(self.file_path, mode="elements")
+            loader = UnstructuredFileLoader(self.file_path)
             docs = loader.load()
         elif self.file_path.lower().endswith(".txt"):
             loader = TextLoader(self.file_path, autodetect_encoding=True)
             texts_splitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
             docs = loader.load_and_split(texts_splitter)
         elif self.file_path.lower().endswith(".pdf"):
-            loader = UnstructuredPaddlePDFLoader(self.file_path, ocr_engine, self.use_cpu, mode="elements")
-            texts_splitter = ChineseTextSplitter(pdf=True, sentence_size=sentence_size)
-            docs = loader.load_and_split(texts_splitter)
+            loader = UnstructuredPaddlePDFLoader(self.file_path, ocr_engine, self.use_cpu)
+            # texts_splitter = ChineseTextSplitter(pdf=True, sentence_size=sentence_size)
+            # docs = loader.load_and_split(texts_splitter)
+            docs = loader.load()
         elif self.file_path.lower().endswith(".jpg") or self.file_path.lower().endswith(
                 ".png") or self.file_path.lower().endswith(".jpeg"):
-            loader = UnstructuredPaddleImageLoader(self.file_path, ocr_engine, self.use_cpu, mode="elements")
+            loader = UnstructuredPaddleImageLoader(self.file_path, ocr_engine, self.use_cpu)
             texts_splitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
             docs = loader.load_and_split(text_splitter=texts_splitter)
         elif self.file_path.lower().endswith(".docx"):
-            loader = UnstructuredWordDocumentLoader(self.file_path, mode="elements")
+            loader = UnstructuredWordDocumentLoader(self.file_path)
             texts_splitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
             docs = loader.load_and_split(texts_splitter)
         elif self.file_path.lower().endswith(".xlsx"):
@@ -93,10 +98,10 @@ class LocalFile:
             loader = CSVLoader(csv_file_path, csv_args={"delimiter": ",", "quotechar": '"'})
             docs = loader.load()
         elif self.file_path.lower().endswith(".pptx"):
-            loader = UnstructuredPowerPointLoader(self.file_path, mode="elements")
+            loader = UnstructuredPowerPointLoader(self.file_path)
             docs = loader.load()
         elif self.file_path.lower().endswith(".eml"):
-            loader = UnstructuredEmailLoader(self.file_path, mode="elements")
+            loader = UnstructuredEmailLoader(self.file_path)
             docs = loader.load()
         elif self.file_path.lower().endswith(".csv"):
             loader = CSVLoader(self.file_path, csv_args={"delimiter": ",", "quotechar": '"'})
@@ -106,20 +111,24 @@ class LocalFile:
         if using_zh_title_enhance:
             debug_logger.info("using_zh_title_enhance %s", using_zh_title_enhance)
             docs = zh_title_enhance(docs)
-
+        print('docs number:', len(docs))
         if not self.file_path.lower().endswith(".csv") and not self.file_path.lower().endswith(".xlsx"):
             new_docs = []
+            min_length = 200
             for doc in docs:
                 if not new_docs:
                     new_docs.append(doc)
                 else:
                     last_doc = new_docs[-1]
-                    if len(last_doc.page_content) + len(doc.page_content) < 200:
+                    if len(last_doc.page_content) + len(doc.page_content) < min_length:
                         last_doc.page_content += '\n' + doc.page_content
                     else:
                         new_docs.append(doc)
             debug_logger.info(f"before 2nd split doc lens: {len(new_docs)}")
-            docs = text_splitter.split_documents(new_docs)
+            if self.file_path.lower().endswith(".pdf"):
+                docs = pdf_text_splitter.split_documents(new_docs)
+            else:
+                docs = text_splitter.split_documents(new_docs)
             debug_logger.info(f"after 2nd split doc lens: {len(docs)}")
 
         # 这里给每个docs片段的metadata里注入file_id

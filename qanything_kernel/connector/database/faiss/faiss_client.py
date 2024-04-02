@@ -5,6 +5,7 @@ from typing import Optional, Union, Callable, Dict, Any, List, Tuple
 from langchain_community.vectorstores.faiss import dependable_faiss_import
 from qanything_kernel.utils.custom_log import debug_logger
 from qanything_kernel.connector.database.mysql.mysql_client import KnowledgeBaseManager
+from qanything_kernel.utils.general_utils import num_tokens
 from functools import lru_cache
 import shutil
 import stat
@@ -66,11 +67,15 @@ class FaissClient:
                 merged_docs.append(doc)
             else:
                 if merged_docs[-1].metadata['chunk_id'] == doc.metadata['chunk_id'] - 1:
-                    print('MERGE:', merged_docs[-1].metadata['chunk_id'], doc.metadata['chunk_id'])
-                    merged_docs[-1].page_content += doc.page_content
-                    merged_docs[-1].metadata['chunk_id'] = doc.metadata['chunk_id']
+                    if num_tokens(merged_docs[-1].page_content + doc.page_content) <= 800:
+                        # print('MERGE:', merged_docs[-1].metadata['chunk_id'], doc.metadata['chunk_id'])
+                        merged_docs[-1].page_content += doc.page_content
+                        merged_docs[-1].metadata['chunk_id'] = doc.metadata['chunk_id']
+                    else:
+                        # print('NOT MERGE:', merged_docs[-1].metadata['chunk_id'], doc.metadata['chunk_id'])
+                        merged_docs.append(doc)
                 else:
-                    print('NOT MERGE:', merged_docs[-1].metadata['chunk_id'], doc.metadata['chunk_id'])
+                    # print('NOT MERGE:', merged_docs[-1].metadata['chunk_id'], doc.metadata['chunk_id'])
                     merged_docs.append(doc)
         return merged_docs
 

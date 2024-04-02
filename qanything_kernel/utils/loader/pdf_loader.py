@@ -39,15 +39,16 @@ class UnstructuredPaddlePDFLoader(UnstructuredFileLoader):
             with open(txt_file_path, 'w', encoding='utf-8') as fout:
                 for i in tqdm(range(doc.page_count)):
                     page = doc.load_page(i)
-                    pix = page.get_pixmap(dpi=300)
-                    img = np.frombuffer(pix.samples, dtype=np.uint8).reshape((pix.h, pix.w, pix.n))
-
-                    img_data = {"img64": base64.b64encode(img).decode("utf-8"), "height": pix.h, "width": pix.w,
-                                "channels": pix.n}
-                    result = self.ocr_engine(img_data)
+                    # pix = page.get_pixmap(dpi=300)
+                    # img = np.frombuffer(pix.samples, dtype=np.uint8).reshape((pix.h, pix.w, pix.n))
+                    # 
+                    # img_data = {"img64": base64.b64encode(img).decode("utf-8"), "height": pix.h, "width": pix.w,
+                    #             "channels": pix.n}
+                    # result = self.ocr_engine(img_data)
                     # result = [line for line in result if line]
                     # ocr_result = [i[1][0] for line in result for i in line]
-                    fout.write("\n".join(result))
+                    result = page.get_text()
+                    fout.write(result + '\n\n')
             if os.path.exists(img_name):
                 os.remove(img_name)
             return txt_file_path
