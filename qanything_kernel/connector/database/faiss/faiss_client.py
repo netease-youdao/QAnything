@@ -10,14 +10,18 @@ from functools import lru_cache
 import shutil
 import stat
 import os
+import platform
+os_system = platform.system()
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'  # 可能是由于是MacOS系统的原因
 
 
 @lru_cache(FAISS_CACHE_SIZE)
 def load_vector_store(faiss_index_path, embeddings):
-    return FAISS.load_local(faiss_index_path, embeddings, allow_dangerous_deserialization=True)
-
+    if os_system == "Darwin":
+        return FAISS.load_local(faiss_index_path, embeddings, allow_dangerous_deserialization=True)
+    else:
+        return FAISS.load_local(faiss_index_path, embeddings)
 
 class FaissClient:
     def __init__(self, mysql_client: KnowledgeBaseManager, embeddings):
