@@ -18,7 +18,7 @@ root_dir = os.path.dirname(parent_dir)
 sys.path.append(root_dir)
 
 from qanything_kernel.configs.model_config import DT_4B_MODEL_PATH, DT_7B_MODEL_PATH, DT_4B_DOWNLOAD_PARAMS, \
-    DT_7B_DOWNLOAD_PARAMS, DT_3B_MODEL_PATH, DT_3B_MODEL_PATH
+    DT_7B_DOWNLOAD_PARAMS, DT_3B_MODEL_PATH, DT_3B_MODEL_PATH, DT_3B_DOWNLOAD_PARAMS
 import qanything_kernel.configs.model_config as model_config
 from qanything_kernel.utils.custom_log import debug_logger
 from qanything_kernel.utils.general_utils import download_file, get_gpu_memory_utilization, check_package_version
