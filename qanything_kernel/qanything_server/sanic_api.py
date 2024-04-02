@@ -17,7 +17,7 @@ root_dir = os.path.dirname(parent_dir)
 # 将项目根目录添加到sys.path
 sys.path.append(root_dir)
 
-from qanything_kernel.configs.model_config import MILVUS_LITE_LOCATION, VW_4B_MODEL_PATH, VW_7B_MODEL_PATH, VM_4B_DOWNLOAD_PARAMS, \
+from qanything_kernel.configs.model_config import VW_4B_MODEL_PATH, VW_7B_MODEL_PATH, VM_4B_DOWNLOAD_PARAMS, \
     VM_7B_DOWNLOAD_PARAMS
 import qanything_kernel.configs.model_config as model_config
 from qanything_kernel.utils.custom_log import debug_logger
@@ -62,7 +62,8 @@ if os_system != 'Darwin':
 
 else:
     # 检查是否安装了xcode
-    os.system(f'CMAKE_ARGS="-DLLAMA_METAL_EMBED_LIBRARY=ON -DLLAMA_METAL=on" pip install -U llama-cpp-python --no-cache-dir -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn')
+    if not check_package_version("llama_cpp_python", "0.2.57"):
+        os.system(f'CMAKE_ARGS="-DLLAMA_METAL_EMBED_LIBRARY=ON -DLLAMA_METAL=on" pip install -U llama-cpp-python --no-cache-dir -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn')
     parser.add_argument('--model', dest='model', help='LLM model path')
 
 from .handler import *
@@ -76,8 +77,9 @@ from modelscope import snapshot_download
 from modelscope.hub.file_download import model_file_download
 import subprocess
 
-parser.add_argument('--host', dest='host', default='0.0.0.0', help='set host for qanything server')
+parser.add_argument('--host', dest='host', default='127.0.0.1', help='set host for qanything server')
 parser.add_argument('--port', dest='port', default=8777, type=int, help='set port for qanything server')
+parser.add_argument('--workers', dest='workers', default=4, type=int, help='sanic server workers number')
 # 是否使用GPU
 parser.add_argument('--use_cpu', dest='use_cpu', action='store_true', help='use gpu')
 # 是否使用Openai API
@@ -174,6 +176,10 @@ async def init_local_doc_qa(app, loop):
     debug_logger.info(f"LocalDocQA started in {time.time() - start} seconds.")
     app.ctx.local_doc_qa = local_doc_qa
 
+@app.after_server_start
+async def print_info(app, loop):
+    print("已启动后端服务，请复制[http://127.0.0.1:8777/qanything/]到浏览器进行测试。", flush=True)
+
 app.add_route(document, "/api/docs", methods=['GET'])
 app.add_route(new_knowledge_base, "/api/local_doc_qa/new_knowledge_base", methods=['POST'])  # tags=["新建知识库"]
 app.add_route(upload_weblink, "/api/local_doc_qa/upload_weblink", methods=['POST'])  # tags=["上传网页链接"]
@@ -187,33 +193,7 @@ app.add_route(delete_docs, "/api/local_doc_qa/delete_files", methods=['POST'])  
 app.add_route(delete_knowledge_base, "/api/local_doc_qa/delete_knowledge_base", methods=['POST'])  # tags=["删除知识库"] 
 app.add_route(rename_knowledge_base, "/api/local_doc_qa/rename_knowledge_base", methods=['POST'])  # tags=["重命名知识库"] 
 
-class LocalDocQAServer:
-    def __init__(self, host='0.0.0.0', port=8777):
-        self.host = host
-        self.port = port
-
-    def start(self):
-        app.run(host=self.host, port=self.port, single_process=True, access_log=False)
-
-    def stop(self):
-        res = requests.get('http://{self.host}:{self.port}/stop'.format(self.host, self.port))
-        debug_logger.info(f"Stop qanything server: {res.text}")
-
-
-def main():
-    # 根据命令行参数启动服务器
-    qanything_server = LocalDocQAServer(host=args.host, port=args.port)
-
-    signal.signal(signal.SIGINT, lambda sig, frame: qanything_server.stop())
-    signal.signal(signal.SIGTERM, lambda sig, frame: qanything_server.stop())
-
-    try:
-        qanything_server.start()
-    except TimeoutError:
-        print('Wait for qanything server started timeout.')
-    except RuntimeError:
-        print('QAnything server already stopped.')
-
-
 if __name__ == "__main__":
-    main()
+    app.run(host=args.host, port=args.port, workers=args.workers, access_log=False)
+
+

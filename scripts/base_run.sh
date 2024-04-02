@@ -29,7 +29,7 @@ openai_api_model_name="gpt-3.5-turbo-1106"
 openai_api_context_length="4096"
 
 # 使用getopts解析命令行参数
-while getopts ":s:m:q:M:cob:k:n:l:" opt; do
+while getopts ":s:m:q:M:cob:k:n:l:w:" opt; do
   case $opt in
     s) system="$OPTARG"
     ;;
@@ -50,6 +50,8 @@ while getopts ":s:m:q:M:cob:k:n:l:" opt; do
     n) openai_api_model_name="$OPTARG"
     ;;
     l) openai_api_context_length="$OPTARG"
+    ;;
+    w) workers="$OPTARG"
     ;;
     \?) echo "Invalid option -$OPTARG" >&2
     ;;
@@ -105,13 +107,14 @@ fi
 
 echo -e "即将启动后端服务，启动成功后请复制[\033[32mhttp://127.0.0.1:$qanything_port/qanything/\033[0m]到浏览器进行测试。"
 echo "运行qanything-server的命令是："
-echo "qanything-server --host 0.0.0.0 --port $qanything_port --model_size $model_size $use_cpu_option $use_openai_api_option ${openai_api_base:+--openai_api_base "$openai_api_base"} ${openai_api_key:+--openai_api_key "$openai_api_key"} ${openai_api_model_name:+--openai_api_model_name "$openai_api_model_name"} ${openai_api_context_length:+--openai_api_context_length "$openai_api_context_length"}"
+echo "python3 -m qanything_kernel.qanything_server.sanic_api --host 0.0.0.0 --port $qanything_port --model_size $model_size $use_cpu_option $use_openai_api_option ${openai_api_base:+--openai_api_base "$openai_api_base"} ${openai_api_key:+--openai_api_key "$openai_api_key"} ${openai_api_model_name:+--openai_api_model_name "$openai_api_model_name"} ${openai_api_context_length:+--openai_api_context_length "$openai_api_context_length"} ${workers:+--workers "$workers"}"
 
 sleep 5
 # 启动qanything-server服务
-qanything-server --host 0.0.0.0 --port $qanything_port --model_size $model_size \
+python3 -m qanything_kernel.qanything_server.sanic_api --host 0.0.0.0 --port $qanything_port --model_size $model_size \
     $use_cpu_option $use_openai_api_option \
     ${openai_api_base:+--openai_api_base "$openai_api_base"} \
     ${openai_api_key:+--openai_api_key "$openai_api_key"} \
     ${openai_api_model_name:+--openai_api_model_name "$openai_api_model_name"} \
-    ${openai_api_context_length:+--openai_api_context_length "$openai_api_context_length"}
+    ${openai_api_context_length:+--openai_api_context_length "$openai_api_context_length"} \
+    ${workers:+--workers "$workers"}

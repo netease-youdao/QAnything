@@ -15,11 +15,11 @@ setup(
     package_data={
         "qanything_kernel": ["nltk_data/taggers/averaged_perceptron_tagger/*", "nltk_data/tokenizers/punkt/*", "nltk_data/tokenizers/punkt/PY3/*"],
     },
-    entry_points={
-        'console_scripts': [
-            'qanything-server=qanything_kernel.qanything_server.sanic_api:main'
-        ],
-    },
+    # entry_points={
+    #     'console_scripts': [
+    #         'qanything-server=qanything_kernel.qanything_server.sanic_api:main'
+    #     ],
+    # },
     description='A QA server',
     author='Junxiong Liu',
     author_email='xixihahaliu01@gmail.com',
