@@ -26,7 +26,7 @@ pip install -e .
 bash scripts/run_for_3B_in_Linux_or_WSL.sh
 ```
 
-## 在Windows WSL或Linux环境下运行7B大模型（自研Qwen-7B-QAnything）要求显存>=20GB
+## 在Windows WSL或Linux环境下运行7B大模型（自研Qwen-7B-QAnything）要求显存>=24GB
 ```bash
 bash scripts/run_for_7B_in_Linux_or_WSL.sh
 ```

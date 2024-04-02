@@ -35,6 +35,7 @@ class OpenAICustomLLM(BaseAnswer, ABC):
         # self.llm = LLM(model=DT_MODEL_PATH)
         # parser = argparse.ArgumentParser()
         # parser = AsyncEngineArgs.add_cli_args(parser)
+        args.trust_remote_code = True
         engine_args = AsyncEngineArgs.from_cli_args(args)
         self.engine = AsyncLLMEngine.from_engine_args(engine_args)
         self.sampling_params = SamplingParams(temperature=0.8, top_p=0.95)
