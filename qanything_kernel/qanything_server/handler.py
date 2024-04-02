@@ -174,7 +174,7 @@ async def list_docs(req: request):
     status_count = {}
     msg_map = {'gray': "正在上传中，请耐心等待",
                'red': "split或embedding失败，请检查文件类型，仅支持[md,txt,pdf,jpg,png,jpeg,docx,xlsx,pptx,eml,csv]",
-               'yellow': "milvus插入失败，请稍后再试", 'green': "上传成功"}
+               'yellow': "faiss插入失败，请稍后再试", 'green': "上传成功"}
     for file_info in file_infos:
         status = file_info[2]
         if status not in status_count:

@@ -41,7 +41,7 @@ class EmbeddingBackend(Embeddings):
         all_embeddings = []
         batch_size = LOCAL_EMBED_BATCH
 
-        with concurrent.futures.ThreadPoolExecutor() as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             futures = []
             for i in range(0, len(texts), batch_size):
                 batch = texts[i:i + batch_size]

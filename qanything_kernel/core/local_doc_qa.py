@@ -71,7 +71,7 @@ class LocalDocQA:
         self.faiss_client = FaissClient(self.mysql_client, self.embeddings)
 
     async def insert_files_to_faiss(self, user_id, kb_id, local_files: List[LocalFile]):
-        debug_logger.info(f'insert_files_to_milvus: {kb_id}')
+        debug_logger.info(f'insert_files_to_faiss: {kb_id}')
         success_list = []
         failed_list = []
 
@@ -96,7 +96,7 @@ class LocalDocQA:
             self.mysql_client.update_file_status(local_file.file_id, status='green')
             success_list.append(local_file)
         debug_logger.info(
-            f"insert_to_milvus: success num: {len(success_list)}, failed num: {len(failed_list)}")
+            f"insert_to_faiss: success num: {len(success_list)}, failed num: {len(failed_list)}")
 
     def deduplicate_documents(self, source_docs):
         unique_docs = set()
@@ -118,7 +118,7 @@ class LocalDocQA:
         docs = await self.faiss_client.search(kb_ids, query, filter=filter, top_k=top_k)
         debug_logger.info(f"query_docs: {len(docs)}")
         t2 = time.time()
-        debug_logger.info(f"milvus search time: {t2 - t1}")
+        debug_logger.info(f"faiss search time: {t2 - t1}")
         for idx, doc in enumerate(docs):
             doc.metadata['retrieval_query'] = query  # 添加查询到文档的元数据中
             doc.metadata['embed_version'] = self.embeddings.getModelVersion
