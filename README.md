@@ -20,7 +20,7 @@ To install the package, run:
 ```bash
 conda create -n qanything-python python=3.10
 conda activate qanything-python
-git clone -b qanything-python-v1.3.0 https://github.com/netease-youdao/QAnything.git
+git clone -b qanything-python-v1.3.1 https://github.com/netease-youdao/QAnything.git
 cd QAnything
 pip install -e .
 ```
