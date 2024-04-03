@@ -166,7 +166,10 @@ If you need to use it for commercial purposes, please follow the license of Qwen
 |                               | git-lfs   |                  | [git-lfs install](https://git-lfs.com/)                                                                                   |
 
 
-### Installation
+### Installation(Pure Python environment)
+If you prefer not to use Docker for installation, we provide a [Pure Python Installation Guide](https://github.com/netease-youdao/QAnything/tree/develop_for_v1.3.1?tab=readme-ov-file#pure-python-environment-installation-guide). The installation of a pure Python environment is intended for demo purposes only and is not recommended for deployment in a production environment.
+
+### Installation(Docker)
 ### step1: pull qanything repository
 ```shell
 git clone https://github.com/netease-youdao/QAnything.git
