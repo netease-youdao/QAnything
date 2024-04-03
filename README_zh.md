@@ -1,5 +1,8 @@
-# QAnything 纯Python3版本 
-
+# 纯Python环境安装教程
+<p >
+  <a href="./README.md">English</a> |
+  <a href="./README_zh.md">简体中文</a>
+</p>
 ## 安装 
 
 要求:

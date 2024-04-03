@@ -1,4 +1,8 @@
-# QAnything depends on Python 3.10+
+# Pure Python Environment Installation Guide
+<p >
+  <a href="./README.md">English</a> |
+  <a href="./README_zh.md">简体中文</a>
+</p>
 
 ## Installation
 
