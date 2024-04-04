@@ -141,6 +141,7 @@ If you need to use it for commercial purposes, please follow the license of Qwen
 
 ## 🚀 Latest Updates
 
+- ***2024-04-03***: **Support installation in a pure Python environment.Support hybrid search.** - See More👉 [v1.3.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.3.0)
 - ***2024-01-29***: **Support for custom large models, including OpenAI API and other open-source large models, with a minimum GPU requirement of GTX 1050Ti, greatly improving deployment, debugging, and user experience.** - See More👉 [v1.2.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.2.0)
 - ***2024-01-23***: **Enable rerank by default and fix various issues when starting on Windows.** - See More👉 [v1.1.1](https://github.com/netease-youdao/QAnything/releases/tag/v1.1.1)
 - ***2024-01-18***: **Support one-click startup, support Windows deployment, improve PDF, XLSX, HTML parsing efficiency.** - See More👉 [v1.1.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.1.0)
@@ -166,7 +167,10 @@ If you need to use it for commercial purposes, please follow the license of Qwen
 |                               | git-lfs   |                  | [git-lfs install](https://git-lfs.com/)                                                                                   |
 
 
-### Installation
+### Installation(Pure Python environment)
+If you prefer not to use Docker for installation, we provide a [Pure Python Installation Guide](https://github.com/netease-youdao/QAnything/tree/develop_for_v1.3.1?tab=readme-ov-file#pure-python-environment-installation-guide). The installation of a pure Python environment is intended for demo purposes only and is not recommended for deployment in a production environment.
+
+### Installation(Docker)
 ### step1: pull qanything repository
 ```shell
 git clone https://github.com/netease-youdao/QAnything.git
@@ -372,11 +376,20 @@ Welcome to the QAnything [Discord](https://discord.gg/5uNpPsEJz8) community
 
 
 
-### WeChat Group
+### WeChat
 
-Welcome to scan the QR code below and join the WeChat group.
+Welcome to follow QAnything WeChat Official Account to get the latest information.
+
+<img src="docs/images/qrcode_for_qanything.jpg" width="30%" height="auto">
+
+
+Welcome to scan the code to join the QAnything discussion group.
 
 <img src="docs/images/Wechat.jpg" width="30%" height="auto">
+
+
+
+
 
 ### Email
 If you need to contact our team privately, please reach out to us via the following email:

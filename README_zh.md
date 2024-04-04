@@ -131,7 +131,7 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 * [📖 常见问题](FAQ_zh.md)
 
 ## 🚀 最近更新 
-
+- ***2024-04-03***: **支持在纯Python环境中安装；支持混合检索。** - 详见👉 [v1.3.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.3.0)
 - ***2024-01-29***: **支持自定义大模型，包括OpenAI API和其他开源大模型，GPU需求最低降至GTX 1050Ti，极大提升部署，调试等方面的用户体验** - 详见👉 [v1.2.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.2.0)
 - ***2024-01-23***: **默认开启rerank，修复在windows上启动时存在的各类问题** - 详见👉 [v1.1.1](https://github.com/netease-youdao/QAnything/releases/tag/v1.1.1)
 - ***2024-01-18***: **支持一键启动，支持windows部署，提升pdf，xlsx，html解析效果** - 详见👉 [v1.1.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.1.0)
@@ -156,7 +156,11 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 |                            |  Docker Desktop           | >=  4.26.1（131620）     | [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)                                    |
 |                            | git-lfs   |                  | [git-lfs install](https://git-lfs.com/)                                                                                   |
 
-### 下载安装
+### 下载安装(纯python环境)
+不想用docker环境安装的，我们提供了[纯Python版本安装教程](https://github.com/netease-youdao/QAnything/blob/develop_for_v1.3.1/README_zh.md#%E7%BA%AFpython%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B)，纯python环境的安装仅作为demo体验，不建议生产环境部署。
+
+### 下载安装(docker环境)
+
 ### step1: 下载本项目
 ```shell
 git clone https://github.com/netease-youdao/QAnything.git
@@ -362,9 +366,12 @@ bash run.sh
 
 
 
-### 微信群
+### 微信
+欢迎关注微信公众号，获取最新QAnything信息
 
-扫描下方二维码，加入QAnything官方微信群
+<img src="docs/images/qrcode_for_qanything.jpg" width="30%" height="auto">
+
+欢迎扫码进入QAnything交流群
 
 <img src="docs/images/Wechat.jpg" width="30%" height="auto">
 
