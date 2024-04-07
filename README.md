@@ -75,8 +75,11 @@ bash scripts/run_for_7B_in_M1_mac.sh
 ```
 
 ## USE WITH WEB UI
-Open http://0.0.0.0:8777/qanything/ in the browser to use the UI interface
-Note that the trailing slash cannot be omitted, otherwise a 404 error will occur
+Open http://127.0.0.1:8777/qanything/ in the browser to use the UI interface,
+
+or open http://{your host ip}:8777/qanything/ in the browser to use the UI interface
+
+*Note that the trailing slash cannot be omitted, otherwise a 404 error will occur*
 
 ## API Documents
 API Documentation is available at [API.md](./docs/API.md).
