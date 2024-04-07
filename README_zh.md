@@ -33,20 +33,21 @@
 <details open="open">
 <summary>目 录</summary>
 
-- [什么是QAnything](#什么是QAnything)
+- [什么是QAnything](#什么是qanything)
   - [特点](#特点)
   - [架构](#架构)
 - [开始之前](#开始之前)
-- [最近更新](#-最近更新-)
+- [最近更新](#-最近更新)
 - [开始](#开始)
   - [必要条件](#必要条件)
-  - [下载安装](#下载安装)
+  - [下载安装(纯python环境)](#下载安装纯python环境)
+  - [下载安装(docker)](#下载安装docker环境)
+  - [断网安装](#断网安装)
 - [常见问题](#常见问题)
 - [使用](#使用)
-- [微信群](#微信群)
 - [支持](#支持)
 - [协议](#协议)
-- [Acknowledgements](#Acknowledgements)
+- [Acknowledgements](#acknowledgements)
 
 </details>
 
