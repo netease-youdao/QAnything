@@ -38,22 +38,22 @@
 <details open="open">
 <summary>Table of Contents</summary>
 
-- [What is QAnything](#What-is-QAnything)
-  - [Key features](#Key-features)
-  - [Architecture](#Architecture)
-- [Before You Start](#Before-You-Start)
-- [Latest Updates](#-Latest-Updates)
+- [What is QAnything](#what-is-qanything)
+  - [Key features](#key-features)
+  - [Architecture](#architecture)
+- [Before You Start](#before-you-start)
+- [Latest Updates](#-latest-updates)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation(Pure Python Environment)](#installationpure-python-environment)
   - [Installation(Docker)](#installationdocker)
-- [FAQ](#FAQ)
+  - [Offline Install](#offline-install)
+- [FAQ](#faq)
 - [Usage](#usage)
-  - [API Document](#API-Document)
-- [WeChat Group](#WeChat-Group)
-- [Community & Support](#Community--Support)
+  - [API Document](#api-document)
+- [Community & Support](#community--support)
 - [License](#license)
-- [Acknowledgements](#Acknowledgments)
+- [Acknowledgements](#acknowledgments)
 
 </details>
 
