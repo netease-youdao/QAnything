@@ -41,7 +41,7 @@
 - [What is QAnything](#what-is-qanything)
   - [Key features](#key-features)
   - [Architecture](#architecture)
-- [Latest Updates](#--latest-updates)
+- [Latest Updates](#-latest-updates)
 - [Before You Start](#before-you-start)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
