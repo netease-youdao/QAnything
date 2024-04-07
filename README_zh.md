@@ -73,7 +73,12 @@ bash scripts/run_for_7B_in_M1_mac.sh
 ```
 
 ## 访问前端页面 
-在浏览器中打开http://0.0.0.0:8777/qanything/，即可使用UI界面
+在浏览器中打开http://127.0.0.1:8777/qanything/
+
+或者打开http://{主机ip地址}:8777/qanything/
+
+即可使用UI界面
+
 注意末尾的斜杠不可省略，否则会出现404错误
 
 ## API 文档 
