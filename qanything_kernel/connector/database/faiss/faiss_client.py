@@ -18,6 +18,7 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'  # 可能是由于是MacOS系统的�
 
 @lru_cache(FAISS_CACHE_SIZE)
 def load_vector_store(faiss_index_path, embeddings):
+    debug_logger.info(f'load faiss index: {faiss_index_path}')
     if os_system == "Darwin":
         return FAISS.load_local(faiss_index_path, embeddings, allow_dangerous_deserialization=True)
     else:
@@ -41,11 +42,14 @@ class FaissClient:
                 faiss = dependable_faiss_import()
                 index = faiss.IndexFlatL2(768)
                 docstore = InMemoryDocstore()
+                debug_logger.info(f'init FAISS kb_id: {kb_id}')
                 faiss_client: FAISS = FAISS(self.embeddings, index, docstore, index_to_docstore_id={})
             if self.faiss_client is None:
                 self.faiss_client = faiss_client
             else:
                 self.faiss_client.merge_from(faiss_client)
+                debug_logger.info(f'merge FAISS kb_id: {kb_id}')
+        debug_logger.info(f'FAISS load kb_ids: {kb_ids}')
 
     async def search(self, kb_ids, query, filter: Optional[Union[Callable, Dict[str, Any]]] = None,
                      top_k=VECTOR_SEARCH_TOP_K):
@@ -54,8 +58,10 @@ class FaissClient:
         # filter = {'page': 1}
         if filter is None:
             filter = {}
+        debug_logger.info(f'FAISS search: {query}, {filter}, {top_k}')
         docs_with_score = await self.faiss_client.asimilarity_search_with_score(query, k=top_k, filter=filter,
                                                                                 fetch_k=200)
+        debug_logger.info(f'FAISS search result number: {len(docs_with_score)}')
         for doc, score in docs_with_score:
             doc.metadata['score'] = score
         docs = [doc for doc, score in docs_with_score]
@@ -97,6 +103,7 @@ class FaissClient:
         debug_logger.info(f'add documents number: {len(add_ids)}')
         faiss_index_path = os.path.join(FAISS_LOCATION, kb_id, 'faiss_index')
         self.faiss_client.save_local(faiss_index_path)
+        debug_logger.info(f'save faiss index: {faiss_index_path}')
         os.chmod(os.path.dirname(faiss_index_path), stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
         return add_ids
 
