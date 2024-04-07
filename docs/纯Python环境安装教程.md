@@ -1,4 +1,8 @@
 # 纯Python环境安装教程
+<p >
+  <a href="./PurePythonEnvironmentInstallationGuide.md">English</a> |
+  <a href="./纯Python环境安装教程.md">简体中文</a>
+</p>
 
 ## 安装 
 
