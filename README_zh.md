@@ -36,30 +36,30 @@
 - [什么是QAnything](#什么是qanything)
   - [特点](#特点)
   - [架构](#架构)
-- [开始之前](#开始之前)
 - [最近更新](#-最近更新)
+- [开始之前](#开始之前)
 - [开始](#开始)
-  - [必要条件](#必要条件)
-  - [下载安装(纯python环境)](#下载安装纯python环境)
-  - [下载安装(docker)](#下载安装docker环境)
+  - [安装方式](#安装方式)
+  - [纯Python环境安装](#纯python环境安装)
+  - [docker环境安装](#docker环境安装)
   - [断网安装](#断网安装)
 - [常见问题](#常见问题)
 - [使用](#使用)
-- [支持](#支持)
+- [交流&支持](#交流--支持)
 - [协议](#协议)
 - [Acknowledgements](#acknowledgements)
 
 </details>
 
 
-## 什么是QAnything？
+# 什么是QAnything？
 **QAnything** (**Q**uestion and **A**nswer based on **Anything**) 是致力于支持任意格式文件或数据库的本地知识库问答系统，可断网安装使用。
 
 您的任何格式的本地文件都可以往里扔，即可获得准确、快速、靠谱的问答体验。
 
 目前已支持格式: **PDF(pdf)**，**Word(docx)**，**PPT(pptx)**，**XLS(xlsx)**，**Markdown(md)**，**电子邮件(eml)**，**TXT(txt)**，**图片(jpg，jpeg，png)**，**CSV(csv)**，**网页链接(html)**，更多格式，敬请期待...
 
-### 特点
+## 特点
 - 数据安全，支持全程拔网线安装使用。
 - 支持跨语种问答，中英文问答随意切换，无所谓文件是什么语种。
 - 支持海量数据问答，两阶段向量排序，解决了大规模数据检索退化的问题，数据越多，效果越好。
@@ -67,12 +67,12 @@
 - 易用性，无需繁琐的配置，一键安装部署，拿来就用。
 - 支持选择多知识库问答。
 
-### 架构
+## 架构
 <div align="center">
 <img src="docs/images/qanything_arch.png" width = "700" alt="qanything_system" align=center />
 </div>
 
-#### 为什么是两阶段检索?
+### 为什么是两阶段检索?
 知识库数据量大的场景下两阶段优势非常明显，如果只用一阶段embedding检索，随着数据量增大会出现检索退化的问题，如下图中绿线所示，二阶段rerank重排后能实现准确率稳定增长，即**数据越多，效果越好**。
 
 <div align="center">
@@ -84,7 +84,7 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 - **基于LlamaIndex的RAG评测，表现SOTA【<a href="https://github.com/netease-youdao/BCEmbedding/tree/master?tab=readme-ov-file#rag-evaluations-in-llamaindex" target="_Self">基于LlamaIndex的RAG评测指标</a>】。**
 
 
-#### 一阶段检索（embedding）
+### 一阶段检索（embedding）
 | 模型名称 | Retrieval | STS | PairClassification | Classification | Reranking | Clustering | 平均 |  
 |:-------------------------------|:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|  
 | bge-base-en-v1.5 | 37.14 | 55.06 | 75.45 | 59.73 | 43.05 | 37.74 | 47.20 |  
@@ -98,7 +98,7 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 
 - 更详细的评测结果详见[Embedding模型指标汇总](https://github.com/netease-youdao/BCEmbedding/blob/master/Docs/EvaluationSummary/embedding_eval_summary.md)。
 
-#### 二阶段检索（rerank）
+### 二阶段检索（rerank）
 | 模型名称 | Reranking | 平均 |  
 |:-------------------------------|:--------:|:--------:|  
 | bge-reranker-base | 57.78 | 57.78 |  
@@ -107,7 +107,7 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 
 - 更详细的评测结果详见[Reranker模型指标汇总](https://github.com/netease-youdao/BCEmbedding/blob/master/Docs/EvaluationSummary/reranker_eval_summary.md)
 
-#### 基于LlamaIndex的RAG评测（embedding and rerank）
+### 基于LlamaIndex的RAG评测（embedding and rerank）
 
 <img src="https://github.com/netease-youdao/BCEmbedding/blob/master/Docs/assets/rag_eval_multiple_domains_summary.jpg">
 
@@ -118,12 +118,18 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 - **bce-embedding-base_v1和bce-reranker-base_v1的组合是SOTA。**
 - 如果想单独使用embedding和rerank请参阅：[BCEmbedding](https://github.com/netease-youdao/BCEmbedding)
 
-#### LLM
+### LLM
 
 开源版本QAnything的大模型基于通义千问，并在大量专业问答数据集上进行微调；在千问的基础上大大加强了问答的能力。
 如果需要商用请遵循千问的license，具体请参阅：[通义千问](https://github.com/QwenLM/Qwen)
 
-## 开始之前
+# 🚀 最近更新 
+- ***2024-04-03***: **支持在纯Python环境中安装；支持混合检索。** - 详见👉 [v1.3.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.3.0)
+- ***2024-01-29***: **支持自定义大模型，包括OpenAI API和其他开源大模型，GPU需求最低降至GTX 1050Ti，极大提升部署，调试等方面的用户体验** - 详见👉 [v1.2.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.2.0)
+- ***2024-01-23***: **默认开启rerank，修复在windows上启动时存在的各类问题** - 详见👉 [v1.1.1](https://github.com/netease-youdao/QAnything/releases/tag/v1.1.1)
+- ***2024-01-18***: **支持一键启动，支持windows部署，提升pdf，xlsx，html解析效果** - 详见👉 [v1.1.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.1.0)
+
+# 开始之前
 **在GitHub上加星，即可立即收到新版本的通知！**
 ![star_us](https://github.com/netease-youdao/QAnything/assets/29041332/fd5e5926-b9b2-4675-9f60-6cdcaca18e14)
 * [🏄 在线试用QAnything](https://qanything.ai)
@@ -131,14 +137,36 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 * [🛠️ 想只使用BCEmbedding(embedding & rerank)](https://github.com/netease-youdao/BCEmbedding)
 * [📖 常见问题](FAQ_zh.md)
 
-## 🚀 最近更新 
-- ***2024-04-03***: **支持在纯Python环境中安装；支持混合检索。** - 详见👉 [v1.3.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.3.0)
-- ***2024-01-29***: **支持自定义大模型，包括OpenAI API和其他开源大模型，GPU需求最低降至GTX 1050Ti，极大提升部署，调试等方面的用户体验** - 详见👉 [v1.2.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.2.0)
-- ***2024-01-23***: **默认开启rerank，修复在windows上启动时存在的各类问题** - 详见👉 [v1.1.1](https://github.com/netease-youdao/QAnything/releases/tag/v1.1.1)
-- ***2024-01-18***: **支持一键启动，支持windows部署，提升pdf，xlsx，html解析效果** - 详见👉 [v1.1.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.1.0)
 
-## 开始
+# 开始
+## 安装方式
+我们提供三种安装方式：
+- [纯python环境安装](#下载安装纯python环境)
+- [docker安装](#installationdocker)
+- [断网安装](#断网安装)
 
+不同安装方式对应的特性如下表:
+
+| 特性                | [纯python环境安装](#下载安装纯python环境)   |    [docker安装](#installationdocker)     |       [断网安装](#断网安装)               |  
+|:-------------------------------|:----------------------:|:----------------------:|:-------------------------:|
+| 生产环境            |   ❌                   |    ✅                  |             ✅            |  
+| 断网安装            |   ❌                   |    ❌                  |             ✅            |
+| 支持Mac            |   ✅                   |    ❌                  |             ❌            |  
+| 支持Linux          |   ✅                   |    ✅                  |             ✅            |  
+| 支持windows WSL    |   ✅                   |    ✅                  |             ✅            |  
+| 支持纯CPU           |   ✅                   |    ❌                  |             ❌            |    
+| 支持混合检索(BM25+embedding)     |   ❌       |    ✅                  |             ✅            |
+
+
+## 纯python环境安装
+
+不想用docker环境安装的，我们提供了[纯Python版本安装教程](./docs/纯Python环境安装教程.md)，纯python环境的安装仅作为demo体验，不建议生产环境部署。
+
+- 支持纯CPU安装运行(检索部分跑在CPU上，大模型调用在线API)
+- 支持Mac安装运行
+
+
+## docker环境安装
 ### 必要条件
 #### **For Linux**
 |**System**| **Required item** | **Minimum Requirement** | **Note**                                                           |
@@ -157,14 +185,9 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 |                            |  Docker Desktop           | >=  4.26.1（131620）     | [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)                                    |
 |                            | git-lfs   |                  | [git-lfs install](https://git-lfs.com/)                                                                                   |
 
-### 下载安装(纯python环境)
 
-不想用docker环境安装的，我们提供了[纯Python版本安装教程](./docs/纯Python环境安装教程.md)，纯python环境的安装仅作为demo体验，不建议生产环境部署。
 
-- 支持纯CPU安装运行(检索部分跑在CPU上，大模型调用在线API)
-- 支持Mac安装运行
 
-### 下载安装(docker环境)
 
 ### step1: 下载本项目
 ```shell
@@ -241,6 +264,9 @@ cd QAnything
 bash ./run.sh -c local -i 0,1 -b default  # 指定0,1号GPU启动，请确认有多张GPU可用，最多支持两张卡启动
 ```
 </details>
+
+
+
 
 ### step3: 开始体验
 
@@ -358,20 +384,22 @@ bash run.sh
 
 ## 贡献代码
 我们感谢您对贡献到我们项目的兴趣。无论您是修复错误、改进现有功能还是添加全新内容，我们都欢迎您的贡献！
+
 ### 感谢以下所有贡献者
 <a href="https://github.com/netease-youdao/QAnything/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=netease-youdao/QAnything" />
 </a>
 
 
-## 支持
 
-### Discord <a href="https://discord.gg/5uNpPsEJz8"><img src="https://img.shields.io/discord/1197874288963895436?style=social&logo=discord"></a>
+# 交流 & 支持
+
+## Discord <a href="https://discord.gg/5uNpPsEJz8"><img src="https://img.shields.io/discord/1197874288963895436?style=social&logo=discord"></a>
 欢迎加入QAnything [Discord](https://discord.gg/5uNpPsEJz8) 社区！
 
 
 
-### 微信
+## 微信
 欢迎关注微信公众号，获取最新QAnything信息
 
 <img src="docs/images/qrcode_for_qanything.jpg" width="30%" height="auto">
@@ -380,24 +408,24 @@ bash run.sh
 
 <img src="docs/images/Wechat.jpg" width="30%" height="auto">
 
-### 邮箱
+## 邮箱
 如果你需要私信我们团队，请通过下面的邮箱联系我们：
 
 qanything@rd.netease.com
 
-### GitHub issues
+## GitHub issues
 有任何公开的问题，欢迎提交
 [Github issues](https://github.com/netease-youdao/QAnything/issues)
 
-## Star History
+# Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=netease-youdao/QAnything,netease-youdao/BCEmbedding&type=Date)](https://star-history.com/#netease-youdao/QAnything&netease-youdao/BCEmbedding&Date)
 
-## 协议
+# 协议
 
 `QAnything` 依照 [Apache 2.0 协议](./LICENSE)开源。
 
-## Acknowledgements
+# Acknowledgements
 - [BCEmbedding](https://github.com/netease-youdao/BCEmbedding)
 - [Qwen](https://github.com/QwenLM/Qwen)
 - [Triton Inference Server](https://github.com/triton-inference-server/server)
