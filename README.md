@@ -156,6 +156,7 @@ We provide three installation methods:
 - [Installation whith Docker](#installationdocker)
 - [Offline installation](#offline-install)
 
+The features corresponding to different installation methods are as follows:
 
 | features                | [Installation(Pure Python Environment)](#installationpure-python-environment)   |    [Installation(Docker)](#installationdocker)     |       [Offline Install](#offline-install)               |  
 |:-------------------------------|:----------------------:|:----------------------:|:-------------------------:|
