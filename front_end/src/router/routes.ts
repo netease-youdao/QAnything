@@ -23,7 +23,53 @@ export const routes: RouteRecordRaw[] = [
           title: '首页',
         },
       },
+      {
+        path: '/bots',
+        name: 'bots',
+        component: () => import('@/views/bots/Bots.vue'),
+        children: [
+          {
+            path: '/bots',
+            name: 'bots',
+            component: () => import('@/views/bots/children/BotsManage.vue'),
+            meta: {
+              requiresAuth: true,
+            },
+          },
+          {
+            path: '/bots/:botId/edit',
+            name: 'edit',
+            component: () => import('@/views/bots/children/BotEdit.vue'),
+            meta: {
+              requiresAuth: true,
+            },
+            children: [
+              {
+                path: '/bots/:botId/edit',
+                name: 'edit',
+                component: () => import('@/views/bots/children/EditDetail.vue'),
+                meta: {
+                  requiresAuth: true,
+                },
+              },
+              {
+                path: '/bots/:botId/publish',
+                name: 'publish',
+                component: () => import('@/views/bots/children/BotPublish.vue'),
+                meta: {
+                  requiresAuth: true,
+                },
+              },
+            ],
+          },
+        ],
+      },
     ],
+  },
+  {
+    path: '/bots/:botId/share',
+    name: 'share',
+    component: () => import('@/views/bots/children/BotShare.vue'),
   },
   {
     path: '/:catchAll(.*)',

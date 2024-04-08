@@ -15,12 +15,14 @@
     "postbuild": "node writeVersion.js"
   },
   "dependencies": {
+    "@fingerprintjs/fingerprintjs": "^4.2.2",
     "@vueuse/core": "^10.5.0",
     "ant-design-vue": "4.x",
     "axios": "^1.6.1",
     "crypto-js": "^4.1.1",
     "html2canvas": "^1.4.1",
     "js-cookie": "^3.0.1",
+    "moment": "^2.30.1",
     "nprogress": "^0.2.0",
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^3.2.0",

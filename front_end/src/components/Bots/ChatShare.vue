@@ -1,38 +1,76 @@
 <template>
-  <div class="container">
-    <div class="my-page">
-      <div id="chat" class="chat">
-        <ul id="chat-ul" ref="scrollDom">
-          <li v-for="(item, index) in QA_List" :key="index">
-            <div v-if="item.type === 'user'" class="user">
-              <img class="avatar" src="../assets/home/avatar.png" alt="头像" />
-              <p class="question-text">{{ item.question }}</p>
+  <div class="bots-chat-container">
+    <div class="header">
+      <img src="@/assets/bots/bot-avatar.png" alt="avatar" />
+      {{ botInfo.name }}
+    </div>
+    <div id="chat" class="chat">
+      <ul id="chat-ul" ref="scrollDom">
+        <div class="ai">
+          <div class="content">
+            <img class="avatar" src="@/assets/home/ai-avatar.png" alt="头像" />
+            <p class="question-text" v-html="botInfo.welcomeMessage"></p>
+          </div>
+        </div>
+        <li v-for="(item, index) in QA_List" :key="index">
+          <div v-if="item.type === 'user'" class="user">
+            <img class="avatar" src="@/assets/home/avatar.png" alt="头像" />
+            <p class="question-text">{{ item.question }}</p>
+          </div>
+          <div v-else class="ai">
+            <div class="content">
+              <img class="avatar" src="@/assets/home/ai-avatar.png" alt="头像" />
+              <p
+                class="question-text"
+                :class="[
+                  !item.source.length ? 'change-radius' : '',
+                  item.showTools ? '' : 'flashing',
+                ]"
+                v-html="item.answer"
+              ></p>
             </div>
-            <div v-else class="ai">
-              <div class="content">
-                <img class="avatar" src="../assets/home/ai-avatar.png" alt="头像" />
-                <p
-                  class="question-text"
-                  :class="[
-                    !item.source.length ? 'change-radius' : '',
-                    item.showTools ? '' : 'flashing',
-                  ]"
-                  v-html="item.answer"
-                ></p>
+            <template v-if="item?.picList?.length">
+              <div
+                v-for="(picItem, picIndex) in item.picList"
+                :key="picItem + picIndex"
+                class="data-picList"
+              >
+                <a-image :width="150" :src="picItem" class="responsive-image" />
               </div>
-              <template v-if="item.source.length">
+            </template>
+            <template v-if="item.source.length">
+              <div
+                :class="[
+                  'source-total',
+                  !showSourceIdxs.includes(index) ? 'source-total-last' : '',
+                ]"
+              >
+                <span v-if="language === 'zh'">找到了{{ item.source.length }}个信息来源：</span>
+                <span v-else>Found {{ item.source.length }} source of information</span>
+                <SvgIcon
+                  v-show="!showSourceIdxs.includes(index)"
+                  name="down"
+                  @click="showSourceList(index)"
+                />
+                <SvgIcon
+                  v-show="showSourceIdxs.includes(index)"
+                  name="up"
+                  @click="hideSourceList(index)"
+                />
+              </div>
+              <div v-show="showSourceIdxs.includes(index)" class="source-list">
                 <div
                   v-for="(sourceItem, sourceIndex) in item.source"
                   :key="sourceIndex"
                   class="data-source"
                 >
-                  <p v-show="sourceItem.file_name" class="control">
+                  <p v-show="sourceItem.fileName" class="control">
                     <span class="tips">{{ common.dataSource }}{{ sourceIndex + 1 }}:</span
-                    ><span class="file">{{ sourceItem.file_name }}</span>
+                    ><span class="file">{{ sourceItem.fileName }}</span>
                     <SvgIcon
                       v-show="sourceItem.showDetailDataSource"
                       name="iconup"
-                      @click="showDetail(item, sourceIndex)"
+                      @click="hideDetail(item, sourceIndex)"
                     />
                     <SvgIcon
                       v-show="!sourceItem.showDetailDataSource"
@@ -41,11 +79,8 @@
                     />
                   </p>
                   <Transition name="sourceitem">
-                    <div class="source-content">
-                      <p
-                        v-show="sourceItem.showDetailDataSource"
-                        v-html="sourceItem.content.replaceAll('\n', '<br/>')"
-                      ></p>
+                    <div v-show="sourceItem.showDetailDataSource" class="source-content">
+                      <p v-html="sourceItem.content?.replaceAll('\n', '<br/>')"></p>
                       <p class="score">
                         <span class="tips">{{ common.correlation }}</span
                         >{{ sourceItem.score }}
@@ -53,54 +88,61 @@
                     </div>
                   </Transition>
                 </div>
-              </template>
-              <div v-if="item.showTools" class="feed-back">
-                <div class="reload-box" @click="reAnswer(item)">
-                  <SvgIcon name="reload"></SvgIcon>
-                  <span class="reload-text">{{ common.regenerate }}</span>
-                </div>
-                <div class="tools">
-                  <SvgIcon
-                    :style="{
-                      color: item.copied ? '#4D71FF' : '',
-                    }"
-                    name="copy"
-                    @click="myCopy(item)"
-                  ></SvgIcon>
-                  <SvgIcon
-                    :style="{
-                      color: item.like ? '#4D71FF' : '',
-                    }"
-                    name="like"
-                    @click="like(item, $event)"
-                  ></SvgIcon>
-                  <SvgIcon
-                    :style="{
-                      color: item.unlike ? '#4D71FF' : '',
-                    }"
-                    name="unlike"
-                    @click="unlike(item)"
-                  ></SvgIcon>
-                </div>
+              </div>
+            </template>
+            <div v-if="item.showTools" class="feed-back">
+              <div class="reload-box" @click="reAnswer(item)">
+                <SvgIcon name="reload"></SvgIcon>
+                <span class="reload-text">{{ common.regenerate }}</span>
+              </div>
+              <div class="tools">
+                <SvgIcon
+                  :style="{
+                    color: item.copied ? '#4D71FF' : '',
+                  }"
+                  name="copy"
+                  @click="myCopy(item)"
+                ></SvgIcon>
+                <SvgIcon
+                  :style="{
+                    color: item.like ? '#4D71FF' : '',
+                  }"
+                  name="like"
+                  @click="like(item, $event)"
+                ></SvgIcon>
+                <SvgIcon
+                  :style="{
+                    color: item.unlike ? '#4D71FF' : '',
+                  }"
+                  name="unlike"
+                  @click="unlike(item)"
+                ></SvgIcon>
               </div>
             </div>
-          </li>
-        </ul>
-      </div>
-      <div class="stop-btn">
-        <a-button v-show="showLoading" @click="stopChat">
-          <template #icon>
-            <SvgIcon name="stop" :class="showLoading ? 'loading' : ''"></SvgIcon> </template
-          >{{ common.stop }}</a-button
-        >
-      </div>
+          </div>
+        </li>
+        <div v-show="showLoading" ref="stopBtn" class="stop-btn">
+          <a-button @click="stopChat">
+            <template #icon>
+              <SvgIcon name="stop" :class="showLoading ? 'loading' : ''"></SvgIcon> </template
+            >{{ common.stop }}</a-button
+          >
+        </div>
+      </ul>
       <div class="question-box">
         <div class="question">
-          <span class="download" @click="downloadChat">
+          <a-popover v-if="chatType === 'share'" placement="topLeft">
+            <template #content>
+              <p v-if="control">{{ bots.multiTurnConversation2 }}</p>
+              <p v-else>{{ bots.multiTurnConversation1 }}</p>
+            </template>
+            <span :class="['control', `control-${control}`]">
+              <SvgIcon name="chat-control" @click="controlChat" />
+            </span>
+          </a-popover>
+
+          <span v-if="chatType === 'share'" class="download" @click="downloadChat">
             <SvgIcon name="chat-download" />
-          </span>
-          <span class="delete" @click="deleteChat">
-            <SvgIcon name="chat-delete" />
           </span>
           <a-input
             v-model:value="question"
@@ -119,25 +161,49 @@
         </div>
       </div>
     </div>
+    <div v-if="!botInfo.kbBindList || !botInfo.kbBindList.length" class="mask">
+      <img src="@/assets/bots/lock.png" alt="icon" />
+      <p>{{ bots.bindKbtoPreview }}</p>
+    </div>
   </div>
   <DefaultModal :content="content" :confirm-loading="confirmLoading" @ok="confirm" />
 </template>
 <script lang="ts" setup>
-import { apiBase } from '@/services';
+import { defineProps, defineEmits } from 'vue';
 import { IChatItem } from '@/utils/types';
 import { useThrottleFn, useClipboard } from '@vueuse/core';
 import { message } from 'ant-design-vue';
-import SvgIcon from './SvgIcon.vue';
-import { useKnowledgeBase } from '@/store/useKnowledgeBase';
+import SvgIcon from '../SvgIcon.vue';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
+import { useBotsChat } from '@/store/useBotsChat';
 import { useChat } from '@/store/useChat';
+import { useSource } from '@/store/useSource';
 import { Typewriter } from '@/utils/typewriter';
-import DefaultModal from './DefaultModal.vue';
+import DefaultModal from '../DefaultModal.vue';
 import html2canvas from 'html2canvas';
-import { userId } from '@/services/urlConfig';
 import { getLanguage } from '@/language/index';
+import routeController from '@/controller/router';
+import { getToken, getShareToken } from '@/utils/token';
+import { useLanguage } from '@/store/useLanguage';
 
+const props = defineProps({
+  chatType: {
+    type: String,
+    default: 'edit',
+  },
+  botInfo: {
+    type: Object as any,
+    default: () => {},
+  },
+});
+
+const { getCurrentRoute } = routeController();
 const common = getLanguage().common;
+const bots = getLanguage().bots;
+const store = useBotsChat();
+const route = getCurrentRoute();
+
+const emits = defineEmits(['botInit']);
 
 const typewriter = new Typewriter((str: string) => {
   if (str) {
@@ -145,12 +211,16 @@ const typewriter = new Typewriter((str: string) => {
   }
 });
 
-const { selectList } = storeToRefs(useKnowledgeBase());
-const { QA_List } = storeToRefs(useChat());
+const { QA_List } = storeToRefs(useBotsChat());
 const { copy } = useClipboard();
+const { setSourceVisible, setPdfSrc, setChunks, setPageSizes, setChunkIds, setPageId } =
+  useSource();
+const { language } = storeToRefs(useLanguage());
 declare module _czc {
   const push: (array: any) => void;
 }
+//当前是否多轮对话
+const control = ref(true);
 
 //当前问的问题
 const question = ref('');
@@ -161,21 +231,24 @@ const history = ref([]);
 //当前是否回答中
 const showLoading = ref(false);
 
+const showSourceIdxs = ref([]);
+
 //取消请求用
 let ctrl: AbortController;
 
 const scrollDom = ref(null);
+const stopBtn = ref(null);
 
 const scrollBottom = () => {
   nextTick(() => {
-    scrollDom.value?.scrollIntoView(false);
+    scrollDom.value.scrollTop = scrollDom.value.scrollHeight;
   });
 };
 
 const like = useThrottleFn((item, e) => {
   item.like = !item.like;
   item.unlike = false;
-  _czc.push(['_trackEvent', 'qanything', '问答页面', '点赞', '', '']);
+  _czc.push(['_trackEvent', 'qanything', 'share_like_click', '点赞', '', '']);
   if (item.like) {
     e.target.parentNode.style.animation = 'shake ease-in .5s';
     const timer = setTimeout(() => {
@@ -187,11 +260,12 @@ const like = useThrottleFn((item, e) => {
 const unlike = (item: IChatItem) => {
   item.unlike = !item.unlike;
   item.like = false;
-  _czc.push(['_trackEvent', 'qanything', '问答页面', '点踩', '', '']);
+  _czc.push(['_trackEvent', 'qanything', '分享问答页面', '点踩', '', '']);
 };
 
 //拷贝
 const myCopy = (item: IChatItem) => {
+  _czc.push(['_trackEvent', 'qanything', 'share_copy_click', '复制单个回答', '', '']);
   copy(item.answer)
     .then(() => {
       item.copied = !item.copied;
@@ -223,6 +297,7 @@ const addAnswer = (question: string) => {
     like: false,
     unlike: false,
     source: [],
+    picList: null,
     showTools: false,
   });
 };
@@ -238,11 +313,9 @@ const stopChat = () => {
 
 //发送问答消息
 const send = () => {
+  _czc.push(['_trackEvent', 'qanything', 'share_send_click', '分享页发送问题', '', '']);
   if (!question.value.length) {
     return;
-  }
-  if (!selectList.value.length) {
-    return message.warning(common.chooseError);
   }
   const q = question.value;
   question.value = '';
@@ -251,20 +324,40 @@ const send = () => {
     history.value = [];
   }
   showLoading.value = true;
+  nextTick(() => {
+    scrollDom.value?.scrollIntoView(true);
+    stopBtn.value?.scrollIntoView();
+  });
+  const severUrl = import.meta.env.VITE_APP_SERVER_URL;
   ctrl = new AbortController();
 
-  fetchEventSource(apiBase + '/local_doc_qa/local_doc_chat', {
+  const headers = {
+    'Content-Type': 'application/json',
+    Accept: ['text/event-stream', 'application/json'],
+    'Transfer-Encoding': 'chunked',
+    Connection: 'keep-alive',
+  };
+  if (route.value.name === 'share') {
+    if (getShareToken()) {
+      const token = getShareToken();
+      headers[token.tokenName] = token.tokenValue;
+    }
+  } else {
+    if (getToken()) {
+      const token = getToken();
+      headers[token.tokenName] = token.tokenValue;
+    }
+  }
+
+  fetchEventSource(severUrl + '/q_anything/bot/chat_stream', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: ['text/event-stream', 'application/json'],
-    },
+    headers: headers,
     body: JSON.stringify({
-      user_id: userId,
-      kb_ids: selectList.value,
-      history: history.value,
+      kbIds: props.botInfo.kbBindList.map(item => item.kbId),
+      history: control.value ? history.value : [],
       question: q,
-      streaming: true,
+      botId: props.botInfo.id,
+      botPromptSetting: props.botInfo.promptSetting,
     }),
     signal: ctrl.signal,
     onopen(e: any) {
@@ -280,7 +373,12 @@ const send = () => {
         return e
           .json()
           .then(data => {
-            message.error(data?.msg || '出错了,请稍后刷新重试。');
+            console.log(data);
+            if (data?.errorCode === 403) {
+              emits('botInit');
+            } else {
+              message.error(data?.msg || '出错了,请稍后刷新重试。');
+            }
           })
           .catch(e => {
             console.log(e);
@@ -289,21 +387,30 @@ const send = () => {
       }
     },
     onmessage(msg: { data: string }) {
-      console.log('message');
-      const res: any = JSON.parse(msg.data);
-      console.log(res);
-      if (res?.code == 200 && res?.response) {
-        // QA_List.value[QA_List.value.length - 1].answer += res.result.response;
-        typewriter.add(res?.response.replaceAll('\n', '<br/>'));
-        scrollBottom();
-      }
+      console.log('message', msg);
+      if (msg.data !== '') {
+        const data: any = JSON.parse(msg.data);
+        const res = data.result;
+        console.log(res);
+        console.log(res?.response);
+        if (res?.response && !res?.history?.length) {
+          // QA_List.value[QA_List.value.length - 1].answer += res.result.response;
+          typewriter.add(res?.response.replaceAll('\n', '<br/>'));
+          scrollBottom();
+        }
 
-      if (res?.source_documents?.length) {
-        QA_List.value[QA_List.value.length - 1].source = res?.source_documents;
-      }
+        if (res?.picList?.length) {
+          QA_List.value[QA_List.value.length - 1].picList = res.picList;
+        }
 
-      if (res?.history.length) {
-        history.value = res?.history;
+        if (res?.source?.length) {
+          console.log('res?.source', res?.source);
+          store.handleSource(res.source);
+        }
+
+        if (res?.history?.length) {
+          history.value = res?.history;
+        }
       }
     },
     onclose(e: any) {
@@ -318,12 +425,12 @@ const send = () => {
       });
     },
     onerror(err: any) {
-      console.log('error');
-      typewriter?.done();
-      ctrl?.abort();
+      console.log('error', err);
+      typewriter.done();
+      ctrl.abort();
       showLoading.value = false;
       QA_List.value[QA_List.value.length - 1].showTools = true;
-      message.error(err.msg || '出错了');
+
       nextTick(() => {
         scrollBottom();
       });
@@ -333,6 +440,7 @@ const send = () => {
 };
 
 const reAnswer = (item: IChatItem) => {
+  _czc.push(['_trackEvent', 'qanything', 'share_regenerate_click', '重新生成回答', '', '']);
   console.log('reAnswer');
   question.value = item.question;
   send();
@@ -340,26 +448,54 @@ const reAnswer = (item: IChatItem) => {
 
 //点击查看是否显示详细来源
 const showDetail = (item: IChatItem, index) => {
-  item.source[index].showDetailDataSource = !item.source[index].showDetailDataSource;
+  console.log('showDetail', item);
+  if (item.source[index].pdf_source_info) {
+    setPdfSrc(item.source[index].pdf_source_info.pdf_nos_url);
+    setChunks(item.source[index].chunks);
+    setPageSizes(item.source[index].pageSizes);
+    setChunkIds(item.source[index].pdf_source_info.chunk_id);
+    setPageId(item.source[index].pdf_source_info.page_id);
+    setSourceVisible(true);
+  } else {
+    item.source[index].showDetailDataSource = true;
+  }
+};
+
+const hideDetail = (item: IChatItem, index) => {
+  item.source[index].showDetailDataSource = false;
+};
+
+const showSourceList = index => {
+  showSourceIdxs.value.push(index);
+};
+
+const hideSourceList = index => {
+  showSourceIdxs.value = showSourceIdxs.value.filter(item => item !== index);
 };
 
 //下载 清除聊天记录相关
 const { showModal } = storeToRefs(useChat());
-const { clearQAList } = useChat();
+const { clearQAList } = useBotsChat();
 const confirmLoading = ref(false);
 const content = ref('');
 const type = ref('');
+const controlChat = () => {
+  control.value = !control.value;
+};
+
 const downloadChat = () => {
+  _czc.push(['_trackEvent', 'qanything', 'share_save_click', '保存会话', '', '']);
   type.value = 'download';
   showModal.value = true;
   content.value = common.saveTip;
 };
 
-const deleteChat = () => {
-  type.value = 'delete';
-  showModal.value = true;
-  content.value = common.clearTip;
-};
+// const deleteChat = () => {
+//   _czc.push(['_trackEvent', 'qanything', 'empty_click', '清空会话', '', '']);
+//   type.value = 'delete';
+//   showModal.value = true;
+//   content.value = common.clearTip;
+// };
 
 const confirm = async () => {
   confirmLoading.value = true;
@@ -381,7 +517,7 @@ const confirm = async () => {
       tempLink.click();
       document.body.removeChild(tempLink);
       window.URL.revokeObjectURL(imgUrl);
-      message.success('下载成功');
+      message.success(bots.downloadSuccessful);
       Promise.resolve();
     } catch (e) {
       console.log(e);
@@ -397,31 +533,56 @@ const confirm = async () => {
   confirmLoading.value = false;
   showModal.value = false;
 };
+
 scrollBottom();
+_czc.push(['_trackEvent', 'qanything', 'share_conversation_page_show', '分享问答页曝光', '', '']);
 </script>
 
 <style lang="scss" scoped>
-.container {
-  padding-top: 16px;
-  background-color: #26293b;
-}
-.my-page {
+.bots-chat-container {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  background: #fff;
+  font-family: PingFang SC;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   position: relative;
-  margin: 0 auto;
-  border-radius: 12px 0 0 0;
-  background: #f3f6fd;
+}
+.header {
+  width: 100%;
+  padding: 0.25rem 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #222222;
+  border-top-right-radius: 12px;
+  border-top-left-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid #ededed;
+  img {
+    width: 32px;
+    height: 32px;
+    margin-right: 8px;
+  }
 }
 .chat {
-  margin: 0 auto;
-  width: 75.36%;
-  min-width: 900px;
-  max-width: 1239px;
-  height: calc(100vh - 54px - 48px - 28px - 28px - 32px - 50px);
-  overflow-y: auto;
-  padding-top: 28px;
+  // margin: 0 auto;
+  // width: 100%;
+  height: 100%;
+  padding: 0 10%;
+  // min-width: 900px;
+  // max-width: 1239px;
+  // height: calc(100vh - 64px - 22px - 66px - 52px - 48px - 80px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 
   #chat-ul {
-    background: #f3f6fd;
+    flex: auto 1 1;
+    overflow-y: auto;
   }
 
   .avatar {
@@ -458,7 +619,7 @@ scrollBottom();
         font-weight: normal;
         line-height: 22px;
         color: $title1;
-        background: #fff;
+        background: #f9f9fc;
         border-radius: 0px 12px 0px 0px;
         word-wrap: break-word;
       }
@@ -478,13 +639,37 @@ scrollBottom();
       }
     }
 
-    .data-source {
+    .source-total {
+      padding: 13px 20px;
       margin-left: 48px;
+      font-size: 14px;
+      background: #f9f9fc;
+      display: flex;
+      align-items: center;
+      span {
+        margin-right: 5px;
+      }
+      svg {
+        width: 16px !important;
+        height: 16px !important;
+        cursor: pointer !important;
+      }
+    }
+    .source-total-last {
+      border-radius: 0px 12px 12px 12px;
+    }
+
+    .source-list {
+      margin-left: 48px;
+      background: #f9f9fc;
+      border-radius: 0px 12px 12px 12px;
+    }
+
+    .data-source {
       padding: 13px 20px;
       font-size: 14px;
       line-height: 22px;
       color: $title1;
-      background: #fff;
 
       &:nth-last-of-type(2) {
         border-radius: 0px 0px 12px 12px;
@@ -494,8 +679,16 @@ scrollBottom();
         border-radius: 0px 12px 12px 12px;
       }
       .control {
+        width: 100%;
+        overflow-wrap: break-word;
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
+        .file {
+          max-width: 100%;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+        }
       }
 
       .score {
@@ -524,6 +717,13 @@ scrollBottom();
         color: $baseColor;
         cursor: pointer;
       }
+    }
+
+    .data-picList {
+      margin-left: 48px;
+      background: #f9f9fc;
+      padding: 10px 20px;
+      border-radius: 0 0 12px 12px;
     }
 
     .feed-back {
@@ -563,14 +763,20 @@ scrollBottom();
 }
 
 .stop-btn {
+  width: 100%;
+  height: 52px;
   display: flex;
   justify-content: center;
-  margin-top: 38px;
+  align-items: center;
+  margin: 10px 0;
   :deep(.ant-btn) {
     width: 92px;
     height: 32px;
     border: 1px solid #e2e2e2;
     color: $title2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
   svg {
     width: 12px;
@@ -584,14 +790,16 @@ scrollBottom();
 }
 
 .question-box {
-  position: fixed;
-  bottom: 28px;
-  left: 280px;
-  width: calc(100vw - 280px);
+  // position: absolute;
+  // bottom: 28px;
+  // left: 280px;
+  width: 100%;
+  margin-top: 10px;
+  margin-bottom: 20px;
 
   .question {
-    width: 75.36%;
-    min-width: 900px;
+    width: 100%;
+    // min-width: 900px;
     max-width: 1239px;
     height: 48px;
     margin: 0 auto;
@@ -599,7 +807,8 @@ scrollBottom();
     align-items: center;
 
     .download,
-    .delete {
+    .delete,
+    .control {
       cursor: pointer;
       padding: 12px;
       display: flex;
@@ -618,6 +827,14 @@ scrollBottom();
         width: 24px;
         height: 24px;
       }
+      &.control-true {
+        border: 1px solid #5a47e5;
+        color: #5a47e5;
+      }
+      &.control-false {
+        border: 1px solid #e5e5e5;
+        color: #666666;
+      }
     }
 
     .send-plane {
@@ -630,6 +847,7 @@ scrollBottom();
       :deep(.ant-btn-primary) {
         background-color: #5a47e5 !important;
       }
+
       :deep(.ant-btn-primary:disabled) {
         background-color: #5a47e5 !important;
         color: #fff !important;
@@ -661,6 +879,33 @@ scrollBottom();
     :deep(.ant-input:focused) {
       border-color: $baseColor;
     }
+    :deep(.ant-input-affix-wrapper) {
+      padding: 4px 4px 4px 11px;
+    }
+  }
+}
+
+.mask {
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  color: #fff;
+  font-size: 16px;
+  border-radius: 12px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  img {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 10px;
+  }
+  p {
+    padding: 0 40px;
   }
 }
 
@@ -675,6 +920,17 @@ scrollBottom();
 .sourceitem-leave-to,
 .sourceitem-enter {
   opacity: 0;
+}
+
+@media (max-width: 1023px) {
+  .chat {
+    padding: 0 1rem;
+  }
+}
+@media (min-width: 1500px) {
+  .chat {
+    padding: 0 20%;
+  }
 }
 </style>
 <style lang="scss">

@@ -22,6 +22,7 @@ export enum fileStatus {
   'error', //解析失败
   'filebig', //上传文件大小超过限制
   'loading', //上传中
+  'failed', // 上传失败
 }
 
 export enum pageStatus {

@@ -10,8 +10,7 @@ k * @LastEditTime: 2024-01-11 11:33:16
 import axios from './axiosInterceptor/index';
 
 export const apiBase =
-  (import.meta.env.VITE_APP_MODE === 'dev' ? '' : import.meta.env.VITE_APP_API_HOST) +
-  import.meta.env.VITE_APP_API_PREFIX;
+  import.meta.env.VITE_APP_MODE === 'dev' ? '' : import.meta.env.VITE_APP_API_HOST;
 
 function validateStatus(status: number) {
   return status >= 200 && status < 300;

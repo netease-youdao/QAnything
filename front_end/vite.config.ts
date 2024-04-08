@@ -122,7 +122,7 @@ export default defineConfig(({ mode }) => {
       cors: true,
       proxy: {
         [env.VITE_APP_API_PREFIX]: {
-		      target: env.VITE_APP_API_HOST + env.VITE_APP_API_PREFIX,
+		      target: env.VITE_APP_API_HOST,
           changeOrigin: true,
 		      secure: false,
         },

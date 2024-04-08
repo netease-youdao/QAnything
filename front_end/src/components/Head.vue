@@ -15,6 +15,17 @@
         @click="goDetail('https://ai.youdao.com/')"
       />
     </div>
+    <div class="header-navs">
+      <div
+        v-for="item in navList"
+        :class="['nav-item', navIndex === item.value ? 'nav-item-active' : '']"
+        :key="item.name"
+        @click="setNavIdx(item.value)"
+      >
+        <div :class="['item-icon', item.value === 0 ? 'knowledge-icon' : 'bot-icon']"></div>
+        {{ item.name }}
+      </div>
+    </div>
     <ul>
       <!-- <li @click="goDetail('https://ai.youdao.com/qanything.s')">
         <img src="../assets/home/icon-home.png" alt="首页" /><span>首页</span>
@@ -49,12 +60,28 @@
 <script lang="ts" setup>
 // import { useUser } from '@/store/useUser';
 // const { userInfo } = storeToRefs(useUser());
+import { useHeader } from '@/store/useHeader';
 import { useLanguage } from '@/store/useLanguage';
 import { getLanguage } from '@/language/index';
+import routeController from '@/controller/router';
 
 const header = getLanguage().header;
 const { language } = storeToRefs(useLanguage());
+const { navIndex } = storeToRefs(useHeader());
 const { setLanguage } = useLanguage();
+const { setNavIndex } = useHeader();
+const { changePage } = routeController();
+
+const navList = [
+  {
+    name: '知识库',
+    value: 0,
+  },
+  {
+    name: 'Bots',
+    value: 1,
+  },
+];
 
 const changLanguage = (lang: string) => {
   setLanguage(lang);
@@ -65,6 +92,18 @@ const goDetail = (url: string) => {
   console.log(url);
   window.location.href = url;
 };
+
+const setNavIdx = value => {
+  if (navIndex.value === value) {
+    return;
+  }
+  setNavIndex(value);
+  if (value === 0) {
+    changePage('/home');
+  } else {
+    changePage('/bots');
+  }
+};
 </script>
 <style lang="scss" scoped>
 .header {
@@ -74,6 +113,49 @@ const goDetail = (url: string) => {
   display: flex;
   align-items: center;
   background: #26293b;
+  .header-navs {
+    width: 234px;
+    height: 50px;
+    margin-left: 158px;
+    display: flex;
+    justify-content: space-between;
+    .nav-item {
+      width: 80px;
+      height: 50px;
+      color: #999999;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      img {
+        width: 20px;
+        height: 20px;
+        margin-right: 4px;
+      }
+      .item-icon {
+        width: 20px;
+        height: 20px;
+        margin-right: 4px;
+        background-size: cover;
+        background-repeat: no-repeat;
+      }
+      .bot-icon {
+        background-image: url('@/assets/header/bots-icon.png');
+      }
+      .knowledge-icon {
+        background-image: url('@/assets/header/knowledge-icon.png');
+      }
+    }
+    .nav-item-active {
+      color: #fff;
+      .bot-icon {
+        background-image: url('@/assets/header/bots-active-icon.png');
+      }
+      .knowledge-icon {
+        background-image: url('@/assets/header/knowledge-active-icon.png');
+      }
+    }
+  }
 
   .logo {
     width: 146px;
