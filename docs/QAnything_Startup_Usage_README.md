@@ -77,7 +77,7 @@ bash ./run.sh -c local -i 0 -b hf -m Qwen-7B-QAnything -t qwen-7b-qanything
 ```bash
 ## Step 1. Download the public LLM model (e.g., MiniChat-2-3B) and save to "/path/to/QAnything/assets/custom_models"
 cd /path/to/QAnything/assets/custom_models
-git clone https://huggingface.co/GeneZC/MiniChat-2-3B
+git lfs clone https://huggingface.co/GeneZC/MiniChat-2-3B
 
 ## Step 2. Execute the service startup command.  Here we use "-b hf" to specify the Huggingface transformers backend.
 ## Here we use "-b hf" to specify the transformers backend that will load model in 8 bits but do bf16 inference as default for saving VRAM.
