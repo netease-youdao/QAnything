@@ -1,0 +1,89 @@
+html,
+body,
+header,
+section,
+nav,
+ul,
+ol,
+li,
+div,
+p,
+form,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+span,
+a,
+img {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+}
+
+html {
+  -webkit-text-size-adjust: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+body {
+  font-family: FZLANTY_ZHUNJW--GB1, Helvetica, Roboto, Arial, sans-serif;
+  font-size: 16px;
+  padding-bottom: constant(safe-area-inset-bottom);
+  padding-top: env(safe-area-inset-top);
+  line-height: 2;
+}
+
+ul,
+ol,
+li {
+  list-style: none;
+}
+
+i {
+  font-style: normal;
+}
+
+a,
+a:active {
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+}
+
+body {
+  -webkit-touch-callout: none;
+}
+
+th {
+  font-weight: normal;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  min-height: 100%;
+}
+img {
+  width: 100%;
+}
+a,
+img {
+  -webkit-user-drag: none;
+}
+@font-face {
+  font-family: 'FZLanTingHeiS-L-GB';
+  src: url('~@/styles/fonts/FZLanTingHeiS-L-GB.TTF') format('truetype');
+}
+
+@font-face {
+  font-family: 'FZYaSongS-B-GB';
+  src: url('~@/styles/fonts/FZYaSongS-B-GB.TTF') format('truetype');
+}
