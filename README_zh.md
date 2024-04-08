@@ -160,7 +160,7 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 
 ## 纯python环境安装
 
-不想用docker环境安装的，我们提供了[纯Python版本安装教程](./docs/纯Python环境安装教程.md)，纯python环境的安装仅作为demo体验，不建议生产环境部署。
+不想用docker环境安装的，我们提供了[纯Python版本安装教程](https://github.com/netease-youdao/QAnything/blob/qanything-python-v1.3.1/README_zh.md#%E7%BA%AFpython%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B)，纯python环境的安装仅作为demo体验，不建议生产环境部署。
 
 - 支持纯CPU安装运行(检索部分跑在CPU上，大模型调用在线API)
 - 支持Mac安装运行
