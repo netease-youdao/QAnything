@@ -27,10 +27,10 @@ Usage: bash run.sh [-c <llm_api>] [-i <device_id>] [-b <runtime_backend>] [-m <m
 | --------------------------------------------------------------------------------------- | -----|--------------------------| -------------------------------- |
 | ```bash ./run.sh -c cloud -i 0 -b default```                                            | 1    | OpenAI API               | OpenAI API                       |
 | ```bash ./run.sh -c local -i 0 -b default```                                            | 1    | FasterTransformer        | Qwen-7B-QAnything                |
-| ```bash ./run.sh -c local -i 0 -b hf -m MiniChat-2-3B -t minichat```                    | 1    | Huggingface Transformers | Public LLM (e.g., MiniChat-2-3B) |
+| ```bash ./run.sh -c local -i 0 -b hf -m MiniChat-2-3B -t minichat```                    | 1    | Hugging Face Transformers| Public LLM (e.g., MiniChat-2-3B) |
 | ```bash ./run.sh -c local -i 0 -b vllm -m MiniChat-2-3B -t minichat -p 1 -r 0.81```     | 1    | vllm                     | Public LLM (e.g., MiniChat-2-3B) |
 | ```bash ./run.sh -c local -i 0,1 -b default```                                          | 2    | FasterTransformer        | Qwen-7B-QAnything                |
-| ```bash ./run.sh -c local -i 0,1 -b hf -m MiniChat-2-3B -t minichat```                  | 2    | Huggingface Transformers | Public LLM (e.g., MiniChat-2-3B) |
+| ```bash ./run.sh -c local -i 0,1 -b hf -m MiniChat-2-3B -t minichat```                  | 2    | Hugging Face Transformers| Public LLM (e.g., MiniChat-2-3B) |
 | ```bash ./run.sh -c local -i 0,1 -b vllm -m MiniChat-2-3B -t minichat -p 1 -r 0.81```   | 2    | vllm                     | Public LLM (e.g., MiniChat-2-3B) |
 | ```bash ./run.sh -c local -i 0,1 -b vllm -m MiniChat-2-3B -t minichat -p 2 -r 0.81```   | 2    | vllm                     | Public LLM (e.g., MiniChat-2-3B) |
 
@@ -43,7 +43,7 @@ Note: You can choose the most suitable Service Startup Command based on your own
 (5) When you choose a public Chat LLM for QAnything system, you should take care of a more suitable **PROMPT_TEMPLATE** (/path/to/QAnything/qanything_kernel/configs/model_config.py) setting considering different LLM models.
 ```
 
-## Supported Pulic LLM using FastChat API with Huggingface Transformers/vllm runtime backend
+## Supported Pulic LLM using FastChat API with Hugging Face Transformers/vllm runtime backend
 
 | model_name                                | conv_template       | Supported Pulic LLM List                                                        |
 |-------------------------------------------|---------------------|---------------------------------------------------------------------------------|
@@ -57,16 +57,16 @@ Note: You can choose the most suitable Service Startup Command based on your own
 | ...                          ```check or add conv_template for more LLMs in "/path/to/QAnything/third_party/FastChat/fastchat/conversation.py"``` |
 
 
-### 1. Run QAnything using FastChat API with **Huggingface transformers** runtime backend (recommend for GPU device with VRAM <= 16GB).
+### 1. Run QAnything using FastChat API with **Hugging Face transformers** runtime backend (recommend for GPU device with VRAM <= 16GB).
 #### 1.1 Run Qwen-7B-QAnything
 ```bash
 ## Step 1. Download the public LLM model (e.g., Qwen-7B-QAnything) and save to "/path/to/QAnything/assets/custom_models"
 ## (Optional) Download Qwen-7B-QAnything from ModelScope: https://www.modelscope.cn/models/netease-youdao/Qwen-7B-QAnything
-## (Optional) Download Qwen-7B-QAnything from Huggingface: https://huggingface.co/netease-youdao/Qwen-7B-QAnything
+## (Optional) Download Qwen-7B-QAnything from Hugging Face: https://huggingface.co/netease-youdao/Qwen-7B-QAnything
 cd /path/to/QAnything/assets/custom_models
 git clone https://huggingface.co/netease-youdao/Qwen-7B-QAnything
 
-## Step 2. Execute the service startup command.  Here we use "-b hf" to specify the Huggingface transformers backend.
+## Step 2. Execute the service startup command.  Here we use "-b hf" to specify the Hugging Face transformers backend.
 ## Here we use "-b hf" to specify the transformers backend that will load model in 8 bits but do bf16 inference as default for saving VRAM.
 cd /path/to/QAnything
 bash ./run.sh -c local -i 0 -b hf -m Qwen-7B-QAnything -t qwen-7b-qanything
@@ -77,9 +77,9 @@ bash ./run.sh -c local -i 0 -b hf -m Qwen-7B-QAnything -t qwen-7b-qanything
 ```bash
 ## Step 1. Download the public LLM model (e.g., MiniChat-2-3B) and save to "/path/to/QAnything/assets/custom_models"
 cd /path/to/QAnything/assets/custom_models
-git clone https://huggingface.co/GeneZC/MiniChat-2-3B
+git lfs clone https://huggingface.co/GeneZC/MiniChat-2-3B
 
-## Step 2. Execute the service startup command.  Here we use "-b hf" to specify the Huggingface transformers backend.
+## Step 2. Execute the service startup command.  Here we use "-b hf" to specify the Hugging Face transformers backend.
 ## Here we use "-b hf" to specify the transformers backend that will load model in 8 bits but do bf16 inference as default for saving VRAM.
 cd /path/to/QAnything
 bash ./run.sh -c local -i 0 -b hf -m MiniChat-2-3B -t minichat
@@ -91,7 +91,7 @@ bash ./run.sh -c local -i 0 -b hf -m MiniChat-2-3B -t minichat
 ```bash
 ## Step 1. Download the public LLM model (e.g., Qwen-7B-QAnything) and save to "/path/to/QAnything/assets/custom_models"
 ## (Optional) Download Qwen-7B-QAnything from ModelScope: https://www.modelscope.cn/models/netease-youdao/Qwen-7B-QAnything
-## (Optional) Download Qwen-7B-QAnything from Huggingface: https://huggingface.co/netease-youdao/Qwen-7B-QAnything
+## (Optional) Download Qwen-7B-QAnything from Hugging Face: https://huggingface.co/netease-youdao/Qwen-7B-QAnything
 cd /path/to/QAnything/assets/custom_models
 git clone https://huggingface.co/netease-youdao/Qwen-7B-QAnything
 

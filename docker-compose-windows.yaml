@@ -65,6 +65,27 @@ services:
       - "etcd"
       - "minio"
 
+  elasticsearch:
+    container_name: es-container-local
+    image: "docker.elastic.co/elasticsearch/elasticsearch:8.11.4"
+    privileged: true
+    ports:
+      - 9200:9200
+      - 9300:9300
+    restart: on-failure
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms1024m -Xmx1024m"
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/third_party/es/plugins:/usr/share/elasticsearch/plugins
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/es/data:/usr/share/elasticsearch/data
+    healthcheck:
+        test: curl --fail http://localhost:9200/_cat/health || exit 1
+        interval: 30s
+        timeout: 20s
+        retries: 3
+
   mysql:
     container_name: mysql-container-local
     privileged: true
@@ -105,6 +126,7 @@ services:
     depends_on:
       - "standalone"
       - "mysql"
+      - "elasticsearch"
     tty: true
     stdin_open: true
 

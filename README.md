@@ -38,25 +38,26 @@
 <details open="open">
 <summary>Table of Contents</summary>
 
-- [What is QAnything](#What-is-QAnything)
-  - [Key features](#Key-features)
-  - [Architecture](#Architecture)
-- [Before You Start](#Before-You-Start)
-- [Latest Updates](#-Latest-Updates)
+- [What is QAnything](#what-is-qanything)
+  - [Key features](#key-features)
+  - [Architecture](#architecture)
+- [Latest Updates](#-latest-updates)
+- [Before You Start](#before-you-start)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-- [FAQ](#FAQ)
+  - [Installation(Pure Python Environment)](#installationpure-python-environment)
+  - [Installation(Docker)](#installationdocker)
+  - [Offline Install](#offline-install)
+- [FAQ](#faq)
 - [Usage](#usage)
-  - [API Document](#API-Document)
-- [WeChat Group](#WeChat-Group)
-- [Community & Support](#Community--Support)
+  - [API Document](#api-document)
+- [Community & Support](#community--support)
 - [License](#license)
-- [Acknowledgements](#Acknowledgments)
+- [Acknowledgements](#acknowledgments)
 
 </details>
 
-## What is QAnything?
+# What is QAnything?
 `QAnything`(**Q**uestion and **A**nswer based on **Anything**) is a local knowledge base question-answering system designed to support a wide range of file formats and databases, allowing for offline installation and use.
 
 With `QAnything`, you can simply drop any locally stored file of any format and receive accurate, fast, and reliable answers.
@@ -64,7 +65,7 @@ With `QAnything`, you can simply drop any locally stored file of any format and 
 Currently supported formats include: **PDF(pdf)**,**Word(docx)**,**PPT(pptx)**,**XLS(xlsx)**,**Markdown(md)**,**Email(eml)**,**TXT(txt)**,**Image(jpg，jpeg，png)**,**CSV(csv)**,**Web links(html)** and more formats coming soon…
 
 
-### Key features
+## Key features
 
 - **Data Security**, supports installation and usage with network cable unplugged throughout the process.
 - **Cross-language QA support**, freely switch between Chinese and English QA, regardless of the language of the document.
@@ -76,12 +77,12 @@ Currently supported formats include: **PDF(pdf)**,**Word(docx)**,**PPT(pptx)**,*
 
 
 
-### Architecture
+## Architecture
 <div align="center">
 <img src="docs/images/qanything_arch.png" width = "700" alt="qanything_system" align=center />
 </div>
 
-#### Why 2 stage retrieval?
+### Why 2 stage retrieval?
 In scenarios with a large volume of knowledge base data, the advantages of a two-stage approach are very clear. If only a first-stage embedding retrieval is used, there will be a problem of retrieval degradation as the data volume increases, as indicated by the green line in the following graph. However, after the second-stage reranking, there can be a stable increase in accuracy, **the more data, the better the performance**.
 <div align="center">
 <img src="docs/images/two_stage_retrieval.jpg" width = "500" alt="two stage retrievaal" align=center />
@@ -92,7 +93,7 @@ QAnything uses the retrieval component [BCEmbedding](https://github.com/netease-
 - **A new benchmark in the realm of <a href="https://github.com/netease-youdao/BCEmbedding/tree/master?tab=readme-ov-file#evaluate-rag-by-llamaindex" target="_Self">RAG Evaluations in LlamaIndex</a>**.
 
 
-#### 1st Retrieval（embedding）
+### 1st Retrieval（embedding）
 | Model | Retrieval | STS | PairClassification | Classification | Reranking | Clustering | Avg |  
 |:-------------------------------|:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|  
 | bge-base-en-v1.5 | 37.14 | 55.06 | 75.45 | 59.73 | 43.05 | 37.74 | 47.20 |  
@@ -106,7 +107,7 @@ QAnything uses the retrieval component [BCEmbedding](https://github.com/netease-
 
 - More evaluation details please check [Embedding Models Evaluation Summary](https://github.com/netease-youdao/BCEmbedding/blob/master/Docs/EvaluationSummary/embedding_eval_summary.md)。
 
-#### 2nd Retrieval（rerank）
+### 2nd Retrieval（rerank）
 | Model | Reranking | Avg |  
 |:-------------------------------|:--------:|:--------:|  
 | bge-reranker-base | 57.78 | 57.78 |  
@@ -115,7 +116,7 @@ QAnything uses the retrieval component [BCEmbedding](https://github.com/netease-
 
 - More evaluation details please check [Reranker Models Evaluation Summary](https://github.com/netease-youdao/BCEmbedding/blob/master/Docs/EvaluationSummary/reranker_eval_summary.md)
 
-#### RAG Evaluations in LlamaIndex（embedding and rerank）
+### RAG Evaluations in LlamaIndex（embedding and rerank）
 
 <img src="https://github.com/netease-youdao/BCEmbedding/blob/master/Docs/assets/rag_eval_multiple_domains_summary.jpg">
 
@@ -126,12 +127,19 @@ QAnything uses the retrieval component [BCEmbedding](https://github.com/netease-
 - **The combination of `bce-embedding-base_v1` and `bce-reranker-base_v1` is SOTA**.
 - If you want to use embedding and rerank separately, please refer to [BCEmbedding](https://github.com/netease-youdao/BCEmbedding)
 
-#### LLM
+### LLM
 
 The open source version of QAnything is based on QwenLM and has been fine-tuned on a large number of professional question-answering datasets. It greatly enhances the ability of question-answering.
 If you need to use it for commercial purposes, please follow the license of QwenLM. For more details, please refer to: [QwenLM](https://github.com/QwenLM/Qwen)
 
-## Before You Start
+# 🚀 Latest Updates
+
+- ***2024-04-03***: **Support installation in a pure Python environment.Support hybrid search.** - See More👉 [v1.3.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.3.0)
+- ***2024-01-29***: **Support for custom large models, including OpenAI API and other open-source large models, with a minimum GPU requirement of GTX 1050Ti, greatly improving deployment, debugging, and user experience.** - See More👉 [v1.2.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.2.0)
+- ***2024-01-23***: **Enable rerank by default and fix various issues when starting on Windows.** - See More👉 [v1.1.1](https://github.com/netease-youdao/QAnything/releases/tag/v1.1.1)
+- ***2024-01-18***: **Support one-click startup, support Windows deployment, improve PDF, XLSX, HTML parsing efficiency.** - See More👉 [v1.1.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.1.0)
+
+# Before You Start
 **Star us on GitHub, and be instantly notified for new release!**
 ![star_us](https://github.com/netease-youdao/QAnything/assets/29041332/fd5e5926-b9b2-4675-9f60-6cdcaca18e14)
 * [🏄 Try QAnything Online](https://qanything.ai)
@@ -139,14 +147,37 @@ If you need to use it for commercial purposes, please follow the license of Qwen
 * [🛠️ Only use our BCEmbedding(embedding & rerank)](https://github.com/netease-youdao/BCEmbedding)
 * [📖 FAQ](FAQ_zh.md)
 
-## 🚀 Latest Updates
 
-- ***2024-01-29***: **Support for custom large models, including OpenAI API and other open-source large models, with a minimum GPU requirement of GTX 1050Ti, greatly improving deployment, debugging, and user experience.** - See More👉 [v1.2.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.2.0)
-- ***2024-01-23***: **Enable rerank by default and fix various issues when starting on Windows.** - See More👉 [v1.1.1](https://github.com/netease-youdao/QAnything/releases/tag/v1.1.1)
-- ***2024-01-18***: **Support one-click startup, support Windows deployment, improve PDF, XLSX, HTML parsing efficiency.** - See More👉 [v1.1.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.1.0)
+# Getting Started
+## Installation Methods
+We provide three installation methods:
 
-## Getting Started
+- [Pure Python Environment Installation](#installationpure-python-environment)
+- [Installation whith Docker](#installationdocker)
+- [Offline installation](#offline-install)
 
+The features corresponding to different installation methods are as follows:
+
+| features                | [Installation(Pure Python Environment)](#installationpure-python-environment)   |    [Installation(Docker)](#installationdocker)     |       [Offline Install](#offline-install)               |  
+|:-------------------------------|:----------------------:|:----------------------:|:-------------------------:|
+| for production environment     |   ❌                   |    ✅                  |             ✅            |  
+| support offline installation   |   ❌                   |    ❌                  |             ✅            |
+| support Mac                    |   ✅                   |    ❌                  |             ❌            |  
+| support Linux                  |   ✅                   |    ✅                  |             ✅            |  
+| support Windows WSL            |   ✅                   |    ✅                  |             ✅            |  
+| support CPU only               |   ✅                   |    ❌                  |             ❌            |    
+| support hybrid search          |   ❌                   |    ✅                  |             ✅            |
+
+## Installation(Pure Python environment)
+If you prefer not to use Docker for installation, we provide a [Pure Python Installation Guide](https://github.com/netease-youdao/QAnything/tree/qanything-python-v1.3.1?tab=readme-ov-file#pure-python-environment-installation-guide). The installation of a pure Python environment is intended for demo purposes only and is not recommended for deployment in a production environment.
+
+- Support installation on CPU only (Retrieval run on CPU, while LLMs calls online API).
+- Support installation on Mac.
+
+
+
+
+## Installation(Docker)
 ### Prerequisites
 #### **For Linux**
 |**System**| **Required item**  | **Minimum Requirement** | **Note**                                                         |
@@ -166,7 +197,7 @@ If you need to use it for commercial purposes, please follow the license of Qwen
 |                               | git-lfs   |                  | [git-lfs install](https://git-lfs.com/)                                                                                   |
 
 
-### Installation
+
 ### step1: pull qanything repository
 ```shell
 git clone https://github.com/netease-youdao/QAnything.git
@@ -365,42 +396,51 @@ We appreciate your interest in contributing to our project. Whether you're fixin
   <img src="https://contrib.rocks/image?repo=netease-youdao/QAnything" />
 </a>
 
-## Community & Support
+# Community & Support
 
-### Discord <a href="https://discord.gg/5uNpPsEJz8"><img src="https://img.shields.io/discord/1197874288963895436?style=social&logo=discord"></a>
+## Discord <a href="https://discord.gg/5uNpPsEJz8"><img src="https://img.shields.io/discord/1197874288963895436?style=social&logo=discord"></a>
 Welcome to the QAnything [Discord](https://discord.gg/5uNpPsEJz8) community
 
 
 
-### WeChat Group
+## WeChat
 
-Welcome to scan the QR code below and join the WeChat group.
+Welcome to follow QAnything WeChat Official Account to get the latest information.
+
+<img src="docs/images/qrcode_for_qanything.jpg" width="30%" height="auto">
+
+
+Welcome to scan the code to join the QAnything discussion group.
 
 <img src="docs/images/Wechat.jpg" width="30%" height="auto">
 
-### Email
+
+
+
+
+## Email
 If you need to contact our team privately, please reach out to us via the following email:
 
 qanything@rd.netease.com
 
-### GitHub issues
+## GitHub issues
 Reach out to the maintainer at one of the following places:
 
 - [Github issues](https://github.com/netease-youdao/QAnything/issues)
 - Contact options listed on [this GitHub profile](https://github.com/netease-youdao)
 
 
-## Star History
+# Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=netease-youdao/QAnything,netease-youdao/BCEmbedding&type=Date)](https://star-history.com/#netease-youdao/QAnything&netease-youdao/BCEmbedding&Date)
 
 
 
-## License
+# License
 
 `QAnything` is licensed under [Apache 2.0 License](./LICENSE)
 
-## Acknowledgments
+# Acknowledgments
 `QAnything` adopts dependencies from the following:
 - Thanks to our [BCEmbedding](https://github.com/netease-youdao/BCEmbedding) for the excellent embedding and rerank model. 
 - Thanks to [Qwen](https://github.com/QwenLM/Qwen) for strong base language models.

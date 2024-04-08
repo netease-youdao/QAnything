@@ -13,6 +13,10 @@ import math
 from itertools import groupby
 from typing import List
 
+# 混合检索
+from .es_client import ElasticsearchClient
+from qanything_kernel.configs.model_config import HYBRID_SEARCH
+
 
 class MilvusFailed(Exception):
     """异常基类"""
@@ -44,6 +48,12 @@ class MilvusClient:
             self.create_params = {"metric_type": "L2", "index_type": "GPU_IVF_FLAT", "params": {"nlist": 2048}}
         self.last_init_ts = time.time() - 100  # 减去100保证最初的init不会被拒绝
         self.init()
+
+        # 混合检索
+        self.hybrid_search = HYBRID_SEARCH
+        if self.hybrid_search:
+            self.index_name = [f"{user_id}++{kb_id}" for kb_id in kb_ids]
+            self.client = ElasticsearchClient(index_name=self.index_name)
 
     @property
     def fields(self):
@@ -84,6 +94,42 @@ class MilvusClient:
             new_cands = not_need_expand + expand_res
             new_result.append(new_cands)
         return new_result
+    
+    # 混合检索
+    def parse_es_batch_result(self, es_records, milvus_records):
+        milvus_records_seen = set()
+        for result in milvus_records:
+            result.sort(key=lambda x: x.score)
+            flag = True
+            for cand in result:
+                if cand.score <= self.threshold:
+                    milvus_records_seen.add(cand.entity.get('chunk_id'))
+                    flag = False
+            if flag:
+                for cand in result[:self.top_k]:
+                    milvus_records_seen.add(cand.entity.get('chunk_id'))
+        
+        new_cands = []
+        for es_record in es_records:
+            if es_record['id'] not in milvus_records_seen:
+                doc = Document(page_content=es_record['content'],
+                               metadata={"score": es_record['score'], "file_id": es_record['file_id'],
+                                         "file_name": es_record['metadata']['file_name'],
+                                         "chunk_id": es_record['metadata']['chunk_id']})
+                new_cands.append(doc)
+            
+        # csv和xlsx文件不做expand_cand_docs
+        need_expand, not_need_expand = [], []
+        for doc in new_cands:
+            if doc.metadata['file_name'].lower().split('.')[-1] in ['csv', 'xlsx']:
+                doc.metadata["kernel"] = doc.page_content
+                not_need_expand.append(doc)
+            else:
+                need_expand.append(doc)
+        expand_res = self.expand_cand_docs(need_expand)
+        new_result = not_need_expand + expand_res
+
+        return new_result
 
     @property
     def output_fields(self):
@@ -110,20 +156,28 @@ class MilvusClient:
         except Exception as e:
             debug_logger.error(e)
 
-    def __search_emb_sync(self, embs, expr='', top_k=None, client_timeout=None):
+    def __search_emb_sync(self, embs, expr='', top_k=None, client_timeout=None, queries=None):
         if not top_k:
             top_k = self.top_k
         milvus_records = self.sess.search(data=embs, partition_names=self.kb_ids, anns_field="embedding",
                                           param=self.search_params, limit=top_k,
                                           output_fields=self.output_fields, expr=expr, timeout=client_timeout)
+        milvus_records_proc = self.parse_batch_result(milvus_records)
         # debug_logger.info(milvus_records)
-        return self.parse_batch_result(milvus_records)
 
-    def search_emb_async(self, embs, expr='', top_k=None, client_timeout=None):
+        # 混合检索
+        if self.hybrid_search:
+            es_records = self.client.search(queries)
+            es_records_proc = self.parse_es_batch_result(es_records, milvus_records)
+            milvus_records_proc.extend(es_records_proc)
+
+        return milvus_records_proc
+
+    def search_emb_async(self, embs, expr='', top_k=None, client_timeout=None, queries=None):
         if not top_k:
             top_k = self.top_k
         # 将search_emb_sync函数放入线程池中运行
-        future = self.executor.submit(self.__search_emb_sync, embs, expr, top_k, client_timeout)
+        future = self.executor.submit(self.__search_emb_sync, embs, expr, top_k, client_timeout, queries)
         return future.result()
 
     def query_expr_async(self, expr, output_fields=None, client_timeout=None):
@@ -169,20 +223,78 @@ class MilvusClient:
                 debug_logger.error(f'Milvus insert file_id:{file_id}, file_name:{file_name} failed: {e}')
                 return False
 
+        # 混合检索
+        if self.hybrid_search:
+            debug_logger.info(f'now inser_file for es: {file_name}')
+            for batch_start in range(0, num_docs, batch_size):
+                batch_end = min(batch_start + batch_size, num_docs)
+                data_es = []
+                for idx in range(batch_start, batch_end):
+                    data_es_item = {
+                        'file_id': file_id,
+                        'content': contents[idx],
+                        'metadata': {
+                            'file_name': file_name,
+                            'file_path': file_path,
+                            'chunk_id': f'{file_id}_{idx}',
+                            'timestamp': timestamp,
+                        }
+                    }
+                    data_es.append(data_es_item)
+
+                try:
+                    debug_logger.info('Inserting into es ...')
+                    mr = await self.client.insert(data=data_es, refresh=batch_end==num_docs)
+                    debug_logger.info(f'{file_name} {mr}')
+                except Exception as e:
+                    debug_logger.error(f'ES insert file_id: {file_id}\nfile_name: {file_name}\nfailed: {e}')
+                    return False
+
         return True
 
     def delete_collection(self):
         self.sess.release()
         utility.drop_collection(self.user_id)
+        # 混合检索
+        if self.hybrid_search:
+            index_name_delete = []
+            for index_name in self.client.indices.get_alias().keys():
+                if index_name.startswith(f"{self.user_id}++"):
+                    index_name_delete.append(index_name)
+            self.client.delete_index(index_name_delete)
 
     def delete_partition(self, partition_name):
         part = Partition(self.sess, partition_name)
         part.release()
         self.sess.drop_partition(partition_name)
+        # 混合检索
+        if self.hybrid_search:
+            index_name_delete = []
+            if isinstance(partition_name, str):
+                index_name_delete.append(f"{self.user_id}++{partition_name}")
+            elif isinstance(partition_name, list) and isinstance(partition_name[0], str):
+                for kb_id in partition_name:
+                    index_name_delete.append(f"{self.user_id}++{kb_id}")
+            else:
+                debug_logger.info(f"##ES## - kb_ids not valid: {partition_name}")
+            self.client.delete_index(index_name_delete)
+            debug_logger.info(f"##ES## - success delete kb_ids: {partition_name}")
 
     def delete_files(self, files_id):
         self.sess.delete(expr=f"file_id in {files_id}")
         debug_logger.info('milvus delete files_id: %s', files_id)
+        # 混合检索
+        if self.hybrid_search:
+            es_records = self.client.search(files_id, field='file_id')
+            delete_index_ids = {}
+            for record in es_records:
+                if record['index'] not in delete_index_ids:
+                    delete_index_ids[record['index']] = []
+                delete_index_ids[record['index']].append(record['id'])
+            
+            for index, ids in delete_index_ids.items():
+                self.client.delete_chunks(index_name=index, ids=ids)
+            debug_logger.info(f"##ES## - success delete files_id: {files_id}")
 
     def get_files(self, files_id):
         res = self.query_expr_async(expr=f"file_id in {files_id}", output_fields=["file_id"])
@@ -247,17 +359,20 @@ class MilvusClient:
         id_list = sorted(list(id_set))
         id_lists = self.seperate_list(id_list)
         for id_seq in id_lists:
-            for id in id_seq:
-                if id == id_seq[0]:
-                    doc = Document(page_content=group_chunk_map[id],
-                                   metadata={"score": 0, "file_id": file_id,
-                                             "file_name": file_name})
-                else:
-                    doc.page_content += " " + group_chunk_map[id]
-            doc_score = min([group_scores_map[id] for id in id_seq if id in group_scores_map])
-            doc.metadata["score"] = round(1 - doc_score / math.sqrt(2), 4)
-            doc.metadata["kernel"] = '|'.join([group_chunk_map[id] for id in id_seq if id in group_scores_map])
-            new_cands.append(doc)
+            try:
+                for id in id_seq:
+                    if id == id_seq[0]:
+                        doc = Document(page_content=group_chunk_map[id],
+                                    metadata={"score": 0, "file_id": file_id,
+                                                "file_name": file_name})
+                    else:
+                        doc.page_content += " " + group_chunk_map[id]
+                doc_score = min([group_scores_map[id] for id in id_seq if id in group_scores_map])
+                doc.metadata["score"] = float(format(1 - doc_score / math.sqrt(2), '.4f'))
+                doc.metadata["kernel"] = '|'.join([group_chunk_map[id] for id in id_seq if id in group_scores_map])
+                new_cands.append(doc)
+            except Exception as e:
+                debug_logger.error(f"process_group error: {e}. maybe chunks in ES not exists in Milvus. Please delete the file and upload again.")
         return new_cands
 
     def expand_cand_docs(self, cand_docs):
