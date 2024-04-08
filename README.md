@@ -400,9 +400,9 @@ We appreciate your interest in contributing to our project. Whether you're fixin
 
 
 # 🛣️ Roadmap & Feedback
-To learn about QAnything's future plans and progress, please see here: [QAnything Roadmap](https://qanything.canny.io/)
+🔎 To learn about QAnything's future plans and progress, please see here: [QAnything Roadmap](https://qanything.canny.io/)
 
-To provide feedback to QAnything, please see here: [QAnything Feedbak](https://qanything.canny.io/feature-requests)
+🤬To provide feedback to QAnything, please see here: [QAnything Feedbak](https://qanything.canny.io/feature-requests)
 
 # Community & Support
 
