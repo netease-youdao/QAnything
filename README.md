@@ -168,7 +168,7 @@ We provide three installation methods:
 | support hybrid search          |   ❌                   |    ✅                  |             ✅            |
 
 ## Installation(Pure Python environment)
-If you prefer not to use Docker for installation, we provide a [Pure Python Installation Guide](./docs/PurePythonEnvironmentInstallationGuide.md). The installation of a pure Python environment is intended for demo purposes only and is not recommended for deployment in a production environment.
+If you prefer not to use Docker for installation, we provide a [Pure Python Installation Guide](https://github.com/netease-youdao/QAnything/tree/qanything-python-v1.3.1?tab=readme-ov-file#pure-python-environment-installation-guide). The installation of a pure Python environment is intended for demo purposes only and is not recommended for deployment in a production environment.
 
 - Support installation on CPU only (Retrieval run on CPU, while LLMs calls online API).
 - Support installation on Mac.
