@@ -51,6 +51,7 @@
 - [FAQ](#faq)
 - [Usage](#usage)
   - [API Document](#api-document)
+- [Roadmap & Feedback](#roadmap--feedback)
 - [Community & Support](#community--support)
 - [License](#license)
 - [Acknowledgements](#acknowledgments)
@@ -395,6 +396,14 @@ We appreciate your interest in contributing to our project. Whether you're fixin
 <a href="https://github.com/netease-youdao/QAnything/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=netease-youdao/QAnything" />
 </a>
+
+
+
+# Roadmap & Feedback
+
+[QAnything Roadmap](https://qanything.canny.io/)
+
+[QAnything Feedbak](https://qanything.canny.io/feature-requests)
 
 # Community & Support
 
