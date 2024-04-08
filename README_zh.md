@@ -45,6 +45,7 @@
   - [断网安装](#断网安装)
 - [常见问题](#常见问题)
 - [使用](#使用)
+- [路线图&反馈](#%EF%B8%8F-路线图--反馈)
 - [交流&支持](#交流--支持)
 - [协议](#协议)
 - [Acknowledgements](#acknowledgements)
@@ -390,7 +391,10 @@ bash run.sh
   <img src="https://contrib.rocks/image?repo=netease-youdao/QAnything" />
 </a>
 
+# 🛣️ 路线图 & 反馈
+🔎 想了解QAnything的未来规划和进展，请看这里： [QAnything Roadmap](https://qanything.canny.io/)
 
+🤬 想要给QAnything提交反馈，请看这里：please see here: [QAnything Feedbak](https://qanything.canny.io/feature-requests)
 
 # 交流 & 支持
 
