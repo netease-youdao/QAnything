@@ -147,6 +147,7 @@ If you need to use it for commercial purposes, please follow the license of Qwen
 * [📚 Try read.youdao.com | 有道速读](https://read.youdao.com)
 * [🛠️ Only use our BCEmbedding(embedding & rerank)](https://github.com/netease-youdao/BCEmbedding)
 * [📖 FAQ](FAQ_zh.md)
+* [👂️Let me hear your voice](https://qanything.canny.io/feature-requests)
 
 
 # Getting Started
