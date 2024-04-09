@@ -422,7 +422,7 @@ qanything@rd.netease.com
 有任何公开的问题，欢迎提交issues，或者在discussions区讨论
 - [Github issues](https://github.com/netease-youdao/QAnything/issues)
 - [Github discussions](https://github.com/netease-youdao/QAnything/discussions)
-<a href="https://github.com/netease-youdao/QAnything">
+<a href="https://github.com/netease-youdao/QAnything/discussions">
   <!-- Please provide path to your logo here -->
   <img src="https://github.com/netease-youdao/QAnything/assets/29041332/ad027ec5-0bbc-4ea0-92eb-81b30c5359a1" alt="Logo" width="600">
 </a>
