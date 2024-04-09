@@ -394,7 +394,7 @@ bash run.sh
 # 🛣️ 路线图 & 反馈
 🔎 想了解QAnything的未来规划和进展，请看这里： [QAnything Roadmap](https://qanything.canny.io/)
 
-🤬 想要给QAnything提交反馈，请看这里：please see here: [QAnything Feedbak](https://qanything.canny.io/feature-requests)
+🤬 想要给QAnything提交反馈，请看这里(可以给每个功能需求投票哦): [QAnything Feedbak](https://qanything.canny.io/feature-requests)
 
 # 交流 & 支持
 
