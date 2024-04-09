@@ -432,11 +432,17 @@ If you need to contact our team privately, please reach out to us via the follow
 
 qanything@rd.netease.com
 
-## GitHub issues
+## GitHub issues & discussions
 Reach out to the maintainer at one of the following places:
 
 - [Github issues](https://github.com/netease-youdao/QAnything/issues)
+- [Github discussions](https://github.com/netease-youdao/QAnything/discussions)
 - Contact options listed on [this GitHub profile](https://github.com/netease-youdao)
+
+<a href="https://github.com/netease-youdao/QAnything">
+  <!-- Please provide path to your logo here -->
+  <img src="https://github.com/netease-youdao/QAnything/assets/29041332/ad027ec5-0bbc-4ea0-92eb-81b30c5359a1" alt="Logo" width="600">
+</a>
 
 
 # Star History
