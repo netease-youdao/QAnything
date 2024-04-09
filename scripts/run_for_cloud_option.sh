@@ -123,10 +123,12 @@ echo "GPU ID: $gpu_id1, $gpu_id2"
 # 判断硬件条件与启动参数是否匹配
 # 获取显卡型号
 gpu_model=$(nvidia-smi --query-gpu=gpu_name --format=csv,noheader,nounits -i $gpu_id1)
-compute_capability=$(jq -r ".[\"$gpu_model\"]" /workspace/qanything_local/scripts/gpu_capabilities.json)
-# 如果compute_capability为空，则说明显卡型号不在gpu_capabilities.json中
-if [ -z "$compute_capability" ]; then
-    echo "您的显卡型号 $gpu_model 不在支持列表中，请联系技术支持。"
+# compute_capability=$(jq -r ".[\"$gpu_model\"]" /workspace/qanything_local/scripts/gpu_capabilities.json)
+# 执行Python脚本，传入设备号，并捕获输出
+compute_capability=$(python3 get_cuda_capability.py $gpu_id1)
+status=$?  # 获取Python脚本的退出状态码
+if [ $status -ne 0 ]; then
+    echo "您的显卡型号 $gpu_model 获取算力时出错，请联系技术支持。"
     exit 1
 fi
 echo "GPU1 Model: $gpu_model"

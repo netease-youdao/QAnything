@@ -150,14 +150,16 @@ gpu_model=$(nvidia-smi --query-gpu=gpu_name --format=csv,noheader,nounits -i $gp
 base_gpu_model=$(echo $gpu_model | grep -o '^[^-]*')
 # nvidia RTX 30系列或40系列或A系列，比如A10，A30，A30，A100，A800
 gpu_series=$(echo $gpu_model | grep -oP '(RTX\s*(30|40)|A(10|30|40|100|800))')
-if ! command -v jq &> /dev/null; then
-    echo "Error: jq 命令不存在，请使用 sudo apt update && sudo apt-get install jq 安装，再重新启动。"
-    exit 1
-fi
-compute_capability=$(jq -r ".[\"$base_gpu_model\"]" /workspace/qanything_local/scripts/gpu_capabilities.json)
-# 如果compute_capability为空，则说明显卡型号不在gpu_capabilities.json中
-if [ "$compute_capability" == "null" ]; then
-    echo "您的显卡型号 $gpu_model 不在支持列表中，请联系技术支持。"
+#if ! command -v jq &> /dev/null; then
+#    echo "Error: jq 命令不存在，请使用 sudo apt update && sudo apt-get install jq 安装，再重新启动。"
+#    exit 1
+#fi
+# compute_capability=$(jq -r ".[\"$base_gpu_model\"]" /workspace/qanything_local/scripts/gpu_capabilities.json)
+# 执行Python脚本，传入设备号，并捕获输出
+compute_capability=$(python3 get_cuda_capability.py $gpu_id1)
+status=$?  # 获取Python脚本的退出状态码
+if [ $status -ne 0 ]; then
+    echo "您的显卡型号 $gpu_model 获取算力时出错，请联系技术支持。"
     exit 1
 fi
 echo "GPU1 Model: $gpu_model"
@@ -375,9 +377,6 @@ echo "rerank服务已就绪! (2/8)"
 CUDA_VISIBLE_DEVICES=$gpu_id2 nohup python3 -u qanything_kernel/dependent_server/ocr_serve/ocr_server.py > /workspace/qanything_local/logs/debug_logs/ocr_server.log 2>&1 &
 echo "The ocr service is ready! (3/8)"
 echo "OCR服务已就绪! (3/8)"
-
-pip install third_party/es/whl/elastic_transport-8.12.0-py3-none-any.whl
-pip install third_party/es/whl/elasticsearch-8.12.1-py3-none-any.whl
 
 nohup python3 -u qanything_kernel/qanything_server/sanic_api.py --mode "local" > /workspace/qanything_local/logs/debug_logs/sanic_api.log 2>&1 &
 
