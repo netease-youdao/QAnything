@@ -125,7 +125,7 @@ echo "GPU ID: $gpu_id1, $gpu_id2"
 gpu_model=$(nvidia-smi --query-gpu=gpu_name --format=csv,noheader,nounits -i $gpu_id1)
 # compute_capability=$(jq -r ".[\"$gpu_model\"]" /workspace/qanything_local/scripts/gpu_capabilities.json)
 # 执行Python脚本，传入设备号，并捕获输出
-compute_capability=$(python3 get_cuda_capability.py $gpu_id1)
+compute_capability=$(python3 scripts/get_cuda_capability.py $gpu_id1)
 status=$?  # 获取Python脚本的退出状态码
 if [ $status -ne 0 ]; then
     echo "您的显卡型号 $gpu_model 获取算力时出错，请联系技术支持。"
