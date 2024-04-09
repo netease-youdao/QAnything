@@ -41,7 +41,7 @@ class OpenAICustomLLM(BaseAnswer, ABC):
         self.sampling_params = SamplingParams(temperature=0.8, top_p=0.95)
         if args.model_size == '3B':
             self.conv_template = DT_CONV_3B_TEMPLATE
-        if args.model_size == '4B':
+        elif args.model_size == '4B':
             self.conv_template = DT_CONV_4B_TEMPLATE
         else:
             self.conv_template = DT_CONV_7B_TEMPLATE
