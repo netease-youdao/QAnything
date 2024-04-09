@@ -137,6 +137,7 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 * [📚 在线试用有道速读](https://read.youdao.com)
 * [🛠️ 想只使用BCEmbedding(embedding & rerank)](https://github.com/netease-youdao/BCEmbedding)
 * [📖 常见问题](FAQ_zh.md)
+* [👂️需求反馈 | 让我听见你的声音](https://qanything.canny.io/feature-requests)
 
 
 # 开始
