@@ -117,12 +117,12 @@ model_path = os.path.join(root_path, "assets", "custom_models")
 if not os.path.exists(model_path):
     os.makedirs(model_path)
 if os_system == 'Darwin':
-    # DT_3B_MODEL_PATH = os.path.join(model_path, "netease-youdao/MiniChat-2-3B-FP16-GGUF") + '/MiniChat-2-3B-fp16.gguf'
-    # DT_3B_DOWNLOAD_PARAMS = {'model_id': 'netease-youdao/MiniChat-2-3B-FP16-GGUF',
-    #                          'revision': 'master', 'cache_dir': model_path}
-    DT_3B_MODEL_PATH = os.path.join(model_path, "netease-youdao/MiniChat-2-3B-INT8-GGUF") + '/MiniChat-2-3B-int8.gguf'
-    DT_3B_DOWNLOAD_PARAMS = {'model_id': 'netease-youdao/MiniChat-2-3B-INT8-GGUF',
+    DT_3B_MODEL_PATH = os.path.join(model_path, "netease-youdao/MiniChat-2-3B-FP16-GGUF") + '/MiniChat-2-3B-fp16.gguf'
+    DT_3B_DOWNLOAD_PARAMS = {'model_id': 'netease-youdao/MiniChat-2-3B-FP16-GGUF',
                              'revision': 'master', 'cache_dir': model_path}
+    # DT_3B_MODEL_PATH = os.path.join(model_path, "netease-youdao/MiniChat-2-3B-INT8-GGUF") + '/MiniChat-2-3B-int8.gguf'
+    # DT_3B_DOWNLOAD_PARAMS = {'model_id': 'netease-youdao/MiniChat-2-3B-INT8-GGUF',
+    #                          'revision': 'master', 'cache_dir': model_path}
     DT_CONV_3B_TEMPLATE = "minichat"
     DT_7B_MODEL_PATH = ''
     DT_7B_DOWNLOAD_PARAMS = {}  # Qwen-7B-QAnything使用llama-cpp-python运行存在问题，暂时不支持
