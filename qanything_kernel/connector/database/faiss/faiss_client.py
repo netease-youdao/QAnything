@@ -127,5 +127,9 @@ class FaissClient:
         try:
             res = self.faiss_client.delete(doc_ids)
             debug_logger.info(f'delete documents: {res}')
+            faiss_index_path = os.path.join(FAISS_LOCATION, kb_id, 'faiss_index')
+            self.faiss_client.save_local(faiss_index_path)
+            debug_logger.info(f'save faiss index: {faiss_index_path}')
+            os.chmod(os.path.dirname(faiss_index_path), stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
         except ValueError as e:
             debug_logger.warning(f'delete documents not find docs')
