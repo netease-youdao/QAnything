@@ -1514,8 +1514,6 @@ register_conv_template(
     )
 )
 
-from vllm import LLM
-
 if __name__ == "__main__":
     from fastchat.conversation import get_conv_template
 
