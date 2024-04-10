@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 
 # 读取requirements.txt文件内容
@@ -7,8 +7,9 @@ with open('requirements.txt') as f:
 
 setup(
     name='qanything',
-    version='0.1',
-    packages=find_packages(),
+    version='0.2',
+    packages=['qanything'],
+    package_dir={'qanything': 'qanything_kernel'},  # 指定源代码目录
     install_requires=required,
     python_requires='>=3.10, <=3.12',  # 这里限定了Python的版本
     include_package_data=True,  # 包含所有的非.py文件
