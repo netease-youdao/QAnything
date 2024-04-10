@@ -2,6 +2,7 @@ from qanything_kernel.core.local_file import LocalFile
 from qanything_kernel.core.local_doc_qa import LocalDocQA
 from qanything_kernel.utils.general_utils import *
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger
+from qanything_kernel.configs.model_config import BOT_DESC, BOT_IMAGE, BOT_PROMPT, BOT_WELCOME
 from sanic.response import ResponseStream
 from sanic.response import json as sanic_json
 from sanic.response import text as sanic_text
@@ -16,7 +17,7 @@ import os
 
 __all__ = ["new_knowledge_base", "upload_files", "list_kbs", "list_docs", "delete_knowledge_base", "delete_docs",
            "rename_knowledge_base", "get_total_status", "clean_files_by_status", "upload_weblink", "local_doc_chat",
-           "document"]
+           "document", "new_bot", "delete_bot", "update_bot", "get_bot_info"]
 
 INVALID_USER_ID = f"fail, Invalid user_id: . user_id 必须只含有字母，数字和下划线且字母开头"
 
@@ -32,7 +33,7 @@ async def new_knowledge_base(req: request):
     debug_logger.info("new_knowledge_base %s", user_id)
     kb_name = safe_get(req, 'kb_name')
     kb_id = 'KB' + uuid.uuid4().hex
-    local_doc_qa.mysql_client.new_milvus_base(kb_id, user_id, kb_name)
+    local_doc_qa.mysql_client.new_knowledge_base(kb_id, user_id, kb_name)
     now = datetime.now()
     timestamp = now.strftime("%Y%m%d%H%M")
     return sanic_json({"code": 200, "msg": "success create knowledge base {}".format(kb_id),
@@ -479,3 +480,112 @@ https://qanything.youdao.com
 
 """
     return sanic_text(description)
+
+
+async def new_bot(req: request):
+    local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
+    user_id = safe_get(req, 'user_id')
+    bot_name = safe_get(req, "name")
+    desc = safe_get(req, "description", BOT_DESC)
+    head_image = safe_get(req, "head_image", BOT_IMAGE)
+    prompt_setting = safe_get(req, "prompt_setting", BOT_PROMPT)
+    welcome_message = safe_get(req, "welcome_message", BOT_WELCOME)
+    model = safe_get(req, "model", 'MiniChat-2-3B')
+    kb_ids = safe_get(req, "kb_ids", [])
+    kb_ids_str = ",".join(kb_ids)
+
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
+    is_valid = validate_user_id(user_id)
+    if not is_valid:
+        return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
+    debug_logger.info("new_bot %s", user_id)
+    bot_id = 'BOT' + uuid.uuid4().hex
+    local_doc_qa.mysql_client.new_qanything_bot(bot_id, user_id, bot_name, desc, head_image, prompt_setting,
+                                                welcome_message, model, kb_ids_str)
+    create_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return sanic_json({"code": 200, "msg": "success create qanything bot {}".format(bot_id),
+                       "data": {"bot_id": bot_id, "bot_name": bot_name, "create_time": create_time}})
+
+
+async def delete_bot(req: request):
+    local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
+    user_id = safe_get(req, 'user_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
+    is_valid = validate_user_id(user_id)
+    if not is_valid:
+        return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
+    debug_logger.info("delete_bot %s", user_id)
+    bot_id = safe_get(req, 'bot_id')
+    if not local_doc_qa.mysql_client.check_bot_is_exist(user_id, bot_id):
+        return sanic_json({"code": 2003, "msg": "fail, Bot {} not found".format(bot_id)})
+    local_doc_qa.mysql_client.delete_bot(user_id, bot_id)
+    return sanic_json({"code": 200, "msg": "Bot {} delete success".format(bot_id)})
+
+
+async def update_bot(req: request):
+    local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
+    user_id = safe_get(req, 'user_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
+    is_valid = validate_user_id(user_id)
+    if not is_valid:
+        return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
+    debug_logger.info("update_bot %s", user_id)
+    bot_id = safe_get(req, 'bot_id')
+    if not local_doc_qa.mysql_client.check_bot_is_exist(user_id, bot_id):
+        return sanic_json({"code": 2003, "msg": "fail, Bot {} not found".format(bot_id)})
+    bot_info = local_doc_qa.mysql_client.get_bot(user_id, bot_id)[0]
+    bot_name = safe_get(req, "name", bot_info[1])
+    description = safe_get(req, "description", bot_info[2])
+    head_image = safe_get(req, "head_image", bot_info[3])
+    prompt_setting = safe_get(req, "prompt_setting", bot_info[4])
+    welcome_message = safe_get(req, "welcome_message", bot_info[5])
+    model = safe_get(req, "model", bot_info[6])
+    kb_ids = safe_get(req, "kb_ids")
+    if kb_ids:
+        kb_ids_str = ",".join(kb_ids)
+    else:
+        kb_ids_str = bot_info[7]
+    # 判断哪些项修改了
+    if bot_name != bot_info[1]:
+        debug_logger.info(f"update bot name from {bot_info[1]} to {bot_name}")
+    if description != bot_info[2]:
+        debug_logger.info(f"update bot description from {bot_info[2]} to {description}")
+    if head_image != bot_info[3]:
+        debug_logger.info(f"update bot head_image from {bot_info[3]} to {head_image}")
+    if prompt_setting != bot_info[4]:
+        debug_logger.info(f"update bot prompt_setting from {bot_info[4]} to {prompt_setting}")
+    if welcome_message != bot_info[5]:
+        debug_logger.info(f"update bot welcome_message from {bot_info[5]} to {welcome_message}")
+    if model != bot_info[6]:
+        debug_logger.info(f"update bot model from {bot_info[6]} to {model}")
+    if kb_ids_str != bot_info[7]:
+        debug_logger.info(f"update bot kb_ids from {bot_info[7]} to {kb_ids_str}")
+    #  update_time     TIMESTAMP DEFAULT CURRENT_TIMESTAMP 根据这个mysql的格式获取现在的时间
+    update_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    debug_logger.info(f"update_time: {update_time}")
+    local_doc_qa.mysql_client.update_bot(user_id, bot_id, bot_name, description, head_image, prompt_setting,
+                                         welcome_message, model, kb_ids_str, update_time)
+    return sanic_json({"code": 200, "msg": "Bot {} update success".format(bot_id)})
+
+
+async def get_bot_info(req: request):
+    local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
+    user_id = safe_get(req, 'user_id')
+    bot_id = safe_get(req, 'bot_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
+    if bot_id:
+        if not local_doc_qa.mysql_client.check_bot_is_exist(user_id, bot_id):
+            return sanic_json({"code": 2003, "msg": "fail, Bot {} not found".format(bot_id)})
+    debug_logger.info("get_bot_info %s", user_id)
+    bot_infos = local_doc_qa.mysql_client.get_bot(user_id, bot_id)
+    data = []
+    for bot_info in bot_infos:
+        info = {"bot_id": bot_info[0], "user_id": user_id, "bot_name": bot_info[1], "description": bot_info[2],
+                "head_image": bot_info[3], "prompt_setting": bot_info[4], "welcome_message": bot_info[5],
+                "model": bot_info[6], "kb_ids": bot_info[7], "update_time": bot_info[8]}
+        data.append(info)
+    return sanic_json({"code": 200, "msg": "success", "data": data})

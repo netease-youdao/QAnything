@@ -17,8 +17,8 @@ root_dir = os.path.dirname(parent_dir)
 # 将项目根目录添加到sys.path
 sys.path.append(root_dir)
 
-from qanything_kernel.configs.model_config import DT_4B_MODEL_PATH, DT_7B_MODEL_PATH, DT_4B_DOWNLOAD_PARAMS, \
-    DT_7B_DOWNLOAD_PARAMS, DT_3B_MODEL_PATH, DT_3B_MODEL_PATH, DT_3B_DOWNLOAD_PARAMS
+from qanything_kernel.configs.model_config import DT_7B_MODEL_PATH, \
+    DT_7B_DOWNLOAD_PARAMS, DT_3B_MODEL_PATH, DT_3B_DOWNLOAD_PARAMS
 import qanything_kernel.configs.model_config as model_config
 from qanything_kernel.utils.custom_log import debug_logger
 from qanything_kernel.utils.general_utils import download_file, get_gpu_memory_utilization, check_package_version
@@ -62,7 +62,7 @@ if os_system != 'Darwin':
 
 else:
     # 检查是否安装了xcode
-    if not check_package_version("llama_cpp_python", "0.2.57"):
+    if not check_package_version("llama_cpp_python", "0.2.60"):
         os.system(f'CMAKE_ARGS="-DLLAMA_METAL_EMBED_LIBRARY=ON -DLLAMA_METAL=on" pip install -U llama-cpp-python --no-cache-dir -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn')
     parser.add_argument('--model', dest='model', help='LLM model path')
 
@@ -77,7 +77,7 @@ from modelscope import snapshot_download
 from modelscope.hub.file_download import model_file_download
 import subprocess
 
-parser.add_argument('--host', dest='host', default='127.0.0.1', help='set host for qanything server')
+parser.add_argument('--host', dest='host', default='0.0.0.0', help='set host for qanything server')
 parser.add_argument('--port', dest='port', default=8777, type=int, help='set port for qanything server')
 parser.add_argument('--workers', dest='workers', default=4, type=int, help='sanic server workers number')
 # 是否使用GPU
@@ -93,7 +93,7 @@ parser.add_argument('--openai_api_model_name', dest='openai_api_model_name', def
 parser.add_argument('--openai_api_context_length', dest='openai_api_context_length', default='4096', type=str,
                     help='openai api content length')
 #  必填参数
-parser.add_argument('--model_size', dest='model_size', default='4B', help='set LLM model size for qanything server')
+parser.add_argument('--model_size', dest='model_size', default='7B', help='set LLM model size for qanything server')
 parser.add_argument('--device_id', dest='device_id', default='0', help='cuda device id for qanything server')
 args = parser.parse_args()
 
@@ -113,27 +113,26 @@ if not args.use_openai_api:
     if model_size == '3B':
         args.model = DT_3B_MODEL_PATH
         model_download_params = DT_3B_DOWNLOAD_PARAMS
-    elif model_size == '4B':
-        args.model = DT_4B_MODEL_PATH
-        model_download_params = DT_4B_DOWNLOAD_PARAMS
     elif model_size == '7B':
         args.model = DT_7B_MODEL_PATH
         model_download_params = DT_7B_DOWNLOAD_PARAMS
     else:
-        raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 4B, 7B")
+        raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 7B")
 
 # 如果模型不存在, 下载模型
 if args.use_openai_api:
     debug_logger.info(f'使用openai api {args.openai_api_model_name} 无需下载大模型')
 elif not os.path.exists(args.model):
     debug_logger.info(f'开始下载大模型：{model_download_params}')
-    if os_system == 'Darwin':
-        cache_dir = model_file_download(**model_download_params)
-        debug_logger.info(f'模型下载完毕！{cache_dir}')
-    else:
-        cache_dir = snapshot_download(**model_download_params)
-        output = subprocess.check_output(['ln', '-s', cache_dir, args.model], text=True)
-        debug_logger.info(f'模型下载完毕！cache地址：{cache_dir}, 软链接地址：{args.model}')
+    # if os_system == 'Darwin':
+    #     cache_dir = model_file_download(**model_download_params)
+    #     debug_logger.info(f'模型下载完毕！{cache_dir}')
+    # else:
+    #     cache_dir = snapshot_download(**model_download_params)
+    cache_dir = snapshot_download(**model_download_params)
+    debug_logger.info(f'模型下载完毕！{cache_dir}')
+    # output = subprocess.check_output(['ln', '-s', cache_dir, args.model], text=True)
+    # debug_logger.info(f'模型下载完毕！cache地址：{cache_dir}, 软链接地址：{args.model}')
     debug_logger.info(f"CUDA_DEVICE: {model_config.CUDA_DEVICE}")
 else:
     debug_logger.info(f'{args.model}路径已存在，不再重复下载大模型（如果下载出错可手动删除此目录）')
@@ -181,7 +180,7 @@ async def init_local_doc_qa(app, loop):
 
 @app.after_server_start
 async def print_info(app, loop):
-    print("已启动后端服务，请复制[http://127.0.0.1:8777/qanything/]到浏览器进行测试。", flush=True)
+    print("已启动后端服务，请复制[http://0.0.0.0:8777/qanything/]到浏览器进行测试。", flush=True)
 
 app.add_route(document, "/api/docs", methods=['GET'])
 app.add_route(new_knowledge_base, "/api/local_doc_qa/new_knowledge_base", methods=['POST'])  # tags=["新建知识库"]
@@ -194,7 +193,11 @@ app.add_route(get_total_status, "/api/local_doc_qa/get_total_status", methods=['
 app.add_route(clean_files_by_status, "/api/local_doc_qa/clean_files_by_status", methods=['POST'])  # tags=["清理数据库"]
 app.add_route(delete_docs, "/api/local_doc_qa/delete_files", methods=['POST'])  # tags=["删除文件"] 
 app.add_route(delete_knowledge_base, "/api/local_doc_qa/delete_knowledge_base", methods=['POST'])  # tags=["删除知识库"] 
-app.add_route(rename_knowledge_base, "/api/local_doc_qa/rename_knowledge_base", methods=['POST'])  # tags=["重命名知识库"] 
+app.add_route(rename_knowledge_base, "/api/local_doc_qa/rename_knowledge_base", methods=['POST'])  # tags=["重命名知识库"]
+app.add_route(new_bot, "/api/local_doc_qa/new_bot", methods=['POST'])  # tags=["新建Bot"]
+app.add_route(delete_bot, "/api/local_doc_qa/delete_bot", methods=['POST'])  # tags=["删除Bot"]
+app.add_route(update_bot, "/api/local_doc_qa/update_bot", methods=['POST'])  # tags=["更新Bot"]
+app.add_route(get_bot_info, "/api/local_doc_qa/get_bot_info", methods=['POST'])  # tags=["获取Bot信息"]
 
 if __name__ == "__main__":
     if args.use_openai_api:

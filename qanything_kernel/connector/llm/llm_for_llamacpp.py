@@ -1,4 +1,6 @@
 from qanything_kernel.connector.llm.base import (BaseAnswer, AnswerResult)
+from qanything_kernel.configs.model_config import DT_CONV_7B_TEMPLATE, DT_CONV_3B_TEMPLATE
+from qanything_kernel.configs.conversation import get_conv_template
 from qanything_kernel.utils.custom_log import debug_logger
 from llama_cpp import Llama
 from abc import ABC
@@ -25,6 +27,11 @@ class LlamaCPPCustomLLM(BaseAnswer, ABC):
             n_gpu_layers=self.n_gpu_layers,
             n_ctx=self.n_ctx
         )
+        if args.model_size == '3B':
+            self.conv_template = DT_CONV_3B_TEMPLATE
+        else:
+            self.conv_template = DT_CONV_7B_TEMPLATE
+        debug_logger.info(f"conv_template: {self.conv_template}, {args.model_size}")
 
     @property
     def _llm_type(self) -> str:
@@ -51,25 +58,38 @@ class LlamaCPPCustomLLM(BaseAnswer, ABC):
 
     async def _call(self, prompt: str, history: List[List[str]], streaming: bool = False) -> str:
         messages = []
+        # for pair in history:
+        #     question, answer = pair
+        #     messages.append({"role": "user", "content": question})
+        #     messages.append({"role": "assistant", "content": answer})
+        # messages.append({"role": "user", "content": prompt})
+
+        conv = get_conv_template(self.conv_template)
         for pair in history:
             question, answer = pair
-            messages.append({"role": "user", "content": question})
-            messages.append({"role": "assistant", "content": answer})
-        messages.append({"role": "user", "content": prompt})
+            conv.append_message(conv.roles[0], question)
+            conv.append_message(conv.roles[1], answer)
+        conv.append_message(conv.roles[0], prompt)
+        conv.append_message(conv.roles[1], None)
+        content = conv.get_prompt()
+        messages.append({"role": "user", "content": content})
+        # debug_logger.info('content: %s', content)
         debug_logger.info(messages)
 
         if streaming:
 
             results = self.llm.create_chat_completion(messages=messages,
                                                       max_tokens=self.max_token,
-                                                      stream=True)
-
+                                                      stream=True,
+                                                      temperature=0.7,
+                                                      top_p=0.8
+                                                      )
             for chunk in results:
                 if isinstance(chunk['choices'], List) and len(chunk['choices']) > 0:
                     if 'content' in chunk['choices'][0]['delta']:
                         chunk_text = chunk['choices'][0]['delta']['content']
+                        debug_logger.info(f"[debug] event_text = [{chunk_text}]")
                         if isinstance(chunk_text, str) and chunk_text != "":
-                            # debug_logger.info(f"[debug] event_text = [{event_text}]")
                             delta = {'answer': chunk_text}
                             yield "data: " + json.dumps(delta, ensure_ascii=False)
 

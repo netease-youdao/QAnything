@@ -11,6 +11,7 @@ import shutil
 import stat
 import os
 import platform
+
 os_system = platform.system()
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'  # 可能是由于是MacOS系统的原因
@@ -19,10 +20,8 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'  # 可能是由于是MacOS系统的�
 @lru_cache(FAISS_CACHE_SIZE)
 def load_vector_store(faiss_index_path, embeddings):
     debug_logger.info(f'load faiss index: {faiss_index_path}')
-    if os_system == "Darwin":
-        return FAISS.load_local(faiss_index_path, embeddings, allow_dangerous_deserialization=True)
-    else:
-        return FAISS.load_local(faiss_index_path, embeddings)
+    return FAISS.load_local(faiss_index_path, embeddings, allow_dangerous_deserialization=True)
+
 
 class FaissClient:
     def __init__(self, mysql_client: KnowledgeBaseManager, embeddings):
@@ -127,5 +126,9 @@ class FaissClient:
         try:
             res = self.faiss_client.delete(doc_ids)
             debug_logger.info(f'delete documents: {res}')
+            faiss_index_path = os.path.join(FAISS_LOCATION, kb_id, 'faiss_index')
+            self.faiss_client.save_local(faiss_index_path)
+            debug_logger.info(f'save faiss index: {faiss_index_path}')
+            os.chmod(os.path.dirname(faiss_index_path), stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
         except ValueError as e:
             debug_logger.warning(f'delete documents not find docs')
