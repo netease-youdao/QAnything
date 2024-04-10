@@ -51,7 +51,7 @@
 - [FAQ](#faq)
 - [Usage](#usage)
   - [API Document](#api-document)
-- [Roadmap & Feedback](%EF%B8%8F-roadmap--feedback)
+- [Roadmap & Feedback](#%EF%B8%8F-roadmap--feedback)
 - [Community & Support](#community--support)
 - [License](#license)
 - [Acknowledgements](#acknowledgments)
