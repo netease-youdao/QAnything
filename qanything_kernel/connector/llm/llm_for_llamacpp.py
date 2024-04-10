@@ -58,17 +58,22 @@ class LlamaCPPCustomLLM(BaseAnswer, ABC):
 
     async def _call(self, prompt: str, history: List[List[str]], streaming: bool = False) -> str:
         messages = []
-        for pair in history:
-            question, answer = pair
-            messages.append({"role": "user", "content": question})
-            messages.append({"role": "assistant", "content": answer})
+        # for pair in history:
+        #     question, answer = pair
+        #     messages.append({"role": "user", "content": question})
+        #     messages.append({"role": "assistant", "content": answer})
         # messages.append({"role": "user", "content": prompt})
 
         conv = get_conv_template(self.conv_template)
-        conv.append_message("user", prompt)
+        for pair in history:
+            question, answer = pair
+            conv.append_message(conv.roles[0], question)
+            conv.append_message(conv.roles[1], answer)
+        conv.append_message(conv.roles[0], prompt)
+        conv.append_message(conv.roles[1], None)
         content = conv.get_prompt()
         messages.append({"role": "user", "content": content})
-        debug_logger.info('content: %s', content)
+        # debug_logger.info('content: %s', content)
         debug_logger.info(messages)
 
         if streaming:
@@ -76,11 +81,9 @@ class LlamaCPPCustomLLM(BaseAnswer, ABC):
             results = self.llm.create_chat_completion(messages=messages,
                                                       max_tokens=self.max_token,
                                                       stream=True,
-                                                      temperature=0.6,
-                                                      top_p=1.0,
-                                                      top_k=1,
-                                                      repeat_penalty=1.05,
-                                                      min_p=0.05)
+                                                      temperature=0.7,
+                                                      top_p=0.8
+                                                      )
             for chunk in results:
                 if isinstance(chunk['choices'], List) and len(chunk['choices']) > 0:
                     if 'content' in chunk['choices'][0]['delta']:
