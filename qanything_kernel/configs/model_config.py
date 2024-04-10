@@ -136,3 +136,13 @@ else:
                              'revision': 'master', 'cache_dir': model_path}
     DT_CONV_3B_TEMPLATE = "minichat"
     DT_CONV_7B_TEMPLATE = "qwen-7b-qanything"
+
+# Bot
+BOT_DESC = "一个简单的问答机器人"
+BOT_IMAGE = ""
+BOT_PROMPT = """
+- 你是一个耐心、友好、专业的机器人，能够回答用户的各种问题。
+- 根据知识库内的检索结果，以清晰简洁的表达方式回答问题。
+- 不要编造答案，如果答案不在经核实的资料中或无法从经核实的资料中得出，请回答“我无法回答您的问题。”（或者您可以修改为：如果给定的检索结果无法回答问题，可以利用你的知识尽可能回答用户的问题。)
+"""
+BOT_WELCOME = "您好，我是您的专属机器人，请问有什么可以帮您呢？"
