@@ -77,7 +77,7 @@ from modelscope import snapshot_download
 from modelscope.hub.file_download import model_file_download
 import subprocess
 
-parser.add_argument('--host', dest='host', default='127.0.0.1', help='set host for qanything server')
+parser.add_argument('--host', dest='host', default='0.0.0.0', help='set host for qanything server')
 parser.add_argument('--port', dest='port', default=8777, type=int, help='set port for qanything server')
 parser.add_argument('--workers', dest='workers', default=4, type=int, help='sanic server workers number')
 # 是否使用GPU
@@ -180,7 +180,7 @@ async def init_local_doc_qa(app, loop):
 
 @app.after_server_start
 async def print_info(app, loop):
-    print("已启动后端服务，请复制[http://127.0.0.1:8777/qanything/]到浏览器进行测试。", flush=True)
+    print("已启动后端服务，请复制[http://0.0.0.0:8777/qanything/]到浏览器进行测试。", flush=True)
 
 app.add_route(document, "/api/docs", methods=['GET'])
 app.add_route(new_knowledge_base, "/api/local_doc_qa/new_knowledge_base", methods=['POST'])  # tags=["新建知识库"]

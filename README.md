@@ -67,7 +67,7 @@ bash scripts/run_for_3B_in_M1_mac.sh
 ```
 
 ## USE WITH WEB UI
-Open http://127.0.0.1:8777/qanything/ in the browser to use the UI interface,
+Open http://0.0.0.0:8777/qanything/ in the browser to use the UI interface,
 
 or open http://{your host ip}:8777/qanything/ in the browser to use the UI interface
 

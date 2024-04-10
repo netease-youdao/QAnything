@@ -65,7 +65,7 @@ bash scripts/run_for_3B_in_M1_mac.sh
 ```
 
 ## 访问前端页面 
-在浏览器中打开http://127.0.0.1:8777/qanything/
+在浏览器中打开http://0.0.0.0:8777/qanything/
 
 或者打开http://{主机ip地址}:8777/qanything/
 
