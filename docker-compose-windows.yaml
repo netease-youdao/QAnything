@@ -96,6 +96,7 @@ services:
       - MYSQL_ROOT_PASSWORD=123456
     volumes:
       - qanything_mysql_data:/var/lib/mysql
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/mysql.conf:/etc/mysql/conf.d/custom.cnf
 
   qanything_local:
     container_name: qanything-container-local
