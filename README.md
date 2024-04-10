@@ -61,17 +61,9 @@ bash scripts/run_for_openai_api_with_gpu_in_Linux_or_WSL.sh
 bash scripts/run_for_openai_api_in_M1_mac.sh
 ```
 
-## Run With 4B LLM (Qwen1.5-4B-Chat-GGUF) On M1 Mac
-<span style="color:red;">It is recommended to use the OpenAI API on Mac, because the performance of the QWen-4B/7B models is not good.</span>
+## Run With 3B LLM (MiniChat-2-3B-INT8-GGUF) On M1 Mac
 ```bash
-bash scripts/run_for_4B_in_M1_mac.sh
-```
-
-## Run With 7B LLM (Qwen1.5-7B-Chat-GGUF) On M1 Mac
-<span style="color:red;">It is recommended to use the OpenAI API on Mac, because the performance of the QWen-4B/7B models is not good.</span>
-
-```bash
-bash scripts/run_for_7B_in_M1_mac.sh
+bash scripts/run_for_3B_in_M1_mac.sh
 ```
 
 ## USE WITH WEB UI
