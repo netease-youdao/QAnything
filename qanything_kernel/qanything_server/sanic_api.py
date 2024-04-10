@@ -17,8 +17,8 @@ root_dir = os.path.dirname(parent_dir)
 # 将项目根目录添加到sys.path
 sys.path.append(root_dir)
 
-from qanything_kernel.configs.model_config import DT_4B_MODEL_PATH, DT_7B_MODEL_PATH, DT_4B_DOWNLOAD_PARAMS, \
-    DT_7B_DOWNLOAD_PARAMS, DT_3B_MODEL_PATH, DT_3B_MODEL_PATH, DT_3B_DOWNLOAD_PARAMS
+from qanything_kernel.configs.model_config import DT_7B_MODEL_PATH, \
+    DT_7B_DOWNLOAD_PARAMS, DT_3B_MODEL_PATH, DT_3B_DOWNLOAD_PARAMS
 import qanything_kernel.configs.model_config as model_config
 from qanything_kernel.utils.custom_log import debug_logger
 from qanything_kernel.utils.general_utils import download_file, get_gpu_memory_utilization, check_package_version
@@ -62,7 +62,7 @@ if os_system != 'Darwin':
 
 else:
     # 检查是否安装了xcode
-    if not check_package_version("llama_cpp_python", "0.2.57"):
+    if not check_package_version("llama_cpp_python", "0.2.60"):
         os.system(f'CMAKE_ARGS="-DLLAMA_METAL_EMBED_LIBRARY=ON -DLLAMA_METAL=on" pip install -U llama-cpp-python --no-cache-dir -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn')
     parser.add_argument('--model', dest='model', help='LLM model path')
 
@@ -93,7 +93,7 @@ parser.add_argument('--openai_api_model_name', dest='openai_api_model_name', def
 parser.add_argument('--openai_api_context_length', dest='openai_api_context_length', default='4096', type=str,
                     help='openai api content length')
 #  必填参数
-parser.add_argument('--model_size', dest='model_size', default='4B', help='set LLM model size for qanything server')
+parser.add_argument('--model_size', dest='model_size', default='7B', help='set LLM model size for qanything server')
 parser.add_argument('--device_id', dest='device_id', default='0', help='cuda device id for qanything server')
 args = parser.parse_args()
 
@@ -113,27 +113,26 @@ if not args.use_openai_api:
     if model_size == '3B':
         args.model = DT_3B_MODEL_PATH
         model_download_params = DT_3B_DOWNLOAD_PARAMS
-    elif model_size == '4B':
-        args.model = DT_4B_MODEL_PATH
-        model_download_params = DT_4B_DOWNLOAD_PARAMS
     elif model_size == '7B':
         args.model = DT_7B_MODEL_PATH
         model_download_params = DT_7B_DOWNLOAD_PARAMS
     else:
-        raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 4B, 7B")
+        raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 7B")
 
 # 如果模型不存在, 下载模型
 if args.use_openai_api:
     debug_logger.info(f'使用openai api {args.openai_api_model_name} 无需下载大模型')
 elif not os.path.exists(args.model):
     debug_logger.info(f'开始下载大模型：{model_download_params}')
-    if os_system == 'Darwin':
-        cache_dir = model_file_download(**model_download_params)
-        debug_logger.info(f'模型下载完毕！{cache_dir}')
-    else:
-        cache_dir = snapshot_download(**model_download_params)
-        output = subprocess.check_output(['ln', '-s', cache_dir, args.model], text=True)
-        debug_logger.info(f'模型下载完毕！cache地址：{cache_dir}, 软链接地址：{args.model}')
+    # if os_system == 'Darwin':
+    #     cache_dir = model_file_download(**model_download_params)
+    #     debug_logger.info(f'模型下载完毕！{cache_dir}')
+    # else:
+    #     cache_dir = snapshot_download(**model_download_params)
+    cache_dir = snapshot_download(**model_download_params)
+    debug_logger.info(f'模型下载完毕！{cache_dir}')
+    # output = subprocess.check_output(['ln', '-s', cache_dir, args.model], text=True)
+    # debug_logger.info(f'模型下载完毕！cache地址：{cache_dir}, 软链接地址：{args.model}')
     debug_logger.info(f"CUDA_DEVICE: {model_config.CUDA_DEVICE}")
 else:
     debug_logger.info(f'{args.model}路径已存在，不再重复下载大模型（如果下载出错可手动删除此目录）')
