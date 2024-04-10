@@ -23,7 +23,7 @@ class KnowledgeBaseManager:
             "password": password,
             "database": database,
         }
-        self.cnxpool = pooling.MySQLConnectionPool(pool_size=5, pool_reset_session=True, **dbconfig)
+        self.cnxpool = pooling.MySQLConnectionPool(pool_size=32, pool_reset_session=True, **dbconfig)
         self.create_tables_()
         debug_logger.info("[SUCCESS] 数据库{}连接成功".format(database))
 
