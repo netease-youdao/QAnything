@@ -117,25 +117,22 @@ model_path = os.path.join(root_path, "assets", "custom_models")
 if not os.path.exists(model_path):
     os.makedirs(model_path)
 if os_system == 'Darwin':
-    DT_4B_MODEL_PATH = os.path.join(model_path, "qwen/Qwen1.5-4B-Chat-GGUF") + '/qwen1_5-4b-chat-q4_k_m.gguf'
-    DT_7B_MODEL_PATH = os.path.join(model_path, "qwen/Qwen1.5-7B-Chat-GGUF") + '/qwen1_5-7b-chat-q4_k_m.gguf'
-    DT_4B_DOWNLOAD_PARAMS = {'model_id': 'qwen/Qwen1.5-4B-Chat-GGUF', 'file_path': 'qwen1_5-4b-chat-q4_k_m.gguf', 'revision': 'master', 'cache_dir': model_path}
-    DT_7B_DOWNLOAD_PARAMS = {'model_id': 'qwen/Qwen1.5-7B-Chat-GGUF', 'file_path': 'qwen1_5-7b-chat-q4_k_m.gguf', 'revision': 'master', 'cache_dir': model_path}
-    DT_CONV_4B_TEMPLATE = "qwen-7b-chat"
-    DT_CONV_7B_TEMPLATE = "qwen-7b-chat"
-    DT_3B_MODEL_PATH = ''
-    DT_3B_DOWNLOAD_PARAMS = {}
-    DT_CONV_3B_TEMPLATE = ''
+    # DT_3B_MODEL_PATH = os.path.join(model_path, "netease-youdao/MiniChat-2-3B-FP16-GGUF") + '/MiniChat-2-3B-fp16.gguf'
+    # DT_3B_DOWNLOAD_PARAMS = {'model_id': 'netease-youdao/MiniChat-2-3B-FP16-GGUF',
+    #                          'revision': 'master', 'cache_dir': model_path}
+    DT_3B_MODEL_PATH = os.path.join(model_path, "netease-youdao/MiniChat-2-3B-INT8-GGUF") + '/MiniChat-2-3B-int8.gguf'
+    DT_3B_DOWNLOAD_PARAMS = {'model_id': 'netease-youdao/MiniChat-2-3B-INT8-GGUF',
+                             'revision': 'master', 'cache_dir': model_path}
+    DT_CONV_3B_TEMPLATE = "minichat"
+    DT_7B_MODEL_PATH = ''
+    DT_7B_DOWNLOAD_PARAMS = {}  # Qwen-7B-QAnything使用llama-cpp-python运行存在问题，暂时不支持
+    DT_CONV_7B_TEMPLATE = "qwen-7b-qanything"
 else:
-    DT_3B_MODEL_PATH = os.path.join(model_path, "MiniChat-2-3B")
-    DT_7B_MODEL_PATH = os.path.join(model_path, "Qwen-7B-QAnything")
+    DT_3B_MODEL_PATH = os.path.join(model_path, "netease-youdao/MiniChat-2-3B")
+    DT_7B_MODEL_PATH = os.path.join(model_path, "netease-youdao/Qwen-7B-QAnything")
     DT_3B_DOWNLOAD_PARAMS = {'model_id': 'netease-youdao/MiniChat-2-3B',
                              'revision': 'master', 'cache_dir': model_path}
     DT_7B_DOWNLOAD_PARAMS = {'model_id': 'netease-youdao/Qwen-7B-QAnything',
                              'revision': 'master', 'cache_dir': model_path}
     DT_CONV_3B_TEMPLATE = "minichat"
     DT_CONV_7B_TEMPLATE = "qwen-7b-qanything"
-    DT_4B_MODEL_PATH = ''
-    DT_4B_DOWNLOAD_PARAMS = {}
-    DT_CONV_4B_TEMPLATE = ''
-
