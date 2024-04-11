@@ -584,8 +584,11 @@ async def get_bot_info(req: request):
     bot_infos = local_doc_qa.mysql_client.get_bot(user_id, bot_id)
     data = []
     for bot_info in bot_infos:
+        kb_ids = bot_info[7].split(',')
+        kb_names = local_doc_qa.mysql_client.get_knowledge_base_name(kb_ids)
+        kb_names = [kb[2] for kb in kb_names]
         info = {"bot_id": bot_info[0], "user_id": user_id, "bot_name": bot_info[1], "description": bot_info[2],
                 "head_image": bot_info[3], "prompt_setting": bot_info[4], "welcome_message": bot_info[5],
-                "model": bot_info[6], "kb_ids": bot_info[7], "update_time": bot_info[8]}
+                "model": bot_info[6], "kb_ids": kb_ids, "kb_names": kb_names, "update_time": bot_info[8]}
         data.append(info)
     return sanic_json({"code": 200, "msg": "success", "data": data})
