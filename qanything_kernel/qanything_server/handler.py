@@ -552,7 +552,7 @@ async def update_bot(req: request):
     welcome_message = safe_get(req, "welcome_message", bot_info[5])
     model = safe_get(req, "model", bot_info[6])
     kb_ids = safe_get(req, "kb_ids")
-    if kb_ids:
+    if kb_ids is not None:
         kb_ids_str = ",".join(kb_ids)
     else:
         kb_ids_str = bot_info[7]
@@ -592,7 +592,7 @@ async def get_bot_info(req: request):
     bot_infos = local_doc_qa.mysql_client.get_bot(user_id, bot_id)
     data = []
     for bot_info in bot_infos:
-        if bot_info[7] is not "":
+        if bot_info[7] != "":
             kb_ids = bot_info[7].split(',')
             kb_names = local_doc_qa.mysql_client.get_knowledge_base_name(kb_ids)
             kb_names = [kb[2] for kb in kb_names]
@@ -617,25 +617,26 @@ async def upload_faqs(req: request):
     debug_logger.info("upload_faqs %s", user_id)
     kb_id = safe_get(req, 'kb_id')
     debug_logger.info("kb_id %s", kb_id)
-    # faqs = safe_get(req, 'faqs')
-    files = req.files.getlist('files')
-    faqs = []
+    faqs = safe_get(req, 'faqs')
     file_status = {}
-    for file in files:
-        debug_logger.info('ori name: %s', file.name)
-        file_name = urllib.parse.unquote(file.name, encoding='UTF-8')
-        debug_logger.info('decode name: %s', file_name)
-        # 删除掉全角字符
-        file_name = re.sub(r'[\uFF01-\uFF5E\u3000-\u303F]', '', file_name)
-        file_name = file_name.replace("/", "_")
-        debug_logger.info('cleaned name: %s', file_name)
-        file_name = truncate_filename(file_name)
-        file_faqs = check_and_transform_excel(file.body)
-        if isinstance(file_faqs, str):
-            file_status[file_name] = file_faqs
-        else:
-            faqs.extend(file_faqs)
-            file_status[file_name] = "success"
+    if faqs is None:
+        files = req.files.getlist('files')
+        faqs = []
+        for file in files:
+            debug_logger.info('ori name: %s', file.name)
+            file_name = urllib.parse.unquote(file.name, encoding='UTF-8')
+            debug_logger.info('decode name: %s', file_name)
+            # 删除掉全角字符
+            file_name = re.sub(r'[\uFF01-\uFF5E\u3000-\u303F]', '', file_name)
+            file_name = file_name.replace("/", "_")
+            debug_logger.info('cleaned name: %s', file_name)
+            file_name = truncate_filename(file_name)
+            file_faqs = check_and_transform_excel(file.body)
+            if isinstance(file_faqs, str):
+                file_status[file_name] = file_faqs
+            else:
+                faqs.extend(file_faqs)
+                file_status[file_name] = "success"
 
     if len(faqs) > 1000:
         return sanic_json({"code": 2002, "msg": f"fail, faqs too many, The maximum length of each request is 1000."})
