@@ -22,6 +22,7 @@ export default {
     updesc2:
       'Can upload files in batches, supported file type: doc、docx、ppt、pptx、xls、xlsx、pdf、md、JPG、JPEG、PNG、BMP、txt、eml, single document less than 30MB, single image less than 5MB',
     confirm: 'Confirm',
+    confirm2: 'Confirm',
     cancel: 'Cancel',
     addUrl: 'Add URL',
     urlPlaceholder: 'Please enter the URL',

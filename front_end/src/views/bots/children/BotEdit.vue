@@ -6,15 +6,13 @@
     <div v-else>
       <div class="header">
         <img src="@/assets/bots/bot-avatar.png" alt="avatar" />
-        <div class="name">{{ curBot?.name }}</div>
+        <div class="name">{{ curBot?.bot_name }}</div>
         <div class="tabs">
           <div
             :class="[
               'tab-item',
               tabIndex === item.value ? 'tab-active' : '',
-              (!curBot.kbBindList || !curBot.kbBindList.length) && item.value === 1
-                ? 'tab-disable'
-                : '',
+              (!curBot.kb_ids || !curBot.kb_ids.length) && item.value === 1 ? 'tab-disable' : '',
             ]"
             v-for="item in tabList"
             :key="item.name"
@@ -30,7 +28,6 @@
 </template>
 <script lang="ts" setup>
 import { useBots } from '@/store/useBots';
-import { useBotsChat } from '@/store/useBotsChat';
 import urlResquest from '@/services/urlConfig';
 import { resultControl } from '@/utils/utils';
 import routeController from '@/controller/router';
@@ -40,7 +37,6 @@ import { getLanguage } from '@/language/index';
 
 const { getCurrentRoute, changePage } = routeController();
 const { tabIndex, curBot } = storeToRefs(useBots());
-const { QA_List } = storeToRefs(useBotsChat());
 const { setTabIndex, setCurBot, setKnowledgeList } = useBots();
 
 const bots = getLanguage().bots;
@@ -66,15 +62,15 @@ const indicator = h(LoadingOutlined, {
   spin: true,
 });
 
-const getKbList = async kbBindList => {
+const getKbList = async kbIds => {
   try {
     const res: any = await resultControl(await urlResquest.kbList());
     let kbs = [...res];
-    console.log('kbs', kbs);
-    if (kbBindList && kbBindList.length) {
+    console.log('kbs', kbs, kbIds);
+    if (kbIds && kbIds.length) {
       kbs = kbs.map(kb => {
         // state: 0 未绑定 1 绑定
-        if (kbBindList.some(item => item.kbId === kb.kbId)) {
+        if (kbIds.some(item => item === kb.kb_id)) {
           kb.state = 1;
         } else {
           kb.state = 0;
@@ -94,25 +90,12 @@ const getKbList = async kbBindList => {
   }
 };
 
-const getQaList = async botId => {
-  try {
-    const res: any = await resultControl(await urlResquest.botQaList({ botId: botId }));
-    res.forEach(item => {
-      addQuestion(item.question);
-      addAnswer(item.question, item.answer, item.picList);
-    });
-    isLoading.value = false;
-  } catch (e) {
-    message.error(e.msg || '获取问答历史失败');
-  }
-};
-
 const getBotInfo = async botId => {
   try {
-    const res: any = await resultControl(await urlResquest.queryBotInfo({}, {}, botId));
-    setCurBot(res);
-    getQaList(res.id);
-    getKbList(res.kbBindList);
+    const res: any = await resultControl(await urlResquest.queryBotInfo({ bot_id: botId }));
+    setCurBot(res[0]);
+    getKbList(res[0].kb_ids);
+    isLoading.value = false;
   } catch (e) {
     message.error(e.msg || '获取Bot信息失败');
   }
@@ -127,7 +110,7 @@ function init() {
 }
 
 function changeEditTab(value) {
-  if (value === 1 && (!curBot.value.kbBindList || !curBot.value.kbBindList.length)) {
+  if (value === 1 && (!curBot.value.kb_ids || !curBot.value.kb_ids.length)) {
     return;
   }
   if (tabIndex.value === value) {
@@ -139,28 +122,6 @@ function changeEditTab(value) {
   } else {
     changePage(`/bots/${botId.value}/publish`);
   }
-}
-
-function addQuestion(q) {
-  QA_List.value.push({
-    question: q,
-    type: 'user',
-  });
-  // scrollBottom();
-}
-
-function addAnswer(question: string, answer: string, picList) {
-  QA_List.value.push({
-    answer,
-    question,
-    type: 'ai',
-    copied: false,
-    like: false,
-    unlike: false,
-    source: [],
-    showTools: true,
-    picList,
-  });
 }
 </script>
 <style lang="scss" scoped>

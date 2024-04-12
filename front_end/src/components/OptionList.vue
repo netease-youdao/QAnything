@@ -67,7 +67,7 @@
               <div class="status-box">
                 <span class="icon-file-status">
                   <img
-                    v-if="record.status === 0"
+                    v-if="record.status === 'gray'"
                     class="loading file-status"
                     src="../assets/home/icon-loading.png"
                     alt="loading"
@@ -75,7 +75,7 @@
                   <SvgIcon
                     v-else
                     class="file-status"
-                    :name="record.status === 1 ? 'success' : 'error'"
+                    :name="record.status === 'green' ? 'success' : 'error'"
                   />
                 </span>
                 <span> {{ parseStatus(record.status) }}</span>
@@ -174,9 +174,6 @@ const navList = [
   },
 ];
 
-declare module _czc {
-  const push: (array: any) => void;
-}
 const columns = [
   {
     title: home.documentId,
@@ -274,8 +271,6 @@ const paginationConfig = computed(() => ({
 let optionItem: any = {};
 
 const deleteItem = item => {
-  _czc.push(['_trackEvent', 'qanything', 'delete_file_click', '删除文档', '', '']);
-
   optionItem = item;
 };
 
@@ -321,17 +316,14 @@ const editQaItem = item => {
 };
 const goChat = () => {
   setDefault(pageStatus.normal);
-  _czc.push(['_trackEvent', 'qanything', 'back_to_conversation_click', '返回对话', '', '']);
 };
 
 const showFileUpload = () => {
-  _czc.push(['_trackEvent', 'qanything', 'upload_click', '上传文档', '', '']);
   setModalVisible(true);
   setModalTitle(home.upload);
 };
 
 const showUrlUpload = () => {
-  _czc.push(['_trackEvent', 'qanything', 'add_website_click', '添加网址', '', '']);
   setUrlModalVisible(true);
   setModalTitle(common.addUrl);
 };
@@ -343,12 +335,13 @@ const showEditQaSet = () => {
 };
 
 const parseStatus = status => {
+  console.log('status', status);
   let str = common.failed;
   switch (status) {
-    case 0:
+    case 'gray':
       str = common.parsing;
       break;
-    case 1:
+    case 'green':
       str = common.succeeded;
       break;
     default:
@@ -409,14 +402,6 @@ onBeforeUnmount(() => {
   clearTimeout(faqTimer.value);
   console.log('销毁请求');
 });
-_czc.push([
-  '_trackEvent',
-  'qanything',
-  'database_management_page_show',
-  '管理知识库页曝光',
-  '',
-  '',
-]);
 </script>
 
 <style lang="scss" scoped>

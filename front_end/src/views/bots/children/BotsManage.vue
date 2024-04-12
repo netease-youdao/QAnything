@@ -19,7 +19,7 @@ import { message } from 'ant-design-vue';
 import { LoadingOutlined } from '@ant-design/icons-vue';
 
 const { botList } = storeToRefs(useBots());
-const { setDefaultBotList, setBotList } = useBots();
+const { setBotList } = useBots();
 const isLoading = ref(true);
 
 const indicator = h(LoadingOutlined, {
@@ -29,19 +29,10 @@ const indicator = h(LoadingOutlined, {
   spin: true,
 });
 
-const getDefaultBots = async () => {
-  try {
-    const res: any = await resultControl(await urlResquest.defaultBots({}));
-    setDefaultBotList(res);
-  } catch (e) {
-    message.error(e.msg || '获取示例Bot失败');
-  }
-};
-getDefaultBots();
-
 const getBotList = async () => {
   try {
-    const res: any = await resultControl(await urlResquest.botList());
+    const res: any = await resultControl(await urlResquest.queryBotInfo());
+    console.log('getBotList', res);
     setBotList(res);
   } catch (e) {
     message.error(e.msg || '获取Bot列表失败');

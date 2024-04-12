@@ -111,6 +111,38 @@ const urlConfig: IUrlConfig = {
       kb_id: '',
     },
   },
+  // 创建Bot
+  createBot: {
+    type: EUrlType.POST,
+    url: '/local_doc_qa/new_bot',
+    param: {
+      user_id: userId,
+    },
+  },
+  // 更新Bot
+  updateBot: {
+    type: EUrlType.POST,
+    url: '/local_doc_qa/update_bot',
+    param: {
+      user_id: userId,
+    },
+  },
+  // 获取Bot信息/列表
+  queryBotInfo: {
+    type: EUrlType.POST,
+    url: '/local_doc_qa/get_bot_info',
+    param: {
+      user_id: userId,
+    },
+  },
+  //删除Bot
+  deleteBot: {
+    type: EUrlType.POST,
+    url: '/local_doc_qa/delete_bot',
+    param: {
+      user_id: userId,
+    },
+  },
 };
 const urlResquest: any = {};
 Object.keys(urlConfig).forEach(key => {

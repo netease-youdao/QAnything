@@ -8,19 +8,18 @@
 </template>
 <script lang="ts" setup>
 import ChatShare from '@/components/Bots/ChatShare.vue';
-import { useBotsChat } from '@/store/useBotsChat';
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import urlResquest from '@/services/urlConfig';
-import { setShareToken } from '@/utils/token';
+import { resultControl } from '@/utils/utils';
 import { message } from 'ant-design-vue';
 import routeController from '@/controller/router';
 import { LoadingOutlined } from '@ant-design/icons-vue';
 
 const { getCurrentRoute } = routeController();
-const { QA_List } = storeToRefs(useBotsChat());
 const botInfo = ref(null);
 const botId = ref(null);
 const isLoading = ref(true);
+const userId = ref(null);
 
 const indicator = h(LoadingOutlined, {
   style: {
@@ -48,54 +47,13 @@ onUnmounted(() => {
 
 init();
 
-const loginVirtualUser = async uuid => {
-  try {
-    const res: any = await urlResquest.loginVirtualUser({ uuid: uuid });
-    if (+res.errorCode === 0) {
-      setShareToken(res.result);
-    } else {
-      setTimeout(() => {
-        init();
-      }, 5000);
-      throw new Error(res);
-    }
-  } catch (e) {
-    console.log(e.msg);
-  }
-};
-
-const getQaList = async botId => {
-  try {
-    const res: any = await urlResquest.botQaList({ botId: botId });
-    if (+res.errorCode === 0) {
-      res.result.forEach(item => {
-        addQuestion(item.question);
-        addAnswer(item.question, item.answer, item.picList);
-      });
-      isLoading.value = false;
-    } else if (+res.errorCode === 403) {
-      init();
-    } else {
-      throw new Error(res);
-    }
-  } catch (e) {
-    message.error(e.msg || '获取问答历史失败');
-  }
-};
-
 const getBotInfo = async botId => {
   try {
     console.log('zj-botId', botId);
-    const res: any = await urlResquest.queryBotInfo({}, {}, botId);
-    if (+res.errorCode === 0) {
-      botInfo.value = res.result;
-      document.title = `Qanything-${res.result.name}`;
-      getQaList(res.result.id);
-    } else if (+res.errorCode === 403) {
-      init();
-    } else {
-      throw new Error(res);
-    }
+    const res: any = await resultControl(await urlResquest.queryBotInfo({ bot_id: botId }));
+    botInfo.value = res[0];
+    document.title = `Qanything-${res[0].bot_name}`;
+    isLoading.value = false;
   } catch (e) {
     message.error(e.msg || '获取Bot信息失败');
   }
@@ -110,35 +68,13 @@ async function init() {
 
     // 获取浏览器指纹
     const result = await fp.get();
+    userId.value = result.visitorId;
 
-    await loginVirtualUser(result.visitorId);
     await getBotInfo(botId.value);
     console.log('visitorId', result.visitorId);
   } catch (error) {
     console.error('获取浏览器指纹失败', error);
   }
-}
-
-function addQuestion(q) {
-  QA_List.value.push({
-    question: q,
-    type: 'user',
-  });
-  // scrollBottom();
-}
-
-function addAnswer(question: string, answer: string, picList) {
-  QA_List.value.push({
-    answer,
-    question,
-    type: 'ai',
-    copied: false,
-    like: false,
-    unlike: false,
-    source: [],
-    showTools: true,
-    picList,
-  });
 }
 </script>
 <style lang="scss" scoped>

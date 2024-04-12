@@ -8,7 +8,7 @@
  */
 
 import urlResquest from '@/services/urlConfig';
-import { formatFileSize, resultControl } from '@/utils/utils';
+import { formatFileSize, resultControl, formatDate } from '@/utils/utils';
 import { message } from 'ant-design-vue';
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
 import moment from 'moment';
@@ -67,23 +67,25 @@ export const useOptiionList = defineStore(
         if (timer.value) {
           clearTimeout(timer.value);
         }
-        const res: any = await resultControl(await urlResquest.fileList({ kbId: currentId.value }));
+        const res: any = await resultControl(
+          await urlResquest.fileList({ kb_id: currentId.value })
+        );
 
         setDataSource([]);
-        res?.forEach((item: any, index) => {
+        res?.details.forEach((item: any, index) => {
           dataSource.value.push({
             id: 10000 + index,
-            fileId: item?.fileId,
-            fileIdName: item?.fileName,
-            status: +item?.status,
-            bytes: formatFileSize(item?.fileSize),
-            createtime: item?.createTime?.split(' ')[0],
-            errortext: item?.status == 1 || item?.status == 0 ? '' : item?.remark,
+            fileId: item?.file_id,
+            fileIdName: item?.file_name,
+            status: item?.status,
+            bytes: formatFileSize(item?.bytes || 0),
+            createtime: formatDate(item?.timestamp),
+            errortext: item?.status === 'gray' || item?.status === 'green' ? '' : item?.msg,
           });
         });
 
-        const flag = res?.some(item => {
-          return item.status === '0';
+        const flag = res?.details.some(item => {
+          return item.status === 'gray';
         });
         console.log(flag);
         if (flag) {
@@ -111,29 +113,23 @@ export const useOptiionList = defineStore(
         }
         setLoading(true);
         const res: any = await resultControl(
-          await urlResquest.faqList({
-            kbId: currentId.value,
-            page: pageId,
-            size: 10,
-          })
+          await urlResquest.fileList({ kb_id: currentId.value + '_FAQ' })
         );
 
         setFaqList([]);
-        if (!res?.faqList) {
+        if (!res?.details) {
+          console.log('res?.details', res?.details);
           setTotal(0);
           setLoading(false);
           return;
         }
-        setTotal(res.total);
-        res?.faqList.forEach(async (item, i) => {
+        res?.details.forEach(async (item, i) => {
           faqList.value.push({
-            id: item?.faq.id,
-            faqId: item?.faq.faqId,
-            kbId: item?.faq.kbId,
+            faqId: item?.file_id,
             question: item?.faq.question,
             answer: item?.faq.answer,
             status: +item?.faq.status,
-            bytes: `${item?.faq.size}字符`,
+            bytes: `${item?.bytes}字符`,
             createtime: moment(item?.faq.createTime).format('YYYY-MM-DD'),
             picUrlList: [],
           });

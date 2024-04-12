@@ -22,6 +22,7 @@ export default {
     updesc2:
       '可批量上传，支持文件格式doc、docx、ppt、pptx、xls、xlsx、pdf、md、JPG、JPEG、PNG、BMP、txt、eml,单个文档小于30M,单张图片小于5M',
     confirm: '确定',
+    confirm2: '确认',
     cancel: '取消',
     addUrl: '添加网址',
     urlPlaceholder: '请输入网址',

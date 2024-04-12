@@ -54,6 +54,30 @@
   }
 }
 
+.select-knowledge-modal {
+  .ant-modal {
+    width: auto !important;
+  }
+  .ant-modal-content {
+    width: fit-content;
+    background: #ffffff;
+    padding: 0;
+  }
+  .ant-modal-header {
+    height: 48px;
+    line-height: 48px;
+    background: #f7f9ff;
+    border-radius: 8px 8px 0px 0px;
+    padding: 12px 0 12px 28px;
+    margin-bottom: 0;
+  }
+  .ant-modal-body {
+    height: calc(100% - 36px - 48px - 28px);
+    padding: 20px 28px;
+    // overflow: auto;
+  }
+}
+
 //新增、修改知识库弹窗
 .upload-file-modal {
   .ant-modal-content {

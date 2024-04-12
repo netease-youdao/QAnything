@@ -24,23 +24,10 @@
       :auto-size="{ minRows: 6, maxRows: 6 }"
       :rows="6"
     />
-    <div class="model-select">
-      <div class="title model-title">首选模型</div>
-      <div class="model-list">
-        <div
-          :class="['model-item', modelValue === item.name ? 'model-item-active' : '']"
-          v-for="item in modelList"
-          @click="changeModel(item)"
-          :key="item.name"
-        >
-          {{ item.name }}
-        </div>
-      </div>
-    </div>
     <div class="title">{{ bots.associatedKb }}<span>*</span></div>
-    <div class="knowedge-item knowledge-info" v-for="item in curBot.kbBindList" :key="item.kbId">
+    <div class="knowedge-item knowledge-info" v-for="(item, index) in curBot.kb_ids" :key="item">
       <img class="knowledge-icon" src="@/assets/bots/knowledge.png" alt="knowledge" />
-      <div class="kb-name">{{ item.kbName }}</div>
+      <div class="kb-name">{{ curBot.kb_names[index] }}</div>
       <img
         class="remove-icon"
         src="@/assets/bots/remove.png"
@@ -74,29 +61,18 @@ const roleSetting = ref('');
 const welcomeMessage = ref('');
 const matches: any = computed(() => roleSetting.value.match(/[^a-zA-Z\s]|\p{P}|\w+/g));
 
-const modelList = [
-  {
-    name: 'QAnything 4k',
-    value: 0,
-  },
-  {
-    name: 'QAnything 16k',
-    value: 1,
-  },
-];
-const modelValue = ref(null);
-
 onMounted(() => {
-  name.value = curBot.value.name;
-  welcomeMessage.value = curBot.value.welcomeMessage;
-  roleSetting.value = curBot.value.promptSetting;
-  modelValue.value = curBot.value.model;
+  console.log('curBot', curBot.value);
+  name.value = curBot.value.bot_name;
+  welcomeMessage.value = curBot.value.welcome_message;
+  roleSetting.value = curBot.value.prompt_setting;
 });
 
 const getBotInfo = async botId => {
   try {
-    const res: any = await resultControl(await urlResquest.queryBotInfo({}, {}, botId));
-    setCurBot(res);
+    const res: any = await resultControl(await urlResquest.queryBotInfo({ bot_id: botId }));
+    console.log('getBotInfo', res);
+    setCurBot(res[0]);
   } catch (e) {
     message.error(e.msg || '获取Bot信息失败');
   }
@@ -106,16 +82,13 @@ const saveBotInfo = async () => {
   try {
     await resultControl(
       await urlResquest.updateBot({
-        botId: curBot.value.id,
-        botName: name.value,
-        botPromptSetting: roleSetting.value,
-        botDescription: curBot.value.description,
-        botHeadImage: '',
-        welcomeMessage: welcomeMessage.value,
-        model: modelValue.value,
+        bot_id: curBot.value.bot_id,
+        bot_name: name.value,
+        prompt_setting: roleSetting.value,
+        welcome_message: welcomeMessage.value,
       })
     );
-    getBotInfo(curBot.value.uuid);
+    getBotInfo(curBot.value.bot_id);
     message.success(bots.saveSuccessful);
   } catch (e) {
     console.log('error--', e);
@@ -123,37 +96,20 @@ const saveBotInfo = async () => {
   }
 };
 
-const saveModel = async () => {
+const removeKb = async data => {
+  let kbIds = curBot.value.kb_ids;
+  console.log('removeKb', data, kbIds);
+  kbIds = kbIds.filter(item => item != data);
   try {
     await resultControl(
       await urlResquest.updateBot({
-        botId: curBot.value.id,
-        botName: curBot.value.name,
-        botPromptSetting: curBot.value.promptSetting,
-        botDescription: curBot.value.description,
-        botHeadImage: '',
-        welcomeMessage: curBot.value.welcomeMessage,
-        model: modelValue.value,
+        bot_id: curBot.value.bot_id,
+        kb_ids: kbIds,
       })
     );
-    getBotInfo(curBot.value.uuid);
-  } catch (e) {
-    console.log('error--', e);
-    message.error(e.msg || '保存失败，请重试');
-  }
-};
-
-const removeKb = async data => {
-  try {
-    await resultControl(
-      await urlResquest.bindKb({
-        botId: curBot.value.id,
-        kbId: data.kbId,
-      })
-    );
-    getBotInfo(curBot.value.uuid);
+    getBotInfo(curBot.value.bot_id);
     knowledgeList.value = knowledgeList.value.map(item => {
-      if (item.kbId === data.kbId) {
+      if (item.kb_id === data) {
         item.state = item.state === 0 ? 1 : 0;
       }
       return item;
@@ -162,11 +118,6 @@ const removeKb = async data => {
   } catch (e) {
     message.error(e.msg || '请求失败');
   }
-};
-
-const changeModel = item => {
-  modelValue.value = item.name;
-  saveModel();
 };
 </script>
 <style lang="scss" scoped>

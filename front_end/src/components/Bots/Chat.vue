@@ -3,14 +3,14 @@
     <div class="my-page">
       <div class="header">
         <img src="@/assets/bots/bot-avatar.png" alt="avatar" />
-        {{ botInfo.name }}
+        {{ botInfo.bot_name }}
       </div>
       <div id="chat" class="chat">
         <ul id="chat-ul" ref="scrollDom">
           <div class="ai">
             <div class="content">
               <img class="avatar" src="@/assets/home/ai-avatar.png" alt="头像" />
-              <p class="question-text" v-html="botInfo.welcomeMessage"></p>
+              <p class="question-text" v-html="botInfo.welcome_message"></p>
             </div>
           </div>
           <li v-for="(item, index) in QA_List" :key="index">
@@ -70,9 +70,9 @@
                     :key="sourceIndex"
                     class="data-source"
                   >
-                    <p v-show="sourceItem.fileName" class="control">
+                    <p v-show="sourceItem.file_name" class="control">
                       <span class="tips">{{ common.dataSource }}{{ sourceIndex + 1 }}:</span
-                      ><span class="file">{{ sourceItem.fileName }}</span>
+                      ><span class="file">{{ sourceItem.file_name }}</span>
                       <SvgIcon
                         v-show="sourceItem.showDetailDataSource"
                         name="iconup"
@@ -169,7 +169,7 @@
         </div>
       </div>
     </div>
-    <div v-if="!botInfo.kbBindList || !botInfo.kbBindList.length" class="mask">
+    <div v-if="!botInfo.kb_ids || !botInfo.kb_ids.length" class="mask">
       <img src="@/assets/bots/lock.png" alt="icon" />
       <p>{{ bots.bindKbtoPreview }}</p>
     </div>
@@ -177,6 +177,7 @@
   <DefaultModal :content="content" :confirm-loading="confirmLoading" @ok="confirm" />
 </template>
 <script lang="ts" setup>
+import { apiBase } from '@/services';
 import { defineProps } from 'vue';
 import { IChatItem } from '@/utils/types';
 import { useThrottleFn, useClipboard } from '@vueuse/core';
@@ -185,14 +186,12 @@ import SvgIcon from '../SvgIcon.vue';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { useBotsChat } from '@/store/useBotsChat';
 import { useChat } from '@/store/useChat';
-import { useSource } from '@/store/useSource';
 import { Typewriter } from '@/utils/typewriter';
 import DefaultModal from '../DefaultModal.vue';
 import html2canvas from 'html2canvas';
 import { getLanguage } from '@/language/index';
-import routeController from '@/controller/router';
-import { getToken, getShareToken, removeToken } from '@/utils/token';
 import { useLanguage } from '@/store/useLanguage';
+import { userId } from '@/services/urlConfig';
 
 const props = defineProps({
   chatType: {
@@ -205,11 +204,8 @@ const props = defineProps({
   },
 });
 
-const { getCurrentRoute } = routeController();
 const common = getLanguage().common;
 const bots = getLanguage().bots;
-const store = useBotsChat();
-const route = getCurrentRoute();
 
 const typewriter = new Typewriter((str: string) => {
   if (str) {
@@ -219,12 +215,7 @@ const typewriter = new Typewriter((str: string) => {
 
 const { QA_List } = storeToRefs(useBotsChat());
 const { copy } = useClipboard();
-const { setSourceVisible, setPdfSrc, setChunks, setPageSizes, setChunkIds, setPageId } =
-  useSource();
 const { language } = storeToRefs(useLanguage());
-declare module _czc {
-  const push: (array: any) => void;
-}
 //当前是否多轮对话
 const control = ref(true);
 
@@ -254,7 +245,6 @@ const scrollBottom = () => {
 const like = useThrottleFn((item, e) => {
   item.like = !item.like;
   item.unlike = false;
-  _czc.push(['_trackEvent', 'qanything', 'edit_like_click', '点赞', '', '']);
   if (item.like) {
     e.target.parentNode.style.animation = 'shake ease-in .5s';
     const timer = setTimeout(() => {
@@ -266,12 +256,10 @@ const like = useThrottleFn((item, e) => {
 const unlike = (item: IChatItem) => {
   item.unlike = !item.unlike;
   item.like = false;
-  _czc.push(['_trackEvent', 'qanything', 'edit问答页面', '点踩', '', '']);
 };
 
 //拷贝
 const myCopy = (item: IChatItem) => {
-  _czc.push(['_trackEvent', 'qanything', 'edit_copy_click', '复制单个回答', '', '']);
   copy(item.answer)
     .then(() => {
       item.copied = !item.copied;
@@ -319,7 +307,6 @@ const stopChat = () => {
 
 //发送问答消息
 const send = () => {
-  _czc.push(['_trackEvent', 'qanything', 'edit_send_click', '点击调试页面内发送问题上传', '', '']);
   if (!question.value.length) {
     return;
   }
@@ -331,7 +318,6 @@ const send = () => {
   }
   showLoading.value = true;
   scrollDom.value?.scrollIntoView(true);
-  const severUrl = import.meta.env.VITE_APP_SERVER_URL;
   ctrl = new AbortController();
 
   const headers = {
@@ -340,27 +326,17 @@ const send = () => {
     'Transfer-Encoding': 'chunked',
     Connection: 'keep-alive',
   };
-  if (route.value.name === 'share') {
-    if (getShareToken()) {
-      const token = getShareToken();
-      headers[token.tokenName] = token.tokenValue;
-    }
-  } else {
-    if (getToken()) {
-      const token = getToken();
-      headers[token.tokenName] = token.tokenValue;
-    }
-  }
 
-  fetchEventSource(severUrl + '/q_anything/bot/chat_stream', {
+  fetchEventSource(apiBase + '/local_doc_qa/local_doc_chat', {
     method: 'POST',
     headers: headers,
     body: JSON.stringify({
-      kbIds: props.botInfo.kbBindList.map(item => item.kbId),
+      user_id: userId,
+      kb_ids: props.botInfo.kb_ids,
       history: control.value ? history.value : [],
       question: q,
-      botId: props.botInfo.id,
-      botPromptSetting: props.botInfo.promptSetting,
+      custom_prompt: props.botInfo.prompt_setting,
+      streaming: true,
     }),
     signal: ctrl.signal,
     onopen(e: any) {
@@ -377,11 +353,7 @@ const send = () => {
           .json()
           .then(data => {
             console.log(data);
-            if (+data?.errorCode === 403) {
-              removeToken();
-            } else {
-              message.error(data?.msg || '出错了,请稍后刷新重试。');
-            }
+            message.error(data?.msg || '出错了,请稍后刷新重试。');
           })
           .catch(e => {
             console.log(e);
@@ -390,30 +362,21 @@ const send = () => {
       }
     },
     onmessage(msg: { data: string }) {
-      console.log('message', msg);
-      if (msg.data !== '') {
-        const data: any = JSON.parse(msg.data);
-        const res = data.result;
-        console.log(res);
-        console.log(res?.response);
-        if (res?.response && !res?.history?.length) {
-          // QA_List.value[QA_List.value.length - 1].answer += res.result.response;
-          typewriter.add(res?.response.replaceAll('\n', '<br/>'));
-          scrollBottom();
-        }
+      console.log('message');
+      const res: any = JSON.parse(msg.data);
+      console.log(res);
+      if (res?.code == 200 && res?.response) {
+        // QA_List.value[QA_List.value.length - 1].answer += res.result.response;
+        typewriter.add(res?.response.replaceAll('\n', '<br/>'));
+        scrollBottom();
+      }
 
-        if (res?.picList?.length) {
-          QA_List.value[QA_List.value.length - 1].picList = res.picList;
-        }
+      if (res?.source_documents?.length) {
+        QA_List.value[QA_List.value.length - 1].source = res?.source_documents;
+      }
 
-        if (res?.source?.length) {
-          console.log('res?.source', res?.source);
-          store.handleSource(res.source);
-        }
-
-        if (res?.history?.length) {
-          history.value = res?.history;
-        }
+      if (res?.history.length) {
+        history.value = res?.history;
       }
     },
     onclose(e: any) {
@@ -443,29 +406,18 @@ const send = () => {
 };
 
 const reAnswer = (item: IChatItem) => {
-  _czc.push(['_trackEvent', 'qanything', 'edit_regenerate_click', '重新生成回答', '', '']);
   console.log('reAnswer');
   question.value = item.question;
   send();
 };
 
-//点击查看是否显示详细来源
-const showDetail = (item: IChatItem, index) => {
-  console.log('showDetail', item);
-  if (item.source[index].pdf_source_info) {
-    setPdfSrc(item.source[index].pdf_source_info.pdf_nos_url);
-    setChunks(item.source[index].chunks);
-    setPageSizes(item.source[index].pageSizes);
-    setChunkIds(item.source[index].pdf_source_info.chunk_id);
-    setPageId(item.source[index].pdf_source_info.page_id);
-    setSourceVisible(true);
-  } else {
-    item.source[index].showDetailDataSource = true;
-  }
-};
-
 const hideDetail = (item: IChatItem, index) => {
   item.source[index].showDetailDataSource = false;
+};
+
+//点击查看是否显示详细来源
+const showDetail = (item: IChatItem, index) => {
+  item.source[index].showDetailDataSource = !item.source[index].showDetailDataSource;
 };
 
 const showSourceList = index => {
@@ -487,18 +439,10 @@ const controlChat = () => {
 };
 
 const downloadChat = () => {
-  _czc.push(['_trackEvent', 'qanything', 'edit_save_click', '保存会话', '', '']);
   type.value = 'download';
   showModal.value = true;
   content.value = common.saveTip;
 };
-
-// const deleteChat = () => {
-//   _czc.push(['_trackEvent', 'qanything', 'empty_click', '清空会话', '', '']);
-//   type.value = 'delete';
-//   showModal.value = true;
-//   content.value = common.clearTip;
-// };
 
 const confirm = async () => {
   confirmLoading.value = true;
@@ -538,7 +482,6 @@ const confirm = async () => {
 };
 
 scrollBottom();
-_czc.push(['_trackEvent', 'qanything', 'edit_conversation_page_show', '问答页曝光', '', '']);
 </script>
 
 <style lang="scss" scoped>

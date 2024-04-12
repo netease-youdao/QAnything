@@ -21,12 +21,12 @@
         <div class="content">
           <div
             class="knowledge-item"
-            v-for="item in knowledgeList.filter(item => regex.test(item.kbName))"
+            v-for="item in knowledgeList.filter(item => regex.test(item.kb_nmame))"
             :key="item.kbId"
           >
             <img src="@/assets/bots/knowledge.png" alt="knowledge" />
             <div class="detail-info">
-              <div class="kb-name">{{ item.kbName }}</div>
+              <div class="kb-name">{{ item.kb_name }}</div>
               <!-- <div class="kb-time">{{ bots.creationTime }} {{ item.time }}</div> -->
             </div>
             <div
@@ -60,24 +60,27 @@ const regex = computed(() => new RegExp(knowledge.value, 'i'));
 
 const getBotInfo = async botId => {
   try {
-    const res: any = await resultControl(await urlResquest.queryBotInfo({}, {}, botId));
-    setCurBot(res);
+    const res: any = await resultControl(await urlResquest.queryBotInfo({ bot_id: botId }));
+    setCurBot(res[0]);
   } catch (e) {
     message.error(e.msg || '获取Bot信息失败');
   }
 };
 
 const handleKbBind = async data => {
+  const kbIds = curBot.value.kb_ids;
+  kbIds.push(data.kb_id);
+  console.log('kbIds', kbIds);
   try {
     await resultControl(
-      await urlResquest.bindKb({
-        botId: curBot.value.id,
-        kbId: data.kbId,
+      await urlResquest.updateBot({
+        bot_id: curBot.value.bot_id,
+        kb_ids: kbIds,
       })
     );
-    getBotInfo(curBot.value.uuid);
+    getBotInfo(curBot.value.bot_id);
     knowledgeList.value = knowledgeList.value.map(item => {
-      if (item.kbId === data.kbId) {
+      if (item.kb_id === data.kb_id) {
         item.state = item.state === 0 ? 1 : 0;
       }
       return item;

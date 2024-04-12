@@ -5,7 +5,6 @@
       :title="bots.copyLink"
       centered
       :destroyOnClose="true"
-      width="680px"
       wrap-class-name="select-knowledge-modal"
       :footer="null"
     >

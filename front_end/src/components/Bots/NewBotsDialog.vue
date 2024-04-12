@@ -39,7 +39,7 @@
               :auto-size="{ minRows: 3, maxRows: 3 }"
             />
           </a-form-item>
-          <a-form-item>
+          <!-- <a-form-item>
             <div class="item-title">{{ bots.preSetBot }}</div>
             <div class="preset-bot-list">
               <div
@@ -54,7 +54,7 @@
                 {{ item.name }}
               </div>
             </div>
-          </a-form-item>
+          </a-form-item> -->
           <a-form-item>
             <div class="footer">
               <a-button class="cancel-btn" @click="setNewBotsVisible(false)">
@@ -80,7 +80,7 @@ import routeController from '@/controller/router';
 import { getLanguage } from '@/language/index';
 
 const { changePage } = routeController();
-const { newBotsVisible, defaultBotList } = storeToRefs(useBots());
+const { newBotsVisible } = storeToRefs(useBots());
 const { setNewBotsVisible, setCurBot, setTabIndex } = useBots();
 const { setQaList } = useBotsChat();
 const bots = getLanguage().bots;
@@ -91,10 +91,6 @@ interface FormState {
   introduction: string;
 }
 
-declare module _czc {
-  const push: (array: any) => void;
-}
-
 const loading = ref(false);
 const selectedPrebot = ref(null); // 选中的预设机器人
 const formState = reactive<FormState>({
@@ -102,69 +98,41 @@ const formState = reactive<FormState>({
   introduction: '',
 });
 
+const getBotInfo = async botId => {
+  try {
+    const res: any = await resultControl(await urlResquest.queryBotInfo({ bot_id: botId }));
+    setCurBot(res[0]);
+  } catch (e) {
+    message.error(e.msg || '获取Bot信息失败');
+  }
+};
+
 const onFinish = async (values: any) => {
   console.log('Success:', values);
   try {
-    const code = selectedPrebot.value ? selectedPrebot.value.code : 0;
     const res: any = await resultControl(
       await urlResquest.createBot({
-        botName: values.name,
-        defaultBotSetting: code,
-        botDescription: values.introduction,
-        botHeadImage: '',
-        model: 'QAnything 4k', // 默认4k模型
+        bot_name: values.name,
+        description: values.introduction,
       })
     );
-    setCurBot(res);
+    await getBotInfo(res.bot_id);
     message.success(bots.creationSuccessful);
     setTabIndex(0);
     setQaList([]);
     formState.name = '';
     formState.introduction = '';
     selectedPrebot.value = null;
-    changePage(`/bots/${res.uuid}/edit`);
+    changePage(`/bots/${res.bot_id}/edit`);
   } catch (e) {
     message.error(e.msg || '创建失败');
   }
   setNewBotsVisible(false);
-  _czc.push([
-    '_trackEvent',
-    'qanything',
-    'create_new_bot_confirm_click',
-    '点击确认新建bot',
-    '',
-    '',
-  ]);
 };
 
 const onFinishFailed = (errorInfo: any) => {
   console.log('Failed:', errorInfo);
 };
-
-function selectDefaultBot(data) {
-  if (selectedPrebot.value && selectedPrebot.value.code === data.code) {
-    selectedPrebot.value = null;
-    return;
-  }
-  selectedPrebot.value = data;
-  // try {
-  //   const res: any = await resultControl(
-  //     await urlResquest.createBot({
-  //       botName: data.name,
-  //       defaultBotSetting: data.code,
-  //       botDescription: data.description,
-  //       botHeadImage: '',
-  //       welcomeMessage: data.welcomeMessage,
-  //     })
-  //   );
-  //   setCurBot(res);
-  //   message.success('创建成功');
-  //   changePage(`/bots/${res.uuid}/edit`);
-  // } catch (e) {
-  //   message.error(e.msg || '创建失败');
-  // }
-  // setNewBotsVisible(false);
-}
 </script>
 <style lang="scss" scoped>
 .new-bots-comp {

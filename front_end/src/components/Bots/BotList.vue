@@ -57,15 +57,16 @@ const emits = defineEmits(['getBotList']);
 const bots = getLanguage().bots;
 
 const botEdit = item => {
+  console.log('botEdit', item);
   setTabIndex(0);
   setCurBot(item);
   setQaList([]);
-  changePage(`/bots/${item.uuid}/edit`);
+  changePage(`/bots/${item.bot_id}/edit`);
 };
 
 const deleteBot = async data => {
   try {
-    await resultControl(await urlResquest.deleteBot({ botId: data.id }));
+    await resultControl(await urlResquest.deleteBot({ bot_id: data.bot_id }));
     emits('getBotList');
     message.success(bots.deletedSucessfully);
   } catch (e) {
