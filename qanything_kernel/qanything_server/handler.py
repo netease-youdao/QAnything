@@ -617,10 +617,28 @@ async def upload_faqs(req: request):
     debug_logger.info("upload_faqs %s", user_id)
     kb_id = safe_get(req, 'kb_id')
     debug_logger.info("kb_id %s", kb_id)
-    faqs = safe_get(req, 'faqs')
+    # faqs = safe_get(req, 'faqs')
+    files = req.files.getlist('files')
+    faqs = []
+    file_status = {}
+    for file in files:
+        debug_logger.info('ori name: %s', file.name)
+        file_name = urllib.parse.unquote(file.name, encoding='UTF-8')
+        debug_logger.info('decode name: %s', file_name)
+        # 删除掉全角字符
+        file_name = re.sub(r'[\uFF01-\uFF5E\u3000-\u303F]', '', file_name)
+        file_name = file_name.replace("/", "_")
+        debug_logger.info('cleaned name: %s', file_name)
+        file_name = truncate_filename(file_name)
+        file_faqs = check_and_transform_excel(file.body)
+        if isinstance(file_faqs, str):
+            file_status[file_name] = file_faqs
+        else:
+            faqs.extend(file_faqs)
+            file_status[file_name] = "success"
 
     if len(faqs) > 1000:
-        return sanic_json({"code": 2002, "msg": f"fail, faqs too many, max length is 1000."})
+        return sanic_json({"code": 2002, "msg": f"fail, faqs too many, The maximum length of each request is 1000."})
 
     not_exist_kb_ids = local_doc_qa.mysql_client.check_kb_exist(user_id, [kb_id])
     if not_exist_kb_ids:
@@ -632,8 +650,14 @@ async def upload_faqs(req: request):
     local_files = []
     timestamp = now.strftime("%Y%m%d%H%M")
     debug_logger.info(f"start insert {len(faqs)} faqs to mysql, user_id: {user_id}, kb_id: {kb_id}")
+    exist_questions = []
     for faq in tqdm(faqs):
         ques = faq['question']
+        if ques not in exist_questions:
+            exist_questions.append(ques)
+        else:
+            debug_logger.info(f"question {ques} already exists, skip it")
+            continue
         if len(ques) > 512 or len(faq['answer']) > 2048:
             return sanic_json({"code": 2003, "msg": f"fail, faq too long, max length of question is 512, answer is 2048."})
         file_name = f"FAQ_{ques}.faq"
@@ -654,5 +678,5 @@ async def upload_faqs(req: request):
     asyncio.create_task(local_doc_qa.insert_files_to_faiss(user_id, kb_id, local_files))
 
     msg = "success，后台正在飞速上传文件，请耐心等待"
-    return sanic_json({"code": 200, "msg": msg, "data": data})
+    return sanic_json({"code": 200, "msg": msg, "file_status": file_status, "data": data})
 

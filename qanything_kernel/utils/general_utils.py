@@ -13,12 +13,14 @@ import pkg_resources
 import torch
 import math
 import packaging.version
+import pandas as pd
+from io import BytesIO
 import platform
 from qanything_kernel.utils.custom_log import debug_logger
 
 __all__ = ['write_check_file', 'isURL', 'format_source_documents', 'get_time', 'safe_get', 'truncate_filename',
            'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens', 'download_file', 
-           'get_gpu_memory_utilization', 'check_package_version', 'simplify_filename']
+           'get_gpu_memory_utilization', 'check_package_version', 'simplify_filename', 'check_and_transform_excel']
 
 
 def get_invalid_user_id_msg(user_id):
@@ -223,3 +225,34 @@ def simplify_filename(filename, max_length=40):
     simplified_name = f"{name[:part_length]}-{name[end_start:]}" if part_length else name[:max_length - 1]
 
     return f"{simplified_name}{extension}"
+
+
+def check_and_transform_excel(binary_data):
+    # 使用BytesIO读取二进制数据
+    try:
+        data_io = BytesIO(binary_data)
+        df = pd.read_excel(data_io)
+    except Exception as e:
+        return f"读取文件时出错: {e}"
+
+    # 检查列数
+    if len(df.columns) != 2:
+        return "格式错误：文件应该只有两列"
+
+    # 检查列标题
+    if df.columns[0] != "问题" or df.columns[1] != "答案":
+        return "格式错误：第一列标题应为'问题'，第二列标题应为'答案'"
+
+    # 检查每行长度
+    for index, row in df.iterrows():
+        question_len = len(row['问题'])
+        answer_len = len(row['答案'])
+        if question_len > 512 or answer_len > 2048:
+            return f"行{index + 1}长度超出限制：问题长度={question_len}，答案长度={answer_len}"
+
+    # 转换数据格式
+    transformed_data = []
+    for _, row in df.iterrows():
+        transformed_data.append({"question": row['问题'], "answer": row['答案']})
+
+    return transformed_data
