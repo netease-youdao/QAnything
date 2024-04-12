@@ -190,7 +190,7 @@ class LocalDocQA:
         source_documents = sorted(source_documents, key=lambda x: x.metadata['score'], reverse=True)
         return source_documents
 
-    async def get_knowledge_based_answer(self, query, kb_ids, chat_history=None, streaming: bool = STREAMING,
+    async def get_knowledge_based_answer(self, custom_prompt, query, kb_ids, chat_history=None, streaming: bool = STREAMING,
                                          rerank: bool = False):
         if chat_history is None:
             chat_history = []
@@ -203,13 +203,18 @@ class LocalDocQA:
             debug_logger.info(f"use rerank, rerank docs num: {len(retrieval_documents)}")
             retrieval_documents = self.rerank_documents(query, retrieval_documents)[: self.rerank_top_k]
 
+        if custom_prompt is None:
+            prompt_template = PROMPT_TEMPLATE
+        else:
+            prompt_template = custom_prompt + '\n' + PROMPT_TEMPLATE
+
         source_documents = self.reprocess_source_documents(query=query,
                                                            source_docs=retrieval_documents,
                                                            history=chat_history,
-                                                           prompt_template=PROMPT_TEMPLATE)
+                                                           prompt_template=prompt_template)
         prompt = self.generate_prompt(query=query,
                                       source_docs=source_documents,
-                                      prompt_template=PROMPT_TEMPLATE)
+                                      prompt_template=prompt_template)
         t1 = time.time()
         async for answer_result in self.llm.generatorAnswer(prompt=prompt,
                                                       history=chat_history,

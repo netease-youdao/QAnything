@@ -332,11 +332,13 @@ async def local_doc_chat(req: request):
     rerank = safe_get(req, 'rerank', default=True)
     debug_logger.info('rerank %s', rerank)
     streaming = safe_get(req, 'streaming', False)
+    custom_prompt = safe_get(req, 'custom_prompt', None)
     history = safe_get(req, 'history', [])
     debug_logger.info("history: %s ", history)
     debug_logger.info("question: %s", question)
     debug_logger.info("kb_ids: %s", kb_ids)
     debug_logger.info("user_id: %s", user_id)
+    debug_logger.info("custom_prompt: %s", custom_prompt)
 
     not_exist_kb_ids = local_doc_qa.mysql_client.check_kb_exist(user_id, kb_ids)
     if not_exist_kb_ids:
@@ -357,7 +359,7 @@ async def local_doc_chat(req: request):
 
             async def generate_answer(response):
                 debug_logger.info("start generate...")
-                async for resp, next_history in local_doc_qa.get_knowledge_based_answer(
+                async for resp, next_history in local_doc_qa.get_knowledge_based_answer(custom_prompt=custom_prompt,
                         query=question, kb_ids=kb_ids, chat_history=history, streaming=True, rerank=rerank
                 ):
                     chunk_data = resp["result"]
@@ -410,7 +412,7 @@ async def local_doc_chat(req: request):
             return response_stream
 
         else:
-            async for resp, history in local_doc_qa.get_knowledge_based_answer(
+            async for resp, history in local_doc_qa.get_knowledge_based_answer(custom_prompt=custom_prompt,
                     query=question, kb_ids=kb_ids, chat_history=history, streaming=False, rerank=rerank
             ):
                 pass
