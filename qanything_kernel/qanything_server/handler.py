@@ -493,7 +493,7 @@ https://qanything.youdao.com
 async def new_bot(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
-    bot_name = safe_get(req, "name")
+    bot_name = safe_get(req, "bot_name")
     desc = safe_get(req, "description", BOT_DESC)
     head_image = safe_get(req, "head_image", BOT_IMAGE)
     prompt_setting = safe_get(req, "prompt_setting", BOT_PROMPT)
@@ -545,7 +545,7 @@ async def update_bot(req: request):
     if not local_doc_qa.mysql_client.check_bot_is_exist(user_id, bot_id):
         return sanic_json({"code": 2003, "msg": "fail, Bot {} not found".format(bot_id)})
     bot_info = local_doc_qa.mysql_client.get_bot(user_id, bot_id)[0]
-    bot_name = safe_get(req, "name", bot_info[1])
+    bot_name = safe_get(req, "bot_name", bot_info[1])
     description = safe_get(req, "description", bot_info[2])
     head_image = safe_get(req, "head_image", bot_info[3])
     prompt_setting = safe_get(req, "prompt_setting", bot_info[4])

@@ -79,6 +79,11 @@
     - [删除Bot请求参数（Body）](#删除bot请求参数body)
     - [删除Bot请求示例](#删除bot请求示例)
     - [删除Bot响应示例](#删除bot响应示例)
+  - [上传FAQ（POST）](#上传faqpost)
+    - [URL：http://{your_host}:8777/api/local_doc_qa/upload_faqs](#urlhttpyour_host8777apilocal_doc_qaupload_faqs)
+    - [上传FAQ请求参数（Body）](#上传faq请求参数body)
+    - [上传FAQ请求示例](#上传faq请求示例)
+    - [上传FAQ响应示例](#上传faq响应示例)
 
 ## <h2><p id="全局参数">全局参数</p></h2>
 
@@ -841,16 +846,16 @@ print(response.text)
 
 ### <h3><p id="创建bot请求参数body">创建Bot请求参数（Body）</p></h3>
 
-| 参数名         | 示例参数值                           | 是否必填 | 参数类型 | 描述说明                  |
-|-------------|---------------------------------|------| -------- |-----------------------|
-| user_id     | "zzp"                           | 是    | String   | 用户 id                 |
-| bot_name    | "测试"                            | 是    | String   | Bot名字                 |
-| description | "这是一个测试Bot"                     | 否    | String   | Bot简介                 |
-| head_image | "zhiyun/xxx"                    | 否    | String   | 头像nos地址               |
-| prompt_setting | "你是一个耐心、友好、专业的机器人，能够回答用户的各种问题。" | 否    | String   | Bot角色设定               |
-| welcome_message | "您好，我是您的专属机器人，请问有什么可以帮您呢？"      | 否    | String   | Bot欢迎语                |
-| model | "MiniChat-2-3B"                 | 否    | String   | 模型选择，默认为MiniChat-2-3B |
-| kb_ids | "KB_xxx, KB_xxx, KB_xxx"        | 否    | String   | Bot关联的知识库id列表         |
+| 参数名         | 示例参数值                           | 是否必填 | 参数类型         | 描述说明                  |
+|-------------|---------------------------------|------|--------------|-----------------------|
+| user_id     | "zzp"                           | 是    | String       | 用户 id                 |
+| bot_name    | "测试"                            | 是    | String       | Bot名字                 |
+| description | "这是一个测试Bot"                     | 否    | String       | Bot简介                 |
+| head_image | "zhiyun/xxx"                    | 否    | String       | 头像nos地址               |
+| prompt_setting | "你是一个耐心、友好、专业的机器人，能够回答用户的各种问题。" | 否    | String       | Bot角色设定               |
+| welcome_message | "您好，我是您的专属机器人，请问有什么可以帮您呢？"      | 否    | String       | Bot欢迎语                |
+| model | "MiniChat-2-3B"                 | 否    | String       | 模型选择，默认为MiniChat-2-3B |
+| kb_ids | ["KB_xxx, KB_xxx, KB_xxx"]      | 否    | List[String] | Bot关联的知识库id列表         |
 
 ### <h3><p id="创建bot请求示例">创建Bot请求示例</p></h3>
 
@@ -864,7 +869,7 @@ headers = {
 }
 data = {
 	"user_id": "zzp",
-	"name": "测试机器人"
+	"bot_name": "测试机器人"
 }
 
 response = requests.post(url, headers=headers, data=json.dumps(data))
@@ -973,7 +978,7 @@ headers = {
 data = {
     "user_id": "zzp",
     "bot_id": "BOTc87cc749a9844325a2e26f09bf8f6918",
-    "name": "测试Bot2",
+    "bot_name": "测试Bot2",
     "description": "测试3",
     "head_image": "xx",
     "prompt_setting": "测试4",
@@ -1035,5 +1040,85 @@ print(response.text)
 {
 	"code": 200,
 	"msg": "Bot BOTc87cc749a9844325a2e26f09bf8f6918 delete success"
+}
+```
+
+## <h2><p id="上传faqpost">上传FAQ（POST）</p></h2>
+
+### <h3><p id="urlhttpyour_host8777apilocal_doc_qaupload_faqs">URL：<http://{your_host}:8777/api/local_doc_qa/upload_faqs></p> </h3>
+
+Content-Type: multipart/form-data
+
+### <h3><p id="上传faq请求参数body">上传FAQ请求参数（Body）</p></h3>
+
+| 参数名  | 参数值                                    | 是否必填 | 参数类型 | 描述说明                                                        |
+| ------- |----------------------------------------| -------- | -------- |-------------------------------------------------------------|
+| files   | 文件二进制                                  | 是       | File     | 需要上传的文件，可多选，仅支持xlsx格式                                       |
+| user_id | zzp                                    | 是       | String   | 用户 id                                                       |
+| kb_id   | KBb1dd58e8485443ce81166d24f6febda7_FAQ | 是       | String   | 知识库 id                                                      |
+
+### <h3><p id="上传faq请求示例">上传FAQ请求示例</p></h3>
+
+```python
+import os
+import requests
+
+url = "http://{your_host}:8777/api/local_doc_qa/upload_faqs"
+folder_path = "./xlsx_data"  # 文件所在文件夹，注意是文件夹！！
+data = {
+    "user_id": "zzp",
+    "kb_id": "KB6dae785cdd5d47a997e890521acbe1c9_FAQ",
+}
+
+files = []
+for root, dirs, file_names in os.walk(folder_path):
+    for file_name in file_names:
+        if file_name.endswith(".xlsx"):
+            file_path = os.path.join(root, file_name)
+            files.append(("files", open(file_path, "rb")))
+
+response = requests.post(url, files=files, data=data)
+print(response.text)
+```
+
+### <h3><p id="上传faq响应示例">上传FAQ响应示例</p></h3>
+
+```json
+{
+	"code": 200,
+	"msg": "success，后台正在飞速上传文件，请耐心等待",
+	"file_status": {
+		"QAnything_QA_模板.xlsx": "success"
+	},
+	"data": [
+		{
+			"file_id": "de9c63dfd2fe477394041612bdfbdec3",
+			"file_name": "FAQ_你今天吃了什么.faq",
+			"status": "gray",
+			"length": 11,
+			"timestamp": "202404121141"
+		},
+		{
+			"file_id": "b3f9ac467ce14b0280e991c098298155",
+			"file_name": "FAQ_天气晴朗吗.faq",
+			"status": "gray",
+			"length": 9,
+			"timestamp": "202404121141"
+		},
+		{
+			"file_id": "5a5ac165324940a8a62062a5335f5f92",
+			"file_name": "FAQ_你是谁.faq",
+			"status": "gray",
+			"length": 14,
+			"timestamp": "202404121141"
+		},
+		{
+			"file_id": "562e9a2d1b994d619d4e1ebc85857c92",
+			"file_name": "FAQ_你好呀.faq",
+			"status": "gray",
+			"length": 7,
+			"timestamp": "202404121141"
+		}
+	]
 }
 ```
