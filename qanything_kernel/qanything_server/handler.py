@@ -13,11 +13,12 @@ import asyncio
 import urllib.parse
 import re
 from datetime import datetime
+from tqdm import tqdm
 import os
 
 __all__ = ["new_knowledge_base", "upload_files", "list_kbs", "list_docs", "delete_knowledge_base", "delete_docs",
            "rename_knowledge_base", "get_total_status", "clean_files_by_status", "upload_weblink", "local_doc_chat",
-           "document", "new_bot", "delete_bot", "update_bot", "get_bot_info"]
+           "document", "new_bot", "delete_bot", "update_bot", "get_bot_info", "upload_faqs"]
 
 INVALID_USER_ID = f"fail, Invalid user_id: . user_id 必须只含有字母，数字和下划线且字母开头"
 
@@ -32,7 +33,14 @@ async def new_knowledge_base(req: request):
         return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
     debug_logger.info("new_knowledge_base %s", user_id)
     kb_name = safe_get(req, 'kb_name')
-    kb_id = 'KB' + uuid.uuid4().hex
+    default_kb_id = 'KB' + uuid.uuid4().hex
+    kb_id = safe_get(req, 'kb_id', default_kb_id)
+    if kb_id[:2] != 'KB':
+        return sanic_json({"code": 2001, "msg": "fail, kb_id must start with 'KB'"})
+    not_exist_kb_ids = local_doc_qa.mysql_client.check_kb_exist(user_id, [kb_id])
+    if not not_exist_kb_ids:
+        return sanic_json({"code": 2001, "msg": "fail, knowledge Base {} already exist".format(kb_id)})
+
     local_doc_qa.mysql_client.new_knowledge_base(kb_id, user_id, kb_name)
     now = datetime.now()
     timestamp = now.strftime("%Y%m%d%H%M")
@@ -592,3 +600,56 @@ async def get_bot_info(req: request):
                 "model": bot_info[6], "kb_ids": kb_ids, "kb_names": kb_names, "update_time": bot_info[8]}
         data.append(info)
     return sanic_json({"code": 200, "msg": "success", "data": data})
+
+
+async def upload_faqs(req: request):
+    local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
+    user_id = safe_get(req, 'user_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
+    is_valid = validate_user_id(user_id)
+    if not is_valid:
+        return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
+    debug_logger.info("upload_faqs %s", user_id)
+    kb_id = safe_get(req, 'kb_id')
+    debug_logger.info("kb_id %s", kb_id)
+    faqs = safe_get(req, 'faqs')
+
+    if len(faqs) > 1000:
+        return sanic_json({"code": 2002, "msg": f"fail, faqs too many, max length is 1000."})
+
+    not_exist_kb_ids = local_doc_qa.mysql_client.check_kb_exist(user_id, [kb_id])
+    if not_exist_kb_ids:
+        msg = "invalid kb_id: {}, please check...".format(not_exist_kb_ids)
+        return sanic_json({"code": 2001, "msg": msg})
+
+    data = []
+    now = datetime.now()
+    local_files = []
+    timestamp = now.strftime("%Y%m%d%H%M")
+    debug_logger.info(f"start insert {len(faqs)} faqs to mysql, user_id: {user_id}, kb_id: {kb_id}")
+    for faq in tqdm(faqs):
+        ques = faq['question']
+        if len(ques) > 512 or len(faq['answer']) > 2048:
+            return sanic_json({"code": 2003, "msg": f"fail, faq too long, max length of question is 512, answer is 2048."})
+        file_name = f"FAQ_{ques}.faq"
+        file_name = file_name.replace("/", "_").replace(":", "_")  # 文件名中的/和：会导致写入时出错
+        file_name = simplify_filename(file_name)
+        file_id = uuid.uuid4().hex
+        local_file = LocalFile(user_id, kb_id, faq, file_id, file_name, local_doc_qa.embeddings)
+        local_files.append(local_file)
+        local_doc_qa.mysql_client.add_faq(file_id, user_id, kb_id, ques, faq['answer'], faq.get("nos_keys", ""))
+        file_size = len(ques) + len(faq['answer'])
+        file_location = 'FAQ'
+        msg = local_doc_qa.mysql_client.add_file(user_id, kb_id, file_name, timestamp, status='green')
+        # debug_logger.info(f"{file_name}, {file_id}, {msg}, {faq}")
+        data.append(
+            {"file_id": file_id, "file_name": file_name, "status": "gray", "length": file_size,
+             "timestamp": timestamp})
+    debug_logger.info(f"end insert {len(faqs)} faqs to mysql, user_id: {user_id}, kb_id: {kb_id}")
+
+    asyncio.create_task(local_doc_qa.insert_files_to_faiss(user_id, kb_id, local_files))
+
+    msg = "success，后台正在飞速上传文件，请耐心等待"
+    return sanic_json({"code": 200, "msg": msg, "data": data})
+

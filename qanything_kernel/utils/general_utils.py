@@ -18,7 +18,7 @@ from qanything_kernel.utils.custom_log import debug_logger
 
 __all__ = ['write_check_file', 'isURL', 'format_source_documents', 'get_time', 'safe_get', 'truncate_filename',
            'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens', 'download_file', 
-           'get_gpu_memory_utilization', 'check_package_version']
+           'get_gpu_memory_utilization', 'check_package_version', 'simplify_filename']
 
 
 def get_invalid_user_id_msg(user_id):
@@ -204,3 +204,22 @@ def get_gpu_memory_utilization(model_size, device_id):
     else:
         raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 7B")
     return gpu_memory_utilization
+
+
+def simplify_filename(filename, max_length=40):
+    if len(filename) <= max_length:
+        # 如果文件名长度小于等于最大长度，直接返回原文件名
+        return filename
+
+    # 分离文件的基本名和扩展名
+    name, extension = filename.rsplit('.', 1)
+    extension = '.' + extension  # 将点添加回扩展名
+
+    # 计算头部和尾部的保留长度
+    part_length = (max_length - len(extension) - 1) // 2  # 减去扩展名长度和破折号的长度
+    end_start = -part_length if part_length else None
+
+    # 构建新的简化文件名
+    simplified_name = f"{name[:part_length]}-{name[end_start:]}" if part_length else name[:max_length - 1]
+
+    return f"{simplified_name}{extension}"

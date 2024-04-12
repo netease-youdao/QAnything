@@ -121,6 +121,11 @@ class LocalDocQA:
         t2 = time.time()
         debug_logger.info(f"faiss search time: {t2 - t1}")
         for idx, doc in enumerate(docs):
+            if doc.metadata['file_name'].endswith('.faq'):
+                faq_dict = doc.metadata['faq_dict']
+                doc.page_content = f"{faq_dict['question']}：{faq_dict['answer']}"
+                nos_keys = faq_dict.get('nos_keys')
+                doc.metadata['nos_keys'] = nos_keys
             doc.metadata['retrieval_query'] = query  # 添加查询到文档的元数据中
             doc.metadata['embed_version'] = self.embeddings.getModelVersion
             source_documents.append(doc)

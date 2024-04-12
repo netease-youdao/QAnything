@@ -79,7 +79,7 @@ class KnowledgeBaseManager:
         self.execute_query_(query, (), commit=True)
 
         query = """
-            CREATE TABLE IF NOT EXISTS QanythingBot(
+            CREATE TABLE IF NOT EXISTS QanythingBot (
                 bot_id          VARCHAR(64) PRIMARY KEY,
                 user_id         VARCHAR(255),
                 bot_name        VARCHAR(512),
@@ -92,6 +92,18 @@ class KnowledgeBaseManager:
                 deleted         INT DEFAULT 0,
                 create_time     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 update_time     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """
+        self.execute_query_(query, (), commit=True)
+
+        query = """
+            CREATE TABLE IF NOT EXISTS Faqs (
+                faq_id  VARCHAR(255) PRIMARY KEY,
+                user_id VARCHAR(255) NOT NULL,
+                kb_id VARCHAR(255) NOT NULL,
+                question VARCHAR(512) NOT NULL, 
+                answer VARCHAR(2048) NOT NULL, 
+                nos_keys VARCHAR(768) 
             );
         """
         self.execute_query_(query, (), commit=True)
@@ -255,6 +267,11 @@ class KnowledgeBaseManager:
         debug_logger.info("add_file: {}".format(file_id))
         return file_id, "success"
 
+    def add_faq(self, faq_id, user_id, kb_id, question, answer, nos_keys):
+        # debug_logger.info(f"add_faq: {faq_id}, {user_id}, {kb_id}, {question}, {answer}, {nos_keys}")
+        query = "INSERT INTO Faqs (faq_id, user_id, kb_id, question, answer, nos_keys) VALUES (?, ?, ?, ?, ?, ?)"
+        self.execute_query_(query, (faq_id, user_id, kb_id, question, answer, nos_keys), commit=True)
+
     #  更新file中的file_size
     def update_file_size(self, file_id, file_size):
         query = "UPDATE File SET file_size = ? WHERE file_id = ?"
@@ -304,3 +321,27 @@ class KnowledgeBaseManager:
                    kb_ids_str, update_time):
         query = "UPDATE QanythingBot SET bot_name = ?, description = ?, head_image = ?, prompt_setting = ?, welcome_message = ?, model = ?, kb_ids_str = ?, update_time = ? WHERE user_id = ? AND bot_id = ? AND deleted = 0"
         self.execute_query_(query, (bot_name, description, head_image, prompt_setting, welcome_message, model, kb_ids_str, update_time, user_id, bot_id), commit=True)
+
+    def get_faq(self, faq_id) -> tuple:
+        query = "SELECT user_id, kb_id, question, answer, nos_keys FROM Faqs WHERE faq_id = %s"
+        faq_all = self.execute_query_(query, (faq_id,), fetch=True)
+        if faq_all:
+            faq = faq_all[0]
+            debug_logger.info(f"get_faq: faq_id: {faq_id}, mysql res: {faq}")
+            return faq
+        else:
+            debug_logger.error(f"get_faq: faq_id: {faq_id} not found")
+            return None
+
+    def delete_faqs(self, faq_ids):
+        # 分批，因为多个faq_id的加一起可能会超过sql的最大长度
+        batch_size = 100
+        total_deleted = 0
+        for i in range(0, len(faq_ids), batch_size):
+            batch_faq_ids = faq_ids[i:i+batch_size]
+            placeholders = ','.join(['%s'] * len(batch_faq_ids))
+            query = "DELETE FROM Faqs WHERE faq_id IN ({})".format(placeholders)
+            res = self.execute_query_(query, (batch_faq_ids), commit=True, check=True)
+            total_deleted += res
+        debug_logger.info(f"delete_faqs count: {total_deleted}")
+
