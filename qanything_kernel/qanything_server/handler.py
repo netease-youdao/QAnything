@@ -592,9 +592,13 @@ async def get_bot_info(req: request):
     bot_infos = local_doc_qa.mysql_client.get_bot(user_id, bot_id)
     data = []
     for bot_info in bot_infos:
-        kb_ids = bot_info[7].split(',')
-        kb_names = local_doc_qa.mysql_client.get_knowledge_base_name(kb_ids)
-        kb_names = [kb[2] for kb in kb_names]
+        if bot_info[7] is not "":
+            kb_ids = bot_info[7].split(',')
+            kb_names = local_doc_qa.mysql_client.get_knowledge_base_name(kb_ids)
+            kb_names = [kb[2] for kb in kb_names]
+        else:
+            kb_ids = []
+            kb_names = []
         info = {"bot_id": bot_info[0], "user_id": user_id, "bot_name": bot_info[1], "description": bot_info[2],
                 "head_image": bot_info[3], "prompt_setting": bot_info[4], "welcome_message": bot_info[5],
                 "model": bot_info[6], "kb_ids": kb_ids, "kb_names": kb_names, "update_time": bot_info[8]}
@@ -640,7 +644,6 @@ async def upload_faqs(req: request):
         local_files.append(local_file)
         local_doc_qa.mysql_client.add_faq(file_id, user_id, kb_id, ques, faq['answer'], faq.get("nos_keys", ""))
         file_size = len(ques) + len(faq['answer'])
-        file_location = 'FAQ'
         msg = local_doc_qa.mysql_client.add_file(user_id, kb_id, file_name, timestamp, status='green')
         # debug_logger.info(f"{file_name}, {file_id}, {msg}, {faq}")
         data.append(
