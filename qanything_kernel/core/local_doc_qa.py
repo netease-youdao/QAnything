@@ -80,7 +80,10 @@ class LocalDocQA:
             start = time.time()
             try:
                 local_file.split_file_to_docs(self.get_ocr_result)
-                content_length = sum([len(doc.page_content) for doc in local_file.docs])
+                if local_file.file_name.endswith('.faq'):
+                    content_length = len(local_file.docs[0].metadata['faq_dict']['question']) + len(local_file.docs[0].metadata['faq_dict']['answer'])
+                else:
+                    content_length = sum([len(doc.page_content) for doc in local_file.docs])
             except Exception as e:
                 error_info = f'split error: {traceback.format_exc()}'
                 debug_logger.error(error_info)

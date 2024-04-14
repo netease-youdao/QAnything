@@ -663,18 +663,17 @@ async def upload_faqs(req: request):
             continue
         if len(ques) > 512 or len(faq['answer']) > 2048:
             return sanic_json({"code": 2003, "msg": f"fail, faq too long, max length of question is 512, answer is 2048."})
+        content_length = len(ques) + len(faq['answer'])
         file_name = f"FAQ_{ques}.faq"
         file_name = file_name.replace("/", "_").replace(":", "_")  # 文件名中的/和：会导致写入时出错
         file_name = simplify_filename(file_name)
-        file_id = uuid.uuid4().hex
+        file_id, msg = local_doc_qa.mysql_client.add_file(user_id, kb_id, file_name, timestamp, status='green')
         local_file = LocalFile(user_id, kb_id, faq, file_id, file_name, local_doc_qa.embeddings)
         local_files.append(local_file)
         local_doc_qa.mysql_client.add_faq(file_id, user_id, kb_id, ques, faq['answer'], faq.get("nos_keys", ""))
-        file_size = len(ques) + len(faq['answer'])
-        msg = local_doc_qa.mysql_client.add_file(user_id, kb_id, file_name, timestamp, status='green')
         # debug_logger.info(f"{file_name}, {file_id}, {msg}, {faq}")
         data.append(
-            {"file_id": file_id, "file_name": file_name, "status": "gray", "length": file_size,
+            {"file_id": file_id, "file_name": file_name, "status": "gray", "length": content_length,
              "timestamp": timestamp})
     debug_logger.info(f"end insert {len(faqs)} faqs to mysql, user_id: {user_id}, kb_id: {kb_id}")
 
