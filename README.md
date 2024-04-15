@@ -325,7 +325,7 @@ docker pull quay.io/coreos/etcd:v3.5.5
 docker pull minio/minio:RELEASE.2023-03-20T20-16-18Z
 docker pull milvusdb/milvus:v2.3.4
 docker pull mysql:latest
-docker pull freeren/qanything-win:v1.2.1
+docker pull freeren/qanything-win:v1.2.x  # From [https://github.com/netease-youdao/QAnything/blob/master/docker-compose-windows.yaml#L103] Get the latest version number.
 
 # pack image
 docker save quay.io/coreos/etcd:v3.5.5 minio/minio:RELEASE.2023-03-20T20-16-18Z milvusdb/milvus:v2.3.4 mysql:latest freeren/qanything-win:v1.2.1 -o qanything_offline.tar
@@ -352,7 +352,7 @@ docker pull quay.io/coreos/etcd:v3.5.5
 docker pull minio/minio:RELEASE.2023-03-20T20-16-18Z
 docker pull milvusdb/milvus:v2.3.4
 docker pull mysql:latest
-docker pull freeren/qanything:v1.2.1
+docker pull freeren/qanything:v1.2.x  # From [https://github.com/netease-youdao/qanything/blob/master/docker-compose-linux.yaml#L104] Get the latest version number.
 
 # pack image
 docker save quay.io/coreos/etcd:v3.5.5 minio/minio:RELEASE.2023-03-20T20-16-18Z milvusdb/milvus:v2.3.4 mysql:latest freeren/qanything:v1.2.1 -o qanything_offline.tar
