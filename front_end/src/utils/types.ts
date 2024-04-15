@@ -10,6 +10,7 @@
 export interface IKnowledgeItem {
   kb_id: string;
   kb_name: string;
+  isFaq?: boolean;
   createTime?: any;
   edit?: boolean;
 }

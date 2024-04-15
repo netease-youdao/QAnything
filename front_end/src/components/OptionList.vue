@@ -114,7 +114,7 @@
                   class="edit-item"
                   type="link"
                   @click="editQaItem(record)"
-                  :disabled="+record.status !== 1"
+                  :disabled="record.status !== 'green'"
                 >
                   {{ bots.edit }}
                 </a-button>
@@ -295,15 +295,18 @@ const deleteQaItem = item => {
 const qaConfirm = async () => {
   console.log(qaOptionItem);
   try {
-    await resultControl(await urlResquest.deleteFaq({ id: qaOptionItem.id }));
+    await resultControl(
+      await urlResquest.deleteFile({
+        kb_id: `${currentId.value}_FAQ`,
+        file_ids: [qaOptionItem.faqId],
+      })
+    );
     message.success('删除成功');
-    // 如果删除的是当前页的最后一个 就请求上一页的数据
+    // 如果删除的是当前页的最后一个
     if (total.value - 1 - (pageNum.value - 1) * 10 <= 0) {
-      getFaqList(pageNum.value - 1);
       setPageNum(pageNum.value - 1);
-    } else {
-      getFaqList(pageNum.value);
     }
+    getFaqList();
   } catch (e) {
     message.error(e.msg || '删除失败');
   }
@@ -353,16 +356,50 @@ const parseStatus = status => {
 const parseFaqStatus = status => {
   let str = common.failed;
   switch (status) {
-    case 0:
+    case 'gray':
       str = common.uploadCompleted;
       break;
-    case 1:
+    case 'green':
       str = common.learningCompleted;
       break;
     default:
       break;
   }
   return str;
+};
+
+const checkKbIsCreate = async () => {
+  try {
+    const res: any = await resultControl(await urlResquest.kbList());
+    if (res.find(item => item.kb_id === `${currentId.value}_FAQ`)) {
+      return true;
+    }
+  } catch (e) {
+    message.error(e.msg || common.error);
+    return true;
+  }
+  return false;
+};
+
+const addKnowledge = async () => {
+  const isCreate = await checkKbIsCreate();
+  if (isCreate) {
+    return;
+  }
+  //获取到知识库id后  赋值给newId
+  try {
+    const res: any = await resultControl(
+      await urlResquest.createKb({
+        kb_name: `${currentKbName.value}_FAQ`,
+        kb_id: `${currentId.value}_FAQ`,
+      })
+    );
+    console.log(res);
+  } catch (e) {
+    message.error(e.msg || common.error);
+    return false;
+  }
+  return true;
 };
 
 const navClick = value => {
@@ -373,7 +410,8 @@ const navClick = value => {
   } else {
     setPageNum(1);
     clearTimeout(timer.value);
-    getFaqList(0);
+    getFaqList();
+    addKnowledge();
   }
 };
 
@@ -381,7 +419,6 @@ const onChange = pagination => {
   console.log('onChange', pagination, paginationConfig);
   const { current } = pagination;
   setPageNum(current);
-  getFaqList(current);
 };
 
 watch(

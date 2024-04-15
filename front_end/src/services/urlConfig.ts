@@ -143,6 +143,14 @@ const urlConfig: IUrlConfig = {
       user_id: userId,
     },
   },
+  //上传faq
+  uploadFaqs: {
+    type: EUrlType.POST,
+    url: '/local_doc_qa/upload_faqs',
+    param: {
+      user_id: userId,
+    },
+  },
 };
 const urlResquest: any = {};
 Object.keys(urlConfig).forEach(key => {

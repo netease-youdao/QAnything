@@ -118,10 +118,7 @@
                     <li v-for="(item, index) in uploadFileList" :key="index">
                       <span class="name">{{ item.file_name }}</span>
                       <div class="status-box">
-                        <SvgIcon
-                          v-if="item.status != fileStatus.loading"
-                          :name="fileStatus[item.status]"
-                        />
+                        <SvgIcon v-if="item.status != 'loading'" :name="item.status" />
                         <img
                           v-else
                           class="loading"
@@ -169,19 +166,21 @@
   </Teleport>
 </template>
 <script lang="ts" setup>
+import { apiBase } from '@/services';
 import { useOptiionList } from '@/store/useOptiionList';
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
-// import urlResquest from '@/services/urlConfig';
-// import { resultControl } from '@/utils/utils';
+import urlResquest from '@/services/urlConfig';
+import { resultControl } from '@/utils/utils';
 import { message } from 'ant-design-vue';
 import { getLanguage } from '@/language/index';
 // import { PlusOutlined } from '@ant-design/icons-vue';
 import { fileStatus } from '@/utils/enum';
 import { useLanguage } from '@/store/useLanguage';
 import { IFileListItem } from '@/utils/types';
+import { userId } from '@/services/urlConfig';
 
 const { setEditModalVisible, setEditQaSet, getFaqList } = useOptiionList();
-const { editModalVisible, editQaSet, faqType, pageNum } = storeToRefs(useOptiionList());
+const { editModalVisible, editQaSet, faqType } = storeToRefs(useOptiionList());
 const { currentId } = storeToRefs(useKnowledgeBase());
 const home = getLanguage().home;
 const common = getLanguage().common;
@@ -246,51 +245,43 @@ function clearFormState() {
   formState.imgs = [];
 }
 
+const delFaq = async () => {
+  try {
+    await resultControl(
+      await urlResquest.deleteFile({
+        kb_id: `${currentId.value}_FAQ`,
+        file_ids: [editQaSet.value?.faqId],
+      })
+    );
+  } catch (e) {
+    message.error(e.msg || '删除失败');
+  }
+};
+
 const onFinish = async (values: any) => {
   console.log('Success:', values);
   loading.value = true;
-  const formData = new FormData();
-  formData.append('kbId', currentId.value);
-  formData.append('question', formState.question);
-  formData.append('answer', formState.answer);
-  for (let i = 0; i < formState.imgs.length; i++) {
-    formData.append('faqPicList', formState.imgs[i]?.originFileObj);
-    console.log('fileobj', formState.imgs[i]?.originFileObj);
-  }
   // 编辑接口比上传多两个参数
   if (faqType.value === 'edit') {
-    formData.append('id', editQaSet.value.id);
-    formData.append('faqId', editQaSet.value.faqId);
+    await delFaq();
   }
-  const base = import.meta.env.VITE_APP_SERVER_URL;
-  const path = faqType.value === 'upload' ? '/faq/uploadFaq' : '/faq/updateFaq';
-  const requestUrl = base + path;
-  console.log('requestUrl', requestUrl, base, faqType.value, path);
-  await fetch(requestUrl, {
-    method: 'POST',
-    body: formData,
-  })
-    .then(response => {
-      if (response.ok) {
-        return response.json(); // 将响应解析为 JSON
-      } else {
-        throw new Error('上传失败');
-      }
-    })
-    .then(data => {
-      console.log(data);
-      // 在此处对接口返回的数据进行处理
-      if (data.errorCode === '0') {
-        message.success('上传成功');
-        getFaqList(pageNum.value);
-      } else {
-        message.error(data.msg || '出错了');
-      }
-    })
-    .catch(error => {
-      console.log(error);
-      message.error(error.message || '出错了');
-    });
+  try {
+    const faqs = [
+      {
+        question: values.question,
+        answer: values.answer,
+        nos_key: null,
+      },
+    ];
+    const res: any = await resultControl(
+      await urlResquest.uploadFaqs({ kb_id: `${currentId.value}_FAQ`, faqs: faqs })
+    );
+    console.log(res);
+    message.success('上传成功');
+  } catch (e) {
+    message.error(e.msg || '获取Bot信息失败');
+  }
+  getFaqList();
   loading.value = false;
   setEditModalVisible(false);
 };
@@ -319,7 +310,7 @@ const beforeFileUpload = async (file, index) => {
       uploadFileList.value.push({
         file_name: file.name,
         file: file,
-        status: fileStatus.loading,
+        status: 'loading',
         errorText: common.uploading,
         file_id: '',
         order: uploadFileList.value.length,
@@ -350,19 +341,20 @@ const fileChange = e => {
 const uplolad = async () => {
   const list = [];
   showUploadList.value = true;
+  console.log('uploadFileList', uploadFileList.value);
   uploadFileList.value.forEach((file: IFileListItem) => {
-    if (file.status == 'loading') {
+    if (file.status === 'loading') {
       list.push(file);
     }
   });
   const formData = new FormData();
   for (let i = 0; i < list.length; i++) {
-    formData.append('faqExcel', list[i]?.file);
+    formData.append('files', list[i]?.file);
   }
-  formData.append('kbId', currentId.value);
-  const base = import.meta.env.VITE_APP_SERVER_URL;
+  formData.append('user_id', userId);
+  formData.append('kb_id', `${currentId.value}_FAQ`);
 
-  fetch(base + '/faq/uploadFaqExcel', {
+  fetch(apiBase + '/local_doc_qa/upload_faqs', {
     method: 'POST',
     body: formData,
   })
@@ -378,18 +370,23 @@ const uplolad = async () => {
     .then(data => {
       console.log(data);
       // 在此处对接口返回的数据进行处理
-      if (data.errorCode === '0') {
-        list.forEach(item => {
-          uploadFileList.value[item.order].status = fileStatus.success;
+      if (data.code === 200) {
+        list.forEach((item, index) => {
+          let status = data.data[index].status;
+          if (status == 'green' || status == 'gray') {
+            status = 'success';
+          } else {
+            status = 'error';
+          }
+          uploadFileList.value[item.order].status = status;
           uploadFileList.value[item.order].errorText = common.upSucceeded;
         });
         setEditModalVisible(false);
         message.success('上传成功');
-        getFaqList(pageNum.value);
       } else {
         message.error(data.msg || '出错了');
         list.forEach(item => {
-          uploadFileList.value[item.order].status = fileStatus.error;
+          uploadFileList.value[item.order].status = 'error';
           uploadFileList.value[item.order].errorText = data?.msg || common.upFailed;
         });
       }
@@ -402,6 +399,7 @@ const uplolad = async () => {
       });
       message.error(JSON.stringify(error.message) || '出错了');
     });
+  getFaqList();
 };
 
 // function getBase64(file: File) {

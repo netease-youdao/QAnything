@@ -11,7 +11,6 @@ import urlResquest from '@/services/urlConfig';
 import { formatFileSize, resultControl, formatDate } from '@/utils/utils';
 import { message } from 'ant-design-vue';
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
-import moment from 'moment';
 const { currentId } = storeToRefs(useKnowledgeBase());
 
 export const useOptiionList = defineStore(
@@ -106,7 +105,7 @@ export const useOptiionList = defineStore(
 
     const faqTimer = ref(null);
 
-    const getFaqList = async pageId => {
+    const getFaqList = async () => {
       try {
         if (faqTimer.value) {
           clearTimeout(faqTimer.value);
@@ -125,12 +124,13 @@ export const useOptiionList = defineStore(
         }
         res?.details.forEach(async (item, i) => {
           faqList.value.push({
+            id: 10000 + i,
             faqId: item?.file_id,
-            question: item?.faq.question,
-            answer: item?.faq.answer,
-            status: +item?.faq.status,
-            bytes: `${item?.bytes}字符`,
-            createtime: moment(item?.faq.createTime).format('YYYY-MM-DD'),
+            question: item?.question,
+            answer: item?.answer,
+            status: item?.status,
+            bytes: `${item?.content_length}字符`,
+            createtime: formatDate(item?.timestamp),
             picUrlList: [],
           });
           // 格式化图片为upload支持的结构
@@ -157,8 +157,8 @@ export const useOptiionList = defineStore(
           }
         });
 
-        const flag = res?.faqList.some(item => {
-          return +item.faq.status === 0;
+        const flag = res?.details.some(item => {
+          return item.status === 'gray';
         });
         console.log('flag', flag);
         if (flag) {
@@ -166,7 +166,7 @@ export const useOptiionList = defineStore(
           //有解析中的
           faqTimer.value = setTimeout(() => {
             clearTimeout(faqTimer.value);
-            getFaqList(pageId);
+            getFaqList();
           }, 5000);
         } else {
           console.log('全部解析完成');

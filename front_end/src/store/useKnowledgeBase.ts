@@ -59,12 +59,13 @@ export const useKnowledgeBase = defineStore('knowledgeBase', () => {
     try {
       const res: any = await urlResquest.kbList();
       if (+res.code === 200) {
-        setKnowledgeBaseList(res.data);
         if (res?.data?.length > 0) {
+          const list = res.data.filter(item => !/.*_FAQ$/.test(item.kb_name));
+          setKnowledgeBaseList(list);
           setDefault(pageStatus.normal);
 
           if (!selectList.value.length) {
-            selectList.value.push(res.data[0].kb_id);
+            selectList.value.push(list[0].kb_id);
           }
         } else {
           setDefault(pageStatus.default);

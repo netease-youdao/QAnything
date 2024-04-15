@@ -65,7 +65,8 @@ const indicator = h(LoadingOutlined, {
 const getKbList = async kbIds => {
   try {
     const res: any = await resultControl(await urlResquest.kbList());
-    let kbs = [...res];
+    const list = res.filter(item => !/.*_FAQ$/.test(item.kb_name));
+    let kbs = [...list];
     console.log('kbs', kbs, kbIds);
     if (kbIds && kbIds.length) {
       kbs = kbs.map(kb => {
