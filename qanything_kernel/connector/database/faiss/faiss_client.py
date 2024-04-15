@@ -64,8 +64,11 @@ class FaissClient:
             if self.faiss_client is None:
                 self.faiss_client = faiss_client
             else:
-                self.faiss_client.merge_from(faiss_client)
-                debug_logger.info(f'merge FAISS kb_id: {kb_id}')
+                try:
+                    self.faiss_client.merge_from(faiss_client)
+                    debug_logger.info(f'merge FAISS kb_id: {kb_id}')
+                except ValueError:
+                    raise ValueError(f'遗留数据与新版本不匹配，请删除{os.path.dirname(FAISS_LOCATION)}文件夹（清空所有知识库）后重新启动服务并重新创建知识库')
         debug_logger.info(f'FAISS load kb_ids: {kb_ids}')
 
     async def search(self, kb_ids, query, filter: Optional[Union[Callable, Dict[str, Any]]] = None,
