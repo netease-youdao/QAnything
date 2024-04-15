@@ -350,6 +350,11 @@ async def local_doc_chat(req: request):
     not_exist_kb_ids = local_doc_qa.mysql_client.check_kb_exist(user_id, kb_ids)
     if not_exist_kb_ids:
         return sanic_json({"code": 2003, "msg": "fail, knowledge Base {} not found".format(not_exist_kb_ids)})
+    faq_kb_ids = [kb + '_FAQ' for kb in kb_ids]
+    not_exist_faq_kb_ids = local_doc_qa.mysql_client.check_kb_exist(user_id, faq_kb_ids)
+    exist_faq_kb_ids = [kb for kb in faq_kb_ids if kb not in not_exist_faq_kb_ids]
+    debug_logger.info("exist_faq_kb_ids: %s", exist_faq_kb_ids)
+    kb_ids += exist_faq_kb_ids
 
     file_infos = []
     for kb_id in kb_ids:
