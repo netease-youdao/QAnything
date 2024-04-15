@@ -192,6 +192,13 @@ async def list_docs(req: request):
             status_count[status] += 1
         data.append({"file_id": file_info[0], "file_name": file_info[1], "status": file_info[2], "bytes": file_info[3],
                      "content_length": file_info[4], "timestamp": file_info[5], "msg": msg_map[file_info[2]]})
+        file_name = file_info[1]
+        file_id = file_info[0]
+        if file_name.endswith('.faq'):
+            faq_info = local_doc_qa.mysql_client.get_faq(file_id)
+            if faq_info:
+                data[-1]['question'] = faq_info[2]
+                data[-1]['answer'] = faq_info[3]
 
     return sanic_json({"code": 200, "msg": "success", "data": {'total': status_count, 'details': data}})
 

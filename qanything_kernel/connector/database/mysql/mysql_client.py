@@ -323,7 +323,7 @@ class KnowledgeBaseManager:
         self.execute_query_(query, (bot_name, description, head_image, prompt_setting, welcome_message, model, kb_ids_str, update_time, user_id, bot_id), commit=True)
 
     def get_faq(self, faq_id) -> tuple:
-        query = "SELECT user_id, kb_id, question, answer, nos_keys FROM Faqs WHERE faq_id = %s"
+        query = "SELECT user_id, kb_id, question, answer, nos_keys FROM Faqs WHERE faq_id = ?"
         faq_all = self.execute_query_(query, (faq_id,), fetch=True)
         if faq_all:
             faq = faq_all[0]
