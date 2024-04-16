@@ -80,7 +80,10 @@ class LocalDocQA:
             start = time.time()
             try:
                 local_file.split_file_to_docs(self.get_ocr_result)
-                content_length = sum([len(doc.page_content) for doc in local_file.docs])
+                if local_file.file_name.endswith('.faq'):
+                    content_length = len(local_file.docs[0].metadata['faq_dict']['question']) + len(local_file.docs[0].metadata['faq_dict']['answer'])
+                else:
+                    content_length = sum([len(doc.page_content) for doc in local_file.docs])
             except Exception as e:
                 error_info = f'split error: {traceback.format_exc()}'
                 debug_logger.error(error_info)
@@ -121,6 +124,11 @@ class LocalDocQA:
         t2 = time.time()
         debug_logger.info(f"faiss search time: {t2 - t1}")
         for idx, doc in enumerate(docs):
+            if doc.metadata['file_name'].endswith('.faq'):
+                faq_dict = doc.metadata['faq_dict']
+                doc.page_content = f"{faq_dict['question']}：{faq_dict['answer']}"
+                nos_keys = faq_dict.get('nos_keys')
+                doc.metadata['nos_keys'] = nos_keys
             doc.metadata['retrieval_query'] = query  # 添加查询到文档的元数据中
             doc.metadata['embed_version'] = self.embeddings.getModelVersion
             source_documents.append(doc)
@@ -185,7 +193,7 @@ class LocalDocQA:
         source_documents = sorted(source_documents, key=lambda x: x.metadata['score'], reverse=True)
         return source_documents
 
-    async def get_knowledge_based_answer(self, query, kb_ids, chat_history=None, streaming: bool = STREAMING,
+    async def get_knowledge_based_answer(self, custom_prompt, query, kb_ids, chat_history=None, streaming: bool = STREAMING,
                                          rerank: bool = False):
         if chat_history is None:
             chat_history = []
@@ -198,13 +206,18 @@ class LocalDocQA:
             debug_logger.info(f"use rerank, rerank docs num: {len(retrieval_documents)}")
             retrieval_documents = self.rerank_documents(query, retrieval_documents)[: self.rerank_top_k]
 
+        if custom_prompt is None:
+            prompt_template = PROMPT_TEMPLATE
+        else:
+            prompt_template = custom_prompt + '\n' + PROMPT_TEMPLATE
+
         source_documents = self.reprocess_source_documents(query=query,
                                                            source_docs=retrieval_documents,
                                                            history=chat_history,
-                                                           prompt_template=PROMPT_TEMPLATE)
+                                                           prompt_template=prompt_template)
         prompt = self.generate_prompt(query=query,
                                       source_docs=source_documents,
-                                      prompt_template=PROMPT_TEMPLATE)
+                                      prompt_template=prompt_template)
         t1 = time.time()
         async for answer_result in self.llm.generatorAnswer(prompt=prompt,
                                                       history=chat_history,

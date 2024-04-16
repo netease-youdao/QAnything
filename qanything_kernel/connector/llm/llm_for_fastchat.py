@@ -9,7 +9,7 @@ import requests
 
 sys.path.append("../../../")
 from qanything_kernel.connector.llm.base import (BaseAnswer, AnswerResult)
-from qanything_kernel.configs.model_config import DT_CONV_4B_TEMPLATE, DT_CONV_7B_TEMPLATE, DT_CONV_3B_TEMPLATE
+from qanything_kernel.configs.model_config import DT_CONV_7B_TEMPLATE, DT_CONV_3B_TEMPLATE
 from vllm import LLM, SamplingParams
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.engine.async_llm_engine import AsyncLLMEngine
@@ -38,13 +38,12 @@ class OpenAICustomLLM(BaseAnswer, ABC):
         args.trust_remote_code = True
         engine_args = AsyncEngineArgs.from_cli_args(args)
         self.engine = AsyncLLMEngine.from_engine_args(engine_args)
-        self.sampling_params = SamplingParams(temperature=0.8, top_p=0.95)
+        self.sampling_params = SamplingParams(temperature=0.6, top_p=0.8, repetition_penalty=1.05, max_tokens=512)
         if args.model_size == '3B':
             self.conv_template = DT_CONV_3B_TEMPLATE
-        if args.model_size == '4B':
-            self.conv_template = DT_CONV_4B_TEMPLATE
         else:
             self.conv_template = DT_CONV_7B_TEMPLATE
+        debug_logger.info(f"conv_template: {self.conv_template}")
 
     @property
     def _llm_type(self) -> str:
@@ -74,25 +73,30 @@ class OpenAICustomLLM(BaseAnswer, ABC):
         return num_tokens
 
     async def _call(self, prompt: str, history: List[List[str]], streaming: bool = False) -> str:
-        messages = []
+        conv = get_conv_template(self.conv_template)
         for pair in history:
             question, answer = pair
-            messages.append({"role": "user", "content": question})
-            messages.append({"role": "assistant", "content": answer})
-        messages.append({"role": "user", "content": prompt})
-        debug_logger.info(messages)
-
-        conv = get_conv_template(self.conv_template)
-        for message in messages:
-            conv.append_message(message['role'], message['content'])
+            conv.append_message(conv.roles[0], question)
+            conv.append_message(conv.roles[1], answer)
+        conv.append_message(conv.roles[0], prompt)
+        conv.append_message(conv.roles[1], None)
         prompt = conv.get_prompt()
 
         results_generator = self.engine.generate(prompt, self.sampling_params, request_id=random_uuid())
-        async for request_output in results_generator:
-            delta = {"answer": request_output.outputs[0].text}
-            yield "data: " + json.dumps(delta, ensure_ascii=False)
+        if streaming:
+            pre_text_len = 0
+            async for request_output in results_generator:
+                delta = {"answer": request_output.outputs[0].text[pre_text_len:]}
+                pre_text_len += len(delta['answer'])
+                # delta = {"answer": request_output.outputs[0].text}
+                yield "data: " + json.dumps(delta, ensure_ascii=False)
 
-        yield f"data: [DONE]\n\n"
+            yield f"data: [DONE]\n\n"
+        else:
+            delta = {"answer": ""}
+            async for request_output in results_generator:
+                delta["answer"] = request_output.outputs[0].text
+            yield "data: " + json.dumps(delta, ensure_ascii=False)
 
     async def generatorAnswer(self, prompt: str,
                               history: List[List[str]] = [],

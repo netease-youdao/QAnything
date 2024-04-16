@@ -65,8 +65,8 @@ VECTOR_SEARCH_SCORE_THRESHOLD = 1.1
 ZH_TITLE_ENHANCE = False
 
 # MILVUS向量数据库地址
-MILVUS_HOST_LOCAL = '127.0.0.1'
-MILVUS_HOST_ONLINE = '127.0.0.1'
+MILVUS_HOST_LOCAL = '0.0.0.0'
+MILVUS_HOST_ONLINE = '0.0.0.0'
 MILVUS_PORT = 19530
 MILVUS_USER = ''
 MILVUS_PASSWORD = ''
@@ -97,7 +97,7 @@ else:
 print('LOCAL_RERANK_REPO:', LOCAL_RERANK_REPO)
 LOCAL_RERANK_MODEL_NAME = 'rerank'
 LOCAL_RERANK_MAX_LENGTH = 512
-LOCAL_RERANK_BATCH = 16
+LOCAL_RERANK_BATCH = 8
 
 LOCAL_EMBED_PATH = os.path.join(root_path, 'qanything_kernel/connector/embedding', 'embedding_model_configs_v0.0.1')
 if os_system == 'Darwin':
@@ -109,7 +109,7 @@ else:
 print('LOCAL_EMBED_REPO:', LOCAL_EMBED_REPO)
 LOCAL_EMBED_MODEL_NAME = 'embed'
 LOCAL_EMBED_MAX_LENGTH = 512
-LOCAL_EMBED_BATCH = 16
+LOCAL_EMBED_BATCH = 8
 
 # VLLM PARAMS
 model_path = os.path.join(root_path, "assets", "custom_models")
@@ -117,25 +117,32 @@ model_path = os.path.join(root_path, "assets", "custom_models")
 if not os.path.exists(model_path):
     os.makedirs(model_path)
 if os_system == 'Darwin':
-    DT_4B_MODEL_PATH = os.path.join(model_path, "qwen/Qwen1.5-4B-Chat-GGUF") + '/qwen1_5-4b-chat-q4_k_m.gguf'
-    DT_7B_MODEL_PATH = os.path.join(model_path, "qwen/Qwen1.5-7B-Chat-GGUF") + '/qwen1_5-7b-chat-q4_k_m.gguf'
-    DT_4B_DOWNLOAD_PARAMS = {'model_id': 'qwen/Qwen1.5-4B-Chat-GGUF', 'file_path': 'qwen1_5-4b-chat-q4_k_m.gguf', 'revision': 'master', 'cache_dir': model_path}
-    DT_7B_DOWNLOAD_PARAMS = {'model_id': 'qwen/Qwen1.5-7B-Chat-GGUF', 'file_path': 'qwen1_5-7b-chat-q4_k_m.gguf', 'revision': 'master', 'cache_dir': model_path}
-    DT_CONV_4B_TEMPLATE = "qwen-7b-chat"
-    DT_CONV_7B_TEMPLATE = "qwen-7b-chat"
-    DT_3B_MODEL_PATH = ''
-    DT_3B_DOWNLOAD_PARAMS = {}
-    DT_CONV_3B_TEMPLATE = ''
+    DT_3B_MODEL_PATH = os.path.join(model_path, "netease-youdao/MiniChat-2-3B-FP16-GGUF") + '/MiniChat-2-3B-fp16.gguf'
+    DT_3B_DOWNLOAD_PARAMS = {'model_id': 'netease-youdao/MiniChat-2-3B-FP16-GGUF',
+                             'revision': 'master', 'cache_dir': model_path}
+    # DT_3B_MODEL_PATH = os.path.join(model_path, "netease-youdao/MiniChat-2-3B-INT8-GGUF") + '/MiniChat-2-3B-int8.gguf'
+    # DT_3B_DOWNLOAD_PARAMS = {'model_id': 'netease-youdao/MiniChat-2-3B-INT8-GGUF',
+    #                          'revision': 'master', 'cache_dir': model_path}
+    DT_CONV_3B_TEMPLATE = "minichat"
+    DT_7B_MODEL_PATH = ''
+    DT_7B_DOWNLOAD_PARAMS = {}  # Qwen-7B-QAnything使用llama-cpp-python运行存在问题，暂时不支持
+    DT_CONV_7B_TEMPLATE = "qwen-7b-qanything"
 else:
-    DT_3B_MODEL_PATH = os.path.join(model_path, "MiniChat-2-3B")
-    DT_7B_MODEL_PATH = os.path.join(model_path, "Qwen-7B-QAnything")
+    DT_3B_MODEL_PATH = os.path.join(model_path, "netease-youdao/MiniChat-2-3B")
+    DT_7B_MODEL_PATH = os.path.join(model_path, "netease-youdao/Qwen-7B-QAnything")
     DT_3B_DOWNLOAD_PARAMS = {'model_id': 'netease-youdao/MiniChat-2-3B',
                              'revision': 'master', 'cache_dir': model_path}
     DT_7B_DOWNLOAD_PARAMS = {'model_id': 'netease-youdao/Qwen-7B-QAnything',
                              'revision': 'master', 'cache_dir': model_path}
     DT_CONV_3B_TEMPLATE = "minichat"
     DT_CONV_7B_TEMPLATE = "qwen-7b-qanything"
-    DT_4B_MODEL_PATH = ''
-    DT_4B_DOWNLOAD_PARAMS = {}
-    DT_CONV_4B_TEMPLATE = ''
 
+# Bot
+BOT_DESC = "一个简单的问答机器人"
+BOT_IMAGE = ""
+BOT_PROMPT = """
+- 你是一个耐心、友好、专业的机器人，能够回答用户的各种问题。
+- 根据知识库内的检索结果，以清晰简洁的表达方式回答问题。
+- 不要编造答案，如果答案不在经核实的资料中或无法从经核实的资料中得出，请回答“我无法回答您的问题。”（或者您可以修改为：如果给定的检索结果无法回答问题，可以利用你的知识尽可能回答用户的问题。)
+"""
+BOT_WELCOME = "您好，我是您的专属机器人，请问有什么可以帮您呢？"

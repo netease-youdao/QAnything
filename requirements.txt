@@ -10,7 +10,7 @@ transformers==4.36.2
 openai==1.12.0
 concurrent-log-handler==0.9.25
 sentencepiece==0.1.99
-tiktoken==0.4.0
+tiktoken==0.6.0
 sanic==23.6.0
 sanic_ext==23.6.0
 faiss-cpu==1.8.0
@@ -23,3 +23,5 @@ unstructured[pptx]==0.12.4
 unstructured[md]==0.12.4
 accelerate==0.21.0
 faster-whisper==1.0.1
+networkx==3.2.1
+
