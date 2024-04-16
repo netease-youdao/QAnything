@@ -17,7 +17,7 @@ import platform
 from qanything_kernel.utils.custom_log import debug_logger
 
 __all__ = ['write_check_file', 'isURL', 'format_source_documents', 'get_time', 'safe_get', 'truncate_filename',
-           'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens', 'download_file', 
+           'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens', 'download_file',
            'get_gpu_memory_utilization', 'check_package_version']
 
 
@@ -134,7 +134,7 @@ def read_files_with_extensions():
 
     directory = project_dir + '/data'
     print(f'now reading {directory}')
-    extensions = ['.md', '.txt', '.pdf', '.jpg', '.docx', '.xlsx', '.eml', '.csv']
+    extensions = ['.md', '.txt', '.pdf', '.jpg', '.docx', '.xlsx', '.eml', '.csv', '.mp3', '.wav']
     for root, dirs, files in os.walk(directory):
         for file in files:
             if file.endswith(tuple(extensions)):
@@ -195,11 +195,13 @@ def get_gpu_memory_utilization(model_size, device_id):
     debug_logger.info(f"GPU memory: {gpu_memory_in_GB}GB")
     if model_size == '3B':
         if gpu_memory_in_GB < 10:  # 显存最低需要10GB
-            raise ValueError(f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 10GB is required with 3B Model.")
+            raise ValueError(
+                f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 10GB is required with 3B Model.")
         gpu_memory_utilization = round(8 / gpu_memory_in_GB, 2)
     elif model_size == '7B':
         if gpu_memory_in_GB < 24:  # 显存最低需要20GB
-            raise ValueError(f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 24GB is required with 7B Model.")
+            raise ValueError(
+                f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 24GB is required with 7B Model.")
         gpu_memory_utilization = 0.9
     else:
         raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 7B")

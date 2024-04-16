@@ -22,3 +22,4 @@ unstructured==0.12.4
 unstructured[pptx]==0.12.4
 unstructured[md]==0.12.4
 accelerate==0.21.0
+faster-whisper==1.0.1
