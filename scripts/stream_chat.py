@@ -1,11 +1,8 @@
-import os
 import json
 import requests
-import time
-import random
-import string
-import argparse
+import sys
 
+kb_id = "KBb66a202b3cfe48869763107f9b967427"
 def stream_requests(data_raw):
     url = 'http://localhost:8777/api/local_doc_qa/local_doc_chat'
     response = requests.post(
@@ -20,8 +17,8 @@ def stream_requests(data_raw):
 
 def test():
     data_raw = {
-      "kb_ids": ["KB8ee2b2ab902a4ea2b4b42b623790f3e8"],
-      "question": "韦小宝住在哪里？",
+      "kb_ids": [kb_id],
+      "question": "韦小宝身份证号？",
       "user_id": "zzp",
       "streaming": True,
       "history": []
@@ -29,6 +26,7 @@ def test():
     for i, chunk in enumerate(stream_requests(data_raw)):
         if chunk:
             chunkstr = chunk.decode("utf-8")[6:]
+            # print(chunkstr)
             chunkjs = json.loads(chunkstr)
             print(chunkjs)
 

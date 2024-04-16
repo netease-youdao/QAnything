@@ -70,6 +70,11 @@ MILVUS_DB_NAME = ''
 SQLITE_DATABASE = os.path.join(root_path, "QANY_DB", "qanything.db")
 MILVUS_LITE_LOCATION = os.path.join(root_path, "QANY_DB", "milvus")
 
+FAISS_LOCATION = os.path.join(root_path, "QANY_DB", "faiss")
+FAISS_INDEX_FILE_PATH = os.path.join(FAISS_LOCATION, "faiss_index.idx")
+FAISS_INDEX_LOCAL_PATH = os.path.join(FAISS_LOCATION, "local_file")
+# 缓存知识库数量
+FAISS_CACHE_SIZE = 10
 # llm_api_serve_model = os.getenv('LLM_API_SERVE_MODEL', 'MiniChat-2-3B')
 # llm_api_serve_port = os.getenv('LLM_API_SERVE_PORT', 7802)
 
@@ -106,3 +111,12 @@ VW_7B_MODEL = "netease-youdao/Qwen-7B-QAnything"
 VW_CONV_3B_TEMPLATE = "minichat"
 VW_CONV_7B_TEMPLATE = "qwen-7b-qanything"
 
+# Bot
+BOT_DESC = "一个简单的问答机器人"
+BOT_IMAGE = ""
+BOT_PROMPT = """
+- 你是一个耐心、友好、专业的机器人，能够回答用户的各种问题。
+- 根据知识库内的检索结果，以清晰简洁的表达方式回答问题。
+- 不要编造答案，如果答案不在经核实的资料中或无法从经核实的资料中得出，请回答“我无法回答您的问题。”（或者您可以修改为：如果给定的检索结果无法回答问题，可以利用你的知识尽可能回答用户的问题。)
+"""
+BOT_WELCOME = "您好，我是您的专属机器人，请问有什么可以帮您呢？"

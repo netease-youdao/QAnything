@@ -1,11 +1,11 @@
-import os
 import requests
 import sys
 
+kb_id = "KBb66a202b3cfe48869763107f9b967427"
 url = "http://localhost:8777/api/local_doc_qa/upload_files"
 data = {
     "user_id": "zzp",
-    "kb_id": "KB8ee2b2ab902a4ea2b4b42b623790f3e8"
+    "kb_id": kb_id,
 }
 
 files = []

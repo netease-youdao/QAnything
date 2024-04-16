@@ -13,8 +13,7 @@ sentencepiece==0.1.99
 tiktoken==0.4.0
 sanic==23.6.0
 sanic_ext==23.6.0
-milvus>=2.2.16
-pymilvus==2.3.6
+faiss-cpu==1.8.0
 langchain==0.1.9
 pypinyin==0.50.0
 unstructured==0.12.4

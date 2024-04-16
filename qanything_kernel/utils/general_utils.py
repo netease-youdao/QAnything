@@ -1,5 +1,4 @@
 import platform
-
 from sanic.request import Request
 from sanic.exceptions import BadRequest
 import traceback
@@ -14,10 +13,12 @@ from tqdm import tqdm
 import pkg_resources
 import torch
 import math
+import pandas as pd
+from io import BytesIO
 
 __all__ = ['write_check_file', 'isURL', 'format_source_documents', 'get_time', 'safe_get', 'truncate_filename',
            'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens', 'download_file',
-           'get_gpu_memory_utilization', 'check_onnx_version', 'check_package']
+           'get_gpu_memory_utilization', 'check_onnx_version', 'check_package', 'check_and_transform_excel', 'simplify_filename']
 
 
 def get_invalid_user_id_msg(user_id):
@@ -55,7 +56,6 @@ def format_source_documents(ori_source_documents):
                        'file_name': doc.metadata['file_name'],
                        'content': doc.page_content,
                        'retrieval_query': doc.metadata['retrieval_query'],
-                       'kernel': doc.metadata['kernel'],
                        'score': str(doc.metadata['score']),
                        'embed_version': doc.metadata['embed_version']}
         source_documents.append(source_info)
@@ -233,3 +233,52 @@ def get_gpu_memory_utilization(model_size, device_id):
         else:
             raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 7B")
     return gpu_memory_utilization
+
+def simplify_filename(filename, max_length=40):
+    if len(filename) <= max_length:
+        # 如果文件名长度小于等于最大长度，直接返回原文件名
+        return filename
+
+    # 分离文件的基本名和扩展名
+    name, extension = filename.rsplit('.', 1)
+    extension = '.' + extension  # 将点添加回扩展名
+
+    # 计算头部和尾部的保留长度
+    part_length = (max_length - len(extension) - 1) // 2  # 减去扩展名长度和破折号的长度
+    end_start = -part_length if part_length else None
+
+    # 构建新的简化文件名
+    simplified_name = f"{name[:part_length]}-{name[end_start:]}" if part_length else name[:max_length - 1]
+
+    return f"{simplified_name}{extension}"
+
+
+def check_and_transform_excel(binary_data):
+    # 使用BytesIO读取二进制数据
+    try:
+        data_io = BytesIO(binary_data)
+        df = pd.read_excel(data_io)
+    except Exception as e:
+        return f"读取文件时出错: {e}"
+
+    # 检查列数
+    if len(df.columns) != 2:
+        return "格式错误：文件应该只有两列"
+
+    # 检查列标题
+    if df.columns[0] != "问题" or df.columns[1] != "答案":
+        return "格式错误：第一列标题应为'问题'，第二列标题应为'答案'"
+
+    # 检查每行长度
+    for index, row in df.iterrows():
+        question_len = len(row['问题'])
+        answer_len = len(row['答案'])
+        if question_len > 512 or answer_len > 2048:
+            return f"行{index + 1}长度超出限制：问题长度={question_len}，答案长度={answer_len}"
+
+    # 转换数据格式
+    transformed_data = []
+    for _, row in df.iterrows():
+        transformed_data.append({"question": row['问题'], "answer": row['答案']})
+
+    return transformed_data

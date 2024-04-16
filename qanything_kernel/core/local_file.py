@@ -6,6 +6,8 @@ from qanything_kernel.utils.loader.my_recursive_url_loader import MyRecursiveUrl
 from langchain_community.document_loaders import UnstructuredFileLoader, TextLoader
 from langchain_community.document_loaders import UnstructuredWordDocumentLoader
 from langchain_community.document_loaders import UnstructuredExcelLoader
+from langchain_community.document_loaders import UnstructuredPDFLoader
+import langchain_community.document_loaders.pdf
 from langchain_community.document_loaders import UnstructuredEmailLoader
 from langchain_community.document_loaders import UnstructuredPowerPointLoader
 from qanything_kernel.utils.loader.csv_loader import CSVLoader
@@ -17,22 +19,25 @@ from qanything_kernel.utils.splitter import zh_title_enhance
 from sanic.request import File
 import pandas as pd
 import os
+import re
 
 text_splitter = RecursiveCharacterTextSplitter(
-    separators=["\n", ".", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " "],
+    separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
     chunk_size=400,
+    chunk_overlap=100,
     length_function=num_tokens,
 )
 
+pdf_text_splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=200, length_function=num_tokens)
+
 
 class LocalFile:
-    def __init__(self, user_id, kb_id, file: Union[File, str], file_id, file_name, embedding, is_url=False, in_milvus=False):
+    def __init__(self, user_id, kb_id, file: Union[File, str, dict], file_id, file_name, embedding, is_url=False, in_milvus=False):
         self.user_id = user_id
         self.kb_id = kb_id
         self.file_id = file_id
         self.docs: List[Document] = []
         self.embs = []
-        self.emb_infer = embedding
         self.url = None
         self.in_milvus = in_milvus
         self.file_name = file_name
@@ -40,6 +45,9 @@ class LocalFile:
             self.url = file
             self.file_path = "URL"
             self.file_content = b''
+        elif isinstance(file, dict):
+            self.file_path = "FAQ"
+            self.file_content = file
         else:
             if isinstance(file, str):
                 self.file_path = file
@@ -62,8 +70,10 @@ class LocalFile:
             loader = MyRecursiveUrlLoader(url=self.url)
             textsplitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
             docs = loader.load_and_split(text_splitter=textsplitter)
+        elif self.file_path == 'FAQ':
+            docs = [Document(page_content=self.file_content['question'], metadata={"faq_dict": self.file_content})]
         elif self.file_path.lower().endswith(".md"):
-            loader = UnstructuredFileLoader(self.file_path, mode="elements")
+            loader = UnstructuredFileLoader(self.file_path)
             docs = loader.load()
         elif self.file_path.lower().endswith(".txt"):
             loader = TextLoader(self.file_path, autodetect_encoding=True)
@@ -71,15 +81,16 @@ class LocalFile:
             docs = loader.load_and_split(texts_splitter)
         elif self.file_path.lower().endswith(".pdf"):
             loader = UnstructuredPaddlePDFLoader(self.file_path, ocr_engine)
-            texts_splitter = ChineseTextSplitter(pdf=True, sentence_size=sentence_size)
-            docs = loader.load_and_split(texts_splitter)
+            # texts_splitter = ChineseTextSplitter(pdf=True, sentence_size=sentence_size)
+            # docs = loader.load_and_split(texts_splitter)
+            docs = loader.load()
         elif self.file_path.lower().endswith(".jpg") or self.file_path.lower().endswith(
                 ".png") or self.file_path.lower().endswith(".jpeg"):
-            loader = UnstructuredPaddleImageLoader(self.file_path, ocr_engine, mode="elements")
+            loader = UnstructuredPaddleImageLoader(self.file_path, ocr_engine)
             texts_splitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
             docs = loader.load_and_split(text_splitter=texts_splitter)
         elif self.file_path.lower().endswith(".docx"):
-            loader = UnstructuredWordDocumentLoader(self.file_path, mode="elements")
+            loader = UnstructuredWordDocumentLoader(self.file_path)
             texts_splitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
             docs = loader.load_and_split(texts_splitter)
         elif self.file_path.lower().endswith(".xlsx"):
@@ -90,10 +101,10 @@ class LocalFile:
             loader = CSVLoader(csv_file_path, csv_args={"delimiter": ",", "quotechar": '"'})
             docs = loader.load()
         elif self.file_path.lower().endswith(".pptx"):
-            loader = UnstructuredPowerPointLoader(self.file_path, mode="elements")
+            loader = UnstructuredPowerPointLoader(self.file_path)
             docs = loader.load()
         elif self.file_path.lower().endswith(".eml"):
-            loader = UnstructuredEmailLoader(self.file_path, mode="elements")
+            loader = UnstructuredEmailLoader(self.file_path)
             docs = loader.load()
         elif self.file_path.lower().endswith(".csv"):
             loader = CSVLoader(self.file_path, csv_args={"delimiter": ",", "quotechar": '"'})
@@ -103,23 +114,46 @@ class LocalFile:
         if using_zh_title_enhance:
             debug_logger.info("using_zh_title_enhance %s", using_zh_title_enhance)
             docs = zh_title_enhance(docs)
-
-        # 重构docs，如果doc的文本长度大于800tokens，则利用text_splitter将其拆分成多个doc
-        # text_splitter: RecursiveCharacterTextSplitter
-        debug_logger.info(f"before 2nd split doc lens: {len(docs)}")
-        docs = text_splitter.split_documents(docs)
-        debug_logger.info(f"after 2nd split doc lens: {len(docs)}")
+        print('docs number:', len(docs))
+        # 不是csv，xlsx和FAQ的文件，需要再次分割
+        if not self.file_path.lower().endswith(".csv") and not self.file_path.lower().endswith(".xlsx") and not self.file_path == 'FAQ':
+            new_docs = []
+            min_length = 200
+            for doc in docs:
+                if not new_docs:
+                    new_docs.append(doc)
+                else:
+                    last_doc = new_docs[-1]
+                    if len(last_doc.page_content) + len(doc.page_content) < min_length:
+                        last_doc.page_content += '\n' + doc.page_content
+                    else:
+                        new_docs.append(doc)
+            debug_logger.info(f"before 2nd split doc lens: {len(new_docs)}")
+            if self.file_path.lower().endswith(".pdf"):
+                docs = pdf_text_splitter.split_documents(new_docs)
+            else:
+                docs = text_splitter.split_documents(new_docs)
+            debug_logger.info(f"after 2nd split doc lens: {len(docs)}")
 
         # 这里给每个docs片段的metadata里注入file_id
-        for doc in docs:
-            doc.metadata["file_id"] = self.file_id
-            doc.metadata["file_name"] = self.url if self.url else os.path.split(self.file_path)[-1]
-        write_check_file(self.file_path, docs)
-        if docs:
-            debug_logger.info('langchain analysis content head: %s', docs[0].page_content[:100])
+        new_docs = []
+        for idx, doc in enumerate(docs):
+            page_content = re.sub(r'[\n\t]+', '\n', doc.page_content).strip()
+            new_doc = Document(page_content=page_content)
+            new_doc.metadata["user_id"] = self.user_id
+            new_doc.metadata["kb_id"] = self.kb_id
+            new_doc.metadata["file_id"] = self.file_id
+            new_doc.metadata["file_name"] = self.url if self.url else self.file_name
+            new_doc.metadata["chunk_id"] = idx
+            new_doc.metadata["file_path"] = self.file_path
+            if 'faq_dict' not in doc.metadata:
+                new_doc.metadata['faq_dict'] = {}
+            else:
+                new_doc.metadata['faq_dict'] = doc.metadata['faq_dict']
+            new_docs.append(new_doc)
+
+        if new_docs:
+            debug_logger.info('langchain analysis content head: %s', new_docs[0].page_content[:100])
         else:
             debug_logger.info('langchain analysis docs is empty!')
-        self.docs = docs
-
-    def create_embedding(self):
-        self.embs = self.emb_infer._get_len_safe_embeddings([doc.page_content for doc in self.docs])
+        self.docs = new_docs

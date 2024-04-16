@@ -32,22 +32,6 @@ class YouDaoLocalEmbeddings:
         embeddings = self.embedding_client.get_embedding(queries, max_length=LOCAL_EMBED_MAX_LENGTH)
         return embeddings
 
-    def _get_len_safe_embeddings(self, texts: List[str]) -> List[List[float]]:
-        all_embeddings = []
-        batch_size = self.embedding_client.max_batchsz
-
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = []
-            for i in range(0, len(texts), batch_size):
-                batch = texts[i:i + batch_size]
-                future = executor.submit(self._get_embedding, batch)
-                futures.append(future)
-            debug_logger.info(f'embedding number: {len(futures)}')
-            for future in tqdm(futures):
-                embeddings = future.result()
-                all_embeddings += embeddings
-        return all_embeddings
-
     @property
     def embed_version(self):
         return self.embedding_client.ModelVersion
