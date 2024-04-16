@@ -713,11 +713,9 @@ async def get_file_base64(req: request):
     if not is_valid:
         return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
     debug_logger.info("get_file_base64 %s", user_id)
-    kb_id = safe_get(req, 'kb_id')
-    debug_logger.info("kb_id: {}".format(kb_id))
     file_id = safe_get(req, 'file_id')
     debug_logger.info("file_id: {}".format(file_id))
-    file_path = local_doc_qa.mysql_client.get_file_path(kb_id, file_id)
+    file_path = local_doc_qa.mysql_client.get_file_path(file_id)
     if file_path in ['URL', 'FAQ', 'UNK']:
         return sanic_json({"code": 2003, "msg": f"fail, {file_path} file has no base64"})
     with open(file_path, 'rb') as f:

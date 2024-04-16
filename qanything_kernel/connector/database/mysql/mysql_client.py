@@ -321,9 +321,9 @@ class KnowledgeBaseManager:
         query = "SELECT file_id, file_name, status, file_size, content_length, timestamp FROM File WHERE kb_id = ? AND kb_id IN (SELECT kb_id FROM KnowledgeBase WHERE user_id = ?) AND deleted = 0"
         return self.execute_query_(query, (kb_id, user_id), fetch=True)
 
-    def get_file_path(self, kb_id, file_id):
-        query = "SELECT file_path FROM File WHERE kb_id = ? AND file_id = ? AND deleted = 0"
-        return self.execute_query_(query, (kb_id, file_id), fetch=True)[0][0]
+    def get_file_path(self, file_id):
+        query = "SELECT file_path FROM File WHERE file_id = ? AND deleted = 0"
+        return self.execute_query_(query, (file_id, ), fetch=True)[0][0]
 
     # [文件] 删除指定文件
     def delete_files(self, kb_id, file_ids):
