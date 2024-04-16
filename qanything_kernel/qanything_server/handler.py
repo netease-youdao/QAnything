@@ -608,8 +608,13 @@ async def get_bot_info(req: request):
     for bot_info in bot_infos:
         if bot_info[7] != "":
             kb_ids = bot_info[7].split(',')
-            kb_names = local_doc_qa.mysql_client.get_knowledge_base_name(kb_ids)
-            kb_names = [kb[2] for kb in kb_names]
+            kb_infos = local_doc_qa.mysql_client.get_knowledge_base_name(kb_ids)
+            kb_names = []
+            for kb_id in kb_ids:
+                for kb_info in kb_infos:
+                    if kb_id == kb_info[1]:
+                        kb_names.append(kb_info[2])
+                        break
         else:
             kb_ids = []
             kb_names = []
