@@ -97,7 +97,7 @@ else:
 print('LOCAL_RERANK_REPO:', LOCAL_RERANK_REPO)
 LOCAL_RERANK_MODEL_NAME = 'rerank'
 LOCAL_RERANK_MAX_LENGTH = 512
-LOCAL_RERANK_BATCH = 16
+LOCAL_RERANK_BATCH = 8
 
 LOCAL_EMBED_PATH = os.path.join(root_path, 'qanything_kernel/connector/embedding', 'embedding_model_configs_v0.0.1')
 if os_system == 'Darwin':
@@ -109,7 +109,7 @@ else:
 print('LOCAL_EMBED_REPO:', LOCAL_EMBED_REPO)
 LOCAL_EMBED_MODEL_NAME = 'embed'
 LOCAL_EMBED_MAX_LENGTH = 512
-LOCAL_EMBED_BATCH = 16
+LOCAL_EMBED_BATCH = 8
 
 # VLLM PARAMS
 model_path = os.path.join(root_path, "assets", "custom_models")
