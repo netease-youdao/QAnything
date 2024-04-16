@@ -61,6 +61,7 @@ class KnowledgeBaseManager:
                 file_size INT DEFAULT -1,
                 content_length INT DEFAULT -1,
                 chunk_size INT DEFAULT -1,
+                file_path VARCHAR(512),
                 FOREIGN KEY (kb_id) REFERENCES KnowledgeBase(kb_id) ON DELETE CASCADE
             );
 
@@ -107,6 +108,20 @@ class KnowledgeBaseManager:
             );
         """
         self.execute_query_(query, (), commit=True)
+
+        # 旧的File不存在file_path，补上默认值：'UNK'
+        # 如果存在File表，但是没有file_path字段，那么添加file_path字段
+        query = "PRAGMA table_info(File)"
+        result = self.execute_query_(query, (), fetch=True)
+        if result:
+            file_path_exist = False
+            for column_info in result:
+                if column_info[1] == 'file_path':
+                    file_path_exist = True
+                    break
+            if not file_path_exist:
+                query = "ALTER TABLE File ADD COLUMN file_path VARCHAR(512) DEFAULT 'UNK'"
+                self.execute_query_(query, (), commit=True)
 
     def check_user_exist_(self, user_id):
         query = "SELECT user_id FROM User WHERE user_id = ?"
@@ -281,6 +296,10 @@ class KnowledgeBaseManager:
     def update_content_length(self, file_id, content_length):
         query = "UPDATE File SET content_length = ? WHERE file_id = ?"
         self.execute_query_(query, (content_length, file_id), commit=True)
+
+    def update_file_path(self, file_id, file_path):
+        query = "UPDATE File SET file_path = ? WHERE file_id = ?"
+        self.execute_query_(query, (file_path, file_id), commit=True)
     
     #  更新file中的chunk_size
     def update_chunk_size(self, file_id, chunk_size):
@@ -301,6 +320,10 @@ class KnowledgeBaseManager:
     def get_files(self, user_id, kb_id):
         query = "SELECT file_id, file_name, status, file_size, content_length, timestamp FROM File WHERE kb_id = ? AND kb_id IN (SELECT kb_id FROM KnowledgeBase WHERE user_id = ?) AND deleted = 0"
         return self.execute_query_(query, (kb_id, user_id), fetch=True)
+
+    def get_file_path(self, kb_id, file_id):
+        query = "SELECT file_path FROM File WHERE kb_id = ? AND file_id = ? AND deleted = 0"
+        return self.execute_query_(query, (kb_id, file_id), fetch=True)[0][0]
 
     # [文件] 删除指定文件
     def delete_files(self, kb_id, file_ids):

@@ -15,10 +15,11 @@ import re
 from datetime import datetime
 from tqdm import tqdm
 import os
+import base64
 
 __all__ = ["new_knowledge_base", "upload_files", "list_kbs", "list_docs", "delete_knowledge_base", "delete_docs",
            "rename_knowledge_base", "get_total_status", "clean_files_by_status", "upload_weblink", "local_doc_chat",
-           "document", "new_bot", "delete_bot", "update_bot", "get_bot_info", "upload_faqs"]
+           "document", "new_bot", "delete_bot", "update_bot", "get_bot_info", "upload_faqs", "get_file_base64"]
 
 INVALID_USER_ID = f"fail, Invalid user_id: . user_id 必须只含有字母，数字和下划线且字母开头"
 
@@ -76,6 +77,7 @@ async def upload_weblink(req: request):
     else:
         file_id, msg = local_doc_qa.mysql_client.add_file(user_id, kb_id, url, timestamp)
         local_file = LocalFile(user_id, kb_id, url, file_id, url, local_doc_qa.embeddings, is_url=True)
+        local_doc_qa.mysql_client.update_file_path(file_id, local_file.file_path)
         data = [{"file_id": file_id, "file_name": url, "status": "gray", "bytes": 0, "timestamp": timestamp}]
         asyncio.create_task(local_doc_qa.insert_files_to_faiss(user_id, kb_id, [local_file]))
         msg = "success，后台正在飞速上传文件，请耐心等待"
@@ -136,6 +138,7 @@ async def upload_files(req: request):
         file_id, msg = local_doc_qa.mysql_client.add_file(user_id, kb_id, file_name, timestamp)
         debug_logger.info(f"{file_name}, {file_id}, {msg}")
         local_file = LocalFile(user_id, kb_id, file, file_id, file_name, local_doc_qa.embeddings)
+        local_doc_qa.mysql_client.update_file_path(file_id, local_file.file_path)
         local_files.append(local_file)
         local_doc_qa.mysql_client.update_file_size(file_id, len(local_file.file_content))
         data.append(
@@ -686,6 +689,7 @@ async def upload_faqs(req: request):
         file_name = simplify_filename(file_name)
         file_id, msg = local_doc_qa.mysql_client.add_file(user_id, kb_id, file_name, timestamp, status='green')
         local_file = LocalFile(user_id, kb_id, faq, file_id, file_name, local_doc_qa.embeddings)
+        local_doc_qa.mysql_client.update_file_path(file_id, local_file.file_path)
         local_files.append(local_file)
         local_doc_qa.mysql_client.add_faq(file_id, user_id, kb_id, ques, faq['answer'], faq.get("nos_keys", ""))
         # debug_logger.info(f"{file_name}, {file_id}, {msg}, {faq}")
@@ -699,3 +703,24 @@ async def upload_faqs(req: request):
     msg = "success，后台正在飞速上传文件，请耐心等待"
     return sanic_json({"code": 200, "msg": msg, "file_status": file_status, "data": data})
 
+
+async def get_file_base64(req: request):
+    local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
+    user_id = safe_get(req, 'user_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
+    is_valid = validate_user_id(user_id)
+    if not is_valid:
+        return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
+    debug_logger.info("get_file_base64 %s", user_id)
+    kb_id = safe_get(req, 'kb_id')
+    debug_logger.info("kb_id: {}".format(kb_id))
+    file_id = safe_get(req, 'file_id')
+    debug_logger.info("file_id: {}".format(file_id))
+    file_path = local_doc_qa.mysql_client.get_file_path(kb_id, file_id)
+    if file_path in ['URL', 'FAQ', 'UNK']:
+        return sanic_json({"code": 2003, "msg": f"fail, {file_path} file has no base64"})
+    with open(file_path, 'rb') as f:
+        content = f.read()
+    base64_content = base64.b64encode(content).decode()
+    return sanic_json({"code": 200, "msg": "success", "base64_content": base64_content})

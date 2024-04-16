@@ -199,6 +199,7 @@ app.add_route(delete_bot, "/api/local_doc_qa/delete_bot", methods=['POST'])  # t
 app.add_route(update_bot, "/api/local_doc_qa/update_bot", methods=['POST'])  # tags=["更新Bot"]
 app.add_route(get_bot_info, "/api/local_doc_qa/get_bot_info", methods=['POST'])  # tags=["获取Bot信息"]
 app.add_route(upload_faqs, "/api/local_doc_qa/upload_faqs", methods=['POST'])  # tags=["上传FAQ"]
+app.add_route(get_file_base64, "/api/local_doc_qa/get_file_base64", methods=['POST'])  # tags=["获取文件base64"]
 
 if __name__ == "__main__":
     if args.use_openai_api:
