@@ -16,6 +16,9 @@
   },
   "dependencies": {
     "@fingerprintjs/fingerprintjs": "^4.2.2",
+    "@vue-office/docx": "^1.6.0",
+    "@vue-office/excel": "^1.7.6",
+    "@vue-office/pdf": "^1.6.5",
     "@vueuse/core": "^10.5.0",
     "ant-design-vue": "4.x",
     "axios": "^1.6.1",
@@ -24,10 +27,12 @@
     "js-cookie": "^3.0.1",
     "moment": "^2.30.1",
     "nprogress": "^0.2.0",
+    "pdfjs-dist": "^2.0.943",
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^3.2.0",
     "qs": "^6.11.0",
     "vue": "3.3",
+    "vue-demi": "^0.14.7",
     "vue-router": "^4.0.11"
   },
   "husky": {

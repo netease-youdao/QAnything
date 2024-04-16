@@ -71,8 +71,16 @@
                     class="data-source"
                   >
                     <p v-show="sourceItem.file_name" class="control">
-                      <span class="tips">{{ common.dataSource }}{{ sourceIndex + 1 }}:</span
-                      ><span class="file">{{ sourceItem.file_name }}</span>
+                      <span class="tips">{{ common.dataSource }}{{ sourceIndex + 1 }}:</span>
+                      <span
+                        :class="[
+                          'file',
+                          checkFileType(sourceItem.file_name) ? 'filename-active' : '',
+                        ]"
+                        @click="handleChatSource(sourceItem)"
+                      >
+                        {{ sourceItem.file_name }}
+                      </span>
                       <SvgIcon
                         v-show="sourceItem.showDetailDataSource"
                         name="iconup"
@@ -186,12 +194,15 @@ import SvgIcon from '../SvgIcon.vue';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { useBotsChat } from '@/store/useBotsChat';
 import { useChat } from '@/store/useChat';
+import { useChatSource } from '@/store/useChatSource';
 import { Typewriter } from '@/utils/typewriter';
 import DefaultModal from '../DefaultModal.vue';
 import html2canvas from 'html2canvas';
 import { getLanguage } from '@/language/index';
 import { useLanguage } from '@/store/useLanguage';
 import { userId } from '@/services/urlConfig';
+import urlResquest from '@/services/urlConfig';
+import { resultControl } from '@/utils/utils';
 
 const props = defineProps({
   chatType: {
@@ -215,6 +226,7 @@ const typewriter = new Typewriter((str: string) => {
 
 const { QA_List } = storeToRefs(useBotsChat());
 const { copy } = useClipboard();
+const { setChatSourceVisible, setSourceType, setSourceUrl, setTextContent } = useChatSource();
 const { language } = storeToRefs(useLanguage());
 //当前是否多轮对话
 const control = ref(true);
@@ -481,6 +493,64 @@ const confirm = async () => {
   showModal.value = false;
 };
 
+// 检查信息来源的文件是否支持窗口化渲染
+let supportSourceTypes = ['pdf', 'docx', 'xlsx', 'txt', 'jpg', 'png', 'jpeg'];
+const checkFileType = filename => {
+  if (!filename) {
+    return false;
+  }
+  const arr = filename.split('.');
+  if (arr.length) {
+    const suffix = arr.pop();
+    if (supportSourceTypes.includes(suffix)) {
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    return false;
+  }
+};
+
+const handleChatSource = file => {
+  console.log('handleChatSource', file);
+  const isSupport = checkFileType(file.file_name);
+  if (isSupport) {
+    queryFile(file);
+  }
+};
+
+async function queryFile(file) {
+  try {
+    setSourceUrl(null);
+    const res: any = await resultControl(await urlResquest.docDetail({ docId: file.fileId }));
+    console.log('queryFile', res);
+    const suffix = file.file_name.split('.').pop();
+    setSourceType(suffix);
+    setSourceUrl(res.url);
+    if (suffix === 'txt') {
+      fetch(res.url)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.text();
+        })
+        .then(data => {
+          setTextContent(data);
+          setChatSourceVisible(true);
+        })
+        .catch(error => {
+          console.error('There has been a problem with your fetch operation:', error);
+        });
+    } else {
+      setChatSourceVisible(true);
+    }
+  } catch (e) {
+    message.error(e.msg || '获取文件失败');
+  }
+}
+
 scrollBottom();
 </script>
 
@@ -657,6 +727,12 @@ scrollBottom();
       .file {
         color: $baseColor;
         margin-right: 8px;
+      }
+
+      .filename-active {
+        color: #5a47e5;
+        text-decoration: underline;
+        cursor: pointer;
       }
 
       svg {

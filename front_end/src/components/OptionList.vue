@@ -302,10 +302,6 @@ const qaConfirm = async () => {
       })
     );
     message.success('删除成功');
-    // 如果删除的是当前页的最后一个
-    if (total.value - 1 - (pageNum.value - 1) * 10 <= 0) {
-      setPageNum(pageNum.value - 1);
-    }
     getFaqList();
   } catch (e) {
     message.error(e.msg || '删除失败');

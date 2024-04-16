@@ -67,7 +67,7 @@ const getBotInfo = async botId => {
   }
 };
 
-const handleKbBind = async data => {
+const bindKb = async data => {
   const kbIds = curBot.value.kb_ids;
   kbIds.push(data.kb_id);
   console.log('kbIds', kbIds);
@@ -87,6 +87,39 @@ const handleKbBind = async data => {
     });
   } catch (e) {
     message.error(e.msg || '请求失败');
+  }
+};
+
+const removeKb = async data => {
+  let kbIds = curBot.value.kb_ids;
+  console.log('removeKb', data, kbIds);
+  kbIds = kbIds.filter(item => item != data.kb_id);
+  try {
+    await resultControl(
+      await urlResquest.updateBot({
+        bot_id: curBot.value.bot_id,
+        kb_ids: kbIds,
+      })
+    );
+    getBotInfo(curBot.value.bot_id);
+    knowledgeList.value = knowledgeList.value.map(item => {
+      if (item.kb_id === data.kb_id) {
+        item.state = item.state === 0 ? 1 : 0;
+      }
+      return item;
+    });
+    message.success(bots.removalSucessful);
+  } catch (e) {
+    message.error(e.msg || '请求失败');
+  }
+};
+
+const handleKbBind = data => {
+  console.log('handleKbBind', data);
+  if (data.state === 0) {
+    bindKb(data);
+  } else {
+    removeKb(data);
   }
 };
 

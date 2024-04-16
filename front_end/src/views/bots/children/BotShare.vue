@@ -4,10 +4,12 @@
       <a-spin :indicator="indicator" />
     </div>
     <ChatShare v-else :bot-info="botInfo" chat-type="share" @bot-init="init" />
+    <ChatSourceDialog />
   </div>
 </template>
 <script lang="ts" setup>
 import ChatShare from '@/components/Bots/ChatShare.vue';
+import ChatSourceDialog from '@/components/ChatSourceDialog.vue';
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import urlResquest from '@/services/urlConfig';
 import { resultControl } from '@/utils/utils';

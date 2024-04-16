@@ -35,6 +35,7 @@
       <SelectKnowledgeDialog />
       <CopyUrlDialog />
     </div>
+    <ChatSourceDialog />
   </div>
 </template>
 <script lang="ts" setup>
@@ -49,6 +50,7 @@ import EditQaSetDialog from '@/components/EditQaSetDialog.vue';
 import NewBotsDialog from '@/components/Bots/NewBotsDialog.vue';
 import SelectKnowledgeDialog from '@/components/Bots/SelectKnowledgeDialog.vue';
 import CopyUrlDialog from '@/components/Bots/CopyUrlDialog.vue';
+import ChatSourceDialog from '@/components/ChatSourceDialog.vue';
 import { useHeader } from '@/store/useHeader';
 import routeController from '@/controller/router';
 // import { useKnowledgeModal } from '@/store/useKnowledgeModal';

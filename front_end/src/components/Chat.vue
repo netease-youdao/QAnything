@@ -22,36 +22,62 @@
               </div>
               <template v-if="item.source.length">
                 <div
-                  v-for="(sourceItem, sourceIndex) in item.source"
-                  :key="sourceIndex"
-                  class="data-source"
+                  :class="[
+                    'source-total',
+                    !showSourceIdxs.includes(index) ? 'source-total-last' : '',
+                  ]"
                 >
-                  <p v-show="sourceItem.file_name" class="control">
-                    <span class="tips">{{ common.dataSource }}{{ sourceIndex + 1 }}:</span
-                    ><span class="file">{{ sourceItem.file_name }}</span>
-                    <SvgIcon
-                      v-show="sourceItem.showDetailDataSource"
-                      name="iconup"
-                      @click="showDetail(item, sourceIndex)"
-                    />
-                    <SvgIcon
-                      v-show="!sourceItem.showDetailDataSource"
-                      name="icondown"
-                      @click="showDetail(item, sourceIndex)"
-                    />
-                  </p>
-                  <Transition name="sourceitem">
-                    <div class="source-content">
-                      <p
+                  <span v-if="language === 'zh'">找到了{{ item.source.length }}个信息来源：</span>
+                  <span v-else>Found {{ item.source.length }} source of information</span>
+                  <SvgIcon
+                    v-show="!showSourceIdxs.includes(index)"
+                    name="down"
+                    @click="showSourceList(index)"
+                  />
+                  <SvgIcon
+                    v-show="showSourceIdxs.includes(index)"
+                    name="up"
+                    @click="hideSourceList(index)"
+                  />
+                </div>
+                <div v-show="showSourceIdxs.includes(index)" class="source-list">
+                  <div
+                    v-for="(sourceItem, sourceIndex) in item.source"
+                    :key="sourceIndex"
+                    class="data-source"
+                  >
+                    <p v-show="sourceItem.file_name" class="control">
+                      <span class="tips">{{ common.dataSource }}{{ sourceIndex + 1 }}:</span>
+                      <span
+                        :class="[
+                          'file',
+                          checkFileType(sourceItem.file_name) ? 'filename-active' : '',
+                        ]"
+                        @click="handleChatSource(sourceItem)"
+                      >
+                        {{ sourceItem.file_name }}
+                      </span>
+                      <SvgIcon
                         v-show="sourceItem.showDetailDataSource"
-                        v-html="sourceItem.content.replaceAll('\n', '<br/>')"
-                      ></p>
-                      <p class="score">
-                        <span class="tips">{{ common.correlation }}</span
-                        >{{ sourceItem.score }}
-                      </p>
-                    </div>
-                  </Transition>
+                        name="iconup"
+                        @click="hideDetail(item, sourceIndex)"
+                      />
+                      <SvgIcon
+                        v-show="!sourceItem.showDetailDataSource"
+                        name="icondown"
+                        @click="showDetail(item, sourceIndex)"
+                      />
+                    </p>
+                    <Transition name="sourceitem">
+                      <div v-show="sourceItem.showDetailDataSource" class="source-content">
+                        <p v-html="sourceItem.content?.replaceAll('\n', '<br/>')"></p>
+                        <p class="score">
+                          <span class="tips">{{ common.correlation }}</span
+                          >{{ sourceItem.score }}
+                        </p>
+                      </div>
+                    </Transition>
+                  </div>
                 </div>
               </template>
               <div v-if="item.showTools" class="feed-back">
@@ -131,11 +157,15 @@ import SvgIcon from './SvgIcon.vue';
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { useChat } from '@/store/useChat';
+import { useChatSource } from '@/store/useChatSource';
 import { Typewriter } from '@/utils/typewriter';
 import DefaultModal from './DefaultModal.vue';
 import html2canvas from 'html2canvas';
 import { userId } from '@/services/urlConfig';
 import { getLanguage } from '@/language/index';
+import { useLanguage } from '@/store/useLanguage';
+import urlResquest from '@/services/urlConfig';
+import { resultControl } from '@/utils/utils';
 
 const common = getLanguage().common;
 
@@ -148,6 +178,8 @@ const typewriter = new Typewriter((str: string) => {
 const { selectList } = storeToRefs(useKnowledgeBase());
 const { QA_List } = storeToRefs(useChat());
 const { copy } = useClipboard();
+const { setChatSourceVisible, setSourceType, setSourceUrl, setTextContent } = useChatSource();
+const { language } = storeToRefs(useLanguage());
 declare module _czc {
   const push: (array: any) => void;
 }
@@ -163,6 +195,8 @@ const showLoading = ref(false);
 
 //取消请求用
 let ctrl: AbortController;
+
+const showSourceIdxs = ref([]);
 
 const scrollDom = ref(null);
 
@@ -343,6 +377,18 @@ const showDetail = (item: IChatItem, index) => {
   item.source[index].showDetailDataSource = !item.source[index].showDetailDataSource;
 };
 
+const hideDetail = (item: IChatItem, index) => {
+  item.source[index].showDetailDataSource = false;
+};
+
+const showSourceList = index => {
+  showSourceIdxs.value.push(index);
+};
+
+const hideSourceList = index => {
+  showSourceIdxs.value = showSourceIdxs.value.filter(item => item !== index);
+};
+
 //下载 清除聊天记录相关
 const { showModal } = storeToRefs(useChat());
 const { clearQAList } = useChat();
@@ -397,6 +443,65 @@ const confirm = async () => {
   confirmLoading.value = false;
   showModal.value = false;
 };
+
+// 检查信息来源的文件是否支持窗口化渲染
+let supportSourceTypes = ['pdf', 'docx', 'xlsx', 'txt', 'jpg', 'png', 'jpeg'];
+const checkFileType = filename => {
+  if (!filename) {
+    return false;
+  }
+  const arr = filename.split('.');
+  if (arr.length) {
+    const suffix = arr.pop();
+    if (supportSourceTypes.includes(suffix)) {
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    return false;
+  }
+};
+
+const handleChatSource = file => {
+  console.log('handleChatSource', file);
+  const isSupport = checkFileType(file.file_name);
+  if (isSupport) {
+    queryFile(file);
+  }
+};
+
+async function queryFile(file) {
+  try {
+    setSourceUrl(null);
+    const res: any = await resultControl(await urlResquest.docDetail({ docId: file.fileId }));
+    console.log('queryFile', res);
+    const suffix = file.file_name.split('.').pop();
+    setSourceType(suffix);
+    setSourceUrl(res.url);
+    if (suffix === 'txt') {
+      fetch(res.url)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.text();
+        })
+        .then(data => {
+          setTextContent(data);
+          setChatSourceVisible(true);
+        })
+        .catch(error => {
+          console.error('There has been a problem with your fetch operation:', error);
+        });
+    } else {
+      setChatSourceVisible(true);
+    }
+  } catch (e) {
+    message.error(e.msg || '获取文件失败');
+  }
+}
+
 scrollBottom();
 </script>
 
@@ -478,21 +583,37 @@ scrollBottom();
       }
     }
 
-    .data-source {
+    .source-total {
+      padding: 13px 20px;
       margin-left: 48px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      span {
+        margin-right: 5px;
+      }
+      svg {
+        width: 16px !important;
+        height: 16px !important;
+        cursor: pointer !important;
+      }
+    }
+    .source-total-last {
+      border-radius: 0px 12px 12px 12px;
+    }
+
+    .source-list {
+      margin-left: 48px;
+      background: #fff;
+      border-radius: 0px 12px 12px 12px;
+    }
+
+    .data-source {
       padding: 13px 20px;
       font-size: 14px;
       line-height: 22px;
       color: $title1;
-      background: #fff;
 
-      &:nth-last-of-type(2) {
-        border-radius: 0px 0px 12px 12px;
-      }
-
-      &:nth-first-of-type(1) {
-        border-radius: 0px 12px 12px 12px;
-      }
       .control {
         display: flex;
         align-items: center;
@@ -516,6 +637,12 @@ scrollBottom();
       .file {
         color: $baseColor;
         margin-right: 8px;
+      }
+
+      .filename-active {
+        color: #5a47e5;
+        text-decoration: underline;
+        cursor: pointer;
       }
 
       svg {

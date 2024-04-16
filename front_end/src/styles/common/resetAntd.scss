@@ -78,6 +78,30 @@
   }
 }
 
+.chat-source-modal {
+  .ant-modal {
+    width: auto !important;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+  }
+  .ant-modal-content {
+    width: fit-content;
+    min-width: 680px;
+    max-width: 90vw;
+    background: #ffffff;
+    padding: 0;
+  }
+  .ant-modal-header {
+    height: 48px;
+    line-height: 48px;
+    background: #f7f9ff;
+    border-radius: 8px 8px 0px 0px;
+    padding: 12px 0 12px 28px;
+    margin-bottom: 0;
+  }
+}
+
 //新增、修改知识库弹窗
 .upload-file-modal {
   .ant-modal-content {
