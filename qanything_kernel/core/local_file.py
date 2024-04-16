@@ -147,6 +147,7 @@ class LocalFile:
             new_doc.metadata["file_id"] = self.file_id
             new_doc.metadata["file_name"] = self.url if self.url else self.file_name
             new_doc.metadata["chunk_id"] = idx
+            new_doc.metadata["file_path"] = self.file_path
             if 'faq_dict' not in doc.metadata:
                 new_doc.metadata['faq_dict'] = {}
             else:
