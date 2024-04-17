@@ -331,6 +331,7 @@ async def clean_files_by_status(req: request):
 async def local_doc_chat(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
+    chat_user_id = user_id
     if user_id is None:
         return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
     is_valid = validate_user_id(user_id)
@@ -342,7 +343,7 @@ async def local_doc_chat(req: request):
         if not local_doc_qa.mysql_client.check_bot_is_exist(bot_id):
             return sanic_json({"code": 2003, "msg": "fail, Bot {} not found".format(bot_id)})
         bot_info = local_doc_qa.mysql_client.get_bot(None, bot_id)[0]
-        bot_id, bot_name, desc, image, prompt, welcome, model, kb_ids_str, upload_time = bot_info
+        bot_id, bot_name, desc, image, prompt, welcome, model, kb_ids_str, upload_time, user_id = bot_info
         kb_ids = kb_ids_str.split(',')
         if not kb_ids:
             return sanic_json({"code": 2003, "msg": "fail, Bot {} unbound knowledge base.".format(bot_id)})
@@ -355,6 +356,8 @@ async def local_doc_chat(req: request):
     debug_logger.info('rerank %s', rerank)
     streaming = safe_get(req, 'streaming', False)
     history = safe_get(req, 'history', [])
+    product_source = safe_get(req, 'product_source', 'saas')
+    debug_logger.info("product_source: %s", product_source)
     debug_logger.info("history: %s ", history)
     debug_logger.info("question: %s", question)
     debug_logger.info("kb_ids: %s", kb_ids)
@@ -535,6 +538,10 @@ async def new_bot(req: request):
     is_valid = validate_user_id(user_id)
     if not is_valid:
         return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
+    not_exist_kb_ids = local_doc_qa.mysql_client.check_kb_exist(user_id, kb_ids)
+    if not_exist_kb_ids:
+        msg = "invalid kb_id: {}, please check...".format(not_exist_kb_ids)
+        return sanic_json({"code": 2001, "msg": msg, "data": [{}]})
     debug_logger.info("new_bot %s", user_id)
     bot_id = 'BOT' + uuid.uuid4().hex
     local_doc_qa.mysql_client.new_qanything_bot(bot_id, user_id, bot_name, desc, head_image, prompt_setting,
@@ -581,6 +588,10 @@ async def update_bot(req: request):
     model = safe_get(req, "model", bot_info[6])
     kb_ids = safe_get(req, "kb_ids")
     if kb_ids is not None:
+        not_exist_kb_ids = local_doc_qa.mysql_client.check_kb_exist(user_id, kb_ids)
+        if not_exist_kb_ids:
+            msg = "invalid kb_id: {}, please check...".format(not_exist_kb_ids)
+            return sanic_json({"code": 2001, "msg": msg, "data": [{}]})
         kb_ids_str = ",".join(kb_ids)
     else:
         kb_ids_str = bot_info[7]
