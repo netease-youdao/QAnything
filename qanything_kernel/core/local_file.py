@@ -32,7 +32,7 @@ pdf_text_splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap
 
 
 class LocalFile:
-    def __init__(self, user_id, kb_id, file: Union[File, str], file_id, file_name, embedding, is_url=False, in_milvus=False):
+    def __init__(self, user_id, kb_id, file: Union[File, str, dict], file_id, file_name, embedding, is_url=False, in_milvus=False):
         self.user_id = user_id
         self.kb_id = kb_id
         self.file_id = file_id
@@ -47,6 +47,9 @@ class LocalFile:
             self.url = file
             self.file_path = "URL"
             self.file_content = b''
+        elif isinstance(file, dict):
+            self.file_path = "FAQ"
+            self.file_content = file
         else:
             if isinstance(file, str):
                 self.file_path = file
@@ -69,6 +72,8 @@ class LocalFile:
             loader = MyRecursiveUrlLoader(url=self.url)
             textsplitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
             docs = loader.load_and_split(text_splitter=textsplitter)
+        elif self.file_path == 'FAQ':
+            docs = [Document(page_content=self.file_content['question'], metadata={"faq_dict": self.file_content})]
         elif self.file_path.lower().endswith(".md"):
             loader = UnstructuredFileLoader(self.file_path)
             docs = loader.load()
@@ -112,7 +117,8 @@ class LocalFile:
             debug_logger.info("using_zh_title_enhance %s", using_zh_title_enhance)
             docs = zh_title_enhance(docs)
         print('docs number:', len(docs))
-        if not self.file_path.lower().endswith(".csv") and not self.file_path.lower().endswith(".xlsx"):
+        # 不是csv，xlsx和FAQ的文件，需要再次分割
+        if not self.file_path.lower().endswith(".csv") and not self.file_path.lower().endswith(".xlsx") and not self.file_path == 'FAQ':
             new_docs = []
             min_length = 200
             for doc in docs:
@@ -141,6 +147,11 @@ class LocalFile:
             new_doc.metadata["file_id"] = self.file_id
             new_doc.metadata["file_name"] = self.url if self.url else self.file_name
             new_doc.metadata["chunk_id"] = idx
+            new_doc.metadata["file_path"] = self.file_path
+            if 'faq_dict' not in doc.metadata:
+                new_doc.metadata['faq_dict'] = {}
+            else:
+                new_doc.metadata['faq_dict'] = doc.metadata['faq_dict']
             new_docs.append(new_doc)
 
         if new_docs:

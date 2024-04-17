@@ -1,5 +1,6 @@
 from langchain_community.vectorstores import FAISS
 from langchain_community.docstore import InMemoryDocstore
+from langchain_core.documents import Document
 from qanything_kernel.configs.model_config import VECTOR_SEARCH_TOP_K, FAISS_LOCATION, FAISS_CACHE_SIZE
 from typing import Optional, Union, Callable, Dict, Any, List, Tuple
 from langchain_community.vectorstores.faiss import dependable_faiss_import
@@ -15,6 +16,23 @@ import platform
 os_system = platform.system()
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'  # 可能是由于是MacOS系统的原因
+
+
+class SelfInMemoryDocstore(InMemoryDocstore):
+    def add(self, texts: Dict[str, Document]) -> None:
+        """Add texts to in memory dictionary.
+
+        Args:
+            texts: dictionary of id -> document.
+
+        Returns:
+            None
+        """
+        # overlapping = set(texts).intersection(self._dict)
+        # if overlapping:
+        #     raise ValueError(f"Tried to add ids that already exist: {overlapping}")
+        # self._dict = {**self._dict, **texts}
+        self._dict.update(texts)
 
 
 @lru_cache(FAISS_CACHE_SIZE)
@@ -40,14 +58,17 @@ class FaissClient:
             else:
                 faiss = dependable_faiss_import()
                 index = faiss.IndexFlatL2(768)
-                docstore = InMemoryDocstore()
+                docstore = SelfInMemoryDocstore()
                 debug_logger.info(f'init FAISS kb_id: {kb_id}')
                 faiss_client: FAISS = FAISS(self.embeddings, index, docstore, index_to_docstore_id={})
             if self.faiss_client is None:
                 self.faiss_client = faiss_client
             else:
-                self.faiss_client.merge_from(faiss_client)
-                debug_logger.info(f'merge FAISS kb_id: {kb_id}')
+                try:
+                    self.faiss_client.merge_from(faiss_client)
+                    debug_logger.info(f'merge FAISS kb_id: {kb_id}')
+                except ValueError:
+                    raise ValueError(f'遗留数据与新版本不匹配，请删除{os.path.dirname(FAISS_LOCATION)}文件夹（清空所有知识库）后重新启动服务并重新创建知识库')
         debug_logger.info(f'FAISS load kb_ids: {kb_ids}')
 
     async def search(self, kb_ids, query, filter: Optional[Union[Callable, Dict[str, Any]]] = None,

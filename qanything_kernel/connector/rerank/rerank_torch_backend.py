@@ -17,7 +17,7 @@ class RerankTorchBackend(RerankBackend):
             self._model = self._model.to(self.device)
         else:
             self.device = torch.device('mps')
-            self._model = self._model.half().to(self.device)
+            self._model = self._model.to(self.device)
 
     def inference(self, batch):
         # 准备输入数据

@@ -13,11 +13,13 @@ import asyncio
 import urllib.parse
 import re
 from datetime import datetime
+from tqdm import tqdm
 import os
+import base64
 
 __all__ = ["new_knowledge_base", "upload_files", "list_kbs", "list_docs", "delete_knowledge_base", "delete_docs",
            "rename_knowledge_base", "get_total_status", "clean_files_by_status", "upload_weblink", "local_doc_chat",
-           "document", "new_bot", "delete_bot", "update_bot", "get_bot_info"]
+           "document", "new_bot", "delete_bot", "update_bot", "get_bot_info", "upload_faqs", "get_file_base64"]
 
 INVALID_USER_ID = f"fail, Invalid user_id: . user_id 必须只含有字母，数字和下划线且字母开头"
 
@@ -32,7 +34,14 @@ async def new_knowledge_base(req: request):
         return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
     debug_logger.info("new_knowledge_base %s", user_id)
     kb_name = safe_get(req, 'kb_name')
-    kb_id = 'KB' + uuid.uuid4().hex
+    default_kb_id = 'KB' + uuid.uuid4().hex
+    kb_id = safe_get(req, 'kb_id', default_kb_id)
+    if kb_id[:2] != 'KB':
+        return sanic_json({"code": 2001, "msg": "fail, kb_id must start with 'KB'"})
+    not_exist_kb_ids = local_doc_qa.mysql_client.check_kb_exist(user_id, [kb_id])
+    if not not_exist_kb_ids:
+        return sanic_json({"code": 2001, "msg": "fail, knowledge Base {} already exist".format(kb_id)})
+
     local_doc_qa.mysql_client.new_knowledge_base(kb_id, user_id, kb_name)
     now = datetime.now()
     timestamp = now.strftime("%Y%m%d%H%M")
@@ -68,6 +77,7 @@ async def upload_weblink(req: request):
     else:
         file_id, msg = local_doc_qa.mysql_client.add_file(user_id, kb_id, url, timestamp)
         local_file = LocalFile(user_id, kb_id, url, file_id, url, local_doc_qa.embeddings, is_url=True)
+        local_doc_qa.mysql_client.update_file_path(file_id, local_file.file_path)
         data = [{"file_id": file_id, "file_name": url, "status": "gray", "bytes": 0, "timestamp": timestamp}]
         asyncio.create_task(local_doc_qa.insert_files_to_faiss(user_id, kb_id, [local_file]))
         msg = "success，后台正在飞速上传文件，请耐心等待"
@@ -128,6 +138,7 @@ async def upload_files(req: request):
         file_id, msg = local_doc_qa.mysql_client.add_file(user_id, kb_id, file_name, timestamp)
         debug_logger.info(f"{file_name}, {file_id}, {msg}")
         local_file = LocalFile(user_id, kb_id, file, file_id, file_name, local_doc_qa.embeddings)
+        local_doc_qa.mysql_client.update_file_path(file_id, local_file.file_path)
         local_files.append(local_file)
         local_doc_qa.mysql_client.update_file_size(file_id, len(local_file.file_content))
         data.append(
@@ -184,6 +195,13 @@ async def list_docs(req: request):
             status_count[status] += 1
         data.append({"file_id": file_info[0], "file_name": file_info[1], "status": file_info[2], "bytes": file_info[3],
                      "content_length": file_info[4], "timestamp": file_info[5], "msg": msg_map[file_info[2]]})
+        file_name = file_info[1]
+        file_id = file_info[0]
+        if file_name.endswith('.faq'):
+            faq_info = local_doc_qa.mysql_client.get_faq(file_id)
+            if faq_info:
+                data[-1]['question'] = faq_info[2]
+                data[-1]['answer'] = faq_info[3]
 
     return sanic_json({"code": 200, "msg": "success", "data": {'total': status_count, 'details': data}})
 
@@ -319,7 +337,19 @@ async def local_doc_chat(req: request):
     if not is_valid:
         return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
     debug_logger.info('local_doc_chat %s', user_id)
-    kb_ids = safe_get(req, 'kb_ids')
+    bot_id = safe_get(req, 'bot_id')
+    if bot_id:
+        if not local_doc_qa.mysql_client.check_bot_is_exist(bot_id):
+            return sanic_json({"code": 2003, "msg": "fail, Bot {} not found".format(bot_id)})
+        bot_info = local_doc_qa.mysql_client.get_bot(None, bot_id)[0]
+        bot_id, bot_name, desc, image, prompt, welcome, model, kb_ids_str, upload_time = bot_info
+        kb_ids = kb_ids_str.split(',')
+        if not kb_ids:
+            return sanic_json({"code": 2003, "msg": "fail, Bot {} unbound knowledge base.".format(bot_id)})
+        custom_prompt = prompt
+    else:
+        kb_ids = safe_get(req, 'kb_ids')
+        custom_prompt = safe_get(req, 'custom_prompt', None)
     question = safe_get(req, 'question')
     rerank = safe_get(req, 'rerank', default=True)
     debug_logger.info('rerank %s', rerank)
@@ -329,10 +359,16 @@ async def local_doc_chat(req: request):
     debug_logger.info("question: %s", question)
     debug_logger.info("kb_ids: %s", kb_ids)
     debug_logger.info("user_id: %s", user_id)
+    debug_logger.info("custom_prompt: %s", custom_prompt)
 
     not_exist_kb_ids = local_doc_qa.mysql_client.check_kb_exist(user_id, kb_ids)
     if not_exist_kb_ids:
         return sanic_json({"code": 2003, "msg": "fail, knowledge Base {} not found".format(not_exist_kb_ids)})
+    faq_kb_ids = [kb + '_FAQ' for kb in kb_ids]
+    not_exist_faq_kb_ids = local_doc_qa.mysql_client.check_kb_exist(user_id, faq_kb_ids)
+    exist_faq_kb_ids = [kb for kb in faq_kb_ids if kb not in not_exist_faq_kb_ids]
+    debug_logger.info("exist_faq_kb_ids: %s", exist_faq_kb_ids)
+    kb_ids += exist_faq_kb_ids
 
     file_infos = []
     for kb_id in kb_ids:
@@ -349,7 +385,7 @@ async def local_doc_chat(req: request):
 
             async def generate_answer(response):
                 debug_logger.info("start generate...")
-                async for resp, next_history in local_doc_qa.get_knowledge_based_answer(
+                async for resp, next_history in local_doc_qa.get_knowledge_based_answer(custom_prompt=custom_prompt,
                         query=question, kb_ids=kb_ids, chat_history=history, streaming=True, rerank=rerank
                 ):
                     chunk_data = resp["result"]
@@ -402,7 +438,7 @@ async def local_doc_chat(req: request):
             return response_stream
 
         else:
-            async for resp, history in local_doc_qa.get_knowledge_based_answer(
+            async for resp, history in local_doc_qa.get_knowledge_based_answer(custom_prompt=custom_prompt,
                     query=question, kb_ids=kb_ids, chat_history=history, streaming=False, rerank=rerank
             ):
                 pass
@@ -485,7 +521,7 @@ https://qanything.youdao.com
 async def new_bot(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
-    bot_name = safe_get(req, "name")
+    bot_name = safe_get(req, "bot_name")
     desc = safe_get(req, "description", BOT_DESC)
     head_image = safe_get(req, "head_image", BOT_IMAGE)
     prompt_setting = safe_get(req, "prompt_setting", BOT_PROMPT)
@@ -518,7 +554,7 @@ async def delete_bot(req: request):
         return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
     debug_logger.info("delete_bot %s", user_id)
     bot_id = safe_get(req, 'bot_id')
-    if not local_doc_qa.mysql_client.check_bot_is_exist(user_id, bot_id):
+    if not local_doc_qa.mysql_client.check_bot_is_exist(bot_id):
         return sanic_json({"code": 2003, "msg": "fail, Bot {} not found".format(bot_id)})
     local_doc_qa.mysql_client.delete_bot(user_id, bot_id)
     return sanic_json({"code": 200, "msg": "Bot {} delete success".format(bot_id)})
@@ -534,17 +570,17 @@ async def update_bot(req: request):
         return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
     debug_logger.info("update_bot %s", user_id)
     bot_id = safe_get(req, 'bot_id')
-    if not local_doc_qa.mysql_client.check_bot_is_exist(user_id, bot_id):
+    if not local_doc_qa.mysql_client.check_bot_is_exist(bot_id):
         return sanic_json({"code": 2003, "msg": "fail, Bot {} not found".format(bot_id)})
     bot_info = local_doc_qa.mysql_client.get_bot(user_id, bot_id)[0]
-    bot_name = safe_get(req, "name", bot_info[1])
+    bot_name = safe_get(req, "bot_name", bot_info[1])
     description = safe_get(req, "description", bot_info[2])
     head_image = safe_get(req, "head_image", bot_info[3])
     prompt_setting = safe_get(req, "prompt_setting", bot_info[4])
     welcome_message = safe_get(req, "welcome_message", bot_info[5])
     model = safe_get(req, "model", bot_info[6])
     kb_ids = safe_get(req, "kb_ids")
-    if kb_ids:
+    if kb_ids is not None:
         kb_ids_str = ",".join(kb_ids)
     else:
         kb_ids_str = bot_info[7]
@@ -578,14 +614,122 @@ async def get_bot_info(req: request):
     if user_id is None:
         return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
     if bot_id:
-        if not local_doc_qa.mysql_client.check_bot_is_exist(user_id, bot_id):
+        if not local_doc_qa.mysql_client.check_bot_is_exist(bot_id):
             return sanic_json({"code": 2003, "msg": "fail, Bot {} not found".format(bot_id)})
     debug_logger.info("get_bot_info %s", user_id)
     bot_infos = local_doc_qa.mysql_client.get_bot(user_id, bot_id)
     data = []
     for bot_info in bot_infos:
+        if bot_info[7] != "":
+            kb_ids = bot_info[7].split(',')
+            kb_infos = local_doc_qa.mysql_client.get_knowledge_base_name(kb_ids)
+            kb_names = []
+            for kb_id in kb_ids:
+                for kb_info in kb_infos:
+                    if kb_id == kb_info[1]:
+                        kb_names.append(kb_info[2])
+                        break
+        else:
+            kb_ids = []
+            kb_names = []
         info = {"bot_id": bot_info[0], "user_id": user_id, "bot_name": bot_info[1], "description": bot_info[2],
                 "head_image": bot_info[3], "prompt_setting": bot_info[4], "welcome_message": bot_info[5],
-                "model": bot_info[6], "kb_ids": bot_info[7], "update_time": bot_info[8]}
+                "model": bot_info[6], "kb_ids": kb_ids, "kb_names": kb_names, "update_time": bot_info[8]}
         data.append(info)
     return sanic_json({"code": 200, "msg": "success", "data": data})
+
+
+async def upload_faqs(req: request):
+    local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
+    user_id = safe_get(req, 'user_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
+    is_valid = validate_user_id(user_id)
+    if not is_valid:
+        return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
+    debug_logger.info("upload_faqs %s", user_id)
+    kb_id = safe_get(req, 'kb_id')
+    debug_logger.info("kb_id %s", kb_id)
+    faqs = safe_get(req, 'faqs')
+    file_status = {}
+    if faqs is None:
+        files = req.files.getlist('files')
+        faqs = []
+        for file in files:
+            debug_logger.info('ori name: %s', file.name)
+            file_name = urllib.parse.unquote(file.name, encoding='UTF-8')
+            debug_logger.info('decode name: %s', file_name)
+            # 删除掉全角字符
+            file_name = re.sub(r'[\uFF01-\uFF5E\u3000-\u303F]', '', file_name)
+            file_name = file_name.replace("/", "_")
+            debug_logger.info('cleaned name: %s', file_name)
+            file_name = truncate_filename(file_name)
+            file_faqs = check_and_transform_excel(file.body)
+            if isinstance(file_faqs, str):
+                file_status[file_name] = file_faqs
+            else:
+                faqs.extend(file_faqs)
+                file_status[file_name] = "success"
+
+    if len(faqs) > 1000:
+        return sanic_json({"code": 2002, "msg": f"fail, faqs too many, The maximum length of each request is 1000."})
+
+    not_exist_kb_ids = local_doc_qa.mysql_client.check_kb_exist(user_id, [kb_id])
+    if not_exist_kb_ids:
+        msg = "invalid kb_id: {}, please check...".format(not_exist_kb_ids)
+        return sanic_json({"code": 2001, "msg": msg})
+
+    data = []
+    now = datetime.now()
+    local_files = []
+    timestamp = now.strftime("%Y%m%d%H%M")
+    debug_logger.info(f"start insert {len(faqs)} faqs to mysql, user_id: {user_id}, kb_id: {kb_id}")
+    exist_questions = []
+    for faq in tqdm(faqs):
+        ques = faq['question']
+        if ques not in exist_questions:
+            exist_questions.append(ques)
+        else:
+            debug_logger.info(f"question {ques} already exists, skip it")
+            continue
+        if len(ques) > 512 or len(faq['answer']) > 2048:
+            return sanic_json({"code": 2003, "msg": f"fail, faq too long, max length of question is 512, answer is 2048."})
+        content_length = len(ques) + len(faq['answer'])
+        file_name = f"FAQ_{ques}.faq"
+        file_name = file_name.replace("/", "_").replace(":", "_")  # 文件名中的/和：会导致写入时出错
+        file_name = simplify_filename(file_name)
+        file_id, msg = local_doc_qa.mysql_client.add_file(user_id, kb_id, file_name, timestamp, status='green')
+        local_file = LocalFile(user_id, kb_id, faq, file_id, file_name, local_doc_qa.embeddings)
+        local_doc_qa.mysql_client.update_file_path(file_id, local_file.file_path)
+        local_files.append(local_file)
+        local_doc_qa.mysql_client.add_faq(file_id, user_id, kb_id, ques, faq['answer'], faq.get("nos_keys", ""))
+        # debug_logger.info(f"{file_name}, {file_id}, {msg}, {faq}")
+        data.append(
+            {"file_id": file_id, "file_name": file_name, "status": "gray", "length": content_length,
+             "timestamp": timestamp})
+    debug_logger.info(f"end insert {len(faqs)} faqs to mysql, user_id: {user_id}, kb_id: {kb_id}")
+
+    asyncio.create_task(local_doc_qa.insert_files_to_faiss(user_id, kb_id, local_files))
+
+    msg = "success，后台正在飞速上传文件，请耐心等待"
+    return sanic_json({"code": 200, "msg": msg, "file_status": file_status, "data": data})
+
+
+async def get_file_base64(req: request):
+    local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
+    user_id = safe_get(req, 'user_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
+    is_valid = validate_user_id(user_id)
+    if not is_valid:
+        return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
+    debug_logger.info("get_file_base64 %s", user_id)
+    file_id = safe_get(req, 'file_id')
+    debug_logger.info("file_id: {}".format(file_id))
+    file_path = local_doc_qa.mysql_client.get_file_path(file_id)
+    if file_path in ['URL', 'FAQ', 'UNK']:
+        return sanic_json({"code": 2003, "msg": f"fail, {file_path} file has no base64"})
+    with open(file_path, 'rb') as f:
+        content = f.read()
+    base64_content = base64.b64encode(content).decode()
+    return sanic_json({"code": 200, "msg": "success", "base64_content": base64_content})

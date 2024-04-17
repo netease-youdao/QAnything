@@ -61,6 +61,7 @@ class KnowledgeBaseManager:
                 file_size INT DEFAULT -1,
                 content_length INT DEFAULT -1,
                 chunk_size INT DEFAULT -1,
+                file_path VARCHAR(512),
                 FOREIGN KEY (kb_id) REFERENCES KnowledgeBase(kb_id) ON DELETE CASCADE
             );
 
@@ -79,7 +80,7 @@ class KnowledgeBaseManager:
         self.execute_query_(query, (), commit=True)
 
         query = """
-            CREATE TABLE IF NOT EXISTS QanythingBot(
+            CREATE TABLE IF NOT EXISTS QanythingBot (
                 bot_id          VARCHAR(64) PRIMARY KEY,
                 user_id         VARCHAR(255),
                 bot_name        VARCHAR(512),
@@ -95,6 +96,32 @@ class KnowledgeBaseManager:
             );
         """
         self.execute_query_(query, (), commit=True)
+
+        query = """
+            CREATE TABLE IF NOT EXISTS Faqs (
+                faq_id  VARCHAR(255) PRIMARY KEY,
+                user_id VARCHAR(255) NOT NULL,
+                kb_id VARCHAR(255) NOT NULL,
+                question VARCHAR(512) NOT NULL, 
+                answer VARCHAR(2048) NOT NULL, 
+                nos_keys VARCHAR(768) 
+            );
+        """
+        self.execute_query_(query, (), commit=True)
+
+        # 旧的File不存在file_path，补上默认值：'UNK'
+        # 如果存在File表，但是没有file_path字段，那么添加file_path字段
+        query = "PRAGMA table_info(File)"
+        result = self.execute_query_(query, (), fetch=True)
+        if result:
+            file_path_exist = False
+            for column_info in result:
+                if column_info[1] == 'file_path':
+                    file_path_exist = True
+                    break
+            if not file_path_exist:
+                query = "ALTER TABLE File ADD COLUMN file_path VARCHAR(512) DEFAULT 'UNK'"
+                self.execute_query_(query, (), commit=True)
 
     def check_user_exist_(self, user_id):
         query = "SELECT user_id FROM User WHERE user_id = ?"
@@ -114,10 +141,10 @@ class KnowledgeBaseManager:
         unvalid_kb_ids = list(set(kb_ids) - set(valid_kb_ids))
         return unvalid_kb_ids
 
-    def check_bot_is_exist(self, user_id, bot_id):
+    def check_bot_is_exist(self, bot_id):
         # 使用参数化查询
-        query = "SELECT bot_id FROM QanythingBot WHERE bot_id = ? AND user_id = ? AND deleted = 0"
-        result = self.execute_query_(query, (bot_id, user_id), fetch=True)
+        query = "SELECT bot_id FROM QanythingBot WHERE bot_id = ? AND deleted = 0"
+        result = self.execute_query_(query, (bot_id, ), fetch=True)
         debug_logger.info("check_bot_exist {}".format(result))
         return result is not None and len(result) > 0
 
@@ -255,6 +282,11 @@ class KnowledgeBaseManager:
         debug_logger.info("add_file: {}".format(file_id))
         return file_id, "success"
 
+    def add_faq(self, faq_id, user_id, kb_id, question, answer, nos_keys):
+        # debug_logger.info(f"add_faq: {faq_id}, {user_id}, {kb_id}, {question}, {answer}, {nos_keys}")
+        query = "INSERT INTO Faqs (faq_id, user_id, kb_id, question, answer, nos_keys) VALUES (?, ?, ?, ?, ?, ?)"
+        self.execute_query_(query, (faq_id, user_id, kb_id, question, answer, nos_keys), commit=True)
+
     #  更新file中的file_size
     def update_file_size(self, file_id, file_size):
         query = "UPDATE File SET file_size = ? WHERE file_id = ?"
@@ -264,6 +296,10 @@ class KnowledgeBaseManager:
     def update_content_length(self, file_id, content_length):
         query = "UPDATE File SET content_length = ? WHERE file_id = ?"
         self.execute_query_(query, (content_length, file_id), commit=True)
+
+    def update_file_path(self, file_id, file_path):
+        query = "UPDATE File SET file_path = ? WHERE file_id = ?"
+        self.execute_query_(query, (file_path, file_id), commit=True)
     
     #  更新file中的chunk_size
     def update_chunk_size(self, file_id, chunk_size):
@@ -285,6 +321,10 @@ class KnowledgeBaseManager:
         query = "SELECT file_id, file_name, status, file_size, content_length, timestamp FROM File WHERE kb_id = ? AND kb_id IN (SELECT kb_id FROM KnowledgeBase WHERE user_id = ?) AND deleted = 0"
         return self.execute_query_(query, (kb_id, user_id), fetch=True)
 
+    def get_file_path(self, file_id):
+        query = "SELECT file_path FROM File WHERE file_id = ? AND deleted = 0"
+        return self.execute_query_(query, (file_id, ), fetch=True)[0][0]
+
     # [文件] 删除指定文件
     def delete_files(self, kb_id, file_ids):
         file_ids_str = ','.join("'{}'".format(str(x)) for x in file_ids)
@@ -296,6 +336,9 @@ class KnowledgeBaseManager:
         if not bot_id:
             query = "SELECT bot_id, bot_name, description, head_image, prompt_setting, welcome_message, model, kb_ids_str, update_time FROM QanythingBot WHERE user_id = ? AND deleted = 0"
             return self.execute_query_(query, (user_id,), fetch=True)
+        elif not user_id:
+            query = "SELECT bot_id, bot_name, description, head_image, prompt_setting, welcome_message, model, kb_ids_str, update_time FROM QanythingBot WHERE bot_id = ? AND deleted = 0"
+            return self.execute_query_(query, (bot_id, ), fetch=True)
         else:
             query = "SELECT bot_id, bot_name, description, head_image, prompt_setting, welcome_message, model, kb_ids_str, update_time FROM QanythingBot WHERE user_id = ? AND bot_id = ? AND deleted = 0"
             return self.execute_query_(query, (user_id, bot_id), fetch=True)
@@ -304,3 +347,27 @@ class KnowledgeBaseManager:
                    kb_ids_str, update_time):
         query = "UPDATE QanythingBot SET bot_name = ?, description = ?, head_image = ?, prompt_setting = ?, welcome_message = ?, model = ?, kb_ids_str = ?, update_time = ? WHERE user_id = ? AND bot_id = ? AND deleted = 0"
         self.execute_query_(query, (bot_name, description, head_image, prompt_setting, welcome_message, model, kb_ids_str, update_time, user_id, bot_id), commit=True)
+
+    def get_faq(self, faq_id) -> tuple:
+        query = "SELECT user_id, kb_id, question, answer, nos_keys FROM Faqs WHERE faq_id = ?"
+        faq_all = self.execute_query_(query, (faq_id,), fetch=True)
+        if faq_all:
+            faq = faq_all[0]
+            debug_logger.info(f"get_faq: faq_id: {faq_id}, mysql res: {faq}")
+            return faq
+        else:
+            debug_logger.error(f"get_faq: faq_id: {faq_id} not found")
+            return None
+
+    def delete_faqs(self, faq_ids):
+        # 分批，因为多个faq_id的加一起可能会超过sql的最大长度
+        batch_size = 100
+        total_deleted = 0
+        for i in range(0, len(faq_ids), batch_size):
+            batch_faq_ids = faq_ids[i:i+batch_size]
+            placeholders = ','.join(['%s'] * len(batch_faq_ids))
+            query = "DELETE FROM Faqs WHERE faq_id IN ({})".format(placeholders)
+            res = self.execute_query_(query, (batch_faq_ids), commit=True, check=True)
+            total_deleted += res
+        debug_logger.info(f"delete_faqs count: {total_deleted}")
+
