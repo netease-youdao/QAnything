@@ -9,7 +9,7 @@
     <div class="bot-item" v-for="item in botList" :key="item.id" @click="botEdit(item)">
       <div class="top-info">
         <img class="avator" src="@/assets/bots/bot-avatar.png" alt="avator" />
-        <span class="name">{{ item.name }}</span>
+        <span class="name">{{ item.bot_name }}</span>
         <a-dropdown
           @click.stop
           :trigger="['click']"

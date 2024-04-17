@@ -3,7 +3,7 @@
     <div v-if="isLoading" class="loading">
       <a-spin :indicator="indicator" />
     </div>
-    <ChatShare v-else :bot-info="botInfo" chat-type="share" @bot-init="init" />
+    <ChatShare v-else :bot-info="botInfo" :virtual-user-id="userId" chat-type="share" />
     <ChatSourceDialog />
   </div>
 </template>
@@ -70,7 +70,8 @@ async function init() {
 
     // 获取浏览器指纹
     const result = await fp.get();
-    userId.value = result.visitorId;
+    // userid必须以字母开头
+    userId.value = 'q' + result.visitorId;
 
     await getBotInfo(botId.value);
     console.log('visitorId', result.visitorId);

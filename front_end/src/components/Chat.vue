@@ -474,32 +474,39 @@ const handleChatSource = file => {
 async function queryFile(file) {
   try {
     setSourceUrl(null);
-    const res: any = await resultControl(await urlResquest.docDetail({ docId: file.fileId }));
+    const res: any = await resultControl(await urlResquest.getFile({ file_id: file.file_id }));
     console.log('queryFile', res);
     const suffix = file.file_name.split('.').pop();
+    const b64Type = getB64Type(suffix);
+    console.log('b64Type', b64Type);
     setSourceType(suffix);
-    setSourceUrl(res.url);
+    setSourceUrl(`data:${b64Type};base64,${res.base64_content}`);
     if (suffix === 'txt') {
-      fetch(res.url)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.text();
-        })
-        .then(data => {
-          setTextContent(data);
-          setChatSourceVisible(true);
-        })
-        .catch(error => {
-          console.error('There has been a problem with your fetch operation:', error);
-        });
+      const decodedTxt = atob(res.base64_content);
+      const correctStr = decodeURIComponent(escape(decodedTxt));
+      console.log('decodedTxt', correctStr);
+      setTextContent(correctStr);
+      setChatSourceVisible(true);
     } else {
       setChatSourceVisible(true);
     }
   } catch (e) {
     message.error(e.msg || '获取文件失败');
   }
+}
+
+let b64Types = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/plain',
+  'image/jpeg',
+  'image/png',
+  'image/jpeg',
+];
+function getB64Type(suffix) {
+  const index = supportSourceTypes.indexOf(suffix);
+  return b64Types[index];
 }
 
 scrollBottom();

@@ -151,6 +151,14 @@ const urlConfig: IUrlConfig = {
       user_id: userId,
     },
   },
+  //获取文件base64
+  getFile: {
+    type: EUrlType.POST,
+    url: '/local_doc_qa/get_file_base64',
+    param: {
+      user_id: userId,
+    },
+  },
 };
 const urlResquest: any = {};
 Object.keys(urlConfig).forEach(key => {
