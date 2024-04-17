@@ -17,7 +17,7 @@ class EmbeddingTorchBackend(EmbeddingBackend):
             self._model = self._model.to(self.device)
         else:
             self.device = torch.device('mps')
-            self._model = self._model.half().to(self.device)
+            self._model = self._model.to(self.device)
 
     def get_embedding(self, sentences, max_length):
         inputs_pt = self._tokenizer(sentences, padding=True, truncation=True, max_length=max_length,
