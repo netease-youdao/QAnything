@@ -337,12 +337,23 @@ async def local_doc_chat(req: request):
     if not is_valid:
         return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
     debug_logger.info('local_doc_chat %s', user_id)
-    kb_ids = safe_get(req, 'kb_ids')
+    bot_id = safe_get(req, 'bot_id')
+    if bot_id:
+        if not local_doc_qa.mysql_client.check_bot_is_exist(bot_id):
+            return sanic_json({"code": 2003, "msg": "fail, Bot {} not found".format(bot_id)})
+        bot_info = local_doc_qa.mysql_client.get_bot(None, bot_id)[0]
+        bot_id, bot_name, desc, image, prompt, welcome, model, kb_ids_str, upload_time = bot_info
+        kb_ids = kb_ids_str.split(',')
+        if not kb_ids:
+            return sanic_json({"code": 2003, "msg": "fail, Bot {} unbound knowledge base.".format(bot_id)})
+        custom_prompt = prompt
+    else:
+        kb_ids = safe_get(req, 'kb_ids')
+        custom_prompt = safe_get(req, 'custom_prompt', None)
     question = safe_get(req, 'question')
     rerank = safe_get(req, 'rerank', default=True)
     debug_logger.info('rerank %s', rerank)
     streaming = safe_get(req, 'streaming', False)
-    custom_prompt = safe_get(req, 'custom_prompt', None)
     history = safe_get(req, 'history', [])
     debug_logger.info("history: %s ", history)
     debug_logger.info("question: %s", question)
@@ -543,7 +554,7 @@ async def delete_bot(req: request):
         return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
     debug_logger.info("delete_bot %s", user_id)
     bot_id = safe_get(req, 'bot_id')
-    if not local_doc_qa.mysql_client.check_bot_is_exist(user_id, bot_id):
+    if not local_doc_qa.mysql_client.check_bot_is_exist(bot_id):
         return sanic_json({"code": 2003, "msg": "fail, Bot {} not found".format(bot_id)})
     local_doc_qa.mysql_client.delete_bot(user_id, bot_id)
     return sanic_json({"code": 200, "msg": "Bot {} delete success".format(bot_id)})
@@ -559,7 +570,7 @@ async def update_bot(req: request):
         return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
     debug_logger.info("update_bot %s", user_id)
     bot_id = safe_get(req, 'bot_id')
-    if not local_doc_qa.mysql_client.check_bot_is_exist(user_id, bot_id):
+    if not local_doc_qa.mysql_client.check_bot_is_exist(bot_id):
         return sanic_json({"code": 2003, "msg": "fail, Bot {} not found".format(bot_id)})
     bot_info = local_doc_qa.mysql_client.get_bot(user_id, bot_id)[0]
     bot_name = safe_get(req, "bot_name", bot_info[1])
@@ -603,7 +614,7 @@ async def get_bot_info(req: request):
     if user_id is None:
         return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
     if bot_id:
-        if not local_doc_qa.mysql_client.check_bot_is_exist(user_id, bot_id):
+        if not local_doc_qa.mysql_client.check_bot_is_exist(bot_id):
             return sanic_json({"code": 2003, "msg": "fail, Bot {} not found".format(bot_id)})
     debug_logger.info("get_bot_info %s", user_id)
     bot_infos = local_doc_qa.mysql_client.get_bot(user_id, bot_id)

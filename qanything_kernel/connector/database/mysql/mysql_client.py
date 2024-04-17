@@ -141,10 +141,10 @@ class KnowledgeBaseManager:
         unvalid_kb_ids = list(set(kb_ids) - set(valid_kb_ids))
         return unvalid_kb_ids
 
-    def check_bot_is_exist(self, user_id, bot_id):
+    def check_bot_is_exist(self, bot_id):
         # 使用参数化查询
-        query = "SELECT bot_id FROM QanythingBot WHERE bot_id = ? AND user_id = ? AND deleted = 0"
-        result = self.execute_query_(query, (bot_id, user_id), fetch=True)
+        query = "SELECT bot_id FROM QanythingBot WHERE bot_id = ? AND deleted = 0"
+        result = self.execute_query_(query, (bot_id, ), fetch=True)
         debug_logger.info("check_bot_exist {}".format(result))
         return result is not None and len(result) > 0
 
@@ -336,6 +336,9 @@ class KnowledgeBaseManager:
         if not bot_id:
             query = "SELECT bot_id, bot_name, description, head_image, prompt_setting, welcome_message, model, kb_ids_str, update_time FROM QanythingBot WHERE user_id = ? AND deleted = 0"
             return self.execute_query_(query, (user_id,), fetch=True)
+        elif not user_id:
+            query = "SELECT bot_id, bot_name, description, head_image, prompt_setting, welcome_message, model, kb_ids_str, update_time FROM QanythingBot WHERE bot_id = ? AND deleted = 0"
+            return self.execute_query_(query, (bot_id, ), fetch=True)
         else:
             query = "SELECT bot_id, bot_name, description, head_image, prompt_setting, welcome_message, model, kb_ids_str, update_time FROM QanythingBot WHERE user_id = ? AND bot_id = ? AND deleted = 0"
             return self.execute_query_(query, (user_id, bot_id), fetch=True)
