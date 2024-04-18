@@ -138,7 +138,7 @@ app.config.REQUEST_MAX_SIZE = 400 * 1024 * 1024
 
 
 # 将 /static 路径映射到 static 文件夹
-app.static('/static', './static')
+app.static('/qanything/', 'qanything_kernel/qanything_server/dist/qanything/', name='qanything', index="index.html")
 
 # 启动Milvus Lite服务
 # @app.main_process_start
