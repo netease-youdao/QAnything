@@ -275,7 +275,7 @@ bash ./run.sh -c local -i 0,1 -b default  # 指定0,1号GPU启动，请确认有
 #### 前端页面
 运行成功后，即可在浏览器输入以下地址进行体验。
 
-- 前端地址: http://`your_host`:5052/qanything/
+- 前端地址: http://`your_host`:8777/qanything/
 
 #### API
 如果想要访问API接口，请参考下面的地址:
