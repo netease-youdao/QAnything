@@ -43,6 +43,7 @@ YouDaoLocalEmbeddings.__hash__ = _embeddings_hash
 
 class LocalDocQA:
     def __init__(self):
+        self.rerank_top_k: int = None
         self.llm: object = None
         self.embeddings: object = None
         self.top_k: int = VECTOR_SEARCH_TOP_K
@@ -67,6 +68,7 @@ class LocalDocQA:
         return res
 
     def init_cfg(self, mode='local', args=None):
+        self.rerank_top_k = int(args.model_size[0])
         self.mode = mode
         self.embeddings = YouDaoLocalEmbeddings()
         if self.mode == 'local':

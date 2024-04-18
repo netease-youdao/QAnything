@@ -33,7 +33,7 @@ parser.add_argument('--host', dest='host', default='0.0.0.0', help='set host for
 parser.add_argument('--port', dest='port', default=8777, type=int, help='set port for qanything server')
 #  必填参数
 parser.add_argument('--model_size', dest='model_size', default=
-'3B', help='set LLM model size for qanything server')
+'7B', help='set LLM model size for qanything server')
 parser.add_argument('--gpu_type', dest='gpu_type', default=
 'Nvidia', help='set the GPU type for qanything server, options=["nvidia", "intel", "metal"], default="nvidia"')
 parser.add_argument('--device_id', dest='device_id', default=
