@@ -31,6 +31,7 @@ class LocalDocQA:
         self.ocr_reader: Reader = None
         self.mode: str = None
         self.use_cpu: bool = True
+        self.model: str = None
 
     def get_ocr_result(self, input: dict):
         img_file = input['img64']
@@ -46,6 +47,10 @@ class LocalDocQA:
     def init_cfg(self, args=None):
         self.rerank_top_k = int(args.model_size[0])
         self.use_cpu = args.use_cpu
+        if args.use_openai_api:
+            self.model = args.openai_api_model_name
+        else:
+            self.model = args.model.split('/')[-1]
         if platform.system() == 'Linux':
             if args.use_openai_api:
                 self.llm: OpenAILLM = OpenAILLM(args)

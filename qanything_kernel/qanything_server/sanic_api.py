@@ -100,7 +100,7 @@ args = parser.parse_args()
 print('use_cpu:', args.use_cpu, flush=True)
 print('use_openai_api:', args.use_openai_api, flush=True)
 
-if args.use_cpu:
+if not args.use_cpu:
     model_config.CUDA_DEVICE = args.device_id
     os.environ["CUDA_VISIBLE_DEVICES"] = args.device_id
 
@@ -200,6 +200,8 @@ app.add_route(update_bot, "/api/local_doc_qa/update_bot", methods=['POST'])  # t
 app.add_route(get_bot_info, "/api/local_doc_qa/get_bot_info", methods=['POST'])  # tags=["获取Bot信息"]
 app.add_route(upload_faqs, "/api/local_doc_qa/upload_faqs", methods=['POST'])  # tags=["上传FAQ"]
 app.add_route(get_file_base64, "/api/local_doc_qa/get_file_base64", methods=['POST'])  # tags=["获取文件base64"]
+app.add_route(get_qa_info, "/api/local_doc_qa/get_qa_info", methods=['POST'])  # tags=["获取QA信息"]
+app.add_route(get_qa_excel, "/api/local_doc_qa/get_qa_excel", methods=['POST'])  # tags=["获取QA Excel"]
 
 if __name__ == "__main__":
     if args.use_openai_api:

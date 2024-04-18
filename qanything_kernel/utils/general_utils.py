@@ -17,10 +17,11 @@ import pandas as pd
 from io import BytesIO
 import platform
 from qanything_kernel.utils.custom_log import debug_logger
+from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH
 
 __all__ = ['write_check_file', 'isURL', 'format_source_documents', 'get_time', 'safe_get', 'truncate_filename',
            'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens', 'download_file', 
-           'get_gpu_memory_utilization', 'check_package_version', 'simplify_filename', 'check_and_transform_excel']
+           'get_gpu_memory_utilization', 'check_package_version', 'simplify_filename', 'check_and_transform_excel', 'export_qalogs_to_excel']
 
 
 def get_invalid_user_id_msg(user_id):
@@ -257,3 +258,16 @@ def check_and_transform_excel(binary_data):
         transformed_data.append({"question": row['问题'], "answer": row['答案']})
 
     return transformed_data
+
+
+# 使用 pandas 将数据写入 Excel
+def export_qalogs_to_excel(qalogs, filename: str):
+    # 将查询结果转换为 DataFrame
+    df = pd.DataFrame(qalogs, columns=['qa_id', 'user_id', 'bot_id', 'kb_ids', 'query', 'model', 'history', 'result', 'timestamp'])
+    # 写入 Excel 文件
+    root_path = UPLOAD_ROOT_PATH + 'qalogs'
+    if not os.path.exists(root_path):
+        os.makedirs(root_path)
+    df.to_excel(os.path.join(root_path, filename), index=False)
+    print(f"Data exported to {filename} successfully.")
+    return os.path.join(root_path, filename)

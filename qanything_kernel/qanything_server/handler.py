@@ -19,7 +19,8 @@ import base64
 
 __all__ = ["new_knowledge_base", "upload_files", "list_kbs", "list_docs", "delete_knowledge_base", "delete_docs",
            "rename_knowledge_base", "get_total_status", "clean_files_by_status", "upload_weblink", "local_doc_chat",
-           "document", "new_bot", "delete_bot", "update_bot", "get_bot_info", "upload_faqs", "get_file_base64"]
+           "document", "new_bot", "delete_bot", "update_bot", "get_bot_info", "upload_faqs", "get_file_base64",
+           "get_qa_info", "get_qa_excel"]
 
 INVALID_USER_ID = f"fail, Invalid user_id: . user_id 必须只含有字母，数字和下划线且字母开头"
 
@@ -254,6 +255,7 @@ async def delete_docs(req: request):
         return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
     debug_logger.info("delete_docs %s", user_id)
     kb_id = safe_get(req, 'kb_id')
+    debug_logger.info("kb_id %s", kb_id)
     file_ids = safe_get(req, "file_ids")
     not_exist_kb_ids = local_doc_qa.mysql_client.check_kb_exist(user_id, [kb_id])
     if not_exist_kb_ids:
@@ -356,7 +358,9 @@ async def local_doc_chat(req: request):
     debug_logger.info('rerank %s', rerank)
     streaming = safe_get(req, 'streaming', False)
     history = safe_get(req, 'history', [])
-    product_source = safe_get(req, 'product_source', 'saas')
+    product_source = safe_get(req, 'product_source', 'paas')
+    model = local_doc_qa.model
+    debug_logger.info("model: %s", model)
     debug_logger.info("product_source: %s", product_source)
     debug_logger.info("history: %s ", history)
     debug_logger.info("question: %s", question)
@@ -382,6 +386,7 @@ async def local_doc_chat(req: request):
                            "response": "All knowledge bases {} are empty or haven't green file, please upload files".format(
                                kb_ids), "history": history, "source_documents": [{}]})
     else:
+        time_record = {}
         debug_logger.info("streaming: %s", streaming)
         if streaming:
             debug_logger.info("start generate answer")
@@ -407,9 +412,12 @@ async def local_doc_chat(req: request):
 
                         retrieval_documents = format_source_documents(resp["retrieval_documents"])
                         source_documents = format_source_documents(resp["source_documents"])
-                        chat_data = {'user_info': user_id, 'kb_ids': kb_ids, 'query': question, 'history': history,
-                                     'prompt': resp['prompt'], 'result': next_history[-1][1],
+                        chat_data = {'user_id': chat_user_id, 'bot_id': bot_id, 'kb_ids': kb_ids, 'query': question,
+                                     'history': history, 'model': model, 'product_source': product_source,
+                                     'time_record': time_record, 'prompt': resp['prompt'],
+                                     'result': next_history[-1][1], 'condense_question': question,
                                      'retrieval_documents': retrieval_documents, 'source_documents': source_documents}
+                        local_doc_qa.mysql_client.add_qalog(**chat_data)
                         qa_logger.info("chat_data: %s", chat_data)
                         debug_logger.info("response: %s", chat_data['result'])
                         stream_res = {
@@ -447,9 +455,15 @@ async def local_doc_chat(req: request):
                 pass
             retrieval_documents = format_source_documents(resp["retrieval_documents"])
             source_documents = format_source_documents(resp["source_documents"])
-            chat_data = {'user_id': user_id, 'kb_ids': kb_ids, 'query': question, 'history': history,
-                         'retrieval_documents': retrieval_documents, 'prompt': resp['prompt'], 'result': resp['result'],
+            # chat_data = {'user_id': user_id, 'kb_ids': kb_ids, 'query': question, 'history': history,
+            #              'retrieval_documents': retrieval_documents, 'prompt': resp['prompt'], 'result': resp['result'],
+            #              'source_documents': source_documents}
+            chat_data = {'user_id': chat_user_id, 'bot_id': bot_id, 'kb_ids': kb_ids, 'query': question,
+                         'history': history, 'model': model, 'product_source': product_source,
+                         'time_record': time_record, 'prompt': resp['prompt'], 'result': resp['result'],
+                         'condense_question': question, 'retrieval_documents': retrieval_documents,
                          'source_documents': source_documents}
+            local_doc_qa.mysql_client.add_qalog(**chat_data)
             qa_logger.info("chat_data: %s", chat_data)
             debug_logger.info("response: %s", chat_data['result'])
             return sanic_json({"code": 200, "msg": "success chat", "question": question, "response": resp["result"],
@@ -744,3 +758,37 @@ async def get_file_base64(req: request):
         content = f.read()
     base64_content = base64.b64encode(content).decode()
     return sanic_json({"code": 200, "msg": "success", "base64_content": base64_content})
+
+
+async def get_qa_info(req: request):
+    local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
+    bot_id = safe_get(req, 'bot_id')
+    if not bot_id:
+        return sanic_json({"code": 2002, "msg": f'输入非法！bot_id为空，request.json：{req.json}，请检查！'})
+    debug_logger.info("get_qa_info %s", bot_id)
+    time_start = safe_get(req, 'time_start')
+    time_end = safe_get(req, 'time_end')
+    # 检查time_end和time_start是否满足2024-10-05的格式
+    if time_start:
+        if not re.match(r'\d{4}-\d{2}-\d{2}', time_start):
+            return sanic_json({"code": 2002, "msg": f'输入非法！time_start格式错误，time_start: {time_start}，示例：2024-10-05，请检查！'})
+    if time_end:
+        if not re.match(r'\d{4}-\d{2}-\d{2}', time_end):
+            return sanic_json({"code": 2002, "msg": f'输入非法！time_end格式错误，time_end: {time_end}，示例：2024-10-05，请检查！'})
+    time_range = None
+    if time_end and time_start:
+        time_range = (time_start, time_end)
+    elif time_start:  # 2024-10-05
+        time_range = (time_start + " 00:00:00", time_start + " 23:59:59")
+    qa_infos = local_doc_qa.mysql_client.get_qalog_by_bot_id(bot_id, time_range)
+    return sanic_json({"code": 200, "msg": "success", "qa_infos": qa_infos})
+
+
+async def get_qa_excel(req: request):
+    local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
+    qa_ids = safe_get(req, 'qa_ids')
+    qa_infos = local_doc_qa.mysql_client.get_qalog_by_ids(qa_ids)
+    timestamp = datetime.now().strftime("%Y%m%d%H%M")
+    file_name = f"QAnything_QA_{timestamp}.xlsx"
+    file_path = export_qalogs_to_excel(qa_infos, file_name)
+    return sanic_json({"code": 200, "msg": "success", "file_path": file_path})

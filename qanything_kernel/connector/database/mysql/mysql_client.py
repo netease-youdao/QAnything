@@ -110,9 +110,12 @@ class KnowledgeBaseManager:
         """
         self.execute_query_(query, (), commit=True)
 
+        # query = 'DROP TABLE IF EXISTS QaLogs'
+        # self.execute_query_(query, (), commit=True)
+
         query = """
             CREATE TABLE IF NOT EXISTS QaLogs (
-                id INT AUTO_INCREMENT PRIMARY KEY,
+                qa_id VARCHAR(64) PRIMARY KEY,
                 user_id VARCHAR(255) NOT NULL,
                 bot_id VARCHAR(255),
                 kb_ids LONGTEXT NOT NULL,
@@ -310,27 +313,39 @@ class KnowledgeBaseManager:
 
     def add_qalog(self, user_id, bot_id, kb_ids, query, model, product_source, time_record, history, condense_question,
                   prompt, result, retrieval_documents, source_documents):
+        debug_logger.info("add_qalog: {}".format(query))
+        qa_id = uuid.uuid4().hex
         kb_ids = json.dumps(kb_ids, ensure_ascii=False)
         retrieval_documents = json.dumps(retrieval_documents, ensure_ascii=False)
         source_documents = json.dumps(source_documents, ensure_ascii=False)
         history = json.dumps(history, ensure_ascii=False)
         time_record = json.dumps(time_record, ensure_ascii=False)
-        insert_query = ("INSERT INTO QaLogs (user_id, bot_id, kb_ids, query, model, product_source, time_record, "
+        insert_query = ("INSERT INTO QaLogs (qa_id, user_id, bot_id, kb_ids, query, model, product_source, time_record, "
                         "history, condense_question, prompt, result, retrieval_documents, source_documents) "
-                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-        self.execute_query_(insert_query, (user_id, bot_id, kb_ids, query, model, product_source, time_record,
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        self.execute_query_(insert_query, (qa_id, user_id, bot_id, kb_ids, query, model, product_source, time_record,
                                            history, condense_question, prompt, result, retrieval_documents,
                                            source_documents), commit=True)
 
     def get_qalog_by_bot_id(self, bot_id, time_range=None):
-        if isinstance(time_range, str):  # 2024-10-05
-            time_range = (time_range + " 00:00:00", time_range + " 23:59:59")
+        need_info = ("qa_id", "user_id", "bot_id", "query", "model", "result", "timestamp")
+        need_info = ", ".join(need_info)
         if isinstance(time_range, tuple):
-            query = "SELECT * FROM QaLogs WHERE bot_id = ? AND timestamp BETWEEN ? AND ?"
-            return self.execute_query_(query, (bot_id, time_range[0], time_range[1]), fetch=True)
+            time_start, time_end = time_range
+            if len(time_start) == 10:
+                time_start = time_start + " 00:00:00"
+            if len(time_end) == 10:
+                time_end = time_end + " 23:59:59"
+            query = f"SELECT {need_info} FROM QaLogs WHERE bot_id = ? AND timestamp BETWEEN ? AND ?"
+            return self.execute_query_(query, (bot_id, time_start, time_end), fetch=True)
         else:
-            query = "SELECT user_id FROM QaLogs WHERE bot_id = ?"
+            query = f"SELECT {need_info} FROM QaLogs WHERE bot_id = ?"
             return self.execute_query_(query, (bot_id,), fetch=True)
+
+    def get_qalog_by_ids(self, ids):
+        placeholders = ','.join(['?'] * len(ids))
+        query = "SELECT qa_id, user_id, bot_id, kb_ids, query, model, history, result, timestamp FROM QaLogs WHERE qa_id IN ({})".format(placeholders)
+        return self.execute_query_(query, ids, fetch=True)
 
     def add_faq(self, faq_id, user_id, kb_id, question, answer, nos_keys):
         # debug_logger.info(f"add_faq: {faq_id}, {user_id}, {kb_id}, {question}, {answer}, {nos_keys}")
