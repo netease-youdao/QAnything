@@ -280,7 +280,7 @@ bash ./run.sh -c local -i 0,1 -b default  # gpu ids: 0,1, Please confirm how man
 #### Front end
 After successful installation, you can experience the application by entering the following addresses in your web browser.
 
-- Front end address: http://`your_host`:5052/qanything/
+- Front end address: http://`your_host`:8777/qanything/
 
 #### API
 If you want to visit API, please refer to the following address:
