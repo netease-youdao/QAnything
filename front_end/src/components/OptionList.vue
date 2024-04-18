@@ -277,7 +277,7 @@ const deleteItem = item => {
 const confirm = async () => {
   try {
     await resultControl(
-      await urlResquest.deleteFile({ fileIds: [optionItem.fileId], kbId: currentId.value })
+      await urlResquest.deleteFile({ file_ids: [optionItem.fileId], kb_id: currentId.value })
     );
     message.success('删除成功');
     getDetails();

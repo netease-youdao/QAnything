@@ -346,6 +346,7 @@ const send = () => {
       history: control.value ? history.value : [],
       question: q,
       streaming: true,
+      product_source: 'saas',
     }),
     signal: ctrl.signal,
     onopen(e: any) {

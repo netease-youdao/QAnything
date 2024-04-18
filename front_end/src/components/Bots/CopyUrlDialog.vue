@@ -12,13 +12,13 @@
         <div class="title">{{ bots.UrlLink }}</div>
         <div class="copy-url">
           <span>{{ webUrl }}</span>
-          <a-button class="btn" @click="copyUrl">{{ bots.copy }}</a-button>
+          <!-- <a-button class="btn" @click="copyUrl">{{ bots.copy }}</a-button> -->
         </div>
         <div class="title">{{ bots.qrCode }}</div>
         <div class="qr-code-content">
           <a-qrcode ref="qrcode" :value="webUrl" bgColor="#fff" />
           <a-button class="btn save-btn" @click="saveQrCode">{{ bots.save }}</a-button>
-          <a-button class="btn" @click="copyQrcode">{{ bots.copy }}</a-button>
+          <!-- <a-button class="btn" @click="copyQrcode">{{ bots.copy }}</a-button> -->
         </div>
       </div>
     </a-modal>
@@ -39,11 +39,11 @@ message.config({
   maxCount: 3,
 });
 
-const copyUrl = () => {
-  navigator.clipboard.writeText(webUrl.value).then(() => {
-    message.success(bots.copySuccessful);
-  });
-};
+// const copyUrl = () => {
+//   navigator.clipboard.writeText(webUrl.value).then(() => {
+//     message.success(bots.copySuccessful);
+//   });
+// };
 
 const saveQrCode = async () => {
   const url = await qrcode.value.toDataURL();
@@ -55,22 +55,22 @@ const saveQrCode = async () => {
   document.body.removeChild(a);
 };
 
-const copyQrcode = async () => {
-  try {
-    // 将canvas转换为blob
-    const url = await qrcode.value.toDataURL();
-    const fetchRes = await fetch(url);
-    const blob = await fetchRes.blob();
-    // 使用ClipboardItem构造函数创建一个新的剪贴板项
-    const clipboardItem = new ClipboardItem({ 'image/png': blob });
-    // 将剪贴板项写入剪贴板
-    await navigator.clipboard.write([clipboardItem]);
-    message.success(bots.copySuccessful);
-    console.log('Canvas已复制到剪贴板');
-  } catch (error) {
-    console.error('复制到剪贴板失败:', error);
-  }
-};
+// const copyQrcode = async () => {
+//   try {
+//     // 将canvas转换为blob
+//     const url = await qrcode.value.toDataURL();
+//     const fetchRes = await fetch(url);
+//     const blob = await fetchRes.blob();
+//     // 使用ClipboardItem构造函数创建一个新的剪贴板项
+//     const clipboardItem = new ClipboardItem({ 'image/png': blob });
+//     // 将剪贴板项写入剪贴板
+//     await navigator.clipboard.write([clipboardItem]);
+//     message.success(bots.copySuccessful);
+//     console.log('Canvas已复制到剪贴板');
+//   } catch (error) {
+//     console.error('复制到剪贴板失败:', error);
+//   }
+// };
 </script>
 <style lang="scss" scoped>
 .copy-url-comp {
@@ -105,6 +105,7 @@ const copyQrcode = async () => {
     color: #666666;
     display: flex;
     align-items: center;
+    user-select: text;
   }
   .qr-code-content {
     width: 100%;

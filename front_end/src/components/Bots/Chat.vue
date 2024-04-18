@@ -344,11 +344,11 @@ const send = () => {
     headers: headers,
     body: JSON.stringify({
       user_id: userId,
-      kb_ids: props.botInfo.kb_ids,
+      bot_id: props.botInfo.bot_id,
       history: control.value ? history.value : [],
       question: q,
-      custom_prompt: props.botInfo.prompt_setting,
       streaming: true,
+      product_source: 'saas',
     }),
     signal: ctrl.signal,
     onopen(e: any) {

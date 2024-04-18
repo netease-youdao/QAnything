@@ -273,7 +273,7 @@ const deleteFile = async (item: IFileListItem, index: number) => {
   if (item.file_id) {
     try {
       await resultControl(
-        await urlResquest.deleteFile({ fileIds: [item.file_id], kbId: newId.value })
+        await urlResquest.deleteFile({ file_ids: [item.file_id], kb_id: newId.value })
       );
       fileList.value.splice(index, 1);
       message.success(common.successTip);
