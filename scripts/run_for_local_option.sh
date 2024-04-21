@@ -219,21 +219,21 @@ elif [ "$GPU1_MEMORY_SIZE" -lt 8000 ]; then  # 显存小于8GB
         echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
         exit 1
     fi
-elif [ "$GPU1_MEMORY_SIZE" -ge 8000 ] && [ "$GPU1_MEMORY_SIZE" -le 10240 ]; then  # 显存[8GB-10GB)
+elif [ "$GPU1_MEMORY_SIZE" -ge 8000 ] && [ "$GPU1_MEMORY_SIZE" -le 10000 ]; then  # 显存[8GB-10GB)
     # 8GB显存，推荐部署1.8B的大模型
     echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 推荐部署1.8B的大模型，包括在线的OpenAI API"
     if [ "$model_size_num" -gt 2 ]; then  # 模型大小大于2B
         echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
         exit 1
     fi
-elif [ "$GPU1_MEMORY_SIZE" -ge 10240 ] && [ "$GPU1_MEMORY_SIZE" -le 16384 ]; then  # 显存[10GB-16GB)
+elif [ "$GPU1_MEMORY_SIZE" -ge 10000 ] && [ "$GPU1_MEMORY_SIZE" -le 16000 ]; then  # 显存[10GB-16GB)
     # 10GB, 11GB, 12GB显存，推荐部署3B及3B以下的模型
     echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB，推荐部署3B及3B以下的模型，包括在线的OpenAI API"
     if [ "$model_size_num" -gt 3 ]; then  # 模型大小大于3B
         echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
         exit 1
     fi
-elif [ "$GPU1_MEMORY_SIZE" -ge 16384 ] && [ "$GPU1_MEMORY_SIZE" -le 22528 ]; then  # 显存[16-22GB)
+elif [ "$GPU1_MEMORY_SIZE" -ge 16000 ] && [ "$GPU1_MEMORY_SIZE" -le 22000 ]; then  # 显存[16-22GB)
     # 16GB显存
     echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 推荐部署小于等于7B的大模型"
     if [ "$model_size_num" -gt 7 ]; then  # 模型大小大于7B
@@ -276,14 +276,14 @@ elif [ "$GPU1_MEMORY_SIZE" -ge 16384 ] && [ "$GPU1_MEMORY_SIZE" -le 22528 ]; the
             OFFCUT_TOKEN=0
         fi
     fi
-elif [ "$GPU1_MEMORY_SIZE" -ge 22528 ] && [ "$GPU1_MEMORY_SIZE" -le 24576 ]; then  # [22GB, 24GB]
+elif [ "$GPU1_MEMORY_SIZE" -ge 22000 ] && [ "$GPU1_MEMORY_SIZE" -le 25000 ]; then  # [22GB, 24GB]
     echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 推荐部署7B模型"
     if [ "$model_size_num" -gt 7 ]; then  # 模型大小大于7B
         echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
         exit 1
     fi
     OFFCUT_TOKEN=0
-elif [ "$GPU1_MEMORY_SIZE" -gt 24576 ]; then  # 显存大于24GB
+elif [ "$GPU1_MEMORY_SIZE" -gt 25000 ]; then  # 显存大于24GB
     OFFCUT_TOKEN=0
 fi
 
