@@ -16,6 +16,16 @@ update_or_append_to_env() {
   fi
 }
 
+# 检测支持的 Docker Compose 命令
+if docker compose version &>/dev/null; then
+  DOCKER_COMPOSE_CMD="docker compose"
+elif docker-compose version &>/dev/null; then
+  DOCKER_COMPOSE_CMD="docker-compose"
+else
+  echo "无法找到 'docker compose' 或 'docker-compose' 命令。"
+  exit 1
+fi
+
 script_name=$(basename "$0")
 
 usage() {
@@ -279,22 +289,22 @@ if [ -e /proc/version ]; then
         echo "Running under git bash"
     fi
     
-    if docker-compose -p user -f docker-compose-windows.yaml down |& tee /dev/tty | grep -q "services.qanything_local.deploy.resources.reservations value 'devices' does not match any of the regexes"; then
+    if $DOCKER_COMPOSE_CMD -p user -f docker-compose-windows.yaml down |& tee /dev/tty | grep -q "services.qanything_local.deploy.resources.reservations value 'devices' does not match any of the regexes"; then
         echo "检测到 Docker Compose 版本过低，请升级到v2.23.3或更高版本。执行docker-compose -v查看版本。"
     fi
     mkdir -p volumes/es/data
     chmod 777 -R volumes/es/data
-    docker-compose -p user -f docker-compose-windows.yaml up -d
-    docker-compose -p user -f docker-compose-windows.yaml logs -f qanything_local
+    $DOCKER_COMPOSE_CMD -p user -f docker-compose-windows.yaml up -d
+    $DOCKER_COMPOSE_CMD -p user -f docker-compose-windows.yaml logs -f qanything_local
   else
     echo "Running under native Linux"
-    if docker-compose -p user -f docker-compose-linux.yaml down |& tee /dev/tty | grep -q "services.qanything_local.deploy.resources.reservations value 'devices' does not match any of the regexes"; then
+    if $DOCKER_COMPOSE_CMD -p user -f docker-compose-linux.yaml down |& tee /dev/tty | grep -q "services.qanything_local.deploy.resources.reservations value 'devices' does not match any of the regexes"; then
         echo "检测到 Docker Compose 版本过低，请升级到v2.23.3或更高版本。执行docker-compose -v查看版本。"
     fi
     mkdir -p volumes/es/data
     chmod 777 -R volumes/es/data
-    docker-compose -p user -f docker-compose-linux.yaml up -d
-    docker-compose -p user -f docker-compose-linux.yaml logs -f qanything_local
+    $DOCKER_COMPOSE_CMD -p user -f docker-compose-linux.yaml up -d
+    $DOCKER_COMPOSE_CMD -p user -f docker-compose-linux.yaml logs -f qanything_local
     # 检查日志输出
   fi
 else
