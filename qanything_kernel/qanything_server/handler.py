@@ -401,7 +401,11 @@ async def local_doc_chat(req: request):
                         await response.eof()
                     await asyncio.sleep(0.001)
 
-            response_stream = ResponseStream(generate_answer, content_type='text/event-stream')
+            headers = {
+                "X-Accel-Buffering": "no"
+            }
+
+            response_stream = ResponseStream(generate_answer, content_type='text/event-stream', headers=headers)
             return response_stream
 
         else:
@@ -466,17 +470,17 @@ https://qanything.youdao.com
         "description": "上传网页链接，自动爬取网页内容，需要指定知识库名称",
     },
     {
-        "api": "/api/local_doc_qa/local_doc_chat" 
+        "api": "/api/local_doc_qa/local_doc_chat"
         "name": "问答接口",
         "description": "知识库问答接口，指定知识库名称，上传用户问题，通过传入history支持多轮对话",
     },
     {
-        "api": "/api/local_doc_qa/list_files" 
+        "api": "/api/local_doc_qa/list_files"
         "name": "文件列表",
         "description": "列出指定知识库下的所有文件名，需要指定知识库名称",
     },
     {
-        "api": "/api/local_doc_qa/delete_files" 
+        "api": "/api/local_doc_qa/delete_files"
         "name": "删除文件",
         "description": "删除指定知识库下的指定文件，需要指定知识库名称",
     },

@@ -113,7 +113,7 @@ export default defineConfig(({ mode }) => {
     base: env.VITE_APP_WEB_PREFIX,
     server: {
       usePolling: true,
-      port: 5052,
+      port: 7861,
       host: '0.0.0.0',
       open: false,
       fs: {

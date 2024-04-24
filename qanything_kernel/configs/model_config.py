@@ -16,7 +16,7 @@ UPLOAD_ROOT_PATH = os.path.join(root_path, "QANY_DB", "content")
 print("UPLOAD_ROOT_PATH:", UPLOAD_ROOT_PATH)
 
 # LLM streaming reponse
-STREAMING = True
+STREAMING = False
 
 PROMPT_TEMPLATE = """参考信息：
 {context}
@@ -27,7 +27,7 @@ PROMPT_TEMPLATE = """参考信息：
 请根据上述参考信息回答我的问题或回复我的指令。前面的参考信息可能有用，也可能没用，你需要从我给出的参考信息中选出与我的问题最相关的那些，来为你的回答提供依据。回答一定要忠于原文，简洁但不丢信息，不要胡乱编造。我的问题或指令是什么语种，你就用什么语种回复,
 你的回复："""
 
-# For LLM Chat w/o Retrieval context 
+# For LLM Chat w/o Retrieval context
 # PROMPT_TEMPLATE = """{question}"""
 
 QUERY_PROMPT_TEMPLATE = """{question}"""
@@ -59,15 +59,15 @@ VECTOR_SEARCH_SCORE_THRESHOLD = 1.1
 ZH_TITLE_ENHANCE = False
 
 # MILVUS向量数据库地址
-MILVUS_HOST_LOCAL = 'milvus-standalone-local'
-MILVUS_HOST_ONLINE = 'milvus-standalone-local'
+MILVUS_HOST_LOCAL = '127.0.0.1'
+MILVUS_HOST_ONLINE = '127.0.0.1'
 MILVUS_PORT = 19530
 MILVUS_USER = ''
 MILVUS_PASSWORD = ''
 MILVUS_DB_NAME = ''
 
-MYSQL_HOST_LOCAL = 'mysql-container-local'
-MYSQL_HOST_ONLINE = 'mysql-container-local'
+MYSQL_HOST_LOCAL = '127.0.0.1'
+MYSQL_HOST_ONLINE = '127.0.0.1'
 MYSQL_PORT = 3306
 MYSQL_USER = 'root'
 MYSQL_PASSWORD = '123456'
@@ -83,7 +83,7 @@ print("rerank_port:", rerank_port)
 print("embed_port:", embed_port)
 
 
-LOCAL_LLM_SERVICE_URL = f"localhost:{llm_api_serve_port}"
+LOCAL_LLM_SERVICE_URL = f"u374619-b408-02bd5b42.beijinga.seetacloud.com/api"
 LOCAL_LLM_MODEL_NAME = llm_api_serve_model
 LOCAL_LLM_MAX_LENGTH = 4096
 

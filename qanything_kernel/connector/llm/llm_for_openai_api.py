@@ -2,7 +2,8 @@ from abc import ABC
 import tiktoken
 import os
 from dotenv import load_dotenv
-from openai import OpenAI
+import openai
+from openai import AzureOpenAI
 from typing import Optional, List
 import sys
 import json
@@ -14,19 +15,15 @@ from qanything_kernel.connector.llm.base import (BaseAnswer, AnswerResult)
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_API_BASE = os.getenv("OPENAI_API_BASE")
-OPENAI_API_MODEL_NAME = os.getenv("OPENAI_API_MODEL_NAME")
-OPENAI_API_CONTEXT_LENGTH = os.getenv("OPENAI_API_CONTEXT_LENGTH")
-if isinstance(OPENAI_API_CONTEXT_LENGTH, str) and OPENAI_API_CONTEXT_LENGTH != '':
-    OPENAI_API_CONTEXT_LENGTH = int(OPENAI_API_CONTEXT_LENGTH)
-logging.info(f"OPENAI_API_BASE = {OPENAI_API_BASE}")
-logging.info(f"OPENAI_API_MODEL_NAME = {OPENAI_API_MODEL_NAME}")
+OPENAI_API_KEY = "" if os.environ.get('OPENAI_API_KEY') is None else os.environ.get('OPENAI_API_KEY')
+AZURE_ENDPOINT = "" if os.environ.get('AZURE_ENDPOINT') is None else os.environ.get('AZURE_ENDPOINT')
+API_VERSION = "" if os.environ.get('API_VERSION') is None else os.environ.get('API_VERSION')
+OPENAI_MODEL = "" if os.environ.get('OPENAI_MODEL') is None else os.environ.get('OPENAI_MODEL')
 
 
 class OpenAILLM(BaseAnswer, ABC):
-    model: str = OPENAI_API_MODEL_NAME
-    token_window: int = OPENAI_API_CONTEXT_LENGTH
+    model: str = OPENAI_MODEL
+    token_window: int = 32768
     max_token: int = 512
     offcut_token: int = 50
     truncate_len: int = 50
@@ -38,7 +35,11 @@ class OpenAILLM(BaseAnswer, ABC):
 
     def __init__(self):
         super().__init__()
-        self.client = OpenAI(base_url=OPENAI_API_BASE, api_key=OPENAI_API_KEY)
+        self.client = AzureOpenAI(
+            api_key=OPENAI_API_KEY,
+            azure_endpoint=AZURE_ENDPOINT,
+            api_version=API_VERSION,
+        )
 
     @property
     def _llm_type(self) -> str:
@@ -85,7 +86,7 @@ class OpenAILLM(BaseAnswer, ABC):
             # 对于 gpt-3.5-turbo 模型可能会有更新，此处返回假设为 gpt-3.5-turbo-0613 的token数量，并给出警告
             logging.info("Warning: gpt-3.5-turbo may update over time. Returning num tokens assuming gpt-3.5-turbo-0613.")
             return self.num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613")
-        elif "gpt-4" in model:
+        elif "gpt-4" in model or "gpt4" in model:
             # 对于 gpt-4 模型可能会有更新，此处返回假设为 gpt-4-0613 的token数量，并给出警告
             logging.info("Warning: gpt-4 may update over time. Returning num tokens assuming gpt-4-0613.")
             return self.num_tokens_from_messages(messages, model="gpt-4-0613")
@@ -95,7 +96,7 @@ class OpenAILLM(BaseAnswer, ABC):
             raise NotImplementedError(
                 f"""num_tokens_from_messages() is not implemented for model {model}. See https://github.com/openai/openai-python/blob/main/chatml.md for information on how messages are converted to tokens."""
             )
-            
+
         num_tokens = 0
         # 计算每条消息的token数
         for message in messages:
@@ -116,7 +117,7 @@ class OpenAILLM(BaseAnswer, ABC):
         return num_tokens
 
     def num_tokens_from_docs(self, docs):
-        
+
         # 尝试获取模型的编码
         try:
             encoding = tiktoken.encoding_for_model(self.model)
@@ -173,7 +174,7 @@ class OpenAILLM(BaseAnswer, ABC):
                     top_p=self.top_p,
                     stop=[self.stop_words] if self.stop_words is not None else None,
                 )
-                
+
                 # logging.info(f"[debug] response.choices = [{response.choices}]")
                 event_text = response.choices[0].message.content if response.choices else ""
                 delta = {'answer': event_text}
@@ -198,7 +199,7 @@ class OpenAILLM(BaseAnswer, ABC):
         logging.info(f"prompt: {prompt}")
         logging.info(f"prompt tokens: {self.num_tokens_from_messages([{'content': prompt}])}")
         logging.info(f"streaming: {streaming}")
-                
+
         response = self._call(prompt, history[:-1], streaming)
         complete_answer = ""
         for response_text in response:
@@ -208,7 +209,7 @@ class OpenAILLM(BaseAnswer, ABC):
                 if not chunk_str.startswith("[DONE]"):
                     chunk_js = json.loads(chunk_str)
                     complete_answer += chunk_js["answer"]
-                    
+
             history[-1] = [prompt, complete_answer]
             answer_result = AnswerResult()
             answer_result.history = history

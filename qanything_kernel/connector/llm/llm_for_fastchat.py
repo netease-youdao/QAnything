@@ -31,9 +31,9 @@ class OpenAICustomLLM(BaseAnswer, ABC):
         super().__init__()
         # self.client = OpenAI(base_url="http://localhost:7802/v1", api_key="EMPTY")
         if LOCAL_LLM_SERVICE_URL.startswith("http://"):
-            base_url = f"{LOCAL_LLM_SERVICE_URL}/v1" 
+            base_url = f"{LOCAL_LLM_SERVICE_URL}/v1"
         else:
-            base_url = f"http://{LOCAL_LLM_SERVICE_URL}/v1" 
+            base_url = f"https://{LOCAL_LLM_SERVICE_URL}/v1"
         self.client = OpenAI(base_url=base_url, api_key="EMPTY")
 
     @property
@@ -48,16 +48,16 @@ class OpenAICustomLLM(BaseAnswer, ABC):
         self.history_len = history_len
 
     def token_check(self, query: str) -> int:
-        
+
         if LOCAL_LLM_SERVICE_URL.startswith("http://"):
-            base_url = f"{LOCAL_LLM_SERVICE_URL}/api/v1/token_check" 
+            base_url = f"{LOCAL_LLM_SERVICE_URL}/v1/token_check"
         else:
-            base_url = f"http://{LOCAL_LLM_SERVICE_URL}/api/v1/token_check" 
+            base_url = f"https://{LOCAL_LLM_SERVICE_URL}/v1/token_check"
 
         headers = {"Content-Type": "application/json"}
-        
+
         response = requests.post(
-            base_url, 
+            base_url,
             data=json.dumps(
                 {'prompts': [{'model': self.model, 'prompt': query, 'max_tokens': self.max_token}]}
             ),
@@ -125,7 +125,7 @@ class OpenAICustomLLM(BaseAnswer, ABC):
                     # temperature=self.temperature,
                     stop=[self.stop_words] if self.stop_words is not None else None,
                 )
-                
+
                 # logging.info(f"[debug] response.choices = [{response.choices}]")
                 event_text = response.choices[0].message.content if response.choices else ""
                 delta = {'answer': event_text}
@@ -150,7 +150,7 @@ class OpenAICustomLLM(BaseAnswer, ABC):
         logging.info(f"prompt: {prompt}")
         logging.info(f"prompt tokens: {self.num_tokens_from_messages([prompt])}")
         logging.info(f"streaming: {streaming}")
-                
+
         response = self._call(prompt, history[:-1], streaming)
         complete_answer = ""
         for response_text in response:
@@ -160,7 +160,7 @@ class OpenAICustomLLM(BaseAnswer, ABC):
                 if not chunk_str.startswith("[DONE]"):
                     chunk_js = json.loads(chunk_str)
                     complete_answer += chunk_js["answer"]
-                    
+
             history[-1] = [prompt, complete_answer]
             answer_result = AnswerResult()
             answer_result.history = history
@@ -174,11 +174,11 @@ class OpenAICustomLLM(BaseAnswer, ABC):
 
 if __name__ == "__main__":
 
-    base_url = f"http://{LOCAL_LLM_SERVICE_URL}/api/v1/token_check" 
+    base_url = f"https://{LOCAL_LLM_SERVICE_URL}/v1/token_check"
     headers = {"Content-Type": "application/json"}
     query = "hello"
     response = requests.post(
-        base_url, 
+        base_url,
         data=json.dumps(
             {'prompts': [{'model': LOCAL_LLM_MODEL_NAME, 'prompt': query, 'max_tokens': 512}]}
         ),

@@ -14,6 +14,7 @@ from qanything_kernel.utils.general_utils import get_time
 import requests
 import traceback
 import logging
+import json
 
 logging.basicConfig(level=logging.INFO)
 
@@ -36,13 +37,17 @@ class LocalDocQA:
         self.milvus_kbs: List[MilvusClient] = []
         self.milvus_summary: KnowledgeBaseManager = None
         self.mode: str = None
-        self.local_rerank_service_url = "http://0.0.0.0:8776"
-        self.ocr_url = 'http://0.0.0.0:8010/ocr'
+        self.local_rerank_service_url = "https://region-101.seetacloud.com:51501"
+        self.ocr_url = 'https://region-101.seetacloud.com:51501/ocr'
 
     def get_ocr_result(self, image_data: dict):
-        response = requests.post(self.ocr_url, json=image_data)
-        response.raise_for_status()  # 如果请求返回了错误状态码，将会抛出异常
-        return response.json()['results']
+        headers = {
+            'Content-Type': 'application/json'
+        }
+        resp = requests.request("POST", "https://region-101.seetacloud.com:51501/ocr", headers=headers, data=json.dumps(image_data), verify=False)
+        #print(resp.text)
+        results = json.loads(resp.text)["results"]
+        return results
 
     def init_cfg(self, mode='local'):
         self.mode = mode
@@ -196,10 +201,14 @@ class LocalDocQA:
         if len(query) > 300:  # tokens数量超过300时不使用local rerank
             return source_documents
         try:
-            response = requests.post(f"{self.local_rerank_service_url}/rerank",
-                                     json={"passages": [doc.page_content for doc in source_documents], "query": query})
-            scores = response.json()
-            for idx, score in enumerate(scores):
+            reranker_data = {"passages": [doc.page_content for doc in source_documents], "query": query}
+            headers = {
+                'Content-Type': 'application/json'
+            }
+            resp = requests.request("POST", "https://region-101.seetacloud.com:51501/reranker", headers=headers, data=json.dumps(reranker_data), verify=False)
+            print(resp.text)
+            result = json.loads(resp.text)
+            for idx, score in enumerate(result["scores"]):
                 source_documents[idx].metadata['score'] = score
 
             source_documents = sorted(source_documents, key=lambda x: x.metadata['score'], reverse=True)

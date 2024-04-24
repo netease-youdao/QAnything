@@ -279,6 +279,7 @@ const send = () => {
       streaming: true,
     }),
     signal: ctrl.signal,
+    openWhenHidden: true,
     onopen(e: any) {
       console.log('open');
       if (e.ok && e.headers.get('content-type') === 'text/event-stream') {
