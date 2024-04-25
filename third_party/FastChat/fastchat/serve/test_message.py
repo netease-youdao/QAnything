@@ -14,15 +14,15 @@ def main():
         worker_addr = args.worker_address
     else:
         controller_addr = args.controller_address
-        ret = requests.post(controller_addr + "/refresh_all_workers")
-        ret = requests.post(controller_addr + "/list_models")
+        ret = requests.post(controller_addr + "/refresh_all_workers", timeout=60)
+        ret = requests.post(controller_addr + "/list_models", timeout=60)
         models = ret.json()["models"]
         models.sort()
         print(f"Models: {models}")
 
         ret = requests.post(
-            controller_addr + "/get_worker_address", json={"model": model_name}
-        )
+            controller_addr + "/get_worker_address", json={"model": model_name}, 
+        timeout=60)
         worker_addr = ret.json()["address"]
         print(f"worker_addr: {worker_addr}")
 
@@ -50,7 +50,7 @@ def main():
         headers=headers,
         json=gen_params,
         stream=True,
-    )
+    timeout=60)
 
     print(f"{conv.roles[0]}: {args.message}")
     print(f"{conv.roles[1]}: ", end="")

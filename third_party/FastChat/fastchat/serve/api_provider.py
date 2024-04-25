@@ -217,7 +217,7 @@ def ai2_api_stream_iter(
                 },
             },
         },
-    )
+    timeout=60)
 
     if res.status_code != 200:
         logger.error(f"unexpected response ({res.status_code}): {res.text}")

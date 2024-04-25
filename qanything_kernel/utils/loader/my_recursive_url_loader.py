@@ -62,7 +62,7 @@ class MyRecursiveUrlLoader(BaseLoader):
         visited.add(url)
 
         # Get all links that are relative to the root of the website
-        response = requests.get(url)
+        response = requests.get(url, timeout=60)
         soup = BeautifulSoup(response.text, "html.parser")
         all_links = [urljoin(url, link.get("href")) for link in soup.find_all("a")]
         # Filter children url of current url

@@ -61,7 +61,7 @@ class OpenAICustomLLM(BaseAnswer, ABC):
             data=json.dumps(
                 {'prompts': [{'model': self.model, 'prompt': query, 'max_tokens': self.max_token}]}
             ),
-            headers=headers)
+            headers=headers, timeout=60)
 
         # {'prompts': [{'fits': True, 'tokenCount': 317, 'contextLength': 8192}]}
         result = response.json()
@@ -182,7 +182,7 @@ if __name__ == "__main__":
         data=json.dumps(
             {'prompts': [{'model': LOCAL_LLM_MODEL_NAME, 'prompt': query, 'max_tokens': 512}]}
         ),
-        headers=headers)
+        headers=headers, timeout=60)
 
     # {'prompts': [{'fits': True, 'tokenCount': 317, 'contextLength': 8192}]}
     result = response.json()

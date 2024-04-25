@@ -14,15 +14,15 @@ def main():
         worker_addr = args.worker_address
     else:
         controller_addr = args.controller_address
-        ret = requests.post(controller_addr + "/refresh_all_workers")
-        ret = requests.post(controller_addr + "/list_models")
+        ret = requests.post(controller_addr + "/refresh_all_workers", timeout=60)
+        ret = requests.post(controller_addr + "/list_models", timeout=60)
         models = ret.json()["models"]
         models.sort()
         print(f"Models: {models}")
 
         ret = requests.post(
-            controller_addr + "/get_worker_address", json={"model": args.model_name}
-        )
+            controller_addr + "/get_worker_address", json={"model": args.model_name}, 
+        timeout=60)
         worker_addr = ret.json()["address"]
         print(f"worker_addr: {worker_addr}")
 
@@ -66,8 +66,8 @@ def main():
     def send_request(results, i):
         if args.test_dispatch:
             ret = requests.post(
-                controller_addr + "/get_worker_address", json={"model": args.model_name}
-            )
+                controller_addr + "/get_worker_address", json={"model": args.model_name}, 
+            timeout=60)
             thread_worker_addr = ret.json()["address"]
         else:
             thread_worker_addr = worker_addr
@@ -77,7 +77,7 @@ def main():
             headers=headers,
             json=ploads[i],
             stream=False,
-        )
+        timeout=60)
         k = list(
             response.iter_lines(chunk_size=8192, decode_unicode=False, delimiter=b"\0")
         )
