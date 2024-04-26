@@ -111,7 +111,7 @@ class OpenAICustomLLM(BaseAnswer, ABC):
                         event = event.model_dump()
 
                     if event["choices"] is None:
-                        event_text = event["text"]+" error_code:"+str(event["error_code"])
+                        event_text = event["text"] + " error_code:" + str(event["error_code"])
                     else:
                         event_text = event["choices"][0]['delta']['content']
                     if isinstance(event_text, str) and event_text != "":
