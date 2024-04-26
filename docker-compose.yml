@@ -1,0 +1,22 @@
+services:
+    qanything:
+        container_name: qanything-container
+        image: freeren/qanything-opencloud:v1.0.1
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                      - driver: nvidia
+                        count: "all"
+                        capabilities: ["gpu"]
+        privileged: true
+        shm_size: '8gb'
+        ports:
+            - "8777:8777"
+        # command: /bin/bash -c 'pip install -e . && bash scripts/run_for_3B_in_Linux_or_WSL.sh'
+        volumes:
+            - ${DOCKER_VOLUME_DIRECTORY:-.}/:/workspace/
+        environment:
+            - NCCL_LAUNCH_MODE=PARALLEL
+        tty: true
+        stdin_open: true

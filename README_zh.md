@@ -64,6 +64,19 @@ bash scripts/run_for_openai_api_in_M1_mac.sh
 bash scripts/run_for_3B_in_M1_mac.sh
 ```
 
+## 在OpenCloud操作系统中运行 
+OpenCloud 需要在 Docker 容器中运行，请先安装 Docker：
+Docker 版本 >= 20.10.5 且 docker-compose 版本 >= 2.23.3
+```bash
+docker-compose up -d
+docker attach qanything-container
+# 选择以下4个命令之一来运行：
+bash scripts/run_for_3B_in_Linux_or_WSL.sh
+bash scripts/run_for_7B_in_Linux_or_WSL.sh
+bash scripts/run_for_openai_api_with_cpu_in_Linux_or_WSL.sh
+bash scripts/run_for_openai_api_with_gpu_in_Linux_or_WSL.sh
+```
+
 ## 访问前端页面 
 在浏览器中打开http://0.0.0.0:8777/qanything/
 
