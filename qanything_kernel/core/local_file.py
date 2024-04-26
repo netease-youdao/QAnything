@@ -111,7 +111,7 @@ class LocalFile:
         elif self.file_path.lower().endswith(".csv"):
             loader = CSVLoader(self.file_path, csv_args={"delimiter": ",", "quotechar": '"'})
             docs = loader.load()
-        elif self.file_path.lower().endswith(".mp3") or self.file_path.lower().endswith(".wav") or self.file_path.lower().endswith(".mp4"):
+        elif self.file_path.lower().endswith(".mp3") or self.file_path.lower().endswith(".wav"):
             loader = UnstructuredPaddleAudioLoader(self.file_path, self.use_cpu)
             docs = loader.load()
         else:
