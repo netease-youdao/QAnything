@@ -29,7 +29,9 @@ class UnstructuredPaddleAudioLoader(UnstructuredFileLoader):
 
         self.use_cpu = use_cpu
         if not whisper_model:
-            if torch.cuda.is_available():
+            # TODO: CUDA memory may run out.
+            # if torch.cuda.is_available():
+            if False:
                 self.whisper_model = WhisperModel(self.model_name, device="cuda", compute_type="float16")
             else:
                 self.whisper_model = WhisperModel(self.model_name, device="cpu", compute_type="int8")
