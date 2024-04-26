@@ -108,7 +108,7 @@ class OpenAILLM(BaseAnswer, ABC):
             elif isinstance(message, str):
                 num_tokens += len(encoding.encode(message))
             else:
-                NotImplementedError(
+                raise NotImplementedError(
                 f"""num_tokens_from_messages() is not implemented message type {type(message)}. """
             )
 
