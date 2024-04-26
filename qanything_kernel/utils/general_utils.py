@@ -52,17 +52,15 @@ def format_source_documents(ori_source_documents):
     for inum, doc in enumerate(ori_source_documents):
         # for inum, doc in enumerate(answer_source_documents):
         # doc_source = doc.metadata['source']
-        file_id = doc.metadata['file_id']
-        file_name = doc.metadata['file_name']
         # source_str = doc_source if isURL(doc_source) else os.path.split(doc_source)[-1]
-        source_info = {'file_id': doc.metadata['file_id'],
-                       'file_name': doc.metadata['file_name'],
+        source_info = {'file_id': doc.metadata.get('source', doc.metadata.get('file_id','')),
+                       'file_name': doc.metadata.get('title', doc.metadata.get('file_name','')),
                        'content': doc.page_content,
                        'retrieval_query': doc.metadata['retrieval_query'],
                        # 'kernel': doc.metadata['kernel'],
                        'file_path': doc.metadata.get('file_path', ''),
-                       'score': str(doc.metadata['score']),
-                       'embed_version': doc.metadata['embed_version']}
+                       'score': str(doc.metadata.get('score','')),
+                       'embed_version': doc.metadata.get('embed_version','')}
         source_documents.append(source_info)
     return source_documents
 
