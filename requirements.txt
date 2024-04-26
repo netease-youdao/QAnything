@@ -25,6 +25,7 @@ unstructured[pptx]==0.12.4
 unstructured[md]==0.12.4
 accelerate==0.21.0
 networkx==3.2.1
+faster_whisper==1.0.1
 python-dotenv==1.0.1
 duckduckgo-search==5.3.0
 html2text==2024.2.26

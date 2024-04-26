@@ -360,7 +360,7 @@ async def local_doc_chat(req: request):
     streaming = safe_get(req, 'streaming', False)
     history = safe_get(req, 'history', [])
     product_source = safe_get(req, 'product_source', 'paas')
-    need_web_search = safe_get(req, 'need_web_search', False)
+    need_web_search = safe_get(req, 'networking', False)
     model = local_doc_qa.model
     debug_logger.info("model: %s", model)
     debug_logger.info("product_source: %s", product_source)
