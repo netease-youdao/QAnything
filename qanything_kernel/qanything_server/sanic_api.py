@@ -31,41 +31,6 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os_system = platform.system()
 parser = ArgumentParser()
 
-if os_system != 'Darwin':
-    cuda_version = torch.version.cuda
-    if cuda_version is None:
-        raise ValueError("CUDA is not installed.")
-    elif float(cuda_version) < 12:
-        raise ValueError("CUDA version must be 12.0 or higher.")
-
-    python_version = platform.python_version()
-    python3_version = python_version.split('.')[1]
-    os_system = platform.system()
-    if os_system == "Windows":
-        raise ValueError("The project must be run in the WSL environment on Windows system.")
-    if os_system != "Linux":
-        raise ValueError(f"Unsupported system: {os_system}")
-    system_name = 'manylinux_2_28_x86_64'
-    # 官方发布的1.17.1不支持cuda12以上的系统，需要根据官方文档:https://onnxruntime.ai/docs/install/里提到的地址手动下载whl
-    if not check_package_version("onnxruntime-gpu", "1.17.1"):
-        download_url = f"https://aiinfra.pkgs.visualstudio.com/PublicPackages/_apis/packaging/feeds/9387c3aa-d9ad-4513-968c-383f6f7f53b8/pypi/packages/onnxruntime-gpu/versions/1.17.1/onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl/content"
-        debug_logger.info(f'开始从{download_url}下载onnxruntime，也可以手动下载并通过pip install *.whl安装')
-        whl_name = f'onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl'
-        download_file(download_url, whl_name)
-        os.system(f"pip install {whl_name}")
-    if not check_package_version("vllm", "0.2.7"):
-        os.system(f"pip install vllm==0.2.7 -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn")
-
-    from vllm.engine.arg_utils import AsyncEngineArgs
-
-    parser = AsyncEngineArgs.add_cli_args(parser)
-
-else:
-    # 检查是否安装了xcode
-    if not check_package_version("llama_cpp_python", "0.2.60"):
-        os.system(f'CMAKE_ARGS="-DLLAMA_METAL_EMBED_LIBRARY=ON -DLLAMA_METAL=on" pip install -U llama-cpp-python --no-cache-dir -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn')
-    parser.add_argument('--model', dest='model', help='LLM model path')
-
 from .handler import *
 from qanything_kernel.core.local_doc_qa import LocalDocQA
 from sanic import Sanic
@@ -100,7 +65,42 @@ args = parser.parse_args()
 print('use_cpu:', args.use_cpu, flush=True)
 print('use_openai_api:', args.use_openai_api, flush=True)
 
-if args.use_cpu:
+if os_system != 'Darwin':
+    cuda_version = torch.version.cuda
+    if cuda_version is None:
+        raise ValueError("CUDA is not installed.")
+    elif float(cuda_version) < 12:
+        raise ValueError("CUDA version must be 12.0 or higher.")
+
+    python_version = platform.python_version()
+    python3_version = python_version.split('.')[1]
+    os_system = platform.system()
+    if os_system == "Windows":
+        raise ValueError("The project must be run in the WSL environment on Windows system.")
+    if os_system != "Linux":
+        raise ValueError(f"Unsupported system: {os_system}")
+    system_name = 'manylinux_2_28_x86_64'
+    # 官方发布的1.17.1不支持cuda12以上的系统，需要根据官方文档:https://onnxruntime.ai/docs/install/里提到的地址手动下载whl
+    if not check_package_version("onnxruntime-gpu", "1.17.1"):
+        download_url = f"https://aiinfra.pkgs.visualstudio.com/PublicPackages/_apis/packaging/feeds/9387c3aa-d9ad-4513-968c-383f6f7f53b8/pypi/packages/onnxruntime-gpu/versions/1.17.1/onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl/content"
+        debug_logger.info(f'开始从{download_url}下载onnxruntime，也可以手动下载并通过pip install *.whl安装')
+        whl_name = f'onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl'
+        download_file(download_url, whl_name)
+        os.system(f"pip install {whl_name}")
+    if not check_package_version("vllm", "0.2.7"):
+        os.system(f"pip install vllm==0.2.7 -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn")
+
+    from vllm.engine.arg_utils import AsyncEngineArgs
+
+    parser = AsyncEngineArgs.add_cli_args(parser)
+
+elif not args.use_openai_api:
+    # 检查是否安装了xcode
+    if not check_package_version("llama_cpp_python", "0.2.60"):
+        os.system(f'CMAKE_ARGS="-DLLAMA_METAL_EMBED_LIBRARY=ON -DLLAMA_METAL=on" pip install -U llama-cpp-python --no-cache-dir -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn')
+    parser.add_argument('--model', dest='model', help='LLM model path')
+
+if not args.use_cpu:
     model_config.CUDA_DEVICE = args.device_id
     os.environ["CUDA_VISIBLE_DEVICES"] = args.device_id
 
@@ -200,6 +200,8 @@ app.add_route(update_bot, "/api/local_doc_qa/update_bot", methods=['POST'])  # t
 app.add_route(get_bot_info, "/api/local_doc_qa/get_bot_info", methods=['POST'])  # tags=["获取Bot信息"]
 app.add_route(upload_faqs, "/api/local_doc_qa/upload_faqs", methods=['POST'])  # tags=["上传FAQ"]
 app.add_route(get_file_base64, "/api/local_doc_qa/get_file_base64", methods=['POST'])  # tags=["获取文件base64"]
+app.add_route(get_qa_info, "/api/local_doc_qa/get_qa_info", methods=['POST'])  # tags=["获取QA信息"]
+app.add_route(get_qa_excel, "/api/local_doc_qa/get_qa_excel", methods=['POST'])  # tags=["获取QA Excel"]
 
 if __name__ == "__main__":
     if args.use_openai_api:
