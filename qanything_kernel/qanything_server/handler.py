@@ -359,6 +359,7 @@ async def local_doc_chat(req: request):
     streaming = safe_get(req, 'streaming', False)
     history = safe_get(req, 'history', [])
     product_source = safe_get(req, 'product_source', 'paas')
+    need_web_search = safe_get(req, 'need_web_search', True)
     model = local_doc_qa.model
     debug_logger.info("model: %s", model)
     debug_logger.info("product_source: %s", product_source)
@@ -394,8 +395,12 @@ async def local_doc_chat(req: request):
             async def generate_answer(response):
                 debug_logger.info("start generate...")
                 async for resp, next_history in local_doc_qa.get_knowledge_based_answer(custom_prompt=custom_prompt,
-                        query=question, kb_ids=kb_ids, chat_history=history, streaming=True, rerank=rerank
-                ):
+                                                                                        query=question, 
+                                                                                        kb_ids=kb_ids, 
+                                                                                        chat_history=history, 
+                                                                                        streaming=True, 
+                                                                                        rerank=rerank,
+                                                                                        need_web_search=need_web_search):
                     chunk_data = resp["result"]
                     if not chunk_data:
                         continue
@@ -403,8 +408,8 @@ async def local_doc_chat(req: request):
                     if chunk_str.startswith("[DONE]"):
                         source_documents = []
                         for inum, doc in enumerate(resp["source_documents"]):
-                            source_info = {'file_id': doc.metadata['file_id'],
-                                           'file_name': doc.metadata['file_name'],
+                            source_info = {'file_id': doc.metadata.get('source', doc.metadata.get('file_id','')),
+                                           'file_name': doc.metadata.get('title', doc.metadata.get('file_name','')),
                                            'content': doc.page_content,
                                            'retrieval_query': doc.metadata['retrieval_query'],
                                            'score': str(doc.metadata['score'])}
@@ -450,8 +455,12 @@ async def local_doc_chat(req: request):
 
         else:
             async for resp, history in local_doc_qa.get_knowledge_based_answer(custom_prompt=custom_prompt,
-                    query=question, kb_ids=kb_ids, chat_history=history, streaming=False, rerank=rerank
-            ):
+                                                                               query=question, 
+                                                                               kb_ids=kb_ids, 
+                                                                               chat_history=history, 
+                                                                               streaming=False, 
+                                                                               rerank=rerank,
+                                                                               need_web_search=need_web_search):
                 pass
             retrieval_documents = format_source_documents(resp["retrieval_documents"])
             source_documents = format_source_documents(resp["source_documents"])

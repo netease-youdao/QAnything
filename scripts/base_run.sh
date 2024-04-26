@@ -78,7 +78,7 @@ if [ "$use_openai_api" = true ] && [ "$openai_api_key" = "sk-xxx" ]; then
 fi
 
 
-if [ "$system" = "M1mac" ]; then
+if [ "$system" = "M1mac" ] && [ "$use_openai_api" = false ]; then
     # 检查 xcode-select 命令是否存在
     if ! command -v xcode-select &> /dev/null; then
         echo "xcode-select 命令不存在。请前往App Store下载Xcode。"

@@ -2,7 +2,7 @@ from qanything_kernel.configs.model_config import VECTOR_SEARCH_TOP_K, CHUNK_SIZ
     PROMPT_TEMPLATE, STREAMING
 from typing import List
 import time
-from qanything_kernel.connector.llm import OpenAILLM
+from qanything_kernel.connector.llm.llm_for_openai_api import OpenAILLM
 from langchain.schema import Document
 from qanything_kernel.connector.database.mysql.mysql_client import KnowledgeBaseManager
 from qanything_kernel.connector.database.faiss.faiss_client import FaissClient
@@ -11,12 +11,14 @@ from qanything_kernel.connector.embedding.embedding_backend import EmbeddingBack
 import easyocr
 from easyocr import Reader
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger
+from qanything_kernel.core.tools.web_search_tool import duckduckgo_search
 from .local_file import LocalFile
 import traceback
 import base64
 import numpy as np
 import platform
-
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import asyncio
 
 class LocalDocQA:
     def __init__(self):
@@ -55,7 +57,7 @@ class LocalDocQA:
             if args.use_openai_api:
                 self.llm: OpenAILLM = OpenAILLM(args)
             else:
-                from qanything_kernel.connector.llm import OpenAICustomLLM
+                from qanything_kernel.connector.llm.llm_for_fastchat import OpenAICustomLLM
                 self.llm: OpenAICustomLLM = OpenAICustomLLM(args)
             from qanything_kernel.connector.rerank.rerank_onnx_backend import RerankOnnxBackend
             from qanything_kernel.connector.embedding.embedding_onnx_backend import EmbeddingOnnxBackend
@@ -65,7 +67,7 @@ class LocalDocQA:
             if args.use_openai_api:
                 self.llm: OpenAILLM = OpenAILLM(args)
             else:
-                from qanything_kernel.connector.llm import LlamaCPPCustomLLM
+                from qanything_kernel.connector.llm.llm_for_llamacpp import LlamaCPPCustomLLM
                 self.llm: LlamaCPPCustomLLM = LlamaCPPCustomLLM(args)
             from qanything_kernel.connector.rerank.rerank_torch_backend import RerankTorchBackend
             from qanything_kernel.connector.embedding.embedding_torch_backend import EmbeddingTorchBackend
@@ -115,6 +117,46 @@ class LocalDocQA:
                 unique_docs.add(doc.page_content)
                 deduplicated_docs.append(doc)
         return deduplicated_docs
+
+    async def local_doc_search(self, query, kb_ids, score_threshold=0.35):
+        source_documents = await self.get_source_documents(query, kb_ids)
+        deduplicated_docs = self.deduplicate_documents(source_documents)
+        retrieval_documents = sorted(deduplicated_docs, key=lambda x: x.metadata['score'], reverse=True)
+        if len(retrieval_documents) > 1:
+            self.print(f"use rerank, rerank docs num: {len(retrieval_documents)}")
+            # rerank需要的query必须是改写后的, 不然会丢一些信息
+            retrieval_documents = self.rerank_documents(query, retrieval_documents)
+        # 删除掉分数低于阈值的文档
+        if score_threshold:
+            retrieval_documents = [item for item in retrieval_documents if float(item.metadata['score']) > score_threshold]
+        
+        retrieval_documents = retrieval_documents[: self.rerank_top_k]
+        debug_logger.info(f"local doc search retrieval_documents: {retrieval_documents}")
+        return retrieval_documents
+
+    def get_web_search(self, queries, top_k=None):
+        if not top_k:
+            top_k = self.top_k
+        query = queries[0]
+        web_content, web_documents = duckduckgo_search(query)
+        source_documents = []
+        for doc in web_documents:
+            doc.metadata['retrieval_query'] = query  # 添加查询到文档的元数据中
+            source_documents.append(doc)
+        return web_content, source_documents
+
+
+
+    def web_page_search(self, query, top_k=None):
+        # 防止get_web_search调用失败，需要try catch
+        try:
+            web_content, source_documents = self.get_web_search([query], top_k)
+        except Exception as e:
+            debug_logger.error(f"web search error: {e}")
+            return []
+
+        return source_documents
+
 
     async def get_source_documents(self, query, kb_ids, cosine_thresh=None, top_k=None):
         if not top_k:
@@ -198,18 +240,24 @@ class LocalDocQA:
         source_documents = sorted(source_documents, key=lambda x: x.metadata['score'], reverse=True)
         return source_documents
 
-    async def get_knowledge_based_answer(self, custom_prompt, query, kb_ids, chat_history=None, streaming: bool = STREAMING,
-                                         rerank: bool = False):
+    async def retrieve(self, query, kb_ids, need_web_search=False):
+        retrieval_documents = await self.local_doc_search(query, kb_ids)
+        if need_web_search:
+            retrieval_documents.extend(self.web_page_search(query, top_k=3))
+        debug_logger.info(f"retrieval_documents: {retrieval_documents}")
+        retrieval_documents = self.rerank_documents(query, retrieval_documents)
+        debug_logger.info(f"reranked retrieval_documents: {retrieval_documents}")
+        return retrieval_documents
+
+    async def get_knowledge_based_answer(self, custom_prompt, query, kb_ids, chat_history=None, 
+                                         streaming: bool = STREAMING,
+                                         rerank: bool = False,
+                                         need_web_search: bool = False):
         if chat_history is None:
             chat_history = []
 
-        source_documents = await self.get_source_documents(query, kb_ids)
-
-        deduplicated_docs = self.deduplicate_documents(source_documents)
-        retrieval_documents = sorted(deduplicated_docs, key=lambda x: x.metadata['score'], reverse=True)
-        if rerank and len(retrieval_documents) > 1:
-            debug_logger.info(f"use rerank, rerank docs num: {len(retrieval_documents)}")
-            retrieval_documents = self.rerank_documents(query, retrieval_documents)[: self.rerank_top_k]
+        #retrieval_queries = [query]
+        retrieval_documents = await self.retrieve(query, kb_ids, need_web_search=need_web_search)
 
         if custom_prompt is None:
             prompt_template = PROMPT_TEMPLATE
