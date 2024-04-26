@@ -169,9 +169,16 @@ The features corresponding to different installation methods are as follows:
 | support Windows WSL            |   ✅                   |    ✅                  |             ✅            |  
 | support CPU only               |   ✅                   |    ❌                  |             ❌            |    
 | support hybrid search          |   ❌                   |    ✅                  |             ✅            |
+| support web search             |   ✅                   |    ❌                  |             ❌            |
+| support FAQ                    |   ✅                   |    ❌                  |             ❌            |
+| support BOT                    |   ✅                   |    ❌                  |             ❌            |
+| support Traceability           |   ✅                   |    ❌                  |             ❌            |
+| support Log retrieval          |   ✅                   |    ❌                  |             ❌            |
+| support OpenCloudOS            |   ✅                   |    ❌                  |             ❌            |
+| support audio file             |   ✅                   |    ❌                  |             ❌            |
 
 ## Installation(Pure Python environment)
-If you prefer not to use Docker for installation, we provide a [Pure Python Installation Guide](https://github.com/netease-youdao/QAnything/tree/qanything-python-v1.3.1?tab=readme-ov-file#pure-python-environment-installation-guide). The installation of a pure Python environment is intended for demo purposes only and is not recommended for deployment in a production environment.
+If you prefer not to use Docker for installation, we provide a [Pure Python Installation Guide](https://github.com/netease-youdao/QAnything/blob/qanything-python/README.md). The installation of a pure Python environment is intended for demo purposes only and is not recommended for deployment in a production environment.
 
 - Support installation on CPU only (Retrieval run on CPU, while LLMs calls online API).
 - Support installation on Mac.
