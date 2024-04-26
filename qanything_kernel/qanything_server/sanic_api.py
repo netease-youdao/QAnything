@@ -93,12 +93,12 @@ if os_system != 'Darwin':
     from vllm.engine.arg_utils import AsyncEngineArgs
 
     parser = AsyncEngineArgs.add_cli_args(parser)
+    args = parser.parse_args()
 
 elif not args.use_openai_api:
     # 检查是否安装了xcode
     if not check_package_version("llama_cpp_python", "0.2.60"):
         os.system(f'CMAKE_ARGS="-DLLAMA_METAL_EMBED_LIBRARY=ON -DLLAMA_METAL=on" pip install -U llama-cpp-python --no-cache-dir -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn')
-    parser.add_argument('--model', dest='model', help='LLM model path')
 
 if not args.use_cpu:
     model_config.CUDA_DEVICE = args.device_id

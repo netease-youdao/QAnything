@@ -123,7 +123,7 @@ class LocalDocQA:
         deduplicated_docs = self.deduplicate_documents(source_documents)
         retrieval_documents = sorted(deduplicated_docs, key=lambda x: x.metadata['score'], reverse=True)
         if len(retrieval_documents) > 1:
-            self.print(f"use rerank, rerank docs num: {len(retrieval_documents)}")
+            debug_logger.info(f"use rerank, rerank docs num: {len(retrieval_documents)}")
             # rerank需要的query必须是改写后的, 不然会丢一些信息
             retrieval_documents = self.rerank_documents(query, retrieval_documents)
         # 删除掉分数低于阈值的文档
