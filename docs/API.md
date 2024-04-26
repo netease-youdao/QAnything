@@ -84,6 +84,11 @@
     - [上传FAQ请求参数（Body）](#上传faq请求参数body)
     - [上传FAQ请求示例](#上传faq请求示例)
     - [上传FAQ响应示例](#上传faq响应示例)
+  - [检索qa日志（POST）](#检索qa日志post)
+    - [URL：http://{your_host}:8777/api/local_doc_qa/get_qa_info](#urlhttpyour_host8777apilocal_doc_qaget_qa_info)
+    - [检索qa日志请求参数（Body）](#检索qa日志请求参数body)
+    - [检索qa日志请求示例](#检索qa日志请求示例)
+    - [检索qa日志响应示例](#检索qa日志响应示例)
 
 ## <h2><p id="全局参数">全局参数</p></h2>
 
@@ -446,14 +451,16 @@ print(response.text)
 
 ### <h3><p id="-问答请求参数body"> 问答请求参数（Body）</p></h3>
 
-| 参数名    | 示例参数值                                                                   | 是否必填 | 参数类型     | 描述说明                                 |
-| --------- | ---------------------------------------------------------------------------- | -------- | ------------ | ---------------------------------------- |
-| user_id   | "zzp"                                                                        | 是       | String       | 用户 id                                  |
-| kb_ids    | ["KBb1dd58e8485443ce81166d24f6febda7", "KB633c69d07a2446b39b3a38e3628b8ada"] | 是       | Array        | 知识库 id 的列表，支持多个知识库联合问答 |
-| question  | "保险单号是多少？"                                                           | 是       | String       | 知识库 id 的列表，支持多个知识库联合问答 |
-| history   | [["question1","answer1"],["question2","answer2"]]                            | 否       | Array[Array] | 历史对话                                 |
-| rerank    | True                                                                         | 否       | Bool         | 是否开启 rerank，默认为 True             |
-| streaming | False                                                                        | 否       | Bool         | 是否开启流式输出，默认为 False           |
+| 参数名        | 示例参数值                                                                   | 是否必填 | 参数类型     | 描述说明                   |
+|------------| ---------------------------------------------------------------------------- | -------- | ------------ |------------------------|
+| user_id    | "zzp"                                                                        | 是       | String       | 用户 id                  |
+| kb_ids     | ["KBb1dd58e8485443ce81166d24f6febda7", "KB633c69d07a2446b39b3a38e3628b8ada"] | 是       | Array        | 知识库 id 的列表，支持多个知识库联合问答 |
+| question   | "保险单号是多少？"                                                           | 是       | String       | 知识库 id 的列表，支持多个知识库联合问答 |
+| history    | [["question1","answer1"],["question2","answer2"]]                            | 否       | Array[Array] | 历史对话                   |
+| rerank     | True                                                                         | 否       | Bool         | 是否开启 rerank，默认为 True   |
+| streaming  | False                                                                        | 否       | Bool         | 是否开启流式输出，默认为 False     |
+| networking | False                                                                        | 否       | Bool         | 是否开启联网搜索，默认为 False     |
+
 
 ### <h3><p id="-问答非流式请求示例"> 问答非流式请求示例</p></h3>
 
@@ -1118,6 +1125,66 @@ print(response.text)
 			"status": "gray",
 			"length": 7,
 			"timestamp": "202404121141"
+		}
+	]
+}
+```
+
+## <h2><p id="检索qa日志post">检索qa日志（POST）</p></h2>
+
+### <h3><p id="urlhttpyour_host8777apilocal_doc_qaget_qa_info">URL：<http://{your_host}:8777/api/local_doc_qa/get_qa_info></p></h3>
+
+### <h3><p id="检索qa日志请求参数body">检索qa日志请求参数（Body）</p></h3>
+
+| 参数名           | 示例参数值                                  | 是否必填 | 参数类型         | 描述说明                                                  |
+|---------------|----------------------------------------|------|--------------|-------------------------------------------------------|
+| user_id       | "zzp"                                  | 是    | String       | 用户 id                                                 |
+| bot_id        | "BOTc87cc749a9844325a2e26f09bf8f6918"  | 否    | String       | 非空则增加bot_id的筛选条件                                      |
+| kb_ids        | ["KBc87cc749a9844325a2e26f09bf8f6918"] | 否    | List[String] | 非空则增加kb_ids的筛选条件                                      |
+| query         | "你的名字"                                 | 否    | String       | 非空则增加query的筛选条件                                       |
+| time_start    | "2024-10-05"                           | 否    | String       | 非空则增加time_start的筛选条件，需和time_end配合使用                   |
+| time_end      | "2024-10-05"                           | 否    | String       | 非空则增加time_end的筛选条件，需和time_start配合使用                   |
+| page_id       | 0                                      | 否    | Int          | 非空则增加page_id的筛选条件，结果超过100条时默认返回第0页（前100条），可用page_id换页 |
+| need_info     | ["query", "result", "timestamp"]       | 否    | List[String] | 非空则增加need_info的筛选条件, 返回日志的key，空则返回全部的key              |
+| save_to_excel | True                                   | 否    | Bool         | 默认为False，为True时返回excel文件，可直接下载                        |
+
+### <h3><p id="检索qa日志请求示例">检索qa日志请求示例</p></h3>
+
+```python
+import requests
+import json
+
+url = "http://{your_host}:8777/api/local_doc_qa/get_qa_info"
+headers = {
+    "Content-Type": "application/json"
+}
+data = {
+    "user_id": "zzp",
+    "kb_ids": [
+        "KBe3f7b698208645218e787d2eee2eae41"
+    ],
+    "time_start": "2024-04-01",
+    "time_end": "2024-04-29",
+    "query": "韦小宝住址",
+    "need_info": ["user_id"]
+}
+
+response = requests.post(url, headers=headers, data=json.dumps(data))
+
+print(response.status_code)
+print(response.text)
+```
+
+### <h3><p id="检索qa日志响应示例">检索qa日志响应示例</p></h3>
+
+```json
+{
+	"code": 200,
+	"msg": "检索到的Log数为1，一次返回所有数据",
+	"page_id": 0,
+	"qa_infos": [
+		{
+			"user_id": "zzp"
 		}
 	]
 }
