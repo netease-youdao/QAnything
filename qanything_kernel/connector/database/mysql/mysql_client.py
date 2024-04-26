@@ -2,6 +2,8 @@ import sqlite3
 from qanything_kernel.configs.model_config import SQLITE_DATABASE 
 from qanything_kernel.utils.custom_log import debug_logger
 import uuid
+import json
+from datetime import datetime, timedelta
 
 
 class KnowledgeBaseManager:
@@ -108,6 +110,34 @@ class KnowledgeBaseManager:
             );
         """
         self.execute_query_(query, (), commit=True)
+
+        # query = 'DROP TABLE IF EXISTS QaLogs'
+        # self.execute_query_(query, (), commit=True)
+
+        query = """
+            CREATE TABLE IF NOT EXISTS QaLogs (
+                qa_id VARCHAR(64) PRIMARY KEY,
+                user_id VARCHAR(255) NOT NULL,
+                bot_id VARCHAR(255),
+                kb_ids LONGTEXT NOT NULL,
+                query VARCHAR(512) NOT NULL,
+                model VARCHAR(64) NOT NULL,
+                product_source VARCHAR(64) NOT NULL,
+                time_record LONGTEXT NOT NULL,
+                history LONGTEXT NOT NULL,
+                condense_question VARCHAR(1024) NOT NULL,
+                prompt LONGTEXT NOT NULL,
+                result VARCHAR(1024) NOT NULL,
+                retrieval_documents LONGTEXT NOT NULL,
+                source_documents LONGTEXT NOT NULL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """
+        self.execute_query_(query, (), commit=True)
+
+        # 如果不存在则创建索引
+        create_index_query = "CREATE INDEX IF NOT EXISTS index_bot_id ON QaLogs (bot_id);"
+        self.execute_query_(create_index_query, (), commit=True)
 
         # 旧的File不存在file_path，补上默认值：'UNK'
         # 如果存在File表，但是没有file_path字段，那么添加file_path字段
@@ -282,6 +312,94 @@ class KnowledgeBaseManager:
         debug_logger.info("add_file: {}".format(file_id))
         return file_id, "success"
 
+    def add_qalog(self, user_id, bot_id, kb_ids, query, model, product_source, time_record, history, condense_question,
+                  prompt, result, retrieval_documents, source_documents):
+        debug_logger.info("add_qalog: {}".format(query))
+        qa_id = uuid.uuid4().hex
+        kb_ids = json.dumps(kb_ids, ensure_ascii=False)
+        retrieval_documents = json.dumps(retrieval_documents, ensure_ascii=False)
+        source_documents = json.dumps(source_documents, ensure_ascii=False)
+        history = json.dumps(history, ensure_ascii=False)
+        time_record = json.dumps(time_record, ensure_ascii=False)
+        insert_query = ("INSERT INTO QaLogs (qa_id, user_id, bot_id, kb_ids, query, model, product_source, time_record, "
+                        "history, condense_question, prompt, result, retrieval_documents, source_documents) "
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        self.execute_query_(insert_query, (qa_id, user_id, bot_id, kb_ids, query, model, product_source, time_record,
+                                           history, condense_question, prompt, result, retrieval_documents,
+                                           source_documents), commit=True)
+
+    def get_qalog_by_bot_id(self, bot_id, time_range=None):
+        need_info = ("qa_id", "user_id", "bot_id", "query", "model", "result", "timestamp")
+        need_info = ", ".join(need_info)
+        if isinstance(time_range, tuple):
+            time_start, time_end = time_range
+            if len(time_start) == 10:
+                time_start = time_start + " 00:00:00"
+            if len(time_end) == 10:
+                time_end = time_end + " 23:59:59"
+            query = f"SELECT {need_info} FROM QaLogs WHERE bot_id = ? AND timestamp BETWEEN ? AND ?"
+            return self.execute_query_(query, (bot_id, time_start, time_end), fetch=True)
+        else:
+            query = f"SELECT {need_info} FROM QaLogs WHERE bot_id = ?"
+            return self.execute_query_(query, (bot_id,), fetch=True)
+
+    def get_qalog_by_ids(self, ids):
+        placeholders = ','.join(['?'] * len(ids))
+        query = "SELECT qa_id, user_id, bot_id, kb_ids, query, model, history, result, timestamp FROM QaLogs WHERE qa_id IN ({})".format(placeholders)
+        return self.execute_query_(query, ids, fetch=True)
+
+    def get_qalog_by_filter(self, need_info, user_id=None, kb_ids=None, query=None, bot_id=None, time_range=None):
+        if kb_ids:
+            kb_ids = json.dumps(kb_ids, ensure_ascii=False)
+        if not time_range:
+            # time_range默认设置为最近30天，格式为2024-02-12
+            time_start = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d 00:00:00")
+            time_end = datetime.now().strftime("%Y-%m-%d 23:59:59")
+            time_range = (time_start, time_end)
+        if isinstance(time_range, tuple):
+            time_start, time_end = time_range
+            if len(time_start) == 10:
+                time_start = time_start + " 00:00:00"
+            if len(time_end) == 10:
+                time_end = time_end + " 23:59:59"
+            time_range = (time_start, time_end)
+        # 判断哪些条件不是None，构建搜索query
+        need_info = ", ".join(need_info)
+        mysql_query = f"SELECT {need_info} FROM QaLogs WHERE timestamp BETWEEN ? AND ?"
+        params = list(time_range)
+        if user_id:
+            mysql_query += " AND user_id = ?"
+            params.append(user_id)
+        if kb_ids:
+            mysql_query += " AND kb_ids = ?"
+            params.append(kb_ids)
+        if bot_id:
+            mysql_query += " AND bot_id = ?"
+            params.append(bot_id)
+        if query:
+            mysql_query += " AND query = ?"
+            params.append(query)
+        debug_logger.info("get_qalog_by_filter: {}".format(params))
+        qa_infos = self.execute_query_(mysql_query, params, fetch=True)
+        # 根据need_info构建一个dict
+        qa_infos = [dict(zip(need_info.split(", "), qa_info)) for qa_info in qa_infos]
+        for qa_info in qa_infos:
+            if 'timestamp' in qa_info:
+                qa_info['timestamp'] = qa_info['timestamp'].strftime("%Y-%m-%d %H:%M:%S")
+            if 'kb_ids' in qa_info:
+                qa_info['kb_ids'] = json.loads(qa_info['kb_ids'])
+            if 'time_record' in qa_info:
+                qa_info['time_record'] = json.loads(qa_info['time_record'])
+            if 'retrieval_documents' in qa_info:
+                qa_info['retrieval_documents'] = json.loads(qa_info['retrieval_documents'])
+            if 'source_documents' in qa_info:
+                qa_info['source_documents'] = json.loads(qa_info['source_documents'])
+            if 'history' in qa_info:
+                qa_info['history'] = json.loads(qa_info['history'])
+        if 'timestamp' in need_info:
+            qa_infos = sorted(qa_infos, key=lambda x: x["timestamp"], reverse=True)
+        return qa_infos
+
     def add_faq(self, faq_id, user_id, kb_id, question, answer, nos_keys):
         # debug_logger.info(f"add_faq: {faq_id}, {user_id}, {kb_id}, {question}, {answer}, {nos_keys}")
         query = "INSERT INTO Faqs (faq_id, user_id, kb_id, question, answer, nos_keys) VALUES (?, ?, ?, ?, ?, ?)"
@@ -334,13 +452,13 @@ class KnowledgeBaseManager:
 
     def get_bot(self, user_id, bot_id):
         if not bot_id:
-            query = "SELECT bot_id, bot_name, description, head_image, prompt_setting, welcome_message, model, kb_ids_str, update_time FROM QanythingBot WHERE user_id = ? AND deleted = 0"
+            query = "SELECT bot_id, bot_name, description, head_image, prompt_setting, welcome_message, model, kb_ids_str, update_time, user_id FROM QanythingBot WHERE user_id = ? AND deleted = 0"
             return self.execute_query_(query, (user_id,), fetch=True)
         elif not user_id:
-            query = "SELECT bot_id, bot_name, description, head_image, prompt_setting, welcome_message, model, kb_ids_str, update_time FROM QanythingBot WHERE bot_id = ? AND deleted = 0"
+            query = "SELECT bot_id, bot_name, description, head_image, prompt_setting, welcome_message, model, kb_ids_str, update_time, user_id FROM QanythingBot WHERE bot_id = ? AND deleted = 0"
             return self.execute_query_(query, (bot_id, ), fetch=True)
         else:
-            query = "SELECT bot_id, bot_name, description, head_image, prompt_setting, welcome_message, model, kb_ids_str, update_time FROM QanythingBot WHERE user_id = ? AND bot_id = ? AND deleted = 0"
+            query = "SELECT bot_id, bot_name, description, head_image, prompt_setting, welcome_message, model, kb_ids_str, update_time, user_id FROM QanythingBot WHERE user_id = ? AND bot_id = ? AND deleted = 0"
             return self.execute_query_(query, (user_id, bot_id), fetch=True)
 
     def update_bot(self, user_id, bot_id, bot_name, description, head_image, prompt_setting, welcome_message, model,

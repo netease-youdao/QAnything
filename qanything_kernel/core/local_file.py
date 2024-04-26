@@ -14,7 +14,7 @@ from qanything_kernel.utils.loader.csv_loader import CSVLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from qanything_kernel.utils.splitter import ChineseTextSplitter
-from qanything_kernel.utils.loader import UnstructuredPaddleImageLoader, UnstructuredPaddlePDFLoader
+from qanything_kernel.utils.loader import UnstructuredPaddleImageLoader, UnstructuredPaddlePDFLoader, UnstructuredPaddleAudioLoader
 from qanything_kernel.utils.splitter import zh_title_enhance
 from sanic.request import File
 import pandas as pd
@@ -111,7 +111,11 @@ class LocalFile:
         elif self.file_path.lower().endswith(".csv"):
             loader = CSVLoader(self.file_path, csv_args={"delimiter": ",", "quotechar": '"'})
             docs = loader.load()
+        elif self.file_path.lower().endswith(".mp3") or self.file_path.lower().endswith(".wav"):
+            loader = UnstructuredPaddleAudioLoader(self.file_path, self.use_cpu)
+            docs = loader.load()
         else:
+            debug_logger.info("file_path: {}".format(self.file_path))
             raise TypeError("文件类型不支持，目前仅支持：[md,txt,pdf,jpg,png,jpeg,docx,xlsx,pptx,eml,csv]")
         if using_zh_title_enhance:
             debug_logger.info("using_zh_title_enhance %s", using_zh_title_enhance)

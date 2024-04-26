@@ -15,12 +15,14 @@ import math
 import packaging.version
 import pandas as pd
 from io import BytesIO
-import platform
 from qanything_kernel.utils.custom_log import debug_logger
+from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH
+from openpyxl.utils import get_column_letter
+from openpyxl import load_workbook
 
 __all__ = ['write_check_file', 'isURL', 'format_source_documents', 'get_time', 'safe_get', 'truncate_filename',
            'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens', 'download_file', 
-           'get_gpu_memory_utilization', 'check_package_version', 'simplify_filename', 'check_and_transform_excel']
+           'get_gpu_memory_utilization', 'check_package_version', 'simplify_filename', 'check_and_transform_excel', 'export_qalogs_to_excel']
 
 
 def get_invalid_user_id_msg(user_id):
@@ -51,17 +53,15 @@ def format_source_documents(ori_source_documents):
     for inum, doc in enumerate(ori_source_documents):
         # for inum, doc in enumerate(answer_source_documents):
         # doc_source = doc.metadata['source']
-        file_id = doc.metadata['file_id']
-        file_name = doc.metadata['file_name']
         # source_str = doc_source if isURL(doc_source) else os.path.split(doc_source)[-1]
-        source_info = {'file_id': doc.metadata['file_id'],
-                       'file_name': doc.metadata['file_name'],
+        source_info = {'file_id': doc.metadata.get('source', doc.metadata.get('file_id','')),
+                       'file_name': doc.metadata.get('title', doc.metadata.get('file_name','')),
                        'content': doc.page_content,
                        'retrieval_query': doc.metadata['retrieval_query'],
                        # 'kernel': doc.metadata['kernel'],
                        'file_path': doc.metadata.get('file_path', ''),
-                       'score': str(doc.metadata['score']),
-                       'embed_version': doc.metadata['embed_version']}
+                       'score': str(doc.metadata.get('score','')),
+                       'embed_version': doc.metadata.get('embed_version','')}
         source_documents.append(source_info)
     return source_documents
 
@@ -137,7 +137,7 @@ def read_files_with_extensions():
 
     directory = project_dir + '/data'
     print(f'now reading {directory}')
-    extensions = ['.md', '.txt', '.pdf', '.jpg', '.docx', '.xlsx', '.eml', '.csv']
+    extensions = ['.md', '.txt', '.pdf', '.jpg', '.docx', '.xlsx', '.eml', '.csv', '.mp3', '.wav']
     for root, dirs, files in os.walk(directory):
         for file in files:
             if file.endswith(tuple(extensions)):
@@ -198,11 +198,13 @@ def get_gpu_memory_utilization(model_size, device_id):
     debug_logger.info(f"GPU memory: {gpu_memory_in_GB}GB")
     if model_size == '3B':
         if gpu_memory_in_GB < 10:  # 显存最低需要10GB
-            raise ValueError(f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 10GB is required with 3B Model.")
+            raise ValueError(
+                f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 10GB is required with 3B Model.")
         gpu_memory_utilization = round(8 / gpu_memory_in_GB, 2)
     elif model_size == '7B':
         if gpu_memory_in_GB < 24:  # 显存最低需要20GB
-            raise ValueError(f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 24GB is required with 7B Model.")
+            raise ValueError(
+                f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 24GB is required with 7B Model.")
         gpu_memory_utilization = 0.9
     else:
         raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 7B")
@@ -257,3 +259,29 @@ def check_and_transform_excel(binary_data):
         transformed_data.append({"question": row['问题'], "answer": row['答案']})
 
     return transformed_data
+
+
+# 使用 pandas 将数据写入 Excel
+def export_qalogs_to_excel(qalogs, columns, filename: str):
+    # 将查询结果转换为 DataFrame
+    df = pd.DataFrame(qalogs, columns=columns)
+
+    # 写入 Excel 文件
+    root_path = os.path.dirname(UPLOAD_ROOT_PATH) + '/saved_qalogs'
+    if not os.path.exists(root_path):
+        os.makedirs(root_path)
+
+    file_path = os.path.join(root_path, filename)
+    df.to_excel(file_path, index=False)
+
+    # 使用 openpyxl 调整列宽
+    workbook = load_workbook(filename=file_path)
+    worksheet = workbook.active
+
+    for column_cells in worksheet.columns:
+        length = max(len(str(cell.value)) for cell in column_cells)
+        worksheet.column_dimensions[get_column_letter(column_cells[0].column)].width = length
+
+    workbook.save(file_path)
+    debug_logger.info(f"Data exported to {file_path} successfully.")
+    return file_path
