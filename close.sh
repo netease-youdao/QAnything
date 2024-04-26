@@ -3,7 +3,7 @@
 # 检测支持的 Docker Compose 命令
 if docker compose version &>/dev/null; then
   DOCKER_COMPOSE_CMD="docker compose"
-elif $DOCKER_COMPOSE_CMD version &>/dev/null; then
+elif docker-compose version &>/dev/null; then
   DOCKER_COMPOSE_CMD="docker-compose"
 else
   echo "无法找到 'docker compose' 或 'docker-compose' 命令。"
