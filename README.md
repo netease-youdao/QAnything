@@ -20,7 +20,7 @@ To install the package, run:
 ```bash
 conda create -n qanything-python python=3.10
 conda activate qanything-python
-git clone -b qanything-python-v1.3.1 https://github.com/netease-youdao/QAnything.git
+git clone -b qanything-python https://github.com/netease-youdao/QAnything.git
 cd QAnything
 pip install -e .
 ```
@@ -65,6 +65,20 @@ bash scripts/run_for_openai_api_in_M1_mac.sh
 ```bash
 bash scripts/run_for_3B_in_M1_mac.sh
 ```
+
+## Run in OpenCloud
+OpenCloud Need Run in Docker Container, Please Install Docker First:
+Docker version >= 20.10.5 and docker-compose version >= 2.23.3
+```bash
+docker-compose up -d
+docker attach qanything-container
+# Choose one of the 4 commands below to run:
+bash scripts/run_for_3B_in_Linux_or_WSL.sh
+bash scripts/run_for_7B_in_Linux_or_WSL.sh
+bash scripts/run_for_openai_api_with_cpu_in_Linux_or_WSL.sh
+bash scripts/run_for_openai_api_with_gpu_in_Linux_or_WSL.sh
+```
+
 
 ## USE WITH WEB UI
 Open http://0.0.0.0:8777/qanything/ in the browser to use the UI interface,
