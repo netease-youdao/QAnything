@@ -158,11 +158,18 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 | 支持windows WSL    |   ✅                   |    ✅                  |             ✅            |  
 | 支持纯CPU           |   ✅                   |    ❌                  |             ❌            |    
 | 支持混合检索(BM25+embedding)     |   ❌       |    ✅                  |             ✅            |
+| 支持联网检索         |   ✅                   |    ❌                  |             ❌            |
+| 支持FAQ问答         |   ✅                   |    ❌                  |             ❌            |
+| 支持自定义机器人     |   ✅                   |    ❌                  |             ❌            |
+| 支持文件溯源        |   ✅                   |    ❌                  |             ❌            |
+| 支持问答日志检索     |   ✅                   |    ❌                  |             ❌            |
+| 支持OpenCloudOS    |   ✅                   |    ❌                  |             ❌            |
+| 支持解析语音文件     |   ✅                   |    ❌                  |             ❌            |
 
 
 ## 纯python环境安装
 
-不想用docker环境安装的，我们提供了[纯Python版本安装教程](https://github.com/netease-youdao/QAnything/blob/qanything-python-v1.3.1/README_zh.md#%E7%BA%AFpython%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B)，纯python环境的安装仅作为demo体验，不建议生产环境部署。
+不想用docker环境安装的，我们提供了[纯Python版本安装教程](https://github.com/netease-youdao/QAnything/blob/qanything-python/README_zh.md)，纯python环境的安装仅作为demo体验，不建议生产环境部署。
 
 - 支持纯CPU安装运行(检索部分跑在CPU上，大模型调用在线API)
 - 支持Mac安装运行
