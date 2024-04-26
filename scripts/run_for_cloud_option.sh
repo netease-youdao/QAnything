@@ -101,6 +101,8 @@ if [ ! -L "/model_repos/QAEnsemble_embed_rerank/embed" ]; then
   cd /model_repos/QAEnsemble_embed_rerank && ln -s /model_repos/QAEnsemble/embed .
 fi
 
+cd /workspace/qanything_local
+
 # 设置默认值
 default_gpu_id1=0
 default_gpu_id2=0
