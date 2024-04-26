@@ -205,7 +205,7 @@ If you prefer not to use Docker for installation, we provide a [Pure Python Inst
 |                               |  Docker Desktop           | >=  4.26.1（131620）     | [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)                                    |
 |                               | git-lfs   |                  | [git-lfs install](https://git-lfs.com/)                                                                                   |
 
-
+### [Lazy installation steps, please click here.](https://github.com/netease-youdao/QAnything/blob/master/docs/docker%E7%89%88%E6%9C%AC%E5%AE%89%E8%A3%85%E6%94%BB%E7%95%A5.md)
 
 ### step1: pull qanything repository
 ```shell
