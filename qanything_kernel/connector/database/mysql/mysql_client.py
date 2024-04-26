@@ -3,6 +3,7 @@ from qanything_kernel.configs.model_config import SQLITE_DATABASE
 from qanything_kernel.utils.custom_log import debug_logger
 import uuid
 import json
+from datetime import datetime, timedelta
 
 
 class KnowledgeBaseManager:
@@ -346,6 +347,58 @@ class KnowledgeBaseManager:
         placeholders = ','.join(['?'] * len(ids))
         query = "SELECT qa_id, user_id, bot_id, kb_ids, query, model, history, result, timestamp FROM QaLogs WHERE qa_id IN ({})".format(placeholders)
         return self.execute_query_(query, ids, fetch=True)
+
+    def get_qalog_by_filter(self, need_info, user_id=None, kb_ids=None, query=None, bot_id=None, time_range=None):
+        if kb_ids:
+            kb_ids = json.dumps(kb_ids, ensure_ascii=False)
+        if not time_range:
+            # time_range默认设置为最近30天，格式为2024-02-12
+            time_start = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d 00:00:00")
+            time_end = datetime.now().strftime("%Y-%m-%d 23:59:59")
+            time_range = (time_start, time_end)
+        if isinstance(time_range, tuple):
+            time_start, time_end = time_range
+            if len(time_start) == 10:
+                time_start = time_start + " 00:00:00"
+            if len(time_end) == 10:
+                time_end = time_end + " 23:59:59"
+            time_range = (time_start, time_end)
+        # 判断哪些条件不是None，构建搜索query
+        need_info = ", ".join(need_info)
+        mysql_query = f"SELECT {need_info} FROM QaLogs WHERE timestamp BETWEEN ? AND ?"
+        params = list(time_range)
+        if user_id:
+            mysql_query += " AND user_id = ?"
+            params.append(user_id)
+        if kb_ids:
+            mysql_query += " AND kb_ids = ?"
+            params.append(kb_ids)
+        if bot_id:
+            mysql_query += " AND bot_id = ?"
+            params.append(bot_id)
+        if query:
+            mysql_query += " AND query = ?"
+            params.append(query)
+        debug_logger.info("get_qalog_by_filter: {}".format(params))
+        qa_infos = self.execute_query_(mysql_query, params, fetch=True)
+        # 根据need_info构建一个dict
+        qa_infos = [dict(zip(need_info.split(", "), qa_info)) for qa_info in qa_infos]
+        for qa_info in qa_infos:
+            if 'timestamp' in qa_info:
+                qa_info['timestamp'] = qa_info['timestamp'].strftime("%Y-%m-%d %H:%M:%S")
+            if 'kb_ids' in qa_info:
+                qa_info['kb_ids'] = json.loads(qa_info['kb_ids'])
+            if 'time_record' in qa_info:
+                qa_info['time_record'] = json.loads(qa_info['time_record'])
+            if 'retrieval_documents' in qa_info:
+                qa_info['retrieval_documents'] = json.loads(qa_info['retrieval_documents'])
+            if 'source_documents' in qa_info:
+                qa_info['source_documents'] = json.loads(qa_info['source_documents'])
+            if 'history' in qa_info:
+                qa_info['history'] = json.loads(qa_info['history'])
+        if 'timestamp' in need_info:
+            qa_infos = sorted(qa_infos, key=lambda x: x["timestamp"], reverse=True)
+        return qa_infos
 
     def add_faq(self, faq_id, user_id, kb_id, question, answer, nos_keys):
         # debug_logger.info(f"add_faq: {faq_id}, {user_id}, {kb_id}, {question}, {answer}, {nos_keys}")

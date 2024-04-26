@@ -15,9 +15,10 @@ import math
 import packaging.version
 import pandas as pd
 from io import BytesIO
-import platform
 from qanything_kernel.utils.custom_log import debug_logger
 from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH
+from openpyxl.utils import get_column_letter
+from openpyxl import load_workbook
 
 __all__ = ['write_check_file', 'isURL', 'format_source_documents', 'get_time', 'safe_get', 'truncate_filename',
            'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens', 'download_file', 
@@ -261,13 +262,26 @@ def check_and_transform_excel(binary_data):
 
 
 # 使用 pandas 将数据写入 Excel
-def export_qalogs_to_excel(qalogs, filename: str):
+def export_qalogs_to_excel(qalogs, columns, filename: str):
     # 将查询结果转换为 DataFrame
-    df = pd.DataFrame(qalogs, columns=['qa_id', 'user_id', 'bot_id', 'kb_ids', 'query', 'model', 'history', 'result', 'timestamp'])
+    df = pd.DataFrame(qalogs, columns=columns)
+
     # 写入 Excel 文件
-    root_path = UPLOAD_ROOT_PATH + 'qalogs'
+    root_path = os.path.dirname(UPLOAD_ROOT_PATH) + '/saved_qalogs'
     if not os.path.exists(root_path):
         os.makedirs(root_path)
-    df.to_excel(os.path.join(root_path, filename), index=False)
-    print(f"Data exported to {filename} successfully.")
-    return os.path.join(root_path, filename)
+
+    file_path = os.path.join(root_path, filename)
+    df.to_excel(file_path, index=False)
+
+    # 使用 openpyxl 调整列宽
+    workbook = load_workbook(filename=file_path)
+    worksheet = workbook.active
+
+    for column_cells in worksheet.columns:
+        length = max(len(str(cell.value)) for cell in column_cells)
+        worksheet.column_dimensions[get_column_letter(column_cells[0].column)].width = length
+
+    workbook.save(file_path)
+    debug_logger.info(f"Data exported to {file_path} successfully.")
+    return file_path

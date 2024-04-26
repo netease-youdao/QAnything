@@ -6,7 +6,8 @@ from qanything_kernel.configs.model_config import BOT_DESC, BOT_IMAGE, BOT_PROMP
 from sanic.response import ResponseStream
 from sanic.response import json as sanic_json
 from sanic.response import text as sanic_text
-from sanic import request
+from sanic import request, response
+import math
 import uuid
 import json
 import asyncio
@@ -20,7 +21,7 @@ import base64
 __all__ = ["new_knowledge_base", "upload_files", "list_kbs", "list_docs", "delete_knowledge_base", "delete_docs",
            "rename_knowledge_base", "get_total_status", "clean_files_by_status", "upload_weblink", "local_doc_chat",
            "document", "new_bot", "delete_bot", "update_bot", "get_bot_info", "upload_faqs", "get_file_base64",
-           "get_qa_info", "get_qa_excel"]
+           "get_qa_info"]
 
 INVALID_USER_ID = f"fail, Invalid user_id: . user_id 必须只含有字母，数字和下划线且字母开头"
 
@@ -771,10 +772,16 @@ async def get_file_base64(req: request):
 
 async def get_qa_info(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
+    user_id = safe_get(req, 'user_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
+    is_valid = validate_user_id(user_id)
+    if not is_valid:
+        return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
+    debug_logger.info("get_qa_info %s", user_id)
+    kb_ids = safe_get(req, 'kb_ids')
+    query = safe_get(req, 'query')
     bot_id = safe_get(req, 'bot_id')
-    if not bot_id:
-        return sanic_json({"code": 2002, "msg": f'输入非法！bot_id为空，request.json：{req.json}，请检查！'})
-    debug_logger.info("get_qa_info %s", bot_id)
     time_start = safe_get(req, 'time_start')
     time_end = safe_get(req, 'time_end')
     # 检查time_end和time_start是否满足2024-10-05的格式
@@ -789,15 +796,35 @@ async def get_qa_info(req: request):
         time_range = (time_start, time_end)
     elif time_start:  # 2024-10-05
         time_range = (time_start + " 00:00:00", time_start + " 23:59:59")
-    qa_infos = local_doc_qa.mysql_client.get_qalog_by_bot_id(bot_id, time_range)
-    return sanic_json({"code": 200, "msg": "success", "qa_infos": qa_infos})
 
+    page_id = safe_get(req, 'page_id')
+    default_need_info = ["qa_id", "user_id", "bot_id", "kb_ids", "query", "model", "product_source", "time_record",
+                         "history", "condense_question", "prompt", "result", "retrieval_documents", "source_documents",
+                         "timestamp"]
+    need_info = safe_get(req, 'need_info', default_need_info)
+    save_to_excel = safe_get(req, 'save_to_excel', False)
+    qa_infos = local_doc_qa.mysql_client.get_qalog_by_filter(need_info=need_info, user_id=user_id, kb_ids=kb_ids,
+                                                             query=query, bot_id=bot_id, time_range=time_range)
+    if save_to_excel:
+        timestamp = datetime.now().strftime("%Y%m%d%H%M")
+        file_name = f"QAnything_QA_{timestamp}.xlsx"
+        file_path = export_qalogs_to_excel(qa_infos, need_info, file_name)
+        return await response.file(file_path, filename=file_name,
+                                   mime_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                   headers={'Content-Disposition': f'attachment; filename="{file_name}"'})
 
-async def get_qa_excel(req: request):
-    local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
-    qa_ids = safe_get(req, 'qa_ids')
-    qa_infos = local_doc_qa.mysql_client.get_qalog_by_ids(qa_ids)
-    timestamp = datetime.now().strftime("%Y%m%d%H%M")
-    file_name = f"QAnything_QA_{timestamp}.xlsx"
-    file_path = export_qalogs_to_excel(qa_infos, file_name)
-    return sanic_json({"code": 200, "msg": "success", "file_path": file_path})
+    if len(qa_infos) > 100:
+        pages = math.ceil(len(qa_infos) // 100)
+        if page_id is None:
+            msg = f"检索到的Log数超过100，需要分页返回，总数为{len(qa_infos)}, 请使用page_id参数获取某一页数据，参数范围：[0, {pages - 1}], 本次返回page_id为0的数据"
+            qa_infos = qa_infos[:100]
+            page_id = 0
+        elif page_id >= pages:
+            return sanic_json({"code": 2002, "msg": f'输入非法！page_id超过最大值，page_id: {page_id}，最大值：{pages - 1}，请检查！'})
+        else:
+            msg = f"检索到的Log数超过100，需要分页返回，总数为{len(qa_infos)}, page范围：[0, {pages - 1}], 本次返回page_id为{page_id}的数据"
+            qa_infos = qa_infos[page_id * 100:(page_id + 1) * 100]
+    else:
+        msg = f"检索到的Log数为{len(qa_infos)}，一次返回所有数据"
+        page_id = 0
+    return sanic_json({"code": 200, "msg": msg, "page_id": page_id, "qa_infos": qa_infos})
