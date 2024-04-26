@@ -125,9 +125,9 @@ def get_model_list(
     controller_url, register_openai_compatible_models, add_chatgpt, add_claude, add_palm
 ):
     if controller_url:
-        ret = requests.post(controller_url + "/refresh_all_workers")
+        ret = requests.post(controller_url + "/refresh_all_workers", timeout=60)
         assert ret.status_code == 200
-        ret = requests.post(controller_url + "/list_models")
+        ret = requests.post(controller_url + "/list_models", timeout=60)
         models = ret.json()["models"]
     else:
         models = []
@@ -400,8 +400,8 @@ def bot_response(
     else:
         # Query worker address
         ret = requests.post(
-            controller_url + "/get_worker_address", json={"model": model_name}
-        )
+            controller_url + "/get_worker_address", json={"model": model_name}, 
+        timeout=60)
         worker_addr = ret.json()["address"]
         logger.info(f"model_name: {model_name}, worker_addr: {worker_addr}")
 

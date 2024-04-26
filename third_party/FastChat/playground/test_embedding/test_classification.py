@@ -26,7 +26,7 @@ def get_embedding_from_api(word, model="vicuna-7b-v1.1"):
     headers = {"Content-Type": "application/json"}
     data = json.dumps({"model": model, "input": word})
 
-    response = requests.post(url, headers=headers, data=data)
+    response = requests.post(url, headers=headers, data=data, timeout=60)
     if response.status_code == 200:
         embedding = np.array(response.json()["data"][0]["embedding"])
         return embedding

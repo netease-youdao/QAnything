@@ -394,7 +394,7 @@ def create_huggingface_api_worker():
             "queue_length": sum([w.get_queue_length() for w in workers]),
         },
     }
-    r = requests.post(url, json=data)
+    r = requests.post(url, json=data, timeout=60)
     assert r.status_code == 200
 
     return args, workers
