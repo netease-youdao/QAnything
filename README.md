@@ -176,7 +176,7 @@ The features corresponding to different installation methods are as follows:
 | support Log retrieval          |   ✅                   |    ❌                  |             ❌            |
 | support OpenCloudOS            |   ✅                   |    ❌                  |             ❌            |
 | support audio file             |   ✅                   |    ❌                  |             ❌            |
-| support High concurrency       |   ❌                   |    ✅                  |             ✅            |
+| support multiple concurrency   |   ❌                   |    ✅                  |             ✅            |
 
 ## Installation(Pure Python environment)
 If you prefer not to use Docker for installation, we provide a [Pure Python Installation Guide](https://github.com/netease-youdao/QAnything/blob/qanything-python/README.md). The installation of a pure Python environment is intended for demo purposes only and is not recommended for deployment in a production environment.
