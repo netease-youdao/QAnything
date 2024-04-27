@@ -165,6 +165,7 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 | 支持问答日志检索     |   ✅                   |    ❌                  |             ❌            |
 | 支持OpenCloudOS    |   ✅                   |    ❌                  |             ❌            |
 | 支持解析语音文件     |   ✅                   |    ❌                  |             ❌            |
+| 支持多并发          |   ❌                   |    ✅                  |             ✅            |
 
 
 ## 纯python环境安装
