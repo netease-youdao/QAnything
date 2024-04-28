@@ -362,7 +362,7 @@ else
         #     --model-path /model_repos/CustomLLM/$LLM_API_SERVE_MODEL --trust-remote-code --block-size 32 --tensor-parallel-size 4 \
         #     --max-model-len 4096 --gpu-memory-utilization $gpu_memory_utilization --dtype bfloat16 --conv-template $LLM_API_SERVE_CONV_TEMPLATE > /workspace/qanything_local/logs/debug_logs/fastchat_logs/fschat_model_worker_7801.log 2>&1 &
         
-        PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True CUDA_VISIBLE_DEVICES=$gpus nohup python3 -m vllm.entrypoints.openai.api_server --model /model_repos/Qwen1.5-32B-Chat --gpu-memory-utilization $gpu_memory_utilization --tensor-parallel-size $tensor_parallel --port 8000 --max-model-len 8192 > /workspace/qanything_local/logs/debug_logs/fastchat_logs/fschat_model_worker_7801.log 2>&1 & 
+        PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True CUDA_VISIBLE_DEVICES=$gpus nohup python3 -m vllm.entrypoints.openai.api_server --model /model_repos/CustomLLM/$LLM_API_SERVE_MODEL --gpu-memory-utilization $gpu_memory_utilization --tensor-parallel-size $tensor_parallel --port 8000 --max-model-len 8192 > /workspace/qanything_local/logs/debug_logs/fastchat_logs/fschat_model_worker_7801.log 2>&1 & 
 
         ;;
     "sglang")
