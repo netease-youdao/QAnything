@@ -102,7 +102,7 @@ services:
   qanything_local:
     container_name: qanything-container-local
     # image: freeren/qanything:v1.2.2
-    image: qany_test:v2.0
+    image: qanything-private:v1.3
     # runtime: nvidia
     deploy:
       resources:
