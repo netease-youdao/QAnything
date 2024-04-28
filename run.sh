@@ -129,14 +129,16 @@ if [ $llm_api = 'cloud' ]; then
 elif [ $runtime_backend = 'default' ]; then
     model_size='7B'
 else
-    read -p "请输入您使用的大模型B数(示例：1.8B/3B/7B): " model_size
+    read -p "请输入您使用的大模型B数(示例：1.8B/3B/7B/32B): " model_size
     # 检查是否合法，必须输入数字+B的形式，可以是小数
     if ! [[ $model_size =~ ^[0-9]+(\.[0-9]+)?B$ ]]; then
-        echo "Invalid model size. Please enter a number like '1.8B' or '3B' or '7B'."
+        echo "Invalid model size. Please enter a number like '1.8B' or '3B' or '7B' or '32B'."
         exit 1
     fi
 fi
 echo "model_size=$model_size"
+
+model_size="7B"
 
 update_or_append_to_env "MODEL_SIZE" "$model_size"
 
@@ -233,14 +235,14 @@ source .env
 # 检查是否存在USER_IP
 if [ -z "${USER_IP}" ]; then
     # 如果USER_IP不存在，询问用户并保存配置
-    read -p "Are you running the code on a remote server or on your local machine? (remotelocal) 您是在云服务器上还是本地机器上启动代码？(remote/local) " answer
-    if [[ $answer == "local" || $answer == "本地" ]]; then
-        ip="localhost"
-    else
-        read -p "Please enter the server IP address 请输入服务器公网IP地址(示例：10.234.10.144): " ip
-        echo "当前设置的远程服务器IP地址为 $ip, QAnything启动后，本地前端服务（浏览器打开[http://$ip:5052/qanything/]）将远程访问[http://$ip:8777]上的后端服务，请知悉！"
-        sleep 5
+    read -p "Please enter the server IP address 请输入服务器公网IP地址(示例：10.234.10.144): " ip
+    # 判断ip是否输入：
+    if [ -z "$ip" ]; then
+        echo "未输入服务器IP地址，请重新运行脚本并输入服务器IP地址"
+        exit 1
     fi
+    echo "当前设置的远程服务器IP地址为 $ip, QAnything启动后，本地前端服务（浏览器打开[http://$ip:8777/qanything/]）将远程访问[http://$ip:8777]上的后端服务，请知悉！"
+    sleep 5
 
     # 保存配置    
     update_or_append_to_env "USER_IP" "$ip"
@@ -251,14 +253,14 @@ else
     read -p "Do you want to use the previous ip: $ip? (yes/no) 是否使用上次的ip: $host？(yes/no) 回车默认选yes，请输入:" use_previous
     use_previous=${use_previous:-yes}
     if [[ $use_previous != "yes" && $use_previous != "是" ]]; then
-        read -p "Are you running the code on a remote server or on your local machine? (remote/local) 您是在远程服务器上还是本地机器上启动代码？(remote/local) " answer
-        if [[ $answer == "local" || $answer == "本地" ]]; then
-            ip="localhost"
-        else
-            read -p "Please enter the server IP address 请输入服务器公网IP地址(示例：10.234.10.144): " ip
-            echo "当前设置的远程服务器IP地址为 $ip, QAnything启动后，本地前端服务（浏览器打开[http://$ip:5052/qanything/]）将远程访问[http://$ip:8777]上的后端服务，请知悉！"
-            sleep 5
+        read -p "Please enter the server IP address 请输入服务器公网IP地址(示例：10.234.10.144): " ip
+        # 判断ip是否输入：
+        if [ -z "$ip" ]; then
+            echo "未输入服务器IP地址，请重新运行脚本并输入服务器IP地址"
+            exit 1
         fi
+        echo "当前设置的远程服务器IP地址为 $ip, QAnything启动后，本地前端服务（浏览器打开[http://$ip:5052/qanything/]）将远程访问[http://$ip:8777]上的后端服务，请知悉！"
+        sleep 5
         # 保存新的配置
         update_or_append_to_env "USER_IP" "$ip"
     fi

@@ -4,10 +4,11 @@ from typing import List
 from qanything_kernel.connector.embedding.embedding_for_online import YouDaoEmbeddings
 from qanything_kernel.connector.embedding.embedding_for_local import YouDaoLocalEmbeddings
 import time
-from qanything_kernel.connector.llm import OpenAILLM, ZiyueLLM
+from qanything_kernel.connector.llm import OpenAILLM, ZiyueLLM, VllmOpenAILLM
 from langchain.schema import Document
 from qanything_kernel.connector.database.mysql.mysql_client import KnowledgeBaseManager
 from qanything_kernel.connector.database.milvus.milvus_client import MilvusClient
+from qanything_kernel.configs.conversation import get_conv_template
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from .local_file import LocalFile
 from qanything_kernel.utils.general_utils import get_time
@@ -48,7 +49,8 @@ class LocalDocQA:
         self.mode = mode
         self.embeddings = YouDaoLocalEmbeddings()
         if self.mode == 'local':
-            self.llm: ZiyueLLM = ZiyueLLM()
+            # self.llm: ZiyueLLM = ZiyueLLM()
+            self.llm: VllmOpenAILLM = VllmOpenAILLM()
         else:
             self.llm: OpenAILLM = OpenAILLM()
         self.milvus_summary = KnowledgeBaseManager(self.mode)

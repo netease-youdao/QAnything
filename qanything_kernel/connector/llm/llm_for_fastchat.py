@@ -76,13 +76,15 @@ class OpenAICustomLLM(BaseAnswer, ABC):
     def num_tokens_from_messages(self, message_texts):
         num_tokens = 0
         for message in message_texts:
-            num_tokens += self.token_check(message)
+            # num_tokens += self.token_check(message)
+            num_tokens += len(message)
         return num_tokens
 
     def num_tokens_from_docs(self, docs):
         num_tokens = 0
         for doc in docs:
-            num_tokens += self.token_check(doc.page_content)
+            # num_tokens += self.token_check(doc.page_content)
+            num_tokens += len(doc.page_content)
         return num_tokens
 
     def _call(self, prompt: str, history: List[List[str]], streaming: bool=False) -> str:

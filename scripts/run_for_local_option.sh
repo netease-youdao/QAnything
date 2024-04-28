@@ -284,6 +284,7 @@ elif [ "$GPU1_MEMORY_SIZE" -ge 22528 ] && [ "$GPU1_MEMORY_SIZE" -le 24576 ]; the
     fi
     OFFCUT_TOKEN=0
 elif [ "$GPU1_MEMORY_SIZE" -gt 24576 ]; then  # 显存大于24GB
+    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 推荐部署7B以上的模型"
     OFFCUT_TOKEN=0
 fi
 
@@ -341,6 +342,8 @@ else
         gpus="$gpu_id1"
     fi
 
+    echo "gpus: $gpus"
+
     case $runtime_backend in
     "hf")
         echo "Executing hf runtime_backend"
@@ -354,10 +357,12 @@ else
     "vllm")
         echo "Executing vllm runtime_backend"
 
-        CUDA_VISIBLE_DEVICES=$gpus nohup python3 -m fastchat.serve.vllm_worker --host 0.0.0.0 --port 7801 \
-            --controller-address http://0.0.0.0:7800 --worker-address http://0.0.0.0:7801 \
-            --model-path /model_repos/CustomLLM/$LLM_API_SERVE_MODEL --trust-remote-code --block-size 32 --tensor-parallel-size $tensor_parallel \
-            --max-model-len 4096 --gpu-memory-utilization $gpu_memory_utilization --dtype bfloat16 --conv-template $LLM_API_SERVE_CONV_TEMPLATE > /workspace/qanything_local/logs/debug_logs/fastchat_logs/fschat_model_worker_7801.log 2>&1 &
+        # CUDA_VISIBLE_DEVICES="4,5,6,7" nohup python3 -m fastchat.serve.vllm_worker --host 0.0.0.0 --port 7801 \
+        #     --controller-address http://0.0.0.0:7800 --worker-address http://0.0.0.0:7801 \
+        #     --model-path /model_repos/CustomLLM/$LLM_API_SERVE_MODEL --trust-remote-code --block-size 32 --tensor-parallel-size 4 \
+        #     --max-model-len 4096 --gpu-memory-utilization $gpu_memory_utilization --dtype bfloat16 --conv-template $LLM_API_SERVE_CONV_TEMPLATE > /workspace/qanything_local/logs/debug_logs/fastchat_logs/fschat_model_worker_7801.log 2>&1 &
+        
+        PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True CUDA_VISIBLE_DEVICES=$gpus nohup python3 -m vllm.entrypoints.openai.api_server --model /model_repos/CustomLLM/$LLM_API_SERVE_MODEL --gpu-memory-utilization $gpu_memory_utilization --tensor-parallel-size $tensor_parallel --port 8000 --max-model-len 8192 > /workspace/qanything_local/logs/debug_logs/fastchat_logs/fschat_model_worker_7801.log 2>&1 & 
 
         ;;
     "sglang")
@@ -460,48 +465,83 @@ done
 tail -f $llm_log_file &  # 后台输出日志文件
 tail_pid=$!  # 获取tail命令的进程ID
 
-now_time=$(date +%s)
+# 设定超时时长（秒）
+timeout=120
+start_time=$(date +%s)
+
 while true; do
-    current_time=$(date +%s)
-    elapsed_time=$((current_time - now_time))
+    # 检查是否存在启动成功的日志
+    if grep -q "Uvicorn running on http://0.0.0.0:8000" "$llm_log_file" ; then
+        echo "LLM 服务已准备就绪！现在您可以使用qanything服务。（8/8)"
+        break
+    fi
 
     # 检查是否超时
-    if [ $elapsed_time -ge 300 ]; then
+    current_time=$(date +%s)
+    elapsed_time=$((current_time - start_time))
+
+    if [ "$elapsed_time" -ge "$timeout" ]; then
         kill $tail_pid  # 关闭后台的tail命令
         echo "启动 LLM 服务超时，自动检查 $llm_log_file 中是否存在Error..."
-
         check_log_errors "$llm_log_file"
-
         exit 1
-    fi
-
-
-    if [ "$runtime_backend" = "default" ]; then
-        llm_response=$(curl -s -w "%{http_code}" http://localhost:10000/v2/health/ready -o /dev/null)
-    else
-        llm_response=$(curl --request POST --url http://localhost:7800/list_models)
-    fi
-
-    if [ "$runtime_backend" = "default" ]; then
-        if [ $llm_response -eq 200 ]; then
-            kill $tail_pid  # 关闭后台的tail命令
-            echo "The llm service is ready!, now you can use the qanything service. (8/8)"
-            echo "LLM 服务已准备就绪！现在您可以使用qanything服务。（8/8)"
-            break
-        fi
-    else
-        if [[ $llm_response == *"$LLM_API_SERVE_MODEL"* ]]; then
-            kill $tail_pid  # 关闭后台的tail命令
-            echo "The llm service is ready!, now you can use the qanything service. (8/8)"
-            echo "LLM 服务已准备就绪！现在您可以使用qanything服务。（8/8)"
-            break
-        fi
     fi
 
     echo "The llm service is starting up, it can be long... you have time to make a coffee :)"
     echo "LLM 服务正在启动，可能需要一段时间...你有时间去冲杯咖啡 :)"
     sleep 10
 done
+
+
+# 帮我监控llm_log_file中是否出现了”Uvicorn running on http://0.0.0.0:8000“
+# 如果出现了，说明llm服务已经启动成功了
+# 如果没有出现，说明llm服务还在启动中
+# 如果启动超时，就kill掉tail_pid，然后检查llm_log_file中是否有Error
+now_time=$(date +%s)
+
+
+# now_time=$(date +%s)
+# while true; do
+#     current_time=$(date +%s)
+#     elapsed_time=$((current_time - now_time))
+
+#     # 检查是否超时
+#     if [ $elapsed_time -ge 300 ]; then
+#         kill $tail_pid  # 关闭后台的tail命令
+#         echo "启动 LLM 服务超时，自动检查 $llm_log_file 中是否存在Error..."
+
+#         check_log_errors "$llm_log_file"
+
+#         exit 1
+#     fi
+
+
+#     if [ "$runtime_backend" = "default" ]; then
+#         llm_response=$(curl -s -w "%{http_code}" http://localhost:10000/v2/health/ready -o /dev/null)
+#     else
+#         llm_response=$(curl --request POST --url http://localhost:7800/list_models)
+#     fi
+
+#     if [ "$runtime_backend" = "default" ]; then
+#         if [ $llm_response -eq 200 ]; then
+#             kill $tail_pid  # 关闭后台的tail命令
+#             echo "The llm service is ready!, now you can use the qanything service. (8/8)"
+#             echo "LLM 服务已准备就绪！现在您可以使用qanything服务。（8/8)"
+#             break
+#         fi
+#     else
+#         if [[ $llm_response == *"$LLM_API_SERVE_MODEL"* ]]; then
+#             kill $tail_pid  # 关闭后台的tail命令
+#             echo "The llm service is ready!, now you can use the qanything service. (8/8)"
+#             echo "LLM 服务已准备就绪！现在您可以使用qanything服务。（8/8)"
+#             break
+#         fi
+#     fi
+
+#     echo "The llm service is starting up, it can be long... you have time to make a coffee :)"
+#     echo "LLM 服务正在启动，可能需要一段时间...你有时间去冲杯咖啡 :)"
+#     sleep 10
+# done
 
 echo "开始检查日志文件中的错误信息..."
 # 调用函数并传入日志文件路径
