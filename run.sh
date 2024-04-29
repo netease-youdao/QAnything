@@ -63,11 +63,11 @@ Note: You can choose the most suitable Service Startup Command based on your own
 
 llm_api="local"
 device_id="0"
-runtime_backend="default"
-model_name=""
-conv_template=""
-tensor_parallel=1
-gpu_memory_utilization=0.81
+runtime_backend="vllm"
+model_name="Qwen1.5-32B-Chat"
+conv_template="qanything-32b-chat"
+tensor_parallel=2
+gpu_memory_utilization=0.75
 
 # 解析命令行参数
 while getopts ":c:i:b:m:t:p:r:h" opt; do
@@ -84,19 +84,9 @@ while getopts ":c:i:b:m:t:p:r:h" opt; do
   esac
 done
 
-# 获取大模型B数
-if [ $llm_api = 'cloud' ]; then
-    model_size='0B'
-elif [ $runtime_backend = 'default' ]; then
-    model_size='7B'
-else
-    read -p "请输入您使用的大模型B数(示例：1.8B/3B/7B/32B): " model_size
-    # 检查是否合法，必须输入数字+B的形式，可以是小数
-    if ! [[ $model_size =~ ^[0-9]+(\.[0-9]+)?B$ ]]; then
-        echo "Invalid model size. Please enter a number like '1.8B' or '3B' or '7B' or '32B'."
-        exit 1
-    fi
-fi
+
+model_size="32B"
+
 echo "model_size=$model_size"
 
 model_size="7B"
