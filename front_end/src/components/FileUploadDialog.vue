@@ -156,6 +156,8 @@ const acceptList = [
   '.pptx',
   '.eml',
   '.csv',
+  '.mp3',
+  '.wav',
 ];
 
 //上传前校验

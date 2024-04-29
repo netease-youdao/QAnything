@@ -66,7 +66,15 @@
                 >
                   <p v-show="sourceItem.file_name" class="control">
                     <span class="tips">{{ common.dataSource }}{{ sourceIndex + 1 }}:</span>
+                    <a
+                      v-if="sourceItem.file_id.startsWith('http')"
+                      :href="sourceItem.file_id"
+                      target="_blank"
+                    >
+                      {{ sourceItem.file_name }}
+                    </a>
                     <span
+                      v-else
                       :class="[
                         'file',
                         checkFileType(sourceItem.file_name) ? 'filename-active' : '',
@@ -139,6 +147,15 @@
       </ul>
       <div class="question-box">
         <div class="question">
+          <a-popover placement="topLeft">
+            <template #content>
+              <p v-if="network">退出联网检索</p>
+              <p v-else>开启联网检索</p>
+            </template>
+            <span :class="['network', `network-${network}`]">
+              <SvgIcon name="network" @click="networkChat" />
+            </span>
+          </a-popover>
           <a-popover v-if="chatType === 'share'" placement="topLeft">
             <template #content>
               <p v-if="control">{{ bots.multiTurnConversation2 }}</p>
@@ -225,6 +242,9 @@ const { setChatSourceVisible, setSourceType, setSourceUrl, setTextContent } = us
 const { language } = storeToRefs(useLanguage());
 //当前是否多轮对话
 const control = ref(true);
+
+//当前是否开启链网检索
+const network = ref(false);
 
 //当前问的问题
 const question = ref('');
@@ -346,6 +366,7 @@ const send = () => {
       history: control.value ? history.value : [],
       question: q,
       streaming: true,
+      networking: network.value,
       product_source: 'saas',
     }),
     signal: ctrl.signal,
@@ -563,6 +584,10 @@ function getB64Type(suffix) {
   return b64Types[index];
 }
 
+const networkChat = () => {
+  network.value = !network.value;
+};
+
 scrollBottom();
 </script>
 
@@ -751,6 +776,11 @@ scrollBottom();
         color: $baseColor;
         cursor: pointer;
       }
+      a {
+        color: #5a47e5;
+        text-decoration: underline;
+        cursor: pointer;
+      }
     }
 
     .data-picList {
@@ -842,9 +872,10 @@ scrollBottom();
 
     .download,
     .delete,
+    .network,
     .control {
       cursor: pointer;
-      padding: 12px;
+      padding: 8px;
       display: flex;
       margin-right: 16px;
       border-radius: 8px;
@@ -860,6 +891,14 @@ scrollBottom();
       svg {
         width: 24px;
         height: 24px;
+      }
+      &.network-true {
+        border: 1px solid #5a47e5;
+        color: #5a47e5;
+      }
+      &.network-false {
+        border: 1px solid #e5e5e5;
+        color: #666666;
       }
       &.control-true {
         border: 1px solid #5a47e5;
