@@ -429,7 +429,7 @@ Welcome to follow QAnything WeChat Official Account to get the latest informatio
 
 Welcome to scan the code to join the QAnything discussion group.
 
-<img src="docs/images/Wechat.jpg" width="30%" height="auto">
+<img src="docs/images/Wechat_0509.jpg" width="30%" height="auto">
 
 
 

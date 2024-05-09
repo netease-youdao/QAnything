@@ -419,7 +419,7 @@ bash run.sh
 
 欢迎扫码进入QAnything交流群
 
-<img src="docs/images/Wechat.jpg" width="30%" height="auto">
+<img src="docs/images/Wechat_0509.jpg" width="30%" height="auto">
 
 ## 邮箱
 如果你需要私信我们团队，请通过下面的邮箱联系我们：
