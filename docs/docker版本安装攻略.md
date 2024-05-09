@@ -56,13 +56,13 @@ sudo reboot
 
 Ubuntu 默认使用 Nouveau 驱动程序来支持 NVIDIA 的显卡。在安装官方 NVIDIA 驱动前，你需要禁用 Nouveau 驱动。
 
-1. 打开 `/etc/modprobe.d/blacklist-nouveau.conf` 文件，并添加以下内容：
+1. 打开 `/etc/modprobe.d/blacklist-nouveau.conf` 文件：
    
    ```bash
    sudo nano /etc/modprobe.d/blacklist-nouveau.conf
    ```
    
-   然后添加：
+   添加以下内容后保存：
    
    ```
    blacklist nouveau
@@ -273,15 +273,6 @@ Ubuntu 默认使用 Nouveau 驱动程序来支持 NVIDIA 的显卡。在安装�
    sudo systemctl restart docker
    ```
 
-### 步骤 3：测试 NVIDIA Docker 安装
-
-完成安装后，你可以运行一个带有 GPU 支持的测试容器，以确保一切工作正常：
-
-```bash
-docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
-```
-
-这个命令会使用 NVIDIA 的 CUDA 基础镜像来运行 `nvidia-smi` 命令，如果安装正确，它将列出你系统中的 NVIDIA GPU。
 
 ## 四、安装git和git-lfs
 
