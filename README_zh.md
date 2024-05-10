@@ -58,6 +58,12 @@ bash scripts/run_for_openai_api_with_gpu_in_Linux_or_WSL.sh
 bash scripts/run_for_openai_api_in_M1_mac.sh
 ```
 
+## 在M1Mac环境下使用Ollama API 
+
+```bash
+bash scripts/run_for_ollama_api_in_M1_mac.sh
+```
+
 ## 在M1Mac环境下使用3B LLM（(MiniChat-2-3B-INT8-GGUF）
 
 ```bash
