@@ -66,11 +66,12 @@ print('use_cpu:', args.use_cpu, flush=True)
 print('use_openai_api:', args.use_openai_api, flush=True)
 
 if os_system != 'Darwin':
-    cuda_version = torch.version.cuda
-    if cuda_version is None:
-        raise ValueError("CUDA is not installed.")
-    elif float(cuda_version) < 12:
-        raise ValueError("CUDA version must be 12.0 or higher.")
+    if not args.use_cpu:
+        cuda_version = torch.version.cuda
+        if cuda_version is None:
+            raise ValueError("CUDA is not installed.")
+        elif float(cuda_version) < 12:
+            raise ValueError("CUDA version must be 12.0 or higher.")
 
     python_version = platform.python_version()
     python3_version = python_version.split('.')[1]
@@ -81,33 +82,31 @@ if os_system != 'Darwin':
         raise ValueError(f"Unsupported system: {os_system}")
     system_name = 'manylinux_2_28_x86_64'
     # 官方发布的1.17.1不支持cuda12以上的系统，需要根据官方文档:https://onnxruntime.ai/docs/install/里提到的地址手动下载whl
-    if not check_package_version("onnxruntime-gpu", "1.17.1"):
+    if not args.use_cpu and not check_package_version("onnxruntime-gpu", "1.17.1"):
         download_url = f"https://aiinfra.pkgs.visualstudio.com/PublicPackages/_apis/packaging/feeds/9387c3aa-d9ad-4513-968c-383f6f7f53b8/pypi/packages/onnxruntime-gpu/versions/1.17.1/onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl/content"
         debug_logger.info(f'开始从{download_url}下载onnxruntime，也可以手动下载并通过pip install *.whl安装')
         whl_name = f'onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl'
         download_file(download_url, whl_name)
         os.system(f"pip install {whl_name}")
-    if not check_package_version("vllm", "0.2.7"):
+    if not args.use_openai_api and not check_package_version("vllm", "0.2.7"):
         os.system(f"pip install vllm==0.2.7 -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn")
 
-    from vllm.engine.arg_utils import AsyncEngineArgs
+        from vllm.engine.arg_utils import AsyncEngineArgs
 
-    parser = AsyncEngineArgs.add_cli_args(parser)
-    args = parser.parse_args()
+        parser = AsyncEngineArgs.add_cli_args(parser)
+        args = parser.parse_args()
 
 elif not args.use_openai_api:
     # 检查是否安装了xcode
     if not check_package_version("llama_cpp_python", "0.2.60"):
         os.system(f'CMAKE_ARGS="-DLLAMA_METAL_EMBED_LIBRARY=ON -DLLAMA_METAL=on" pip install -U llama-cpp-python --no-cache-dir -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn')
 
-if not args.use_cpu:
-    model_config.CUDA_DEVICE = args.device_id
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.device_id
-
 model_download_params = None
 if not args.use_openai_api:
     model_size = args.model_size
-    if os_system == "Linux":
+    if os_system == "Linux" and not args.use_cpu:
+        model_config.CUDA_DEVICE = args.device_id
+        os.environ["CUDA_VISIBLE_DEVICES"] = args.device_id
         args.gpu_memory_utilization = get_gpu_memory_utilization(model_size, args.device_id)
         debug_logger.info(f"GPU memory utilization: {args.gpu_memory_utilization}")
     if model_size == '3B':
@@ -204,7 +203,13 @@ app.add_route(get_qa_info, "/api/local_doc_qa/get_qa_info", methods=['POST'])  #
 
 if __name__ == "__main__":
     if args.use_openai_api:
-        app.run(host=args.host, port=args.port, workers=args.workers, access_log=False)
+        try:
+            # 尝试以指定的workers数量启动应用
+            app.run(host=args.host, port=args.port, workers=args.workers, access_log=False)
+        except Exception as e:
+            debug_logger.info(f"启动多worker模式失败: {e}，尝试以单进程模式启动。")
+            # 如果出现异常，则退回到单进程模式
+            app.run(host=args.host, port=args.port, single_process=True, access_log=False)
     else:
         # 模型占用显存大，多个worker显存不够用
         app.run(host=args.host, port=args.port, single_process=True, access_log=False)
