@@ -83,6 +83,7 @@ class OpenAILLM(BaseAnswer, ABC):
             "gpt-4-32k-0613",
             "gpt-4-32k",
             # "gpt-4-1106-preview",
+            "qwen:32b",
             }:
             tokens_per_message = 3
             tokens_per_name = 1
@@ -97,7 +98,10 @@ class OpenAILLM(BaseAnswer, ABC):
             # 对于 gpt-4 模型可能会有更新，此处返回假设为 gpt-4-0613 的token数量，并给出警告
             debug_logger.info("Warning: gpt-4 may update over time. Returning num tokens assuming gpt-4-0613.")
             return self.num_tokens_from_messages(messages, model="gpt-4-0613")
-
+        elif "qwen:32b" in model:
+            # 对于 qwen 模型可能会有更新，此处返回假设为 qwen:32b 的token数量，并给出警告
+            debug_logger.info("Warning: qwen may update over time. Returning num tokens assuming qwen:32b.")
+            return self.num_tokens_from_messages(messages, model="qwen:32b")
         else:
             # 对于没有实现的模型，抛出未实现错误
             raise NotImplementedError(
