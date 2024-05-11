@@ -91,6 +91,7 @@ if os_system != 'Darwin':
         if exit_status != 0:
             # raise ValueError(f"安装onnxruntime失败，请手动安装{whl_name}")
             debug_logger.warning(f"安装onnxruntime-gpu失败，将安装onnxruntime来代替")
+            print(f"安装onnxruntime-gpu失败，将安装onnxruntime来代替", flush=True)
             os.system("pip install onnxruntime")
     if not args.use_openai_api and not check_package_version("vllm", "0.2.7"):
         os.system(f"pip install vllm==0.2.7 -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn")
@@ -206,17 +207,20 @@ app.add_route(get_file_base64, "/api/local_doc_qa/get_file_base64", methods=['PO
 app.add_route(get_qa_info, "/api/local_doc_qa/get_qa_info", methods=['POST'])  # tags=["获取QA信息"]
 
 if __name__ == "__main__":
-    if args.use_openai_api:
-        try:
-            # 尝试以指定的workers数量启动应用
-            app.run(host=args.host, port=args.port, workers=args.workers, access_log=False)
-        except Exception as e:
-            debug_logger.info(f"启动多worker模式失败: {e}，尝试以单进程模式启动。")
-            # 如果出现异常，则退回到单进程模式
-            app.run(host=args.host, port=args.port, single_process=True, access_log=False)
-    else:
-        # 模型占用显存大，多个worker显存不够用
-        app.run(host=args.host, port=args.port, single_process=True, access_log=False)
+    # if args.use_openai_api:
+    #     try:
+    #         # 尝试以指定的workers数量启动应用
+    #         app.run(host=args.host, port=args.port, workers=args.workers, access_log=False)
+    #     except Exception as e:
+    #         debug_logger.info(f"启动多worker模式失败: {e}，尝试以单进程模式启动。")
+    #         # 如果出现异常，则退回到单进程模式
+    #         app.run(host=args.host, port=args.port, single_process=True, access_log=False)
+    # else:
+    #     # 模型占用显存大，多个worker显存不够用
+    #     app.run(host=args.host, port=args.port, single_process=True, access_log=False)
+    # 由于有用户启动时上下文环境报错，使用单进程模式：
+    app.run(host=args.host, port=args.port, single_process=True, access_log=False)
+
 
 
 
