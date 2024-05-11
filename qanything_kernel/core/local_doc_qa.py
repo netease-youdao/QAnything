@@ -59,16 +59,10 @@ class LocalDocQA:
             else:
                 from qanything_kernel.connector.llm.llm_for_fastchat import OpenAICustomLLM
                 self.llm: OpenAICustomLLM = OpenAICustomLLM(args)
-            if args.use_cpu:
-                from qanything_kernel.connector.rerank.rerank_torch_backend import RerankTorchBackend
-                from qanything_kernel.connector.embedding.embedding_torch_backend import EmbeddingTorchBackend
-                self.local_rerank_backend: RerankTorchBackend = RerankTorchBackend(self.use_cpu)
-                self.embeddings: EmbeddingTorchBackend = EmbeddingTorchBackend(self.use_cpu)
-            else:
-                from qanything_kernel.connector.rerank.rerank_onnx_backend import RerankOnnxBackend
-                from qanything_kernel.connector.embedding.embedding_onnx_backend import EmbeddingOnnxBackend
-                self.local_rerank_backend: RerankOnnxBackend = RerankOnnxBackend(self.use_cpu)
-                self.embeddings: EmbeddingOnnxBackend = EmbeddingOnnxBackend(self.use_cpu)
+            from qanything_kernel.connector.rerank.rerank_onnx_backend import RerankOnnxBackend
+            from qanything_kernel.connector.embedding.embedding_onnx_backend import EmbeddingOnnxBackend
+            self.local_rerank_backend: RerankOnnxBackend = RerankOnnxBackend(self.use_cpu)
+            self.embeddings: EmbeddingOnnxBackend = EmbeddingOnnxBackend(self.use_cpu)
         else:
             if args.use_openai_api:
                 self.llm: OpenAILLM = OpenAILLM(args)

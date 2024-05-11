@@ -15,7 +15,7 @@ class EmbeddingOnnxBackend(EmbeddingBackend):
         if use_cpu:
             providers = ['CPUExecutionProvider']
         else:
-            providers = ['CUDAExecutionProvider']
+            providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
         self._session = InferenceSession(LOCAL_EMBED_MODEL_PATH, sess_options=sess_options, providers=providers)
         debug_logger.info(f"EmbeddingClient: model_path: {LOCAL_EMBED_MODEL_PATH}")
 

@@ -15,7 +15,7 @@ class RerankOnnxBackend(RerankBackend):
         if use_cpu:
             providers = ['CPUExecutionProvider']
         else:
-            providers = ['CUDAExecutionProvider']
+            providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
         self.session = onnxruntime.InferenceSession(LOCAL_RERANK_MODEL_PATH, sess_options, providers=providers)
 
     def inference(self, batch):
