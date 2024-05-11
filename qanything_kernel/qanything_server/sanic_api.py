@@ -101,10 +101,12 @@ if os_system != 'Darwin':
         parser = AsyncEngineArgs.add_cli_args(parser)
         args = parser.parse_args()
 
-elif not args.use_openai_api:
-    # 检查是否安装了xcode
-    if not check_package_version("llama_cpp_python", "0.2.60"):
-        os.system(f'CMAKE_ARGS="-DLLAMA_METAL_EMBED_LIBRARY=ON -DLLAMA_METAL=on" pip install -U llama-cpp-python --no-cache-dir -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn')
+else:
+    # mac下ocr依赖onnxruntime
+    os.system("pip install onnxruntime")
+    if not args.use_openai_api:
+        if not check_package_version("llama_cpp_python", "0.2.60"):
+            os.system(f'CMAKE_ARGS="-DLLAMA_METAL_EMBED_LIBRARY=ON -DLLAMA_METAL=on" pip install -U llama-cpp-python --no-cache-dir -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn')
 
 model_download_params = None
 if not args.use_openai_api:

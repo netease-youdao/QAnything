@@ -24,6 +24,8 @@ nltk_data_path = os.path.join(root_path, 'qanything_kernel/nltk_data')
 # 将你的本地路径添加到nltk的数据路径中
 nltk.data.path.append(nltk_data_path)
 
+OCR_MODEL_PATH = os.path.join(root_path, "qanything_kernel", "dependent_server", "ocr_server", "ocr_models")
+
 # LLM streaming reponse
 STREAMING = True
 

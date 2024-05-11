@@ -22,8 +22,8 @@ class UnstructuredPaddleImageLoader(UnstructuredFileLoader):
         """Initialize with file path."""
         self.ocr_engine = ocr_engine
         self.use_cpu = use_cpu
-        if self.use_cpu:
-            os.environ["CUDA_VISIBLE_DEVICES"] = ""
+        # if self.use_cpu:
+        #     os.environ["CUDA_VISIBLE_DEVICES"] = ""
         super().__init__(file_path=file_path, mode=mode, **unstructured_kwargs)
 
     def _get_elements(self) -> List:

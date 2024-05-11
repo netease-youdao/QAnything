@@ -1,5 +1,5 @@
 from qanything_kernel.configs.model_config import VECTOR_SEARCH_TOP_K, CHUNK_SIZE, VECTOR_SEARCH_SCORE_THRESHOLD, \
-    PROMPT_TEMPLATE, STREAMING
+    PROMPT_TEMPLATE, STREAMING, OCR_MODEL_PATH
 from typing import List
 import time
 from qanything_kernel.connector.llm.llm_for_openai_api import OpenAILLM
@@ -8,17 +8,16 @@ from qanything_kernel.connector.database.mysql.mysql_client import KnowledgeBase
 from qanything_kernel.connector.database.faiss.faiss_client import FaissClient
 from qanything_kernel.connector.rerank.rerank_backend import RerankBackend
 from qanything_kernel.connector.embedding.embedding_backend import EmbeddingBackend
-import easyocr
-from easyocr import Reader
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from qanything_kernel.core.tools.web_search_tool import duckduckgo_search
+from qanything_kernel.dependent_server.ocr_server.ocr import OCRQAnything
 from .local_file import LocalFile
 import traceback
 import base64
 import numpy as np
 import platform
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import asyncio
+import cv2
+
 
 class LocalDocQA:
     def __init__(self):
@@ -30,7 +29,7 @@ class LocalDocQA:
         self.faiss_client: FaissClient = None
         self.mysql_client: KnowledgeBaseManager = None
         self.local_rerank_backend: RerankBackend = None
-        self.ocr_reader: Reader = None
+        self.ocr_reader: OCRQAnything = None
         self.mode: str = None
         self.use_cpu: bool = True
         self.model: str = None
@@ -42,7 +41,7 @@ class LocalDocQA:
         channels = input['channels']
         binary_data = base64.b64decode(img_file)
         img_array = np.frombuffer(binary_data, dtype=np.uint8).reshape((height, width, channels))
-        ocr_res = self.ocr_reader.readtext(img_array, detail=0)
+        ocr_res = self.ocr_reader(img_array)
         res = [line for line in ocr_res if line]
         return res
 
@@ -74,7 +73,7 @@ class LocalDocQA:
             self.local_rerank_backend: RerankTorchBackend = RerankTorchBackend(self.use_cpu)
             self.embeddings: EmbeddingTorchBackend = EmbeddingTorchBackend(self.use_cpu)
         self.mysql_client = KnowledgeBaseManager()
-        self.ocr_reader = easyocr.Reader(['ch_sim', 'en'], gpu=False)  # 省显存
+        self.ocr_reader = OCRQAnything(model_dir=OCR_MODEL_PATH, device="cpu")  # 省显存
         debug_logger.info(f"OCR DEVICE: {self.ocr_reader.device}")
         self.faiss_client = FaissClient(self.mysql_client, self.embeddings)
 
