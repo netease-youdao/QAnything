@@ -155,6 +155,19 @@ if [[ -n "$device_id" ]]; then
     IFS=',' read -ra gpu_ids <<< "$device_id"
     gpu_id1=${gpu_ids[0]}
     gpu_id2=${gpu_ids[1]:-$gpu_id1}  # 如果没有第二个ID，则默认使用第一个ID
+
+    # 设置tensor_parallel变量为gpu_ids的长度
+    tensor_parallel=${#gpu_ids[@]}
+    case "${tensor_parallel}" in
+        1|2|4|8|16)
+            # 如果tensor_parallel的值在列表中，则继续执行脚本
+            echo "由于设置了device_id: ${device_id}, tensor_parallel自动调整为$tensor_parallel"
+            ;;
+        *)
+            echo "错误：device的数量必须是1, 2, 4, 8, 16，当前数量为${tensor_parallel}"
+            exit 1
+            ;;
+    esac
 fi
 
 echo "GPUID1=${gpu_id1}, GPUID2=${gpu_id2}, device_id=${device_id}"

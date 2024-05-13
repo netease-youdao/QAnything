@@ -317,7 +317,7 @@ if [ "$runtime_backend" = "default" ]; then
     echo "大模型中转服务已就绪! (1/8)"
 else
     echo "The triton server for embedding and reranker will start on $gpu_id2 GPUs"
-    CUDA_VISIBLE_DEVICES=$gpu_id2 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_embed_rerank --http-port=9000 --grpc-port=9001 --metrics-port=9002 --log-verbose=1 > /workspace/qanything_local/logs/debug_logs/embed_rerank_tritonserver.log 2>&1 &
+    CUDA_VISIBLE_DEVICES=$gpu_id1 nohup /opt/tritonserver/bin/tritonserver --model-store=/model_repos/QAEnsemble_embed_rerank --http-port=9000 --grpc-port=9001 --metrics-port=9002 --log-verbose=1 > /workspace/qanything_local/logs/debug_logs/embed_rerank_tritonserver.log 2>&1 &
     update_or_append_to_env "RERANK_PORT" "9001"
     update_or_append_to_env "EMBED_PORT" "9001"
 
@@ -334,11 +334,7 @@ else
     nohup python3 -m fastchat.serve.controller --host 0.0.0.0 --port 7800 > /workspace/qanything_local/logs/debug_logs/fastchat_logs/fschat_controller_7800.log 2>&1 &
     nohup python3 -m fastchat.serve.openai_api_server --host 0.0.0.0 --port 7802 --controller-address http://0.0.0.0:7800 > /workspace/qanything_local/logs/debug_logs/fastchat_logs/fschat_openai_api_server_7802.log 2>&1 &
 
-    if [ $tensor_parallel -ne 1 ]; then
-        gpus="$device_id"
-    else
-        gpus="$gpu_id1"
-    fi
+    gpus="$device_id"
 
     case $runtime_backend in
     "hf")
