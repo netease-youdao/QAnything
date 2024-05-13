@@ -140,11 +140,16 @@ echo "model_size=$model_size"
 
 update_or_append_to_env "MODEL_SIZE" "$model_size"
 
-# 检查device_id是否合法
-if ! [[ $device_id =~ ^[0-9]+(?:,[0-9]+)*$ ]]; then
-    echo "Invalid device IDs. Please enter IDs in the format '0,1,2'."
+## 检查device_id是否合法,必须满足以下条件：
+# 1. 以逗号分隔的多个数字
+# 2. 每个数字必须是0或正整数
+# 3. 不能有重复的数字
+if ! [[ $device_id =~ ^([0-9]+,)*[0-9]+$ ]]; then
+    echo "Invalid device_id. Please enter a comma-separated list of integers like '0' or '0,1'."
     exit 1
 fi
+
+
 
 gpu_id1=0
 gpu_id2=0
