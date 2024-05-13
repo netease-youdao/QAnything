@@ -11,6 +11,7 @@ from qanything_kernel.connector.embedding.embedding_backend import EmbeddingBack
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from qanything_kernel.core.tools.web_search_tool import duckduckgo_search
 from qanything_kernel.dependent_server.ocr_server.ocr import OCRQAnything
+from qanything_kernel.utils.general_utils import num_tokens
 from .local_file import LocalFile
 import traceback
 import base64
@@ -229,7 +230,7 @@ class LocalDocQA:
         return prompt
 
     def rerank_documents(self, query, source_documents):
-        if len(query) > 300:  # tokens数量超过300时不使用local rerank
+        if num_tokens(query) > 300:  # tokens数量超过300时不使用local rerank
             return source_documents
 
         scores = self.local_rerank_backend.predict(query, [doc.page_content for doc in source_documents])
