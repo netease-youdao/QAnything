@@ -4,6 +4,7 @@
 .env
 user.config
 venv
+.DS_Store
 __pycache__
 QANY_DB
 qanything_logs
