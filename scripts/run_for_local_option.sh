@@ -141,7 +141,7 @@ if [ -z "${GPUID2}" ]; then
 else
     gpu_id2=${GPUID2}
 fi
-echo "GPU ID: $gpu_id1, $gpu_id2"
+echo "GPU ID: $gpu_id1, $gpu_id2, device_id: $device_id"
 
 # 判断硬件条件与启动参数是否匹配
 # 获取显卡型号
@@ -334,9 +334,8 @@ else
     nohup python3 -m fastchat.serve.controller --host 0.0.0.0 --port 7800 > /workspace/qanything_local/logs/debug_logs/fastchat_logs/fschat_controller_7800.log 2>&1 &
     nohup python3 -m fastchat.serve.openai_api_server --host 0.0.0.0 --port 7802 --controller-address http://0.0.0.0:7800 > /workspace/qanything_local/logs/debug_logs/fastchat_logs/fschat_openai_api_server_7802.log 2>&1 &
 
-    gpus=$tensor_parallel
-    if [ $tensor_parallel -eq 2 ]; then
-        gpus="$gpu_id1,$gpu_id2"
+    if [ $tensor_parallel -ne 1 ]; then
+        gpus="$device_id"
     else
         gpus="$gpu_id1"
     fi

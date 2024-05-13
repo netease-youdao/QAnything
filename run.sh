@@ -140,6 +140,12 @@ echo "model_size=$model_size"
 
 update_or_append_to_env "MODEL_SIZE" "$model_size"
 
+# 检查device_id是否合法
+if ! [[ $device_id =~ ^[0-9]+(?:,[0-9]+)*$ ]]; then
+    echo "Invalid device IDs. Please enter IDs in the format '0,1,2'."
+    exit 1
+fi
+
 gpu_id1=0
 gpu_id2=0
 
@@ -153,15 +159,8 @@ fi
 
 echo "GPUID1=${gpu_id1}, GPUID2=${gpu_id2}, device_id=${device_id}"
 
-# 检查GPU ID是否合法
-if ! [[ $gpu_id1 =~ ^[0-9]+$ ]] || ! [[ $gpu_id2 =~ ^[0-9]+$ ]]; then
-    echo "Invalid GPU IDs. Please enter IDs like '0' or '0,1'."
-    exit 1
-fi
-
 update_or_append_to_env "GPUID1" "$gpu_id1"
 update_or_append_to_env "GPUID2" "$gpu_id2"
-
 
 
 if [ $llm_api = 'cloud' ]; then
