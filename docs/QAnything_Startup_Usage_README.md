@@ -57,8 +57,8 @@ Note: You can choose the most suitable Service Startup Command based on your own
 | ...                          ```check or add conv_template for more LLMs in "/path/to/QAnything/third_party/FastChat/fastchat/conversation.py"``` |
 
 
-### 1. Run QAnything using FastChat API with **Hugging Face transformers** runtime backend (recommend for GPU device with VRAM <= 16GB).
-#### 1.1 Run Qwen-7B-QAnything
+### 1. Run QAnything using FastChat API with **Hugging Face transformers** runtime backend.
+#### 1.1 Run Qwen-7B-QAnything (recommend for GPU device with VRAM >= 20GB)
 ```bash
 ## Step 1. Download the public LLM model (e.g., Qwen-7B-QAnything) and save to "/path/to/QAnything/assets/custom_models"
 ## (Optional) Download Qwen-7B-QAnything from ModelScope: https://www.modelscope.cn/models/netease-youdao/Qwen-7B-QAnything
@@ -73,7 +73,7 @@ bash ./run.sh -c local -i 0 -b hf -m Qwen-7B-QAnything -t qwen-7b-qanything
 
 ```
 
-#### 1.2 Run a public LLM model (e.g., MiniChat-2-3B)
+#### 1.2 Run a public LLM model (e.g., MiniChat-2-3B)  (recommend for GPU device with VRAM >= 10GB)
 ```bash
 ## Step 1. Download the public LLM model (e.g., MiniChat-2-3B) and save to "/path/to/QAnything/assets/custom_models"
 cd /path/to/QAnything/assets/custom_models
@@ -87,7 +87,7 @@ bash ./run.sh -c local -i 0 -b hf -m MiniChat-2-3B -t minichat
 ```
 
 ### 2. Run QAnything using FastChat API with **vllm** runtime backend (recommend for GPU device with enough VRAM).
-#### 2.1 Run Qwen-7B-QAnything
+#### 2.1 Run Qwen-7B-QAnything (recommend for GPU device with VRAM >= 24GB)
 ```bash
 ## Step 1. Download the public LLM model (e.g., Qwen-7B-QAnything) and save to "/path/to/QAnything/assets/custom_models"
 ## (Optional) Download Qwen-7B-QAnything from ModelScope: https://www.modelscope.cn/models/netease-youdao/Qwen-7B-QAnything
@@ -103,7 +103,7 @@ bash ./run.sh -c local -i 0 -b vllm -m Qwen-7B-QAnything -t qwen-7b-qanything -p
 
 ```
 
-#### 2.2 Run a public LLM model (e.g., MiniChat-2-3B)
+#### 2.2 Run a public LLM model (e.g., MiniChat-2-3B) (recommend for GPU device with VRAM >= 12GB)
 ```bash
 ## Step 1. Download the public LLM model (e.g., MiniChat-2-3B) and save to "/path/to/QAnything/assets/custom_models"
 cd /path/to/QAnything/assets/custom_models
