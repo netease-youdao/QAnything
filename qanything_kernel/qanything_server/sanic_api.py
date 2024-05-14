@@ -93,8 +93,9 @@ if os_system != 'Darwin':
             debug_logger.warning(f"安装onnxruntime-gpu失败，将安装onnxruntime来代替")
             print(f"安装onnxruntime-gpu失败，将安装onnxruntime来代替", flush=True)
             os.system("pip install onnxruntime")
-    if not args.use_openai_api and not check_package_version("vllm", "0.2.7"):
-        os.system(f"pip install vllm==0.2.7 -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn")
+    if not args.use_openai_api:
+        if not check_package_version("vllm", "0.2.7"):
+            os.system(f"pip install vllm==0.2.7 -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn")
 
         from vllm.engine.arg_utils import AsyncEngineArgs
 
