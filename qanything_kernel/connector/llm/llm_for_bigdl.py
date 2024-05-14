@@ -78,13 +78,13 @@ class BigDLCustomLLM(BaseAnswer, ABC):
     def num_tokens_from_messages(self, message_texts):
         num_tokens = 0
         for message in message_texts:
-            num_tokens += len(self.tokenizer(message, add_special_tokens=False))
+            num_tokens += len(self.tokenizer(message, add_special_tokens=False)['input_ids'])
         return num_tokens
 
     def num_tokens_from_docs(self, docs):
         num_tokens = 0
         for doc in docs:
-            num_tokens += len(self.tokenizer(doc.page_content, add_special_tokens=False))
+            num_tokens += len(self.tokenizer(doc.page_content, add_special_tokens=False)['input_ids'])
         return num_tokens
 
     async def _call(self, prompt: str, history: List[List[str]], streaming: bool = False) -> str:
@@ -95,7 +95,8 @@ class BigDLCustomLLM(BaseAnswer, ABC):
             messages.append({"role": "assistant", "content": answer})
         messages.append({"role": "user", "content": prompt})
         debug_logger.info(messages)
-
+        print('jmcjmc')
+        print(self.num_tokens_from_messages([prompt]))
         with torch.inference_mode():
             if streaming:
                 text = self.tokenizer.apply_chat_template(
