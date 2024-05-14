@@ -4,27 +4,27 @@
 
 **一句话总结：python版本适合快速体验新功能，性能较差，docker版本适合二次开发并用于实际生产环境，新功能暂缓支持，有定制商业化需求可以联系：xxx**
 
-| 特性                                | python版本              | docker版本            | 说明                                                                |
-| --------------------------------- | --------------------- | ------------------- | ----------------------------------------------------------------- |
-| 生产环境（小型生产环境）                      | ❌                     | ✅                   |                                                                   |
-| 断网安装（私有化部署）                       | ❌                     | ✅  [详情](#DWAZ)      |                                                                   |
-| 支持多并发                             | ❌                     | ✅  [详情](#DBF)       | python在使用API而非本地大模型时可手动设置：[详情](#DBF)                              |
-| 支持多卡推理                            | ❌                     | ✅  [详情](#DKBS)      |                                                                   |
-| 支持Mac（M系列芯片）                      | ✅                     | ❌                   | 目前embedding和rerank模型在mac下运行速度较慢，问答一次时间最长需要数分钟                     |
-| 支持Linux                           | ✅                     | ✅                   | python版本Linux下（非cpu模型）依赖onnxruntime-gpu的cuda12.x版本，其依赖glibc>=2.28 |
-| 支持windows11 WSL（win10下部分配置不可用）    | ✅                     | ✅                   |                                                                   |
-| 支持纯CPU环境                          | ✅  [详情](#USECPU)      | ❌                   |                                                                   |
-| 支持混合检索（BM25+embedding）            | ❌                     | ✅                   |                                                                   |
-| 支持联网检索（需外网VPN）                    | ✅  [详情](#LWJS)        | ❌                   | docker版本计划中                                                       |
-| 支持FAQ问答                           | ✅  [详情](#FAQ)         | ❌                   | docker版本计划中                                                       |
-| 支持自定义机器人（可绑定知识库，可分享）              | ✅  [详情](#BOT)         | ❌                   | docker版本计划中                                                       |
-| 支持文件溯源（数据来源可直接点击打开）               | ✅  [详情](#WJSY)        | ❌                   | docker版本计划中                                                       |
-| 支持问答日志检索（暂只支持通过API调用）             | ✅  [详情](#RZJS)        | ❌                   | docker版本计划中                                                       |
-| 支持解析语音文件（依赖faster_whisper，解析速度慢）  | ✅                     | ❌                   | docker版本计划中，上传文件时可支持mp3，wav格式文件                                   |
-| 支持OpenCloudOS                     | ✅  [详情](#OpenCloudOS) | ❌                   |                                                                   |
-| 支持与OpenAI接口兼容的其他开源大模型服务(包括ollama) | ✅  [详情](#APIPYTHON)   | ✅  [详情](#APIDOCKER) | 需手动修改api_key，base_url，model等参数                                    |
-| pdf（包含表格）解析效果+++                  | ❌                     | ❌                   | 预计下个版本发布（15d）                                                     |
-| 其他文件类型解析效果+++                     | ❌                     | ❌                   | 预计下下个版本发布（30d）                                                    |
+| 特性                                | python版本                      | docker版本   | 说明                                                                |
+| --------------------------------- |-------------------------------|------------|-------------------------------------------------------------------|
+| 生产环境（小型生产环境）                      | ❌                             | ✅          |                                                                   |
+| 断网安装（私有化部署）                       | ❌                             | ✅  [详情](#断网安装) |                                                                   |
+| 支持多并发                             | ❌                             | ✅  [详情](#多并发) | python在使用API而非本地大模型时可手动设置：[详情](#多并发)                              |
+| 支持多卡推理                            | ❌                             | ✅  [详情](#多卡推理) |                                                                   |
+| 支持Mac（M系列芯片）                      | ✅                             | ❌          | 目前embedding和rerank模型在mac下运行速度较慢，问答一次时间最长需要数分钟                     |
+| 支持Linux                           | ✅                             | ✅          | python版本Linux下（非cpu模型）依赖onnxruntime-gpu的cuda12.x版本，其依赖glibc>=2.28 |
+| 支持windows11 WSL（win10下部分配置不可用）    | ✅                             | ✅          |                                                                   |
+| 支持纯CPU环境                          | ✅  [详情](#纯CPU模式)              | ❌          |                                                                   |
+| 支持混合检索（BM25+embedding）            | ❌                             | ✅          |                                                                   |
+| 支持联网检索（需外网VPN）                    | ✅  [详情](#联网检索)                | ❌          | docker版本计划中                                                       |
+| 支持FAQ问答                           | ✅  [详情](#支持FAQ)               | ❌          | docker版本计划中                                                       |
+| 支持自定义机器人（可绑定知识库，可分享）              | ✅  [详情](#支持BOT)               | ❌          | docker版本计划中                                                       |
+| 支持文件溯源（数据来源可直接点击打开）               | ✅  [详情](#文件溯源)                | ❌          | docker版本计划中                                                       |
+| 支持问答日志检索（暂只支持通过API调用）             | ✅  [详情](#问答日志检索)              | ❌          | docker版本计划中                                                       |
+| 支持解析语音文件（依赖faster_whisper，解析速度慢）  | ✅                             | ❌          | docker版本计划中，上传文件时可支持mp3，wav格式文件                                   |
+| 支持OpenCloudOS                     | ✅  [详情](#支持OpenCloudOS)       | ❌          |                                                                   |
+| 支持与OpenAI接口兼容的其他开源大模型服务(包括ollama) | ✅  [详情](#python版OpenaiAI接口兼容) | ✅  [详情](#docker版OpenaiAI接口兼容) | 需手动修改api_key，base_url，model等参数                                    |
+| pdf（包含表格）解析效果+++                  | ❌                             | ❌          | 预计下个版本发布（15d）                                                     |
+| 其他文件类型解析效果+++                     | ❌                             | ❌          | 预计下下个版本发布（30d）                                                    |
 
 ## docker版本使用指南：
 
@@ -32,17 +32,17 @@ docker版本安装攻略（Linux或Win11 WSL环境）
 
 ### 必要条件：
 
-| **System** | **Required item**        | **Minimum Requirement**            | **Note**                                                                                                                                         |
-| ---------- | ------------------------ | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Linux      | NVIDIA GPU Memory        | >= 4GB (use OpenAI API)            | 最低: GTX 1050Ti（use OpenAI API） <br> 推荐: RTX 3090                                                                                                 |
-|            | NVIDIA Driver Version    | >= 525.105.17                      | [Nvidia Driver Downloads](https://www.nvidia.com/download/index.aspx) 或 [小白攻略](#AZND)                                                            |
-|            | Docker version           | >= 20.10.5                         | [Docker install](https://docs.docker.com/engine/install/) 或 [小白攻略](#AZDOCKER)                                                                    |
-|            | docker compose  version  | >= 2.23.3                          | [docker compose install](https://docs.docker.com/compose/install/) 或 [小白攻略](#AZDOCKER)                                                           |
-|            | NVIDIA Container Toolkit | latest                             | [NVIDIA Container Toolkit install](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) 或 [小白攻略](@AZNCT) |
-|            | git && git-lfs           | latest                             | [git-lfs install](https://git-lfs.com/)  或 [小白攻略](#AZGIT)                                                                                        |
-|            | RAM（内存大小）                | >=8GB（不使用本地大模型）<br>>=16GB（使用本地大模型） | 启动服务失败但不报错时大概率是内存不足，请时刻关注内存使用情况 <br>使用本地部署的大模型时：推荐内存>=16GB，使用API等方式调用大模型时：推荐内存>=8GB<br>内存>=32GB时可获得最佳体验                                          |
+| **System** | **Required item**        | **Minimum Requirement**            | **Note**                                                                                                                                                               |
+| ---------- | ------------------------ | ---------------------------------- |------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Linux      | NVIDIA GPU Memory        | >= 4GB (use OpenAI API)            | 最低: GTX 1050Ti（use OpenAI API） <br> 推荐: RTX 3090                                                                                                                       |
+|            | NVIDIA Driver Version    | >= 525.105.17                      | [Nvidia Driver Downloads](https://www.nvidia.com/download/index.aspx) 或 [小白攻略](#一安装nvidia-driver-52510517)                                                             |
+|            | Docker version           | >= 20.10.5                         | [Docker install](https://docs.docker.com/engine/install/) 或 [小白攻略](#二安装docker20105和docker-compose2233)                                                                 |
+|            | docker compose  version  | >= 2.23.3                          | [docker compose install](https://docs.docker.com/compose/install/) 或 [小白攻略](#二安装docker20105和docker-compose2233)                                                        |
+|            | NVIDIA Container Toolkit | latest                             | [NVIDIA Container Toolkit install](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) 或 [小白攻略](#三安装nvidia-container-toolkit) |
+|            | git && git-lfs           | latest                             | [git-lfs install](https://git-lfs.com/)  或 [小白攻略](#四安装git和git-lfs)                                                                                                              |
+|            | RAM（内存大小）                | >=8GB（不使用本地大模型）<br>>=16GB（使用本地大模型） | 启动服务失败但不报错时大概率是内存不足，请时刻关注内存使用情况 <br>使用本地部署的大模型时：推荐内存>=16GB，使用API等方式调用大模型时：推荐内存>=8GB<br>内存>=32GB时可获得最佳体验                                                                |
 
-## <h2><p id="AZND">一、安装NVIDIA Driver （>=525.105.17）</p></h2>
+## 一、安装NVIDIA Driver （>=525.105.17）
 
 ### 步骤 1：准备工作
 
@@ -148,7 +148,7 @@ Ubuntu 默认使用 Nouveau 驱动程序来支持 NVIDIA 的显卡。在安装�
    sudo reboot
    ```
 
-## <h2><p id="AZDOCKER">二、安装docker（>=20.10.5）和docker-compose（>=2.23.3）</p></h2>
+## 二、安装docker（>=20.10.5）和docker-compose（>=2.23.3）
 
 ### 步骤 1：检查已安装的 Docker 和 Docker Compose 版本
 
@@ -271,7 +271,7 @@ Ubuntu 默认使用 Nouveau 驱动程序来支持 NVIDIA 的显卡。在安装�
 
 完成以上步骤后，您将拥有满足版本要求的 Docker 和 Docker Compose。如果遇到任何问题，可能需要根据错误消息调整某些命令。
 
-## <h2><p id="AZNCT">三、安装NVIDIA Container Toolkit</p></h2>
+## 三、安装NVIDIA Container Toolkit
 
 ### 步骤 1：检查 NVIDIA Docker Toolkit 是否已安装
 
@@ -315,7 +315,7 @@ Ubuntu 默认使用 Nouveau 驱动程序来支持 NVIDIA 的显卡。在安装�
    sudo systemctl restart docker
    ```
 
-## <h2><p id="AZGIT">四、安装git和git-lfs</p></h2>
+## 四、安装git和git-lfs
 
 要检查 Git 和 Git Large File Storage (Git LFS) 是否已安装，并在需要时安装它们，你可以按照以下步骤操作：
 
@@ -466,7 +466,8 @@ bash scripts/run_for_3B_in_Linux_or_WSL.sh
 bash scripts/run_for_7B_in_Linux_or_WSL.sh
 ```
 
-## <h2><p id="USECPU">在Windows WSL或Linux环境下运行Openai API，仅使用CPU</p></h2>
+## 在Windows WSL或Linux环境下运行Openai API，仅使用CPU
+### 纯CPU模式
 
 <span style="color:red;">在scripts/run_for_openai_api_with_cpu_in_Linux_or_WSL.sh中补充api-key等参数</span>
 
@@ -545,7 +546,7 @@ python scripts/stream_file.py <kb_id> # print llm res
 
 ## 功能详细说明
 
-### <h3><p id="DWAZ">断网安装</p></h3>
+### 断网安装
 
 ### windows断网安装
 
@@ -623,20 +624,20 @@ cd ../../
 bash ./run.sh -c local -i 0 -b hf -m MiniChat-2-3B -t minichat
 ```
 
-### <h3><p id="DKBS">多卡部署</p></h3>
+### 多卡推理
 
 ```bash
 # 当使用默认后端时：（bash run.sh启动时不指定-b参数或-b参数为default）
-无法使用多卡部署大模型，仅支持使用两张卡省显存
+无法使用多卡推理大模型，仅支持使用两张卡省显存
 bash ./run.sh -c local -i 0,1 -b defaul  # 此时的显存使用逻辑为第一张卡部署大模型，第二张卡部署embedding，rerank，和ocr模型，实际意义不大
-# 当使用huggingface或vllm后端时支持多卡部署大模型
-# 以下示例为两张卡启动，默认embedding，部署在第一张卡上，rerank，ocr模型部署在第二张卡上，两张卡剩余显存均会用与LLM推理
+# 当使用huggingface或vllm后端时支持多卡推理大模型
+# 以下示例为两张卡启动，默认embedding，部署在第一张卡上，rerank，ocr模型部署在第二张卡上，两张卡剩余显存均会用于LLM推理
 bash ./run.sh -c local -i 0,1 -b default  # 指定0,1号GPU启动，请确认有多张GPU可用，注意设备数量必须是1，2，4，8，16，否则显存无法正常分配
 ```
 
 <span style="color:red;">说明：多卡部署是指大模型运行平均分配显存到多张显卡上，但是由于embedding，rerank和ocr模型也需要占用显存（共需4G+显存，启动时占用2G显存，运行后会逐渐上涨至4G左右），目前这三个模型默认会分配到前两个设备上，所以第一张，第二张显卡的显存占用会比其他卡多2G以上，默认启动参数-r(gpu_memory_utilization)=0.81，如果手动设置为0.9以上可能会存在前两张卡显存不足无法启动或启动后运行时显存不足报错的情况</span>
 
-### <h3><p id="DBF">多并发</p></h3>
+### 多并发
 
 #### docker版
 
@@ -654,7 +655,7 @@ bash ./run.sh -c local -i 0,1 -b default  # 指定0,1号GPU启动，请确认有
 
 [QAnything/qanything_kernel/qanything_server/sanic_api.py at qanything-python · netease-youdao/QAnything · GitHub](https://github.com/netease-youdao/QAnything/blob/qanything-python/qanything_kernel/qanything_server/sanic_api.py#L224)
 
-### <h3><p id="LWJS">联网检索</p></h3>
+### 联网检索
 
 注意：联网检索依赖于第三方库：[GitHub - deedy5/duckduckgo_search: Search for words, documents, images, videos, news, maps and text translation using the DuckDuckGo.com search engine. Downloading files and images to a local hard drive.](https://github.com/deedy5/duckduckgo_search)
 
@@ -668,7 +669,7 @@ bash ./run.sh -c local -i 0,1 -b default  # 指定0,1号GPU启动，请确认有
 
 ![](docs/images/examples/lianwang2.jpeg)
 
-### <h3><p id='WJSY'>文件溯源</p></h3>
+### 文件溯源
 
 目前仅支持以下格式的文件溯源：
 
@@ -679,7 +680,7 @@ bash ./run.sh -c local -i 0,1 -b default  # 指定0,1号GPU启动，请确认有
 
 ![](docs/images/examples/suyuan2.jpeg)
 
-### <h3><p id="OpenCloudOS">支持OpenCloudOS</p></h3>
+### 支持OpenCloudOS
 
 OpenCloudOS是腾讯自研的国产操作系统：[官网](https://opencloudos.org/)
 
@@ -696,7 +697,7 @@ bash scripts/run_for_openai_api_with_cpu_in_Linux_or_WSL.sh
 bash scripts/run_for_openai_api_with_gpu_in_Linux_or_WSL.sh
 ```
 
-### <h3><p id="FAQ">支持FAQ</p></h3>
+### 支持FAQ
 
 #### 前端调用步骤：
 
@@ -714,7 +715,7 @@ bash scripts/run_for_openai_api_with_gpu_in_Linux_or_WSL.sh
 
 上传后直接问答即可，知识库会自动包含FAQ和非FAQ内容
 
-### <h3><p id="BOT">支持BOT</p></h3>
+### 支持BOT
 
 #### 前端调用步骤
 
@@ -732,7 +733,7 @@ bash scripts/run_for_openai_api_with_gpu_in_Linux_or_WSL.sh
 
 [删除Bot信息](https://github.com/netease-youdao/QAnything/blob/qanything-python/docs/API.md#%E8%8E%B7%E5%8F%96bot%E4%BF%A1%E6%81%AFpost)
 
-### <h3><p id="RZJS">支持问答日志检索</p></h3>
+### 问答日志检索
 
 [日志检索API](https://github.com/netease-youdao/QAnything/blob/qanything-python/docs/API.md#%E6%A3%80%E7%B4%A2qa%E6%97%A5%E5%BF%97post)
 
@@ -742,7 +743,7 @@ bash scripts/run_for_openai_api_with_gpu_in_Linux_or_WSL.sh
 
 ### OPENAI 接口兼容
 
-#### <h4><p id="APIDOCKER">docker版</p></h4>
+#### docker版OpenaiAI接口兼容
 
 ```bash
 bash ./run.sh -c cloud -i 0
@@ -771,7 +772,7 @@ openai_api_base = "http://localhost:11434/v1"
 openai_api_model_name = "qwen:32b"
 ```
 
-#### <h4><p id="APIPYTHON">python版</p></h4>
+#### python版OpenaiAI接口兼容
 
 支持任意与OpenaAI接口兼容的服务
 
