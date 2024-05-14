@@ -128,7 +128,9 @@ class LocalDocQA:
             retrieval_documents = self.rerank_documents(query, retrieval_documents)
         # 删除掉分数低于阈值的文档
         if score_threshold:
-            retrieval_documents = [item for item in retrieval_documents if float(item.metadata['score']) > score_threshold]
+            tmp_documents = [item for item in retrieval_documents if float(item.metadata['score']) > score_threshold]
+            if tmp_documents:
+                retrieval_documents = tmp_documents
         
         retrieval_documents = retrieval_documents[: self.rerank_top_k]
         debug_logger.info(f"local doc search retrieval_documents: {retrieval_documents}")
