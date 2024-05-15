@@ -18,11 +18,14 @@ print("LOCAL DATA PATH:", UPLOAD_ROOT_PATH)
 # 如果不存在则创建
 if not os.path.exists(UPLOAD_ROOT_PATH):
     os.makedirs(UPLOAD_ROOT_PATH)
+PDF_MODEL_PATH = os.path.join(root_path, "qanything_kernel/utils/loader/pdf_to_markdown")
 
 nltk_data_path = os.path.join(root_path, 'qanything_kernel/nltk_data')
 
 # 将你的本地路径添加到nltk的数据路径中
 nltk.data.path.append(nltk_data_path)
+
+OCR_MODEL_PATH = os.path.join(root_path, "qanything_kernel", "dependent_server", "ocr_server", "ocr_models")
 
 # LLM streaming reponse
 STREAMING = True

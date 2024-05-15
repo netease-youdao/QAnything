@@ -16,6 +16,7 @@ from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from qanything_kernel.utils.splitter import ChineseTextSplitter
 from qanything_kernel.utils.loader import UnstructuredPaddleImageLoader, UnstructuredPaddlePDFLoader, UnstructuredPaddleAudioLoader
 from qanything_kernel.utils.splitter import zh_title_enhance
+from qanything_kernel.utils.loader.self_pdf_loader import PdfLoader
 from sanic.request import File
 import pandas as pd
 import os
@@ -82,7 +83,8 @@ class LocalFile:
             texts_splitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
             docs = loader.load_and_split(texts_splitter)
         elif self.file_path.lower().endswith(".pdf"):
-            loader = UnstructuredPaddlePDFLoader(self.file_path, ocr_engine, self.use_cpu)
+            # loader = UnstructuredPaddlePDFLoader(self.file_path, ocr_engine, self.use_cpu)
+            loader = PdfLoader(filename=self.file_path)
             # texts_splitter = ChineseTextSplitter(pdf=True, sentence_size=sentence_size)
             # docs = loader.load_and_split(texts_splitter)
             docs = loader.load()
