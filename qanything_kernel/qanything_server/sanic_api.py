@@ -81,18 +81,27 @@ if os_system != 'Darwin':
     if os_system != "Linux":
         raise ValueError(f"Unsupported system: {os_system}")
     system_name = 'manylinux_2_28_x86_64'
-    # 官方发布的1.17.1不支持cuda12以上的系统，需要根据官方文档:https://onnxruntime.ai/docs/install/里提到的地址手动下载whl
-    if not check_package_version("onnxruntime-gpu", "1.17.1"):
-        download_url = f"https://aiinfra.pkgs.visualstudio.com/PublicPackages/_apis/packaging/feeds/9387c3aa-d9ad-4513-968c-383f6f7f53b8/pypi/packages/onnxruntime-gpu/versions/1.17.1/onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl/content"
-        debug_logger.info(f'开始从{download_url}下载onnxruntime，也可以手动下载并通过pip install *.whl安装')
-        whl_name = f'onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl'
-        download_file(download_url, whl_name)
-        exit_status = os.system(f"pip install {whl_name}")
-        if exit_status != 0:
-            # raise ValueError(f"安装onnxruntime失败，请手动安装{whl_name}")
-            debug_logger.warning(f"安装onnxruntime-gpu失败，将安装onnxruntime来代替")
-            print(f"安装onnxruntime-gpu失败，将安装onnxruntime来代替", flush=True)
+    glibc_info = platform.libc_ver()
+    if glibc_info[0] != 'glibc':
+        raise ValueError(f"Unsupported libc: {glibc_info[0]}, 请确认系统是否为Linux系统。")
+    glibc_version = float(glibc_info[1])
+    if glibc_version < 2.28:
+        if not check_package_version("onnxruntime", "1.16.3"):
+            print(f"当前系统glibc版本为{glibc_version}<2.28，无法使用onnxruntime-gpu(cuda12.x)，将安装onnxruntime来代替", flush=True)
             os.system("pip install onnxruntime")
+    else:
+        # 官方发布的1.17.1不支持cuda12以上的系统，需要根据官方文档:https://onnxruntime.ai/docs/install/里提到的地址手动下载whl
+        if not check_package_version("onnxruntime-gpu", "1.17.1"):
+            download_url = f"https://aiinfra.pkgs.visualstudio.com/PublicPackages/_apis/packaging/feeds/9387c3aa-d9ad-4513-968c-383f6f7f53b8/pypi/packages/onnxruntime-gpu/versions/1.17.1/onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl/content"
+            debug_logger.info(f'开始从{download_url}下载onnxruntime，也可以手动下载并通过pip install *.whl安装')
+            whl_name = f'onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl'
+            download_file(download_url, whl_name)
+            exit_status = os.system(f"pip install {whl_name}")
+            if exit_status != 0:
+                # raise ValueError(f"安装onnxruntime失败，请手动安装{whl_name}")
+                debug_logger.warning(f"安装onnxruntime-gpu失败，将安装onnxruntime来代替")
+                print(f"安装onnxruntime-gpu失败，将安装onnxruntime来代替", flush=True)
+                os.system("pip install onnxruntime")
     if not args.use_openai_api:
         if not check_package_version("vllm", "0.2.7"):
             os.system(f"pip install vllm==0.2.7 -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn")
