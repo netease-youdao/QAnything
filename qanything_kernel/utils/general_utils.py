@@ -200,7 +200,8 @@ def get_gpu_memory_utilization(model_size, device_id):
         if gpu_memory_in_GB < 10:  # 显存最低需要10GB
             raise ValueError(
                 f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 10GB is required with 3B Model.")
-        gpu_memory_utilization = round(8 / gpu_memory_in_GB, 2)
+        # gpu_memory_utilization = round(8 / gpu_memory_in_GB, 2)
+        gpu_memory_utilization = 0.81
     elif model_size == '7B':
         if gpu_memory_in_GB < 24:  # 显存最低需要20GB
             raise ValueError(

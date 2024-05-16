@@ -30,7 +30,7 @@ class PdfLoader(PdfParser):
         self.zoomin = zoomin
         self.callback = callback
 
-    def load(self):
+    def load_to_markdown(self):
         ocr_start = timer()
         self.__images__(
             self.filename if self.binary is None else self.binary,
@@ -109,8 +109,8 @@ class PdfLoader(PdfParser):
                 new_sections[tbl_no] = {'text': tbl[0][0], 'type': tbl[0][1]}
 
         json.dump(new_sections, open(self.json_dir, 'w'))
-        json2markdown(self.json_dir, self.markdown_dir)
+        markdown_str = json2markdown(self.json_dir, self.markdown_dir)
         debug_logger.info("PDF Parse finished in %s seconds" % (timer() - start))
-        print(new_sections, flush=True)
-        return new_sections
+        # print(new_sections, flush=True)
+        return self.markdown_dir
 

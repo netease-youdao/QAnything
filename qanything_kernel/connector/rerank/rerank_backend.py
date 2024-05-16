@@ -5,10 +5,12 @@ from qanything_kernel.configs.model_config import LOCAL_RERANK_MODEL_PATH, LOCAL
     LOCAL_RERANK_MODEL_NAME, \
     LOCAL_RERANK_BATCH, LOCAL_RERANK_PATH, LOCAL_RERANK_REPO
 from qanything_kernel.utils.custom_log import debug_logger
+from qanything_kernel.utils.general_utils import get_time
 from modelscope import snapshot_download
 from abc import ABC, abstractmethod
 import subprocess
 import os
+import concurrent.futures
 
 # 如果模型不存在, 下载模型
 if not os.path.exists(LOCAL_RERANK_MODEL_PATH):
@@ -80,6 +82,7 @@ class RerankBackend(ABC):
 
         return merge_inputs, merge_inputs_idxs
 
+    @get_time
     def predict(self,
                 query: str,
                 passages: List[str],
@@ -87,20 +90,25 @@ class RerankBackend(ABC):
         tot_batches, merge_inputs_idxs_sort = self.tokenize_preproc(query, passages)
 
         tot_scores = []
-        
-        for k in range(0, len(tot_batches), self.batch_size):
-            batch = self._tokenizer.pad(
-                tot_batches[k:k + self.batch_size],
-                padding=True,
-                max_length=None,
-                pad_to_multiple_of=None,
-                return_tensors=self.return_tensors
-            )
-            scores = self.inference(batch)
-            tot_scores.extend(scores)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            futures = []
+            for k in range(0, len(tot_batches), self.batch_size):
+                batch = self._tokenizer.pad(
+                    tot_batches[k:k + self.batch_size],
+                    padding=True,
+                    max_length=None,
+                    pad_to_multiple_of=None,
+                    return_tensors=self.return_tensors
+                )
+                future = executor.submit(self.inference, batch)
+                futures.append(future)
+            debug_logger.info(f'rerank number: {len(futures)}')
+            for future in futures:
+                scores = future.result()
+                tot_scores.extend(scores)
 
         merge_tot_scores = [0 for _ in range(len(passages))]
         for pid, score in zip(merge_inputs_idxs_sort, tot_scores):
             merge_tot_scores[pid] = max(merge_tot_scores[pid], score)
-        print("merge_tot_scores:", merge_tot_scores, flush=True)
+        # print("merge_tot_scores:", merge_tot_scores, flush=True)
         return merge_tot_scores

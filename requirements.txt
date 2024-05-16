@@ -27,5 +27,5 @@ accelerate==0.21.0
 networkx==3.2.1
 faster_whisper==1.0.1
 python-dotenv==1.0.1
-duckduckgo-search==5.3.0
+duckduckgo-search==5.3.0b4
 html2text==2024.2.26

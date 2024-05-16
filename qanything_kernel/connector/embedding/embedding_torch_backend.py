@@ -12,12 +12,15 @@ class EmbeddingTorchBackend(EmbeddingBackend):
         super().__init__(use_cpu)
         self.return_tensors = "pt"
         self._model = AutoModel.from_pretrained(LOCAL_EMBED_PATH, return_dict=False)
-        if use_cpu or not torch.backends.mps.is_available():
-            self.device = torch.device('cpu')
-            self._model = self._model.to(self.device)
-        else:
-            self.device = torch.device('mps')
-            self._model = self._model.to(self.device)
+        # if use_cpu or not torch.backends.mps.is_available():
+        #     self.device = torch.device('cpu')
+        #     self._model = self._model.to(self.device)
+        # else:
+        #     self.device = torch.device('mps')
+        #     self._model = self._model.to(self.device)
+        self.device = torch.device('cpu')
+        self._model = self._model.to(self.device)
+        print("embedding device:", self.device)
 
     def get_embedding(self, sentences, max_length):
         inputs_pt = self._tokenizer(sentences, padding=True, truncation=True, max_length=max_length,

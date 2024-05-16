@@ -11,13 +11,16 @@ class RerankTorchBackend(RerankBackend):
         super().__init__(use_cpu)
         self.return_tensors = "pt"
         self._model = AutoModelForSequenceClassification.from_pretrained(LOCAL_RERANK_PATH,
-                                                                        return_dict=False)
-        if use_cpu or not torch.backends.mps.is_available():
-            self.device = torch.device('cpu')
-            self._model = self._model.to(self.device)
-        else:
-            self.device = torch.device('mps')
-            self._model = self._model.to(self.device)
+                                                                         return_dict=False)
+        # if use_cpu or not torch.backends.mps.is_available():
+        #     self.device = torch.device('cpu')
+        #     self._model = self._model.to(self.device)
+        # else:
+        #     self.device = torch.device('mps')
+        #     self._model = self._model.to(self.device)
+        self.device = torch.device('cpu')
+        self._model = self._model.to(self.device)
+        print("rerank device:", self.device)
 
     def inference(self, batch):
         # 准备输入数据
