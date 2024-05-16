@@ -2,7 +2,7 @@ import json
 import re
 
 
-def json2markdown(json_dir,markdown_dir):
+def json2markdown(json_dir, markdown_dir):
     pdf = []
     para_before = ''
     before_patt = ['[a-z]', ',', '，', '-', '\(', '\)', '（', '）']
@@ -37,9 +37,10 @@ def json2markdown(json_dir,markdown_dir):
                     para_before = para
             else:
                 para_before = para
-    print(pdf, flush=True)
+    # print(pdf, flush=True)
     for p in pdf:
         print(p, file=open(md, 'a'))
+    return '\n'.join(pdf)
         
         
 

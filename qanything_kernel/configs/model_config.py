@@ -19,6 +19,7 @@ print("LOCAL DATA PATH:", UPLOAD_ROOT_PATH)
 if not os.path.exists(UPLOAD_ROOT_PATH):
     os.makedirs(UPLOAD_ROOT_PATH)
 PDF_MODEL_PATH = os.path.join(root_path, "qanything_kernel/utils/loader/pdf_to_markdown")
+USE_FAST_PDF_PARSER = True
 
 nltk_data_path = os.path.join(root_path, 'qanything_kernel/nltk_data')
 

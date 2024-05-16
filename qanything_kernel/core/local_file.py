@@ -1,13 +1,12 @@
 from qanything_kernel.utils.general_utils import *
 from typing import List, Union, Callable
-from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, SENTENCE_SIZE, ZH_TITLE_ENHANCE
+from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, SENTENCE_SIZE, ZH_TITLE_ENHANCE, USE_FAST_PDF_PARSER
 from langchain.docstore.document import Document
 from qanything_kernel.utils.loader.my_recursive_url_loader import MyRecursiveUrlLoader
 from langchain_community.document_loaders import UnstructuredFileLoader, TextLoader
 from langchain_community.document_loaders import UnstructuredWordDocumentLoader
 from langchain_community.document_loaders import UnstructuredExcelLoader
 from langchain_community.document_loaders import UnstructuredPDFLoader
-import langchain_community.document_loaders.pdf
 from langchain_community.document_loaders import UnstructuredEmailLoader
 from langchain_community.document_loaders import UnstructuredPowerPointLoader
 from qanything_kernel.utils.loader.csv_loader import CSVLoader
@@ -17,6 +16,7 @@ from qanything_kernel.utils.splitter import ChineseTextSplitter
 from qanything_kernel.utils.loader import UnstructuredPaddleImageLoader, UnstructuredPaddlePDFLoader, UnstructuredPaddleAudioLoader
 from qanything_kernel.utils.splitter import zh_title_enhance
 from qanything_kernel.utils.loader.self_pdf_loader import PdfLoader
+from qanything_kernel.utils.loader.markdown_parser import MarkdownParser, MarkdownReader
 from sanic.request import File
 import pandas as pd
 import os
@@ -29,7 +29,7 @@ text_splitter = RecursiveCharacterTextSplitter(
     length_function=num_tokens,
 )
 
-pdf_text_splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=200, length_function=num_tokens)
+pdf_text_splitter = RecursiveCharacterTextSplitter(chunk_size=1200, chunk_overlap=200, length_function=num_tokens)
 
 
 class LocalFile:
@@ -66,6 +66,20 @@ class LocalFile:
                 f.write(self.file_content)
         debug_logger.info(f'success init localfile {self.file_name}')
 
+    @staticmethod
+    @get_time
+    def markdown_to_docs(md_file_path):
+        reader = MarkdownReader()
+        parser = MarkdownParser()
+        pages = reader.load_data([md_file_path])
+        docs = parser.get_nodes_from_documents(pages)
+        # for doc in docs:
+        #     # print(node.node_id)
+        #     print(doc.text)
+        #     print('********')
+        return docs
+
+    @get_time
     def split_file_to_docs(self, ocr_engine: Callable, sentence_size=SENTENCE_SIZE,
                            using_zh_title_enhance=ZH_TITLE_ENHANCE):
         if self.url:
@@ -83,11 +97,14 @@ class LocalFile:
             texts_splitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
             docs = loader.load_and_split(texts_splitter)
         elif self.file_path.lower().endswith(".pdf"):
-            # loader = UnstructuredPaddlePDFLoader(self.file_path, ocr_engine, self.use_cpu)
-            loader = PdfLoader(filename=self.file_path)
-            # texts_splitter = ChineseTextSplitter(pdf=True, sentence_size=sentence_size)
-            # docs = loader.load_and_split(texts_splitter)
-            docs = loader.load()
+            if USE_FAST_PDF_PARSER:
+                loader = UnstructuredPaddlePDFLoader(self.file_path, ocr_engine, self.use_cpu)
+                texts_splitter = ChineseTextSplitter(pdf=True, sentence_size=sentence_size)
+                docs = loader.load_and_split(texts_splitter)
+            else:
+                loader = PdfLoader(filename=self.file_path, root_dir=os.path.dirname(self.file_path))
+                markdown_dir = loader.load_to_markdown()
+                docs = self.markdown_to_docs(markdown_dir)
         elif self.file_path.lower().endswith(".jpg") or self.file_path.lower().endswith(
                 ".png") or self.file_path.lower().endswith(".jpeg"):
             loader = UnstructuredPaddleImageLoader(self.file_path, ocr_engine, self.use_cpu)
