@@ -19,7 +19,7 @@
 ```bash
 conda create -n qanything-python python=3.10
 conda activate qanything-python
-git clone -b qanything-python-v1.3.1 https://github.com/netease-youdao/QAnything.git
+git clone -b qanything-python https://github.com/netease-youdao/QAnything.git
 cd QAnything
 pip install -e .
 ```
@@ -56,6 +56,12 @@ bash scripts/run_for_openai_api_with_gpu_in_Linux_or_WSL.sh
 
 ```bash
 bash scripts/run_for_openai_api_in_M1_mac.sh
+```
+
+## 在M1Mac环境下使用Ollama API 
+
+```bash
+bash scripts/run_for_ollama_api_in_M1_mac.sh
 ```
 
 ## 在M1Mac环境下使用3B LLM（(MiniChat-2-3B-INT8-GGUF）
