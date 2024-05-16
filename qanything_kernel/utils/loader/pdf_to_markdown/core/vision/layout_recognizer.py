@@ -5,6 +5,7 @@ from copy import deepcopy
 import numpy as np
 from qanything_kernel.utils.loader.pdf_to_markdown.core.vision import Recognizer
 from qanything_kernel.configs.model_config import PDF_MODEL_PATH
+from tqdm import tqdm
 
 
 class LayoutRecognizer(Recognizer):
@@ -32,7 +33,7 @@ class LayoutRecognizer(Recognizer):
         assert len(image_list) == len(layouts)
         garbages = {}
         page_layout = []
-        for pn, lts in enumerate(layouts):
+        for pn, lts in tqdm(enumerate(layouts)):
             bxs = ocr_res[pn]
             lts = [{"type": b["type"],
                     "score": float(b["score"]),
