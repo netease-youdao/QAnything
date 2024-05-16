@@ -18,7 +18,7 @@ root_dir = os.path.dirname(parent_dir)
 sys.path.append(root_dir)
 
 from qanything_kernel.configs.model_config import DT_7B_MODEL_PATH, \
-    DT_7B_DOWNLOAD_PARAMS, DT_3B_MODEL_PATH, DT_3B_DOWNLOAD_PARAMS
+    DT_7B_DOWNLOAD_PARAMS, DT_3B_MODEL_PATH, DT_3B_DOWNLOAD_PARAMS, PDF_MODEL_PATH
 import qanything_kernel.configs.model_config as model_config
 from qanything_kernel.utils.custom_log import debug_logger
 from qanything_kernel.utils.general_utils import download_file, get_gpu_memory_utilization, check_package_version
@@ -153,6 +153,15 @@ elif not os.path.exists(args.model):
 else:
     debug_logger.info(f'{args.model}路径已存在，不再重复下载大模型（如果下载出错可手动删除此目录）')
     debug_logger.info(f"CUDA_DEVICE: {model_config.CUDA_DEVICE}")
+
+# 下载pdf解析相关的模型
+pdf_models_path = os.path.join(PDF_MODEL_PATH, 'checkpoints')
+if not os.path.exists(pdf_models_path):
+    debug_logger.info(f'开始下载大模型：{model_download_params}')
+    model_dir = snapshot_download('netease-youdao/QAnything-pdf-parser')
+    subprocess.check_output(['ln', '-s', model_dir, pdf_models_path], text=True)
+    debug_logger.info(f'PDF解析相关模型下载完毕！cache地址：{model_dir}, 软链接地址：{pdf_models_path}')
+
 
 WorkerManager.THRESHOLD = 6000
 
