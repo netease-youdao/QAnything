@@ -16,7 +16,7 @@ from qanything_kernel.utils.splitter import ChineseTextSplitter
 from qanything_kernel.utils.loader import UnstructuredPaddleImageLoader, UnstructuredPaddlePDFLoader, UnstructuredPaddleAudioLoader
 from qanything_kernel.utils.splitter import zh_title_enhance
 from qanything_kernel.utils.loader.self_pdf_loader import PdfLoader
-from qanything_kernel.utils.loader.markdown_parser import MarkdownParser, MarkdownReader
+from qanything_kernel.utils.loader.markdown_parser import convert_markdown_to_langchaindoc
 from sanic.request import File
 import pandas as pd
 import os
@@ -66,19 +66,6 @@ class LocalFile:
                 f.write(self.file_content)
         debug_logger.info(f'success init localfile {self.file_name}')
 
-    @staticmethod
-    @get_time
-    def markdown_to_docs(md_file_path):
-        reader = MarkdownReader()
-        parser = MarkdownParser()
-        pages = reader.load_data([md_file_path])
-        docs = parser.get_nodes_from_documents(pages)
-        # for doc in docs:
-        #     # print(node.node_id)
-        #     print(doc.text)
-        #     print('********')
-        return docs
-
     @get_time
     def split_file_to_docs(self, ocr_engine: Callable, sentence_size=SENTENCE_SIZE,
                            using_zh_title_enhance=ZH_TITLE_ENHANCE):
@@ -104,7 +91,7 @@ class LocalFile:
             else:
                 loader = PdfLoader(filename=self.file_path, root_dir=os.path.dirname(self.file_path))
                 markdown_dir = loader.load_to_markdown()
-                docs = self.markdown_to_docs(markdown_dir)
+                docs = convert_markdown_to_langchaindoc(markdown_dir)
         elif self.file_path.lower().endswith(".jpg") or self.file_path.lower().endswith(
                 ".png") or self.file_path.lower().endswith(".jpeg"):
             loader = UnstructuredPaddleImageLoader(self.file_path, ocr_engine, self.use_cpu)
@@ -140,6 +127,7 @@ class LocalFile:
             debug_logger.info("using_zh_title_enhance %s", using_zh_title_enhance)
             docs = zh_title_enhance(docs)
         print('docs number:', len(docs))
+        # print(docs)
         # 不是csv，xlsx和FAQ的文件，需要再次分割
         if not self.file_path.lower().endswith(".csv") and not self.file_path.lower().endswith(".xlsx") and not self.file_path == 'FAQ':
             new_docs = []
