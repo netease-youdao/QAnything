@@ -16,7 +16,7 @@ from PyPDF2 import PdfReader as pdf2_read
 
 from qanything_kernel.utils.loader.pdf_to_markdown.core.vision import Recognizer, LayoutRecognizer, TableStructureRecognizer_LORE
 from qanything_kernel.utils.loader.pdf_to_markdown.core.nlp import huqie
-from qanything_kernel.dependent_server.ocr_server.ocr import OCRQAnything
+# from qanything_kernel.dependent_server.ocr_server.ocr import OCRQAnything
 from qanything_kernel.configs.model_config import OCR_MODEL_PATH, PDF_MODEL_PATH
 from qanything_kernel.utils.custom_log import debug_logger
 from tqdm import tqdm
@@ -27,7 +27,7 @@ logging.getLogger("pdfminer").setLevel(logging.WARNING)
 
 class HuParser:
     def __init__(self, device='cpu'):
-        self.ocr = OCRQAnything(model_dir=OCR_MODEL_PATH, device=device)  # 省显存
+        # self.ocr = OCRQAnything(model_dir=OCR_MODEL_PATH, device=device)  # 省显存
         if hasattr(self, "model_speciess"):
             self.layouter = LayoutRecognizer("layout." + self.model_speciess)
         else:
@@ -245,51 +245,31 @@ class HuParser:
                 b["H_right"] = spans[ii]["x1"]
                 b["SP"] = ii
 
-    def __ocr(self, pagenum, img, chars, ZM=3):
-        bxs = self.ocr.detect(np.array(img))
+    def __ocr_pdf(self,pagenum,bxs_pymupdf,ZM=3):
+        """
+        use pymupdf parse pdf to save time
+        """
+        bxs = bxs_pymupdf
         if not bxs:
             self.boxes.append([])
-            return
-        bxs = [(line[0], line[1][0]) for line in bxs]
+            return 
+        bxs = [(np.array(item[0]),'',item[1]) for item in bxs]
         bxs = Recognizer.sort_Y_firstly(
             [{"x0": b[0][0] / ZM, "x1": b[1][0] / ZM,
-              "top": b[0][1] / ZM, "text": "", "txt": t,
-              "bottom": b[-1][1] / ZM,
-              "page_number": pagenum} for b, t in bxs if b[0][0] <= b[1][0] and b[0][1] <= b[-1][1]],
+            "top": b[0][1] / ZM, "text": rec_text, "txt": t,
+            "bottom": b[-1][1] / ZM,
+            "page_number": pagenum} for b, t, rec_text in bxs if b[0][0] <= b[1][0] and b[0][1] <= b[-1][1]],
             self.mean_height[-1] / 3
-        )
-
-        # merge chars in the same rect
-        for c in Recognizer.sort_X_firstly(
-                chars, self.mean_width[pagenum - 1] // 4):
-            ii = Recognizer.find_overlapped(c, bxs)
-            if ii is None:
-                self.lefted_chars.append(c)
-                continue
-            ch = c["bottom"] - c["top"]
-            bh = bxs[ii]["bottom"] - bxs[ii]["top"]
-            if abs(ch - bh) / max(ch, bh) >= 0.7 and c["text"] != ' ':
-                self.lefted_chars.append(c)
-                continue
-            if c["text"] == " " and bxs[ii]["text"]:
-                if re.match(r"[0-9a-zA-Z,.?;:!%%]", bxs[ii]["text"][-1]):
-                    bxs[ii]["text"] += " "
-            else:
-                bxs[ii]["text"] += c["text"]
-
+        )        
         for b in bxs:
-            if not b["text"]:
-                left, right, top, bott = b["x0"] * ZM, b["x1"] * \
-                    ZM, b["top"] * ZM, b["bottom"] * ZM
-                b["text"] = self.ocr.recognize(np.array(img),
-                                               np.array([[left, top], [right, top], [right, bott], [left, bott]],
-                                                        dtype=np.float32))
             del b["txt"]
         bxs = [b for b in bxs if b["text"]]
         if self.mean_height[-1] == 0:
             self.mean_height[-1] = np.median([b["bottom"] - b["top"]
-                                              for b in bxs])
-        self.boxes.append(bxs)
+                                            for b in bxs])
+        self.boxes.append(bxs)  
+
+
                 
     def _layouts_rec(self, ZM, drop=True):
         assert len(self.page_images) == len(self.boxes)
@@ -434,91 +414,6 @@ class HuParser:
                 blocks[sec_no] = [sec]
             else:
                 blocks[sec_no].append(sec)
-        # # count boxes in the same row as a feature
-        # for i in range(len(self.boxes)):
-        #     mh = self.mean_height[self.boxes[i]["page_number"] - 1]
-        #     self.boxes[i]["in_row"] = 0
-        #     j = max(0, i - 12)
-        #     while j < min(i + 12, len(self.boxes)):
-        #         if j == i:
-        #             j += 1
-        #             continue
-        #         ydis = self._y_dis(self.boxes[i], self.boxes[j]) / mh
-        #         if abs(ydis) < 1:
-        #             self.boxes[i]["in_row"] += 1
-        #         elif ydis > 0:
-        #             break
-        #         j += 1
-        # # print(self.boxes, file=open('boxes_2.txt', 'w'))
-        # # concat between rows
-        # boxes = deepcopy(self.boxes)
-        # blocks = []
-        # while boxes:
-        #     chunks = []
-            
-        #     def dfs(up, dp):
-        #         if up.get("layoutno", 'nolayoutno') == 'nolayoutno' and dp < min(dp + 12, len(boxes)):
-        #             boxes.pop(0)
-        #             dfs(boxes[0], 1)
-        #             return
-        #         chunks.append(up)
-        #         i = dp
-        #         while i < min(dp + 12, len(boxes)):
-        #             ydis = self._y_dis(up, boxes[i])
-        #             smpg = up["page_number"] == boxes[i]["page_number"]
-        #             mh = self.mean_height[up["page_number"] - 1]
-        #             mw = self.mean_width[up["page_number"] - 1]
-        #             if smpg and ydis > mh * 4:
-        #                 break
-        #             if not smpg and ydis > mh * 16:
-        #                 break
-        #             down = boxes[i]
-        #             if not concat_between_pages and down["page_number"] > up["page_number"]:
-        #                 break
-
-        #             if up.get("R", "") != down.get(
-        #                     "R", "") and up["text"][-1] != "，":
-        #                 i += 1
-        #                 continue
-
-        #             if re.match(r"[0-9]{2,3}/[0-9]{3}$", up["text"]) \
-        #                     or re.match(r"[0-9]{2,3}/[0-9]{3}$", down["text"]):
-        #                 i += 1
-        #                 continue
-
-        #             if not down["text"].strip():
-        #                 i += 1
-        #                 continue
-
-        #             if up["x1"] < down["x0"] - 10 * \
-        #                     mw or up["x0"] > down["x1"] + 10 * mw:
-        #                 i += 1
-        #                 continue
-
-        #             if i - dp < 5 and up.get("layout_type") in ["title", 'text', 'author']:
-        #                 if up.get("layoutno", "1") == down.get(
-        #                         "layoutno", "2"):
-        #                     dfs(down, i + 1)
-        #                     boxes.pop(i)
-        #                     return
-        #                 i += 1
-        #                 continue
-
-        #             fea = self._updown_concat_features(up, down)
-        #             if self.updown_cnt_mdl.predict(
-        #                     xgb.DMatrix([fea]))[0] <= 0.5:
-        #                 i += 1
-        #                 continue
-        #             dfs(down, i + 1)
-        #             boxes.pop(i)
-        #             return
-
-        #     dfs(boxes[0], 1)
-        #     boxes.pop(0)
-        #     if chunks:
-        #         blocks.append(chunks)
-
-        # concat within each block
         boxes = []
         # for b in blocks:
         for k, b in blocks.items():
@@ -974,6 +869,28 @@ class HuParser:
             pdf = fitz.open(fnm) if not binary else fitz.open(
                 stream=fnm, filetype="pdf")
             return len(pdf)
+    
+    def page_ocr(self,page,zoomin):
+        blocks = page.get_text(
+            "dict", flags=0,
+        )["blocks"]
+        ocr_res = []
+        for b in blocks:
+            for line in b["lines"]:
+                line_text = ''
+                line_bbox_lst = [[],[],[],[]]
+                for item in line['spans']:
+                    line_text += item['text']
+                    line_bbox_lst[0].append(item['bbox'][0]*zoomin)
+                    line_bbox_lst[1].append(item['bbox'][1]*zoomin)
+                    line_bbox_lst[2].append(item['bbox'][2]*zoomin)
+                    line_bbox_lst[3].append(item['bbox'][3]*zoomin)
+                line_bbox = [min(line_bbox_lst[0]),min(line_bbox_lst[1]),max(line_bbox_lst[2]),max(line_bbox_lst[3])]
+                four_point_bbox = [[line_bbox[0],line_bbox[1]],[line_bbox[2],line_bbox[1]],
+                                    [line_bbox[2],line_bbox[3]],[line_bbox[0],line_bbox[3]]] 
+                ocr_res.append([four_point_bbox,line_text,1])
+        return ocr_res
+
 
     def __images__(self, fnm, zoomin=3, page_from=0,
                    page_to=299, callback=None):
@@ -990,6 +907,7 @@ class HuParser:
             stream=fnm, filetype="pdf")
         self.page_images = []
         self.page_chars = []
+        self.ocr_res = []
         mat = fitz.Matrix(zoomin, zoomin)
         self.total_page = len(self.pdf)
         for i, page in enumerate(self.pdf):
@@ -1002,6 +920,9 @@ class HuParser:
                                     pix.samples)
             self.page_images.append(img)
             self.page_chars.append([])
+            page_ocr_res = self.page_ocr(page,zoomin)
+            self.ocr_res.append(page_ocr_res)
+
 
         self.outlines = []
         try:
@@ -1048,7 +969,8 @@ class HuParser:
                                                                        chars[j]["width"]) / 2:
                     chars[j]["text"] += " "
                 j += 1
-            self.__ocr(i + 1, img, chars, zoomin)
+            # self.__ocr(i + 1, img, chars, zoomin)
+            self.__ocr_pdf(i+1, self.ocr_res[i], zoomin)
             if callback:
                 callback(prog=(i + 1) * 0.6 / len(self.page_images), msg="")
 
