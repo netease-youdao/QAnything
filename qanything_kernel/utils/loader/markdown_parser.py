@@ -148,7 +148,8 @@ def _update_node_id_title_dfs(doc_json):
         node['node_id'] = '-'.join(node_id_list)
 
         title_list.append(node['title'])
-        node['title'] = '-'.join(title_list)
+        # node['title'] = '-'.join(title_list)
+        node['title'] = title_list.copy()
         
         if 'blocks' in node:
             for block in node['blocks']:
@@ -187,8 +188,11 @@ def parse_markdown_mistune(file_path, doc_title=None, max_heading_depth=2):
     for block in document:
         if not isinstance(block, list): continue
         doc_json = _process_block(block, doc_json, max_heading_depth)
-
+    # print(doc_json)
     _update_node_id_title_dfs(doc_json)
+    # print(doc_json)
+    # with open('markdown_test.json','w',encoding='utf-8') as f_w:
+    #     json.dump(doc_json,f_w,ensure_ascii=False)
     print('Tree building done.')
     return doc_json
 
@@ -223,13 +227,13 @@ def convert_node_to_document(node_lists):
             if item['node_type'].startswith('Level'):
                 if len(item['child_id_list']) == 0:    #是一个单独的标题，并且没有子节点，可能是markdown解析出现了问题
                     title_lst = []
-                    for index,title in enumerate(item['title'].split('-')):
+                    for index,title in enumerate(item['title']):
                         title_lst.append('#'*(index+1)+title)
                     doc = Document(page_content='',metadata={'title_lst':title_lst,'has_table':False})
                     doc_lst.append(doc)
             if item['node_type'] == 'ContentNode':
                 title_lst = []
-                for index,title in enumerate(item['title'].split('-')[:-1]):
+                for index,title in enumerate(item['title'][:-1]):
                     title_lst.append('#'*(index+1)+title)
                 has_table = contains_table(item['content'])
                 doc = Document(page_content=item['content'],metadata={'title_lst':title_lst,'has_table':has_table})
