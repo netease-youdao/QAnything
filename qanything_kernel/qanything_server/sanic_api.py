@@ -18,7 +18,7 @@ root_dir = os.path.dirname(parent_dir)
 sys.path.append(root_dir)
 
 from qanything_kernel.configs.model_config import DT_7B_MODEL_PATH, \
-    DT_7B_DOWNLOAD_PARAMS, DT_3B_MODEL_PATH, DT_3B_DOWNLOAD_PARAMS
+    DT_7B_DOWNLOAD_PARAMS, DT_3B_MODEL_PATH, DT_3B_DOWNLOAD_PARAMS, PDF_MODEL_PATH
 import qanything_kernel.configs.model_config as model_config
 from qanything_kernel.utils.custom_log import debug_logger
 from qanything_kernel.utils.general_utils import download_file, get_gpu_memory_utilization, check_package_version
@@ -81,18 +81,27 @@ if os_system != 'Darwin':
     if os_system != "Linux":
         raise ValueError(f"Unsupported system: {os_system}")
     system_name = 'manylinux_2_28_x86_64'
-    # 官方发布的1.17.1不支持cuda12以上的系统，需要根据官方文档:https://onnxruntime.ai/docs/install/里提到的地址手动下载whl
-    if not check_package_version("onnxruntime-gpu", "1.17.1"):
-        download_url = f"https://aiinfra.pkgs.visualstudio.com/PublicPackages/_apis/packaging/feeds/9387c3aa-d9ad-4513-968c-383f6f7f53b8/pypi/packages/onnxruntime-gpu/versions/1.17.1/onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl/content"
-        debug_logger.info(f'开始从{download_url}下载onnxruntime，也可以手动下载并通过pip install *.whl安装')
-        whl_name = f'onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl'
-        download_file(download_url, whl_name)
-        exit_status = os.system(f"pip install {whl_name}")
-        if exit_status != 0:
-            # raise ValueError(f"安装onnxruntime失败，请手动安装{whl_name}")
-            debug_logger.warning(f"安装onnxruntime-gpu失败，将安装onnxruntime来代替")
-            print(f"安装onnxruntime-gpu失败，将安装onnxruntime来代替", flush=True)
+    glibc_info = platform.libc_ver()
+    if glibc_info[0] != 'glibc':
+        raise ValueError(f"Unsupported libc: {glibc_info[0]}, 请确认系统是否为Linux系统。")
+    glibc_version = float(glibc_info[1])
+    if glibc_version < 2.28:
+        if not check_package_version("onnxruntime", "1.16.3"):
+            print(f"当前系统glibc版本为{glibc_version}<2.28，无法使用onnxruntime-gpu(cuda12.x)，将安装onnxruntime来代替", flush=True)
             os.system("pip install onnxruntime")
+    else:
+        # 官方发布的1.17.1不支持cuda12以上的系统，需要根据官方文档:https://onnxruntime.ai/docs/install/里提到的地址手动下载whl
+        if not check_package_version("onnxruntime-gpu", "1.17.1"):
+            download_url = f"https://aiinfra.pkgs.visualstudio.com/PublicPackages/_apis/packaging/feeds/9387c3aa-d9ad-4513-968c-383f6f7f53b8/pypi/packages/onnxruntime-gpu/versions/1.17.1/onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl/content"
+            debug_logger.info(f'开始从{download_url}下载onnxruntime，也可以手动下载并通过pip install *.whl安装')
+            whl_name = f'onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl'
+            download_file(download_url, whl_name)
+            exit_status = os.system(f"pip install {whl_name}")
+            if exit_status != 0:
+                # raise ValueError(f"安装onnxruntime失败，请手动安装{whl_name}")
+                debug_logger.warning(f"安装onnxruntime-gpu失败，将安装onnxruntime来代替")
+                print(f"安装onnxruntime-gpu失败，将安装onnxruntime来代替", flush=True)
+                os.system("pip install onnxruntime")
     if not args.use_openai_api:
         if not check_package_version("vllm", "0.2.7"):
             os.system(f"pip install vllm==0.2.7 -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn")
@@ -144,6 +153,15 @@ elif not os.path.exists(args.model):
 else:
     debug_logger.info(f'{args.model}路径已存在，不再重复下载大模型（如果下载出错可手动删除此目录）')
     debug_logger.info(f"CUDA_DEVICE: {model_config.CUDA_DEVICE}")
+
+# 下载pdf解析相关的模型
+pdf_models_path = os.path.join(PDF_MODEL_PATH, 'checkpoints')
+if not os.path.exists(pdf_models_path):
+    debug_logger.info(f'开始下载大模型：{model_download_params}')
+    model_dir = snapshot_download('netease-youdao/QAnything-pdf-parser')
+    subprocess.check_output(['ln', '-s', model_dir, pdf_models_path], text=True)
+    debug_logger.info(f'PDF解析相关模型下载完毕！cache地址：{model_dir}, 软链接地址：{pdf_models_path}')
+
 
 WorkerManager.THRESHOLD = 6000
 

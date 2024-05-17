@@ -1,13 +1,12 @@
 from qanything_kernel.utils.general_utils import *
 from typing import List, Union, Callable
-from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, SENTENCE_SIZE, ZH_TITLE_ENHANCE
+from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, SENTENCE_SIZE, ZH_TITLE_ENHANCE, USE_FAST_PDF_PARSER
 from langchain.docstore.document import Document
 from qanything_kernel.utils.loader.my_recursive_url_loader import MyRecursiveUrlLoader
 from langchain_community.document_loaders import UnstructuredFileLoader, TextLoader
 from langchain_community.document_loaders import UnstructuredWordDocumentLoader
 from langchain_community.document_loaders import UnstructuredExcelLoader
 from langchain_community.document_loaders import UnstructuredPDFLoader
-import langchain_community.document_loaders.pdf
 from langchain_community.document_loaders import UnstructuredEmailLoader
 from langchain_community.document_loaders import UnstructuredPowerPointLoader
 from qanything_kernel.utils.loader.csv_loader import CSVLoader
@@ -16,6 +15,8 @@ from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from qanything_kernel.utils.splitter import ChineseTextSplitter
 from qanything_kernel.utils.loader import UnstructuredPaddleImageLoader, UnstructuredPaddlePDFLoader, UnstructuredPaddleAudioLoader
 from qanything_kernel.utils.splitter import zh_title_enhance
+from qanything_kernel.utils.loader.self_pdf_loader import PdfLoader
+from qanything_kernel.utils.loader.markdown_parser import convert_markdown_to_langchaindoc
 from sanic.request import File
 import pandas as pd
 import os
@@ -65,6 +66,27 @@ class LocalFile:
                 f.write(self.file_content)
         debug_logger.info(f'success init localfile {self.file_name}')
 
+    @staticmethod
+    def pdf_process(dos: List[Document]):
+        new_docs = []
+        for doc in dos:
+            # metadata={'title_lst': ['#樊昊天个人简历', '##教育经历'], 'has_table': False}
+            title_lst = doc.metadata['title_lst']
+            # 删除所有仅有多个#的title
+            title_lst = [t for t in title_lst if t.replace('#', '') != '']
+            has_table = doc.metadata['has_table']
+            if has_table:
+                doc.page_content = '\n'.join(title_lst) + '\n本段为表格，内容如下：' + doc.page_content
+                new_docs.append(doc)
+                continue
+            # doc.page_content = '\n'.join(title_lst) + '\n' + doc.page_content
+            slices = pdf_text_splitter.split_documents([doc])
+            for idx, slice in enumerate(slices):
+                slice.page_content = '\n'.join(title_lst) + f'\n######第{idx+1}段内容如下：\n' + slice.page_content
+            new_docs.extend(slices)
+        return new_docs
+
+    @get_time
     def split_file_to_docs(self, ocr_engine: Callable, sentence_size=SENTENCE_SIZE,
                            using_zh_title_enhance=ZH_TITLE_ENHANCE):
         if self.url:
@@ -82,10 +104,16 @@ class LocalFile:
             texts_splitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
             docs = loader.load_and_split(texts_splitter)
         elif self.file_path.lower().endswith(".pdf"):
-            loader = UnstructuredPaddlePDFLoader(self.file_path, ocr_engine, self.use_cpu)
-            # texts_splitter = ChineseTextSplitter(pdf=True, sentence_size=sentence_size)
-            # docs = loader.load_and_split(texts_splitter)
-            docs = loader.load()
+            if USE_FAST_PDF_PARSER:
+                loader = UnstructuredPaddlePDFLoader(self.file_path, ocr_engine, self.use_cpu)
+                texts_splitter = ChineseTextSplitter(pdf=True, sentence_size=sentence_size)
+                docs = loader.load_and_split(texts_splitter)
+            else:
+                loader = PdfLoader(filename=self.file_path, root_dir=os.path.dirname(self.file_path))
+                markdown_dir = loader.load_to_markdown()
+                docs = convert_markdown_to_langchaindoc(markdown_dir)
+                docs = self.pdf_process(docs)
+                # print(docs)
         elif self.file_path.lower().endswith(".jpg") or self.file_path.lower().endswith(
                 ".png") or self.file_path.lower().endswith(".jpeg"):
             loader = UnstructuredPaddleImageLoader(self.file_path, ocr_engine, self.use_cpu)
@@ -121,6 +149,7 @@ class LocalFile:
             debug_logger.info("using_zh_title_enhance %s", using_zh_title_enhance)
             docs = zh_title_enhance(docs)
         print('docs number:', len(docs))
+        # print(docs)
         # 不是csv，xlsx和FAQ的文件，需要再次分割
         if not self.file_path.lower().endswith(".csv") and not self.file_path.lower().endswith(".xlsx") and not self.file_path == 'FAQ':
             new_docs = []
@@ -136,7 +165,8 @@ class LocalFile:
                         new_docs.append(doc)
             debug_logger.info(f"before 2nd split doc lens: {len(new_docs)}")
             if self.file_path.lower().endswith(".pdf"):
-                docs = pdf_text_splitter.split_documents(new_docs)
+                if USE_FAST_PDF_PARSER:
+                    docs = pdf_text_splitter.split_documents(new_docs)
             else:
                 docs = text_splitter.split_documents(new_docs)
             debug_logger.info(f"after 2nd split doc lens: {len(docs)}")

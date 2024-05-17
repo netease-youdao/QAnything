@@ -3,6 +3,19 @@
   <a href="./README.md">English</a> |
   <a href="./README_zh.md">简体中文</a>
 </p>
+
+
+<h1><span style="color:red;">重要的事情说三遍！</span></h1>
+
+# [2024-05-17:最新的安装和使用文档](https://github.com/netease-youdao/QAnything/blob/master/QAnything%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.md) 
+# [2024-05-17:最新的安装和使用文档](https://github.com/netease-youdao/QAnything/blob/master/QAnything%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.md) 
+# [2024-05-17:最新的安装和使用文档](https://github.com/netease-youdao/QAnything/blob/master/QAnything%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.md)
+
+## 商务问题联系方式：
+### 010-82558901
+![](docs/images/business.jpeg)
+
+
 ## 安装 
 
 要求:

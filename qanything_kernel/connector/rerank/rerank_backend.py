@@ -3,7 +3,7 @@ from copy import deepcopy
 from typing import List
 from qanything_kernel.configs.model_config import LOCAL_RERANK_MODEL_PATH, LOCAL_RERANK_MAX_LENGTH, \
     LOCAL_RERANK_MODEL_NAME, \
-    LOCAL_RERANK_BATCH, LOCAL_RERANK_PATH, LOCAL_RERANK_REPO
+    LOCAL_RERANK_BATCH, LOCAL_RERANK_PATH, LOCAL_RERANK_REPO, LOCAL_RERANK_WORKERS
 from qanything_kernel.utils.custom_log import debug_logger
 from qanything_kernel.utils.general_utils import get_time
 from modelscope import snapshot_download
@@ -32,6 +32,7 @@ class RerankBackend(ABC):
         self.batch_size = LOCAL_RERANK_BATCH
         self.max_length = LOCAL_RERANK_MAX_LENGTH
         self.return_tensors = None
+        self.workers = LOCAL_RERANK_WORKERS
     
     @abstractmethod
     def inference(self, batch) -> List:
@@ -90,7 +91,7 @@ class RerankBackend(ABC):
         tot_batches, merge_inputs_idxs_sort = self.tokenize_preproc(query, passages)
 
         tot_scores = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.workers) as executor:
             futures = []
             for k in range(0, len(tot_batches), self.batch_size):
                 batch = self._tokenizer.pad(
