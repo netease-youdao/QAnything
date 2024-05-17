@@ -121,16 +121,16 @@ export default defineConfig(({ mode }) => {
       },
       cors: true,
       proxy: {
-        // '/local_doc_qa': {
-        //   target: 'https://qanything-open-source-demo.site.youdao.com/api',
-        //   changeOrigin: true,
-        //   rewrite: path => path.replace(/^\/local_doc_qa/, '/local_doc_qa'),
-        // },
-        [env.VITE_APP_API_PREFIX]: {
-		      target: env.VITE_APP_API_HOST,
+        '/local_doc_qa': {
+          target: 'https://qanything-open-source-demo.site.youdao.com/api',
           changeOrigin: true,
-		      secure: false,
+          rewrite: path => path.replace(/^\/local_doc_qa/, '/local_doc_qa'),
         },
+        // [env.VITE_APP_API_PREFIX]: {
+		    //   target: env.VITE_APP_API_HOST,
+        //   changeOrigin: true,
+		    //   secure: false,
+        // },
       },
     },
   };

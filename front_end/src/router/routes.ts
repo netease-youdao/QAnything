@@ -72,6 +72,11 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/views/bots/children/BotShare.vue'),
   },
   {
+    path: '/error',
+    name: 'error',
+    component: () => import('@/views/Error.vue'),
+  },
+  {
     path: '/:catchAll(.*)',
     redirect: '/home',
   },

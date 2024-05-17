@@ -100,7 +100,7 @@ import UploadList from '@/components/UploadList.vue';
 import { pageStatus } from '@/utils/enum';
 import { IFileListItem } from '@/utils/types';
 import { message } from 'ant-design-vue';
-import { userId } from '@/services/urlConfig';
+import localStorage from '@/utils/localStorage';
 import { getLanguage } from '@/language/index';
 import { useLanguage } from '@/store/useLanguage';
 
@@ -243,7 +243,7 @@ const uplolad = async () => {
     formData.append('files', list[i]?.file);
   }
   formData.append('kb_id', currentId.value);
-  formData.append('user_id', userId);
+  formData.append('user_id', localStorage.get('userId'));
   // 上传模式，soft：文件名重复的文件不再上传，strong：文件名重复的文件强制上传
   formData.append('mode', 'strong');
 

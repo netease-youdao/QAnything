@@ -178,7 +178,7 @@ import { useChatSource } from '@/store/useChatSource';
 import { Typewriter } from '@/utils/typewriter';
 import DefaultModal from './DefaultModal.vue';
 import html2canvas from 'html2canvas';
-import { userId } from '@/services/urlConfig';
+import localStorage from '@/utils/localStorage';
 import { getLanguage } from '@/language/index';
 import { useLanguage } from '@/store/useLanguage';
 import urlResquest from '@/services/urlConfig';
@@ -314,7 +314,7 @@ const send = () => {
       Accept: ['text/event-stream', 'application/json'],
     },
     body: JSON.stringify({
-      user_id: userId,
+      user_id: localStorage.get('userId'),
       kb_ids: selectList.value,
       history: history.value,
       question: q,

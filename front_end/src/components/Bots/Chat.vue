@@ -217,7 +217,7 @@ import DefaultModal from '../DefaultModal.vue';
 import html2canvas from 'html2canvas';
 import { getLanguage } from '@/language/index';
 import { useLanguage } from '@/store/useLanguage';
-import { userId } from '@/services/urlConfig';
+import localStorage from '@/utils/localStorage';
 import urlResquest from '@/services/urlConfig';
 import { resultControl } from '@/utils/utils';
 
@@ -363,7 +363,7 @@ const send = () => {
     method: 'POST',
     headers: headers,
     body: JSON.stringify({
-      user_id: userId,
+      user_id: localStorage.get('userId'),
       bot_id: props.botInfo.bot_id,
       history: control.value ? history.value : [],
       question: q,

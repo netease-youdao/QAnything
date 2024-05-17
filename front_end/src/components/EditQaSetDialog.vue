@@ -177,7 +177,7 @@ import { getLanguage } from '@/language/index';
 import { fileStatus } from '@/utils/enum';
 import { useLanguage } from '@/store/useLanguage';
 import { IFileListItem } from '@/utils/types';
-import { userId } from '@/services/urlConfig';
+import localStorage from '@/utils/localStorage';
 
 const { setEditModalVisible, setEditQaSet, getFaqList } = useOptiionList();
 const { editModalVisible, editQaSet, faqType } = storeToRefs(useOptiionList());
@@ -351,7 +351,7 @@ const uplolad = async () => {
   for (let i = 0; i < list.length; i++) {
     formData.append('files', list[i]?.file);
   }
-  formData.append('user_id', userId);
+  formData.append('user_id', localStorage.get('userId'));
   formData.append('kb_id', `${currentId.value}_FAQ`);
 
   fetch(apiBase + '/local_doc_qa/upload_faqs', {

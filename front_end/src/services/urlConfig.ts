@@ -26,6 +26,7 @@ interface IUrlConfig {
   [key: string]: IUrlValueConfig;
 }
 import services from '.';
+import localStorage from '@/utils/localStorage';
 
 export const userId = 'zzp';
 
@@ -45,7 +46,7 @@ const urlConfig: IUrlConfig = {
     url: '/local_doc_qa/list_knowledge_base',
     showLoading: true,
     param: {
-      user_id: userId,
+      user_id: localStorage.get('userId'),
     },
   },
   // 新建知识库
@@ -54,7 +55,7 @@ const urlConfig: IUrlConfig = {
     url: '/local_doc_qa/new_knowledge_base',
     showLoading: true,
     param: {
-      user_id: userId,
+      user_id: localStorage.get('userId'),
     },
   },
   // 上传文件
@@ -62,7 +63,7 @@ const urlConfig: IUrlConfig = {
     type: EUrlType.POST,
     url: '/local_doc_qa/upload_files',
     param: {
-      user_id: userId,
+      user_id: localStorage.get('userId'),
     },
   },
   // 删除知识库
@@ -70,7 +71,7 @@ const urlConfig: IUrlConfig = {
     type: EUrlType.POST,
     url: '/local_doc_qa/delete_knowledge_base',
     param: {
-      user_id: userId,
+      user_id: localStorage.get('userId'),
     },
   },
   // 删除文件
@@ -79,7 +80,7 @@ const urlConfig: IUrlConfig = {
     url: '/local_doc_qa/delete_files',
     showLoading: true,
     param: {
-      user_id: userId,
+      user_id: localStorage.get('userId'),
       kb_id: '',
       file_ids: [],
     },
@@ -89,7 +90,7 @@ const urlConfig: IUrlConfig = {
     type: EUrlType.POST,
     url: '/local_doc_qa/upload_weblink',
     param: {
-      user_id: userId,
+      user_id: localStorage.get('userId'),
     },
   },
   kbConfig: {
@@ -97,7 +98,7 @@ const urlConfig: IUrlConfig = {
     url: '/local_doc_qa/rename_knowledge_base',
     showLoading: true,
     param: {
-      user_id: userId,
+      user_id: localStorage.get('userId'),
       kb_id: '',
       new_kb_name: '',
     },
@@ -107,7 +108,7 @@ const urlConfig: IUrlConfig = {
     type: EUrlType.POST,
     url: '/local_doc_qa/list_files',
     param: {
-      user_id: userId,
+      user_id: localStorage.get('userId'),
       kb_id: '',
     },
   },
@@ -116,7 +117,7 @@ const urlConfig: IUrlConfig = {
     type: EUrlType.POST,
     url: '/local_doc_qa/new_bot',
     param: {
-      user_id: userId,
+      user_id: localStorage.get('userId'),
     },
   },
   // 更新Bot
@@ -124,7 +125,7 @@ const urlConfig: IUrlConfig = {
     type: EUrlType.POST,
     url: '/local_doc_qa/update_bot',
     param: {
-      user_id: userId,
+      user_id: localStorage.get('userId'),
     },
   },
   // 获取Bot信息/列表
@@ -132,7 +133,7 @@ const urlConfig: IUrlConfig = {
     type: EUrlType.POST,
     url: '/local_doc_qa/get_bot_info',
     param: {
-      user_id: userId,
+      user_id: localStorage.get('userId'),
     },
   },
   //删除Bot
@@ -140,7 +141,7 @@ const urlConfig: IUrlConfig = {
     type: EUrlType.POST,
     url: '/local_doc_qa/delete_bot',
     param: {
-      user_id: userId,
+      user_id: localStorage.get('userId'),
     },
   },
   //上传faq
@@ -148,7 +149,7 @@ const urlConfig: IUrlConfig = {
     type: EUrlType.POST,
     url: '/local_doc_qa/upload_faqs',
     param: {
-      user_id: userId,
+      user_id: localStorage.get('userId'),
     },
   },
   //获取文件base64
@@ -156,7 +157,7 @@ const urlConfig: IUrlConfig = {
     type: EUrlType.POST,
     url: '/local_doc_qa/get_file_base64',
     param: {
-      user_id: userId,
+      user_id: localStorage.get('userId'),
     },
   },
 };

@@ -8,7 +8,7 @@
  */
 
 export const useUser = defineStore(
-  'user',
+  'useUser',
   () => {
     const userInfo = ref({
       token: '',

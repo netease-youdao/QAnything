@@ -14,7 +14,7 @@
     </div>
   </a-config-provider>
 </template>
-<script>
+<script lang="ts">
 import zhCN from 'ant-design-vue/es/locale/zh_CN';
 
 export default {
@@ -24,6 +24,49 @@ export default {
     };
   },
 };
+</script>
+<script setup lang="ts">
+import { useLogin } from '@/store/useLogin';
+import { useRouter } from 'vue-router';
+import localStorage from '@/utils/localStorage';
+import urlResquest from '@/services/loginUrlConfig';
+
+const route = useRouter();
+const { setErrorTxt } = useLogin();
+
+localStorage.set('userId', 'zzp');
+
+route.beforeEach(async (to, from, next) => {
+  next();
+});
+
+getTokenInfo();
+
+async function getTokenInfo() {
+  try {
+    const loginRes = await urlResquest.loginForToken({ username: 'WYYD', password: 'P@ssword' });
+    console.log(loginRes);
+    if (loginRes.code === 200) {
+      localStorage.set('yongfengToken', loginRes.retObj.token);
+      localStorage.set('userId', `yd${loginRes.retObj.user.id}`);
+      const checkRes = await urlResquest.checkUser({ encodeLoginName: 'pw2sBCINBJzNShAIMUoWqw==' });
+      if (checkRes.code !== 200) {
+        throw new Error('用户校验失败，用户不合法');
+      } else {
+        const res = await urlResquest.getLoginTime({
+          code: '8nXGpQIez0cq8OFxSy1o3V5QQtWAuwdWl0Kcu2ntTJ8=',
+        });
+        console.log(res);
+      }
+    } else {
+      throw new Error('登陆失败');
+    }
+  } catch (e) {
+    console.log('loginerr', e);
+    setErrorTxt(e);
+    return false;
+  }
+}
 </script>
 
 <style lang="scss">
