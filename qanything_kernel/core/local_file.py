@@ -29,7 +29,7 @@ text_splitter = RecursiveCharacterTextSplitter(
     length_function=num_tokens,
 )
 
-pdf_text_splitter = RecursiveCharacterTextSplitter(chunk_size=1200, chunk_overlap=200, length_function=num_tokens)
+pdf_text_splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=200, length_function=num_tokens)
 
 
 class LocalFile:
@@ -66,6 +66,26 @@ class LocalFile:
                 f.write(self.file_content)
         debug_logger.info(f'success init localfile {self.file_name}')
 
+    @staticmethod
+    def pdf_process(dos: List[Document]):
+        new_docs = []
+        for doc in dos:
+            # metadata={'title_lst': ['#樊昊天个人简历', '##教育经历'], 'has_table': False}
+            title_lst = doc.metadata['title_lst']
+            # 删除所有仅有多个#的title
+            title_lst = [t for t in title_lst if t.replace('#', '') != '']
+            has_table = doc.metadata['has_table']
+            if has_table:
+                doc.page_content = '\n'.join(title_lst) + '\n本段为表格，内容如下：' + doc.page_content
+                new_docs.append(doc)
+                continue
+            # doc.page_content = '\n'.join(title_lst) + '\n' + doc.page_content
+            slices = pdf_text_splitter.split_documents([doc])
+            for idx, slice in enumerate(slices):
+                slice.page_content = '\n'.join(title_lst) + f'\n######第{idx+1}段内容如下：\n' + slice.page_content
+            new_docs.extend(slices)
+        return new_docs
+
     @get_time
     def split_file_to_docs(self, ocr_engine: Callable, sentence_size=SENTENCE_SIZE,
                            using_zh_title_enhance=ZH_TITLE_ENHANCE):
@@ -92,6 +112,8 @@ class LocalFile:
                 loader = PdfLoader(filename=self.file_path, root_dir=os.path.dirname(self.file_path))
                 markdown_dir = loader.load_to_markdown()
                 docs = convert_markdown_to_langchaindoc(markdown_dir)
+                docs = self.pdf_process(docs)
+                # print(docs)
         elif self.file_path.lower().endswith(".jpg") or self.file_path.lower().endswith(
                 ".png") or self.file_path.lower().endswith(".jpeg"):
             loader = UnstructuredPaddleImageLoader(self.file_path, ocr_engine, self.use_cpu)
@@ -143,7 +165,8 @@ class LocalFile:
                         new_docs.append(doc)
             debug_logger.info(f"before 2nd split doc lens: {len(new_docs)}")
             if self.file_path.lower().endswith(".pdf"):
-                docs = pdf_text_splitter.split_documents(new_docs)
+                if USE_FAST_PDF_PARSER:
+                    docs = pdf_text_splitter.split_documents(new_docs)
             else:
                 docs = text_splitter.split_documents(new_docs)
             debug_logger.info(f"after 2nd split doc lens: {len(docs)}")

@@ -244,16 +244,6 @@ def convert_markdown_to_langchaindoc(md_file):
     return doc_lst
 
 
-    
-
-
-
-
-
-
-
-
-
 if __name__ =='__main__':
     doc_lst = convert_markdown_to_langchaindoc('/ssd8/exec/qinhaibo/code/RAG/release/git/document-layout-parser/results/樊昊天个人简历_1715841225/樊昊天个人简历_md/樊昊天个人简历.md')
     print(doc_lst)
