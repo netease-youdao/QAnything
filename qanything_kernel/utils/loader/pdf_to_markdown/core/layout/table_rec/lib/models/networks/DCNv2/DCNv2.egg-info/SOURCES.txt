@@ -1,0 +1,13 @@
+LICENSE
+setup.py
+/ssd8/exec/huangjy/AdvancedLiterateMachinery/DocumentUnderstanding/LORE-TSR/src/lib/models/networks/DCNv2/src/vision.cpp
+/ssd8/exec/huangjy/AdvancedLiterateMachinery/DocumentUnderstanding/LORE-TSR/src/lib/models/networks/DCNv2/src/cpu/dcn_v2_cpu.cpp
+/ssd8/exec/huangjy/AdvancedLiterateMachinery/DocumentUnderstanding/LORE-TSR/src/lib/models/networks/DCNv2/src/cpu/dcn_v2_im2col_cpu.cpp
+/ssd8/exec/huangjy/AdvancedLiterateMachinery/DocumentUnderstanding/LORE-TSR/src/lib/models/networks/DCNv2/src/cpu/dcn_v2_psroi_pooling_cpu.cpp
+/ssd8/exec/huangjy/AdvancedLiterateMachinery/DocumentUnderstanding/LORE-TSR/src/lib/models/networks/DCNv2/src/cuda/dcn_v2_cuda.cu
+/ssd8/exec/huangjy/AdvancedLiterateMachinery/DocumentUnderstanding/LORE-TSR/src/lib/models/networks/DCNv2/src/cuda/dcn_v2_im2col_cuda.cu
+/ssd8/exec/huangjy/AdvancedLiterateMachinery/DocumentUnderstanding/LORE-TSR/src/lib/models/networks/DCNv2/src/cuda/dcn_v2_psroi_pooling_cuda.cu
+DCNv2.egg-info/PKG-INFO
+DCNv2.egg-info/SOURCES.txt
+DCNv2.egg-info/dependency_links.txt
+DCNv2.egg-info/top_level.txt
