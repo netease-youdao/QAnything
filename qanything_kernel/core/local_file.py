@@ -67,6 +67,45 @@ class LocalFile:
         debug_logger.info(f'success init localfile {self.file_name}')
 
     @staticmethod
+    def table_process(doc):
+        table_infos = get_table_infos(doc.page_content)
+        title_lst = doc.metadata['title_lst']
+        new_docs = []
+        if table_infos is not None:
+            tmp_content = '\n'.join(title_lst) + '\n' + doc.page_content
+            if num_tokens(tmp_content) <= 800:
+                doc.page_content = tmp_content
+                return [doc]
+            head_line = table_infos['head_line']
+            end_line = table_infos['end_line']
+            table_head = table_infos['head']
+            if head_line != 0:
+                tmp_doc = Document(
+                    page_content='\n'.join(title_lst) + '\n' + '\n'.join(table_infos['lines'][:head_line]),
+                    metadata=doc.metadata)
+                new_docs.append(tmp_doc)
+            # 将head_line + 2:end_line的表格切分，每800的长度切分一个doc
+            tmp_doc = '\n'.join(title_lst) + '\n' + table_head
+            for line in table_infos['lines'][head_line + 2:end_line + 1]:
+                tmp_doc += '\n' + line
+                if num_tokens(tmp_doc) + num_tokens(line) > 800:
+                    tmp_doc = Document(page_content=tmp_doc, metadata=doc.metadata)
+                    new_docs.append(tmp_doc)
+                    tmp_doc = '\n'.join(title_lst) + '\n' + table_head
+            if tmp_doc != '\n'.join(title_lst) + '\n' + table_head:
+                tmp_doc = Document(page_content=tmp_doc, metadata=doc.metadata)
+                new_docs.append(tmp_doc)
+            if end_line != len(table_infos['lines']) - 1:
+                tmp_doc = Document(
+                    page_content='\n'.join(title_lst) + '\n' + '\n'.join(table_infos['lines'][end_line:]),
+                    metadata=doc.metadata)
+                new_docs.append(tmp_doc)
+            debug_logger.info(f"TABLE SLICES: {new_docs}")
+        else:
+            return None
+        return new_docs
+
+    @staticmethod
     def pdf_process(dos: List[Document]):
         new_docs = []
         for doc in dos:
@@ -76,9 +115,10 @@ class LocalFile:
             title_lst = [t for t in title_lst if t.replace('#', '') != '']
             has_table = doc.metadata['has_table']
             if has_table:
-                doc.page_content = '\n'.join(title_lst) + '\n本段为表格，内容如下：' + doc.page_content
-                new_docs.append(doc)
-                continue
+                table_docs = LocalFile.table_process(doc)
+                if table_docs:
+                    new_docs.extend(table_docs)
+                    continue
             # doc.page_content = '\n'.join(title_lst) + '\n' + doc.page_content
             slices = pdf_text_splitter.split_documents([doc])
             for idx, slice in enumerate(slices):
@@ -109,11 +149,16 @@ class LocalFile:
                 texts_splitter = ChineseTextSplitter(pdf=True, sentence_size=sentence_size)
                 docs = loader.load_and_split(texts_splitter)
             else:
-                loader = PdfLoader(filename=self.file_path, root_dir=os.path.dirname(self.file_path))
-                markdown_dir = loader.load_to_markdown()
-                docs = convert_markdown_to_langchaindoc(markdown_dir)
-                docs = self.pdf_process(docs)
-                # print(docs)
+                try:
+                    loader = PdfLoader(filename=self.file_path, root_dir=os.path.dirname(self.file_path))
+                    markdown_dir = loader.load_to_markdown()
+                    docs = convert_markdown_to_langchaindoc(markdown_dir)
+                    docs = self.pdf_process(docs)
+                except Exception as e:
+                    debug_logger.warning(f'Error in Powerful PDF parsing: {e}, use fast PDF parser instead.')
+                    loader = UnstructuredPaddlePDFLoader(self.file_path, ocr_engine, self.use_cpu)
+                    texts_splitter = ChineseTextSplitter(pdf=True, sentence_size=sentence_size)
+                    docs = loader.load_and_split(texts_splitter)
         elif self.file_path.lower().endswith(".jpg") or self.file_path.lower().endswith(
                 ".png") or self.file_path.lower().endswith(".jpeg"):
             loader = UnstructuredPaddleImageLoader(self.file_path, ocr_engine, self.use_cpu)
