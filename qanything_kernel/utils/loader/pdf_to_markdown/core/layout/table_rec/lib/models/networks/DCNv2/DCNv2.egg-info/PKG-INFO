@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: DCNv2
+Version: 0.1
+Summary: deformable convolutional networks
+Home-page: https://github.com/charlesshang/DCNv2
+Author: charlesshang
+License-File: LICENSE
