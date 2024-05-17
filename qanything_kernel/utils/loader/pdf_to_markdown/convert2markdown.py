@@ -39,8 +39,6 @@ def json2markdown(json_dir, markdown_dir):
                 para_before = para
     # print(pdf, flush=True)
     for p in pdf:
-        # TODO 单个出现的-会导致markdown分割出错，暂时替换掉
-        p = re.sub(r'(?<!-)-(?!-)', '_', p)
         print(p, file=open(md, 'a'))
     return '\n'.join(pdf)
         

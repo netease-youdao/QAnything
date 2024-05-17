@@ -10,7 +10,7 @@ os_system = platform.system()
 # 默认的CUDA设备
 CUDA_DEVICE = '0'
 # 设置是否使用快速PDF解析器，设置为False时，使用优化后的PDF解析器，但速度下降
-USE_FAST_PDF_PARSER = False
+USE_FAST_PDF_PARSER = True
 # 设置rerank的batch大小，16GB内存建议设置为8，32GB内存建议设置为16
 LOCAL_RERANK_BATCH = 8
 # 设置rerank的多线程worker数量，默认设置为4，根据机器性能调整
