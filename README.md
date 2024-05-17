@@ -58,6 +58,17 @@
 
 </details>
 
+# 🚀 Important Updates 
+<h1><span style="color:red;">Important things should be said three times.</span></h1>
+
+# [2024-05-17:Latest Installation and Usage Documentation](https://github.com/netease-youdao/QAnything/blob/master/QAnything%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.md) 
+# [2024-05-17:Latest Installation and Usage Documentation](https://github.com/netease-youdao/QAnything/blob/master/QAnything%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.md) 
+# [2024-05-17:Latest Installation and Usage Documentation](https://github.com/netease-youdao/QAnything/blob/master/QAnything%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.md)
+
+## Business contact information：
+### 010-82558901
+![](docs/images/business.jpeg)
+
 # What is QAnything?
 `QAnything`(**Q**uestion and **A**nswer based on **Anything**) is a local knowledge base question-answering system designed to support a wide range of file formats and databases, allowing for offline installation and use.
 
@@ -135,6 +146,7 @@ If you need to use it for commercial purposes, please follow the license of Qwen
 
 # 🚀 Latest Updates
 
+- ***2024-04-26***: **Support web search, FAQ, custom bot, file traceability preview etc.** - See More👉 [v1.4.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.4.0-python)
 - ***2024-04-03***: **Support installation in a pure Python environment.Support hybrid search.** - See More👉 [v1.3.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.3.0)
 - ***2024-01-29***: **Support for custom large models, including OpenAI API and other open-source large models, with a minimum GPU requirement of GTX 1050Ti, greatly improving deployment, debugging, and user experience.** - See More👉 [v1.2.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.2.0)
 - ***2024-01-23***: **Enable rerank by default and fix various issues when starting on Windows.** - See More👉 [v1.1.1](https://github.com/netease-youdao/QAnything/releases/tag/v1.1.1)
@@ -152,31 +164,37 @@ If you need to use it for commercial purposes, please follow the license of Qwen
 
 # Getting Started
 ## Installation Methods
-We provide three installation methods:
-
-- [Pure Python Environment Installation](#installationpure-python-environment)
-- [Installation whith Docker](#installationdocker)
-- [Offline installation](#offline-install)
+We provide two versions:
+Python version and Docker version
+The Python version is suitable for quickly experiencing new features, while the Docker version is suitable for secondary development and use in actual production environments, with new features temporarily not supported.
 
 The features corresponding to different installation methods are as follows:
 
-| features                | [Installation(Pure Python Environment)](#installationpure-python-environment)   |    [Installation(Docker)](#installationdocker)     |       [Offline Install](#offline-install)               |  
-|:-------------------------------|:----------------------:|:----------------------:|:-------------------------:|
-| for production environment     |   ❌                   |    ✅                  |             ✅            |  
-| support offline installation   |   ❌                   |    ❌                  |             ✅            |
-| support Mac                    |   ✅                   |    ❌                  |             ❌            |  
-| support Linux                  |   ✅                   |    ✅                  |             ✅            |  
-| support Windows WSL            |   ✅                   |    ✅                  |             ✅            |  
-| support CPU only               |   ✅                   |    ❌                  |             ❌            |    
-| support hybrid search          |   ❌                   |    ✅                  |             ✅            |
-| support web search             |   ✅                   |    ❌                  |             ❌            |
-| support FAQ                    |   ✅                   |    ❌                  |             ❌            |
-| support BOT                    |   ✅                   |    ❌                  |             ❌            |
-| support Traceability           |   ✅                   |    ❌                  |             ❌            |
-| support Log retrieval          |   ✅                   |    ❌                  |             ❌            |
-| support OpenCloudOS            |   ✅                   |    ❌                  |             ❌            |
-| support audio file             |   ✅                   |    ❌                  |             ❌            |
-| support multiple concurrency   |   ❌                   |    ✅                  |             ✅            |
+| features                                                        | python version                                                                | docker version                                                                   | Explanation                                                             |
+|-----------------------------------------------------------------|-------------------------------------------------------------------------------|----------------------------------------------------------------------------------|--------------------------------------------------------------|
+| Detailed installation document                                  | ✅ [Details](./QAnything使用说明.md)                                               | ✅ [Details](./QAnything使用说明.md)                                                  |                                                              |
+| Support API                                                     | ✅ [Details](https://github.com/netease-youdao/QAnything/blob/qanything-python/docs/API.md) | ✅ [Details](https://github.com/netease-youdao/QAnything/blob/master/docs/API.md) |                                                              |
+| Support production environment                                  | ❌                                                                             | ✅                                                                                |                                                              |
+| Support offline installation (private deployment)               | ❌                                                                             | ✅ [Details](./QAnything使用说明.md)                                                  |                                                              |
+| Support multiple concurrency                                    | ❌                                                                             | ✅ [Details](./QAnything使用说明.md)                                                  | When using API instead of local large models in Python, manual settings are possible.[Details](./QAnything使用说明.md)                         |
+| Support multi-card inference                                    | ❌                                                                             | ✅ [Details](./QAnything使用说明.md)                                                                    |                                                              |
+| Support Mac (M series chips)                                    | ✅                                                                             | ❌                                                                                | Currently running the local LLM on Mac relies on llamacpp, and the question-answering speed is slow. It is recommended to use the OpenAI API to call the model service. |
+| Support Linux                                                   | ✅                                                                             | ✅                                                                                | Python version defaults to onnxruntime-gpu on Linux, automatically switching to onnxruntime when glibc<2.28. |
+| Support windows WSL                                             | ✅                                                                             | ✅                                                                                |                                                              |
+| Support CPU only                                                | ✅ [Details](./QAnything使用说明.md)                                                                 | ❌                                                                                |                                                              |
+| Support hybrid search (BM25+embedding)                          | ❌                                                                             | ✅                                                                                |                                                              |
+| Support web search (need VPN)                                   | ✅ [Details](./QAnything使用说明.md)                                                                 | ❌                                                                                | Docker version plan.                                                 |
+| Support FAQ                                                     | ✅ [Details](./QAnything使用说明.md)                                                           | ❌                                                                                | Docker version plan.                                                  |
+| Support BOT                                                     | ✅ [Details](./QAnything使用说明.md)                                                           | ❌                                                                                | Docker version plan.                                                  |
+| Support Traceability                                            | ✅ [Details](./QAnything使用说明.md)                                                            | ❌                                                                                | Docker version plan.                                                  |
+| Support Log retrieval by API                                    | ✅ [Details](./QAnything使用说明.md)                                                          | ❌                                                                                | Docker version plan.                                                  |
+| Support audio file                                              | ✅                                                                             | ❌                                                                                | In the Docker version plan, uploading files will support mp3 and wav format files.                              |
+| Support OpenCloudOS                                             | ✅[Details](./QAnything使用说明.md)                                                    | ❌                                                                                |                                                              |
+| Support interfaces compatible with Openaiapi (including ollama) | ✅ [Details](./QAnything使用说明.md)                                             | ✅ [Details](./QAnything使用说明.md)                                                | The api_key, base_url, model and other parameters need to be set manually.                              |
+| PDF parsing performance improvement (including tables)          | ✅ [Details](./QAnything使用说明.md)                                                | ❌                                                                                |                                                              |
+| User-defined configuration (Experimental: Improve speed)        | ✅ [Details](./QAnything使用说明.md)                                                       | ❌                                                                                |                                                              |
+| Improvement in parsing performance of other file types          | ❌                                                                             | ❌                                                                                | The next version is expected to be released in 15 days.                                                |
+
 
 ## Installation(Pure Python environment)
 If you prefer not to use Docker for installation, we provide a [Pure Python Installation Guide](https://github.com/netease-youdao/QAnything/blob/qanything-python/README.md). The installation of a pure Python environment is intended for demo purposes only and is not recommended for deployment in a production environment.

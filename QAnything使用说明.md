@@ -8,29 +8,30 @@
 ![](docs/images/business.jpeg)
 
 
-| 特性                               | python版本                     | docker版本                      | 说明                                                                |
-|----------------------------------|------------------------------|-------------------------------|-------------------------------------------------------------------|
-| 详细安装文档                     | ✅ [详情](#Python版本使用指南)        | ✅ [详情](#docker版本使用指南)         |                                                                   |
-| API支持                     | ✅ [详情](https://github.com/netease-youdao/QAnything/blob/qanything-python/docs/API.md)                     | ✅ [详情](https://github.com/netease-youdao/QAnything/blob/master/docs/API.md)                      |                                                                   |
-| 生产环境（小型生产环境）                     | ❌                            | ✅                             |                                                                   |
-| 断网安装（私有化部署）                      | ❌                            | ✅  [详情](#断网安装)                |                                                                   |
-| 支持多并发                            | ❌                            | ✅  [详情](#多并发)                 | python在使用API而非本地大模型时可手动设置：[详情](#多并发)                              |
-| 支持多卡推理                           | ❌                            | ✅  [详情](#多卡推理)                |                                                                   |
-| 支持Mac（M系列芯片）                     | ✅                            | ❌                             | 目前在mac下运行本地LLM依赖llamacpp，问答速度较慢（最长数分钟），建议使用Openai-API的方式调用模型服务                     |
-| 支持Linux                          | ✅                            | ✅                             | python版本Linux下（非cpu模型）依赖onnxruntime-gpu的cuda12.x版本，其依赖glibc>=2.28 |
-| 支持windows WSL                    | ✅                            | ✅                             |                                                                   |
-| 支持纯CPU环境                         | ✅  [详情](#纯CPU模式)             | ❌                             |                                                                   |
-| 支持混合检索（BM25+embedding）           | ❌                            | ✅                             |                                                                   |
-| 支持联网检索（需外网VPN）                   | ✅  [详情](#联网检索)               | ❌                             | docker版本计划中                                                       |
-| 支持FAQ问答                          | ✅  [详情](#支持FAQ)              | ❌                             | docker版本计划中                                                       |
-| 支持自定义机器人（可绑定知识库，可分享）             | ✅  [详情](#支持BOT)              | ❌                             | docker版本计划中                                                       |
-| 支持文件溯源（数据来源可直接点击打开）              | ✅  [详情](#文件溯源)               | ❌                             | docker版本计划中                                                       |
-| 支持问答日志检索（暂只支持通过API调用）            | ✅  [详情](#问答日志检索)             | ❌                             | docker版本计划中                                                       |
-| 支持解析语音文件（依赖faster_whisper，解析速度慢） | ✅                            | ❌                             | docker版本计划中，上传文件时可支持mp3，wav格式文件                                   |
-| 支持OpenCloudOS                    | ✅  [详情](#支持OpenCloudOS)      | ❌                             |                                                                   |
-| 支持与OpenAI接口兼容的其他开源大模型服务(包括ollama) | ✅  [详情](#python版OpenaiAI接口兼容) | ✅  [详情](#docker版OpenaiAI接口兼容) | 需手动修改api_key，base_url，model等参数                                    |
-| pdf（包含表格）解析效果+++                 | ❌                            | ❌                             | 预计下个版本发布（15d）                                                     |
-| 其他文件类型解析效果+++                    | ❌                            | ❌                             | 预计下下个版本发布（30d）                                                    |
+| 特性                                | python版本                                                                     | docker版本                   | 说明                                                             |
+|-----------------------------------|------------------------------------------------------------------------------|----------------------------|----------------------------------------------------------------|
+| 详细安装文档                            | ✅ [详情](#Python版本使用指南)                                                        | ✅ [详情](#docker版本使用指南)      |                                                                |
+| API支持                             | ✅ [详情](https://github.com/netease-youdao/QAnything/blob/qanything-python/docs/API.md) | ✅ [详情](https://github.com/netease-youdao/QAnything/blob/master/docs/API.md)            |                                                                |
+| 生产环境（小型生产环境）                      | ❌                                                                            | ✅                          |                                                                |
+| 断网安装（私有化部署）                       | ❌                                                                            | ✅ [详情](#断网安装)              |                                                                |
+| 支持多并发                             | ❌                                                                            | ✅ [详情](#多并发)               | python在使用API而非本地大模型时可手动设置：[详情](#多并发)                           |
+| 支持多卡推理                            | ❌                                                                            | ✅ [详情](#多卡推理)              |                                                                |
+| 支持Mac（M系列芯片）                      | ✅                                                                            | ❌                          | 目前在mac下运行本地LLM依赖llamacpp，问答速度较慢（最长数分钟），建议使用Openai-API的方式调用模型服务 |
+| 支持Linux                           | ✅                                                                            | ✅                          | python版本Linux下默认使用onnxruntime-gpu，glibc<2.28时自动切换为onnxruntime  |
+| 支持windows WSL                     | ✅                                                                            | ✅                          |                                                                |
+| 支持纯CPU环境                          | ✅ [详情](#纯CPU模式)                                                              | ❌                          |                                                                |
+| 支持混合检索（BM25+embedding）            | ❌                                                                            | ✅                          |                                                                |
+| 支持联网检索（需外网VPN）                    | ✅ [详情](#联网检索)                                                                | ❌                          | docker版本计划中                                                    |
+| 支持FAQ问答                           | ✅ [详情](#支持FAQ)                                                               | ❌                          | docker版本计划中                                                    |
+| 支持自定义机器人（可绑定知识库，可分享）              | ✅ [详情](#支持BOT)                                                               | ❌                          | docker版本计划中                                                    |
+| 支持文件溯源（数据来源可直接点击打开）               | ✅ [详情](#文件溯源)                                                                | ❌                          | docker版本计划中                                                    |
+| 支持问答日志检索（暂只支持通过API调用）             | ✅ [详情](#问答日志检索)                                                              | ❌                          | docker版本计划中                                                    |
+| 支持解析语音文件（依赖faster_whisper，解析速度慢）  | ✅                                                                            | ❌                          | docker版本计划中，上传文件时可支持mp3，wav格式文件                                |
+| 支持OpenCloudOS                     | ✅[详情](#支持OpenCloudOS)                                                        | ❌                          |                                                                |
+| 支持与OpenAI接口兼容的其他开源大模型服务(包括ollama) | ✅ [详情](#python版OpenaiAI接口兼容)                                                 | ✅ [详情](#docker版OpenaiAI接口兼容) | 需手动修改api_key，base_url，model等参数                                 |
+| pdf（包含表格）解析效果+++                  | ✅ [详情:需手动开启](#pdf包含表格解析效果)                                                              | ❌                          |                                                                |
+| 用户自定义配置（实验性：提升速度）                 | ✅ [详情:需手动开启](#用户自定义配置实验性提升速度)                                                                    | ❌                          |                                                                |
+| 其他文件类型解析效果+++                     | ❌                                                                            | ❌                          | 预计下个版本发布（15d）                                                  |
 
 ## docker版本使用指南：
 
@@ -443,9 +444,9 @@ python scripts/stream_file.py <kb_id> # print llm res
 
 - Python 3.10+ (建议使用aoaconda3来管理Python环境)
 - System 
-  - Linux: CPU模式：无，非CPU模式：glibc 2.28+ and Cuda 12.0+ （glibc2.28来源于onnxruntime-gpu cuda12.x版本的依赖）
+  - Linux: CPU模式：无，非CPU模式：glibc 2.28+ and Cuda 12.0+ （来源于onnxruntime-gpu cuda12.x版本的依赖，如果低于2.28自动切换onnxruntime）
   - Windows: CPU模式：WSL with Ubuntu 18.04+ ，非CPU模式：WSL with Ubuntu 20.04+ 和 桌面版GEFORCE EXPERIENCE 535.104+
-  - MacOS（M1/M2/M3）: CPU模式：无，非CPU模式：Xcode 15.0+
+  - MacOS（M1/M2/M3）: 使用Openai-API兼容接口模式：无，本地大模型模式：Xcode 15.0+（llamacpp依赖Xcode）
 
 <h3><span style="color:red;">请创建一个干净的Python虚拟环境，以避免潜在冲突（推荐使用Anaconda3）。</span></h3>
 
@@ -800,4 +801,28 @@ bash scripts/base_run.sh -s "M1mac" -w 2 -m 19530 -q 8777 -o -b 'https://dashsco
 bash scripts/base_run.sh -s "LinuxOrWSL" -w 4 -m 19530 -q 8777 -o -b 'http://localhost:11434/v1' -k 'ollama' -n 'qwen:32b' -l '4096'
 # Mac上
 bash scripts/base_run.sh -s "M1mac" -w 2 -m 19530 -q 8777 -o -b 'http://localhost:11434/v1' -k 'ollama' -n 'qwen:32b' -l '4096'
+```
+
+### pdf（包含表格）解析效果+++
+默认使用快速PDF解析器，解析速度快，但是解析效果一般，如果需要更好的解析效果，可以使用以下方式手动开启强力解析器：
+典型耗时对比：
+环境：Mac M1Pro 16GB，
+单页PDF解析耗时：快速解析器耗时约1/30s，强力解析器耗时约1s
+原理：快速解析器主要依赖PyMuPDF，强力解析器则使用了表格解析模型和版面分析模型，并做了后处理优化
+
+#### 开启强力解析器的方式：
+[设置此处的 USE_FAST_PDF_PARSER = False](https://github.com/netease-youdao/QAnything/blob/qanything-python/qanything_kernel/configs/model_config.py#L13)
+
+### 用户自定义配置（实验性：提升速度）
+[代码位置](https://github.com/netease-youdao/QAnything/blob/qanything-python/qanything_kernel/configs/model_config.py#L15)
+```bash
+# 根据实际情况调整以下参数，对硬件要求更高，但是速度更快
+# 设置rerank的batch大小，16GB内存建议设置为8，32GB内存建议设置为16
+LOCAL_RERANK_BATCH = 8
+# 设置rerank的多线程worker数量，默认设置为4，根据机器性能调整
+LOCAL_RERANK_WORKERS = 4
+# 设置embed的batch大小，16GB内存建议设置为8，32GB内存建议设置为16
+LOCAL_EMBED_BATCH = 8
+# 设置embed的多线程worker数量，默认设置为4，根据机器性能调整
+LOCAL_EMBED_WORKERS = 4
 ```
