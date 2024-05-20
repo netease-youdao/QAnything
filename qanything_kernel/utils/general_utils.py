@@ -22,7 +22,8 @@ from openpyxl import load_workbook
 
 __all__ = ['write_check_file', 'isURL', 'format_source_documents', 'get_time', 'safe_get', 'truncate_filename',
            'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens', 'download_file', 
-           'get_gpu_memory_utilization', 'check_package_version', 'simplify_filename', 'check_and_transform_excel', 'export_qalogs_to_excel']
+           'get_gpu_memory_utilization', 'check_package_version', 'simplify_filename', 'check_and_transform_excel',
+           'export_qalogs_to_excel', 'get_table_infos']
 
 
 def get_invalid_user_id_msg(user_id):
@@ -286,3 +287,27 @@ def export_qalogs_to_excel(qalogs, columns, filename: str):
     workbook.save(file_path)
     debug_logger.info(f"Data exported to {file_path} successfully.")
     return file_path
+
+
+def get_table_infos(markdown_str):
+    lines = markdown_str.split('\n')
+    if len(lines) < 2:
+        return None
+    head_line = None
+    end_line = None
+    for i in range(len(lines) - 1):
+        if '|' in lines[i] and '|' in lines[i + 1]:
+            separator_line = lines[i + 1].strip()
+            if separator_line.startswith('|') and separator_line.endswith('|'):
+                separator_parts = separator_line[1:-1].split('|')
+                if all(part.strip().startswith('-') and len(part.strip()) >= 3 for part in separator_parts):
+                    head_line = i
+                    break
+    for i in range(len(lines)):
+        if '|' in lines[i]:
+            separator_line = lines[i].strip()
+            if separator_line.startswith('|') and separator_line.endswith('|'):
+                end_line = i
+    if head_line is None or end_line is None:
+        return None
+    return {"head_line": head_line, "end_line": end_line, "head": lines[head_line] + '\n' + lines[head_line + 1], "lines": lines}
