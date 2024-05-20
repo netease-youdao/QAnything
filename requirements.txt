@@ -30,3 +30,9 @@ python-dotenv==1.0.1
 duckduckgo-search==5.3.0b4
 html2text==2024.2.26
 mistune==3.0.2
+xgboost==2.0.3
+pdfplumber==0.11.0
+PyPDF2==3.0.1
+markdownify==0.12.1
+datrie==0.8.2
+hanziconv==0.3.2
