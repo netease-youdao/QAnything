@@ -46,6 +46,7 @@ const { errorTxt } = storeToRefs(useLogin());
   }
   .content-text {
     font-size: 24px;
+    width: 400px;
   }
 }
 </style>
