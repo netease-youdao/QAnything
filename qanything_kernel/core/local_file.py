@@ -1,6 +1,6 @@
 from qanything_kernel.utils.general_utils import *
 from typing import List, Union, Callable
-from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, SENTENCE_SIZE, ZH_TITLE_ENHANCE, USE_FAST_PDF_PARSER
+from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, SENTENCE_SIZE, ZH_TITLE_ENHANCE, USE_FAST_PDF_PARSER, PDF_MODEL_PATH
 from langchain.docstore.document import Document
 from qanything_kernel.utils.loader.my_recursive_url_loader import MyRecursiveUrlLoader
 from langchain_community.document_loaders import UnstructuredFileLoader, TextLoader
@@ -18,6 +18,8 @@ from qanything_kernel.utils.splitter import zh_title_enhance
 from qanything_kernel.utils.loader.self_pdf_loader import PdfLoader
 from qanything_kernel.utils.loader.markdown_parser import convert_markdown_to_langchaindoc
 from sanic.request import File
+from modelscope import snapshot_download
+import subprocess
 import pandas as pd
 import os
 import re
@@ -30,6 +32,15 @@ text_splitter = RecursiveCharacterTextSplitter(
 )
 
 pdf_text_splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=200, length_function=num_tokens)
+
+
+# 下载pdf解析相关的模型
+pdf_models_path = os.path.join(PDF_MODEL_PATH, 'checkpoints')
+if not USE_FAST_PDF_PARSER and not os.path.exists(pdf_models_path):
+    debug_logger.info(f'开始从modelscope上下载强力PDF解析相关模型: netease-youdao/QAnything-pdf-parser')
+    model_dir = snapshot_download('netease-youdao/QAnything-pdf-parser')
+    subprocess.check_output(['ln', '-s', model_dir, pdf_models_path], text=True)
+    debug_logger.info(f'强力PDF解析相关模型下载完毕！cache地址：{model_dir}, 软链接地址：{pdf_models_path}')
 
 
 class LocalFile:
@@ -121,8 +132,11 @@ class LocalFile:
                     continue
             # doc.page_content = '\n'.join(title_lst) + '\n' + doc.page_content
             slices = pdf_text_splitter.split_documents([doc])
-            for idx, slice in enumerate(slices):
-                slice.page_content = '\n'.join(title_lst) + f'\n######第{idx+1}段内容如下：\n' + slice.page_content
+            if len(slices) == 1:
+                slices[0].page_content = '\n'.join(title_lst) + '\n' + slices[0].page_content
+            else:
+                for idx, slice in enumerate(slices):
+                    slice.page_content = '\n'.join(title_lst) + f'\n######第{idx+1}段内容如下：\n' + slice.page_content
             new_docs.extend(slices)
         return new_docs
 

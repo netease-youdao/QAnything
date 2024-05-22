@@ -113,7 +113,11 @@ if os_system != 'Darwin':
 
 else:
     # mac下ocr依赖onnxruntime
-    os.system("pip install onnxruntime")
+    os.system("pip install onnxruntime -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn")
+    # torch==2.1.2
+    # torchvision==0.16.2
+    os.system("pip install torch==2.1.2 --index-url https://download.pytorch.org/whl/cpu -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn")
+    os.system("pip install torchvision==0.16.2 --index-url https://download.pytorch.org/whl/cpu -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn")
     if not args.use_openai_api:
         if not check_package_version("llama_cpp_python", "0.2.60"):
             os.system(f'CMAKE_ARGS="-DLLAMA_METAL_EMBED_LIBRARY=ON -DLLAMA_METAL=on" pip install -U llama-cpp-python --no-cache-dir -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn')
@@ -153,14 +157,6 @@ elif not os.path.exists(args.model):
 else:
     debug_logger.info(f'{args.model}路径已存在，不再重复下载大模型（如果下载出错可手动删除此目录）')
     debug_logger.info(f"CUDA_DEVICE: {model_config.CUDA_DEVICE}")
-
-# 下载pdf解析相关的模型
-pdf_models_path = os.path.join(PDF_MODEL_PATH, 'checkpoints')
-if not os.path.exists(pdf_models_path):
-    debug_logger.info(f'开始下载大模型：{model_download_params}')
-    model_dir = snapshot_download('netease-youdao/QAnything-pdf-parser')
-    subprocess.check_output(['ln', '-s', model_dir, pdf_models_path], text=True)
-    debug_logger.info(f'PDF解析相关模型下载完毕！cache地址：{model_dir}, 软链接地址：{pdf_models_path}')
 
 
 WorkerManager.THRESHOLD = 6000
