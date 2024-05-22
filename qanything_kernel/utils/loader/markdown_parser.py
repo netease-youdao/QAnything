@@ -230,13 +230,13 @@ def convert_node_to_document(node_lists):
                 if len(item['child_id_list']) == 0:  #是一个单独的标题，并且没有子节点，可能是markdown解析出现了问题
                     title_lst = []
                     for index, title in enumerate(item['title']):
-                        title_lst.append('#' * (index + 1) + title)
+                        title_lst.append('#' * (index + 1) + ' ' + title)
                     doc = Document(page_content='', metadata={'title_lst': title_lst, 'has_table': False})
                     doc_lst.append(doc)
             if item['node_type'] == 'ContentNode':
                 title_lst = []
                 for index, title in enumerate(item['title'][:-1]):
-                    title_lst.append('#' * (index + 1) + title)
+                    title_lst.append('#' * (index + 1) + ' ' +  title)
                 has_table = contains_table(item['content'])
                 doc = Document(page_content=item['content'], metadata={'title_lst': title_lst, 'has_table': has_table})
                 doc_lst.append(doc)

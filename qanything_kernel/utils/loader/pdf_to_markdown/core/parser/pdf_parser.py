@@ -519,6 +519,22 @@ class HuParser:
             b_["top"] = b["top"]
             self.boxes.pop(i)
 
+
+    def get_markdown_header(self,markdown_str):
+        """
+        extract header from markdown table
+        """
+        markdown_str = markdown_str.lstrip('\n')
+        header = '\n'.join(markdown_str.split('\n')[:2])
+        header = '\n\n' + header
+        return header
+
+    def merge_header_markdown(self,header,table):
+        table = table.lstrip('\n').rstrip('\n')
+        table = '\n'.join([table.split('\n')[0]] + table.split('\n')[2:])
+        res = header + '\n' + table + '\n\n'
+        return res
+
     def _extract_table_figure(self, need_image, ZM,
                               return_html, need_position,image_dir):
         tables = {}
@@ -569,6 +585,7 @@ class HuParser:
         tbls = sorted([(k, bxs) for k, bxs in tables.items()],
                       key=lambda x: (x[1][0]["top"], x[1][0]["x0"]))
         i = len(tbls) - 1
+        table_merge_header = {}
         while i - 1 >= 0:
             k0, bxs0 = tbls[i - 1]
             k, bxs = tbls[i]
@@ -582,8 +599,9 @@ class HuParser:
             mh = self.mean_height[bxs[0]["page_number"] - 1]
             if self._y_dis(bxs0[-1], bxs[0]) > mh * 23:
                 continue
-            tables[k0].extend(tables[k])
-            del tables[k]
+            # tables[k0].extend(tables[k])
+            table_merge_header[k0] = True
+            # del tables[k]
 
         def x_overlapped(a, b):
             return not any([a["x1"] < b["x0"], a["x0"] > b["x1"]])
@@ -727,6 +745,8 @@ class HuParser:
                  caption,
                  k))
             positions.append(poss)
+        merge_header = False
+        table_header = ''            
         for k, bxs in tables.items():
             if not bxs:
                 continue
@@ -735,10 +755,26 @@ class HuParser:
             poss = []
             img = cropout(bxs, "table", poss)
             pn = list(set([b["page_number"] - 1 for b in bxs]))[0]
-            res.append((
-                        # img, self.tbl_det.construct_table(bxs, img, html=return_html, is_english=self.is_english)))
-                        self.tbl_det.construct_table(bxs, img, poss[0][1:], self.page_cum_height[pn], html=return_html, is_english=self.is_english), 
-                        k))
+            try:
+                if merge_header:
+                    res_dict = self.tbl_det.construct_table(bxs, img, poss[0][1:], self.page_cum_height[pn], html=return_html, is_english=self.is_english)
+                    res_dict['table_markdown'] = self.merge_header_markdown(table_header,res_dict['table_markdown'])
+                    res.append((res_dict,k))
+                else:
+                    res_dict = self.tbl_det.construct_table(bxs, img, poss[0][1:], self.page_cum_height[pn], html=return_html, is_english=self.is_english)           
+                    res.append((res_dict,k))
+                if k in table_merge_header.keys():   #下一个表格需要添加当前表头
+                    merge_header = True
+                    table_header = self.get_markdown_header(res_dict['table_markdown'])
+                else:
+                    merge_header = False
+                    table_header = ''
+            except Exception as e:
+                print(e.args)
+                res.append((
+                            # img, self.tbl_det.construct_table(bxs, img, html=return_html, is_english=self.is_english)))
+                            self.tbl_det.construct_table(bxs, img, poss[0][1:], self.page_cum_height[pn], html=return_html, is_english=self.is_english), 
+                            k))
             # img.save('{}.jpg'.format(k))
             positions.append(poss)
 
