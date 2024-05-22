@@ -1,8 +1,12 @@
 import random
 from langchain.schema.document import Document
-
+import re
 RANDOM_NUMBER_SET = set()
 
+def remove_escapes(markdown_text):
+    pattern = r'\\(.)'
+    cleaned_text = re.sub(pattern, r'\1', markdown_text)
+    return cleaned_text
 
 def contains_table(text):
     lines = text.split('\n')
@@ -175,7 +179,7 @@ def parse_markdown_mistune(file_path, doc_title=None, max_heading_depth=2):
 
     with open(file_path, 'r', encoding='utf-8') as file:
         markdown_content = file.read()
-
+    markdown_content = remove_escapes(markdown_content)
     mistune_parser = mistune.Markdown()
     document = mistune_parser.parse(markdown_content)
     print('Markdown parsing done.')
