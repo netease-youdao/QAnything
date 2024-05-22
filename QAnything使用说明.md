@@ -761,7 +761,7 @@ bash ./run.sh -c cloud -i 0
 
 ##### 支持任意与OpenaAI接口兼容的服务
 
-**通义千问DashScope支持：[通义千问DashScopeAPI**](https://help.aliyun.com/zh/dashscope/developer-reference/compatibility-of-openai-with-dashscope/?spm=a2c4g.11186623.0.0.556a140bDcfr3B)
+**通义千问DashScope支持：[通义千问DashScopeAPI](https://help.aliyun.com/zh/dashscope/developer-reference/compatibility-of-openai-with-dashscope/?spm=a2c4g.11186623.0.0.556a140bDcfr3B)**
 
 ```bash
 # 示例
