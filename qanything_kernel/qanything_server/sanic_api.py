@@ -111,7 +111,8 @@ if os_system != 'Darwin':
 
 else:
     # mac下ocr依赖onnxruntime
-    os.system("pip install onnxruntime -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn")
+    if not check_package_version("onnxruntime", "1.17.1"):
+        os.system("pip install onnxruntime -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn")
     # torch==2.1.2
     # torchvision==0.16.2
     # os.system("pip install torch==2.1.2 --index-url https://download.pytorch.org/whl/cpu -i https://pypi.mirrors.ustc.edu.cn/simple/ --trusted-host pypi.mirrors.ustc.edu.cn")
