@@ -3,10 +3,11 @@ modelscope==1.13.0
 Pillow==10.2.0
 numpy==1.24.3
 PyMuPDF==1.23.22
-easyocr==1.7.1
+opencv-python==4.9.0.80
+# easyocr==1.7.1
 # onnxruntime==1.17.1
-# torch==2.1.2
-# torchvision==0.16.2
+torch==2.1.2
+torchvision==0.16.2
 transformers==4.36.2
 # vllm==0.3.3
 openai==1.12.0
@@ -23,7 +24,7 @@ python-docx==1.1.0
 unstructured==0.12.4
 unstructured[pptx]==0.12.4
 unstructured[md]==0.12.4
-accelerate==0.21.0
+# accelerate==0.21.0
 networkx==3.2.1
 faster_whisper==1.0.1
 python-dotenv==1.0.1
@@ -36,3 +37,4 @@ PyPDF2==3.0.1
 markdownify==0.12.1
 datrie==0.8.2
 hanziconv==0.3.2
+shapely==2.0.4

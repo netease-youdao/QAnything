@@ -31,7 +31,7 @@ text_splitter = RecursiveCharacterTextSplitter(
     length_function=num_tokens,
 )
 
-pdf_text_splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=200, length_function=num_tokens)
+pdf_text_splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=0, length_function=num_tokens)
 
 
 # 下载pdf解析相关的模型
