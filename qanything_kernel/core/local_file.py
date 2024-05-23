@@ -227,6 +227,8 @@ class LocalFile:
             if self.file_path.lower().endswith(".pdf"):
                 if USE_FAST_PDF_PARSER:
                     docs = pdf_text_splitter.split_documents(new_docs)
+                else:
+                    docs = new_docs
             else:
                 docs = text_splitter.split_documents(new_docs)
             debug_logger.info(f"after 2nd split doc lens: {len(docs)}")
