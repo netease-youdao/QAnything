@@ -15,7 +15,7 @@ from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from qanything_kernel.utils.splitter import ChineseTextSplitter
 from qanything_kernel.utils.loader import UnstructuredPaddleImageLoader, UnstructuredPaddlePDFLoader, UnstructuredPaddleAudioLoader
 from qanything_kernel.utils.splitter import zh_title_enhance
-from qanything_kernel.utils.loader.self_pdf_loader import PdfLoader
+# from qanything_kernel.utils.loader.self_pdf_loader import PdfLoader
 from qanything_kernel.utils.loader.markdown_parser import convert_markdown_to_langchaindoc
 from sanic.request import File
 from modelscope import snapshot_download
@@ -164,6 +164,7 @@ class LocalFile:
                 docs = loader.load_and_split(texts_splitter)
             else:
                 try:
+                    from qanything_kernel.utils.loader.self_pdf_loader import PdfLoader
                     loader = PdfLoader(filename=self.file_path, root_dir=os.path.dirname(self.file_path))
                     markdown_dir = loader.load_to_markdown()
                     docs = convert_markdown_to_langchaindoc(markdown_dir)
