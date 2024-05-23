@@ -31,8 +31,6 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os_system = platform.system()
 parser = ArgumentParser()
 
-from .handler import *
-from qanything_kernel.core.local_doc_qa import LocalDocQA
 from sanic import Sanic
 from sanic import response as sanic_response
 from sanic.worker.manager import WorkerManager
@@ -158,6 +156,8 @@ else:
     debug_logger.info(f'{args.model}路径已存在，不再重复下载大模型（如果下载出错可手动删除此目录）')
     debug_logger.info(f"CUDA_DEVICE: {model_config.CUDA_DEVICE}")
 
+from .handler import *
+from qanything_kernel.core.local_doc_qa import LocalDocQA
 
 WorkerManager.THRESHOLD = 6000
 
