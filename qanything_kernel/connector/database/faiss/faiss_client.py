@@ -99,7 +99,7 @@ class FaissClient:
                 if merged_docs[-1].metadata['chunk_id'] == doc.metadata['chunk_id'] - 1:
                     if num_tokens(merged_docs[-1].page_content + doc.page_content) <= 800:
                         # print('MERGE:', merged_docs[-1].metadata['chunk_id'], doc.metadata['chunk_id'])
-                        merged_docs[-1].page_content += doc.page_content
+                        merged_docs[-1].page_content += '\n' + doc.page_content
                         merged_docs[-1].metadata['chunk_id'] = doc.metadata['chunk_id']
                     else:
                         # print('NOT MERGE:', merged_docs[-1].metadata['chunk_id'], doc.metadata['chunk_id'])

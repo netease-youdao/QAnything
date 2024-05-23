@@ -60,7 +60,7 @@
     - [重命名知识库请求示例](#重命名知识库请求示例)
     - [重命名知识库响应示例](#重命名知识库响应示例)
   - [创建Bot（POST）](#创建botpost)
-    - [URL：http://{your_host}:8777/api/local_doc_qa/create_bot](#urlhttpyour_host8777apilocal_doc_qacreate_bot)
+    - [URL：http://{your_host}:8777/api/local_doc_qa/create_bot](#urlhttpyour_host8777apilocal_doc_qanew_bot)
     - [创建Bot请求参数（Body）](#创建bot请求参数body)
     - [创建Bot请求示例](#创建bot请求示例)
     - [创建Bot响应示例](#创建bot响应示例)
@@ -70,7 +70,7 @@
     - [获取Bot信息请求示例](#获取bot信息请求示例)
     - [获取Bot信息响应示例](#获取bot信息响应示例)
   - [修改Bot信息（POST）](#修改bot信息post)
-    - [URL：http://{your_host}:8777/api/local_doc_qa/update_bot_info](#urlhttpyour_host8777apilocal_doc_qaupdate_bot_info)
+    - [URL：http://{your_host}:8777/api/local_doc_qa/update_bot_info](#urlhttpyour_host8777apilocal_doc_qaupdate_bot)
     - [修改Bot信息请求参数（Body）](#修改bot信息请求参数body)
     - [修改Bot信息请求示例](#修改bot信息请求示例)
     - [修改Bot信息响应示例](#修改bot信息响应示例)
@@ -1058,11 +1058,12 @@ Content-Type: multipart/form-data
 
 ### <h3><p id="上传faq请求参数body">上传FAQ请求参数（Body）</p></h3>
 
-| 参数名  | 参数值                                    | 是否必填 | 参数类型 | 描述说明                                                        |
-| ------- |----------------------------------------| -------- | -------- |-------------------------------------------------------------|
-| files   | 文件二进制                                  | 是       | File     | 需要上传的文件，可多选，仅支持xlsx格式                                       |
-| user_id | zzp                                    | 是       | String   | 用户 id                                                       |
-| kb_id   | KBb1dd58e8485443ce81166d24f6febda7_FAQ | 是       | String   | 知识库 id                                                      |
+| 参数名     | 参数值                                              | 是否必填 | 参数类型       | 描述说明                      |
+|---------|--------------------------------------------------|------|------------|---------------------------|
+| files   | 文件二进制                                            | 否    | File       | 需要上传的文件，可多选，仅支持xlsx格式     |
+| user_id | zzp                                              | 是    | String     | 用户 id                     |
+| kb_id   | KBb1dd58e8485443ce81166d24f6febda7_FAQ           | 是    | String     | 知识库 id                    |
+| faqs    | [{"question": "你是谁？", "answer": "我是QAnything！"}] | 否    | List[Dict] | json格式的FAQ集合（与files参数二选一） |
 
 ### <h3><p id="上传faq请求示例">上传FAQ请求示例</p></h3>
 
