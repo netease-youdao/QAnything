@@ -494,4 +494,4 @@ Reach out to the maintainer at one of the following places:
 - Thanks to [Milvus](https://github.com/milvus-io/milvus) for the excellent semantic search library.
 - Thanks to [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) for its ease-to-use OCR library.
 - Thanks to [Sanic](https://github.com/sanic-org/sanic) for the powerful web service framework.
-
+- Thanks to [ragflow](https://github.com/infiniflow/ragflow) for providing some ideas for document parsing.

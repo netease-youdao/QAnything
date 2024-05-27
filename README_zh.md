@@ -473,3 +473,4 @@ qanything@rd.netease.com
 - [Milvus](https://github.com/milvus-io/milvus)
 - [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) 
 - [Sanic](https://github.com/sanic-org/sanic)
+- [ragflow](https://github.com/infiniflow/ragflow)
