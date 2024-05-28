@@ -62,8 +62,24 @@ route.beforeEach(async (to, from, next) => {
     next('/error');
     return false;
   }
+
+  let loginName = to.query.loginName;
+  if (Array.isArray(loginName)) {
+    // 如果是字符串数组，则取第一个值
+    loginName = loginName[0];
+  }
+  // 然后进行URL解码
+  loginName = decodeURIComponent(loginName).replace(/\s/g, '+');
+
+  let currentTime = to.query.currentTime;
+  if (Array.isArray(currentTime)) {
+    currentTime = currentTime[0];
+  }
+  currentTime = decodeURIComponent(currentTime).replace(/\s/g, '+');
+  console.log('currentTime', currentTime);
+
   // query有登录信息，调用第三方登录验证
-  const boolean = await getTokenInfo(to.query.loginName, to.query.currentTime);
+  const boolean = await getTokenInfo(to.query.loginName, currentTime, 0);
   console.log('boolean', boolean);
   if (boolean) {
     setIsLogin(true);
@@ -73,19 +89,63 @@ route.beforeEach(async (to, from, next) => {
   }
 });
 
-async function getTokenInfo(loginName, currentTime) {
+// 如果接口401说明token过期，重新获取一下token，state用来限制只重复获取一次token
+async function getTokenInfo(loginName, currentTime, state) {
   try {
-    const loginRes = await urlResquest.loginForToken({ username: 'WYYD', password: 'P@ssword' });
-    console.log(loginRes);
-    if (loginRes.code === 200) {
-      localStorage.set('yongfengToken', loginRes.retObj.token);
-      localStorage.set('userId', `yd${loginRes.retObj.user.id}`);
-      const checkRes = await urlResquest.checkUser({ encodeLoginName: loginName });
-      if (checkRes.code !== 200) {
-        throw new Error(checkRes?.msg || '用户校验失败，用户不合法');
-      } else {
-        const res = await urlResquest.getLoginTime({ code: currentTime });
+    if (localStorage.get('yongfengToken') && state < 1) {
+      // 获取解密的userName作为传给QAnything底层的user_id
+      const res = await urlResquest.getDeCodeString({ code: loginName });
+      if (res.code === 401 && state <= 1) {
+        return getTokenInfo(loginName, currentTime, state + 1);
+      }
+      if (res.code === 200) {
+        localStorage.set('userId', `yd${res.retObj}`);
+      }
+      return verifyUser(loginName, currentTime, state);
+    } else {
+      const loginRes = await urlResquest.loginForToken({ username: 'WYYD', password: 'P@ssword' });
+      console.log(loginRes);
+      if (loginRes.code === 200) {
+        localStorage.set('yongfengToken', loginRes.retObj.token);
+
+        // 获取解密的userName作为传给QAnything底层的user_id
+        const res = await urlResquest.getDeCodeString({ code: loginName });
+        if (res.code === 401 && state <= 1) {
+          return getTokenInfo(loginName, currentTime, state + 1);
+        }
         if (res.code === 200) {
+          localStorage.set('userId', `yd${res.retObj}`);
+        }
+        return verifyUser(loginName, currentTime, state);
+      } else {
+        throw new Error(loginRes?.msg || '登陆失败');
+      }
+    }
+  } catch (e) {
+    console.log('loginerr', e);
+    setErrorTxt(String(e).replace('Error:', ''));
+    return false;
+  }
+}
+
+async function verifyUser(loginName, currentTime, state) {
+  try {
+    const checkRes = await urlResquest.checkUser({ encodeLoginName: loginName });
+    if (checkRes.code === 401 && state <= 1) {
+      return getTokenInfo(loginName, currentTime, state + 1);
+    }
+    if (checkRes.code !== 200) {
+      throw new Error(checkRes?.msg || '用户校验失败，用户不合法');
+    } else {
+      const res = await urlResquest.getDeCodeString({ code: currentTime });
+      if (checkRes.code === 401 && state <= 1) {
+        return getTokenInfo(loginName, currentTime, state + 1);
+      }
+      if (res.code === 200) {
+        // 加密串如果没有解析出来会返回空字符串
+        if (!res?.retObj) {
+          throw new Error('登录超时');
+        } else {
           const time: any = new Date(res?.retObj);
           const currentTime: any = new Date('2024-05-13 11:28:11');
           const timeDifference = currentTime - time;
@@ -98,15 +158,12 @@ async function getTokenInfo(loginName, currentTime) {
             console.log('未超时');
             return true;
           }
-        } else {
-          throw new Error(res?.msg || '获取登陆时间失败');
         }
+      } else {
+        throw new Error(res?.msg || '获取登陆时间失败');
       }
-    } else {
-      throw new Error(loginRes?.msg || '登陆失败');
     }
   } catch (e) {
-    console.log('loginerr', e);
     setErrorTxt(String(e).replace('Error:', ''));
     return false;
   }

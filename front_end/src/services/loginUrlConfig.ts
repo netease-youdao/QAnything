@@ -42,7 +42,7 @@ const urlConfig: IUrlConfig = {
     url: baseUrl + '/system/user/checkUserByEncryptCode',
   },
   //获取登录时间戳
-  getLoginTime: {
+  getDeCodeString: {
     type: EUrlType.POST,
     url: baseUrl + '/encode/getDeCodeString',
   },
