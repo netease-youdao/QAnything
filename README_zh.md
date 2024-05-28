@@ -37,6 +37,10 @@ cd QAnything
 pip install -e .
 ```
 
+## PDF解析++
+
+如果你想使用更强大的pdf解析功能，请在modelscope下载相关的[解析模型](https://www.modelscope.cn/models/netease-youdao/QAnything-pdf-parser/files),并将其放置到根目录的qanything_kernel/utils/loader/pdf_to_markdown/checkpoints/下
+
 ## 在Windows WSL或Linux环境下运行3B大模型（MiniChat-2-3B）要求显存>=10GB
 ```bash
 bash scripts/run_for_3B_in_Linux_or_WSL.sh
