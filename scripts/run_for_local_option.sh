@@ -207,35 +207,45 @@ if [ "$runtime_backend" = "default" ] && [ "$model_size_num" -ne 0 ]; then
     fi
 fi
 
-if [ "$GPU1_MEMORY_SIZE" -lt 4000 ]; then # 显存小于4GB
-    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 不足以部署本项目，建议升级到GTX 1050Ti或以上级别的显卡"
+# 判断tensor_parallel不为1时，是否使用vllm后端，如果不是，则自动切换为vllm后端，因为vllm后端支持tensor_parallel，并给出提示
+if [ "$tensor_parallel" -ne 1 ] && [ "$runtime_backend" != "vllm" ]; then
+    echo "指定GPU设备数量不为1时，启动多卡并行，此时仅支持vllm后端，已自动为您切换为vllm后端!!!"
+    sleep 3
+    runtime_backend="vllm"
+fi
+
+# 获取GPU1_MEMORY_SIZE * tensor_parallel * gpu_memory_utilization的值
+TOTAL_MEMORY_SIZE=$(echo "$GPU1_MEMORY_SIZE * $tensor_parallel * $gpu_memory_utilization" | bc)
+
+if [ "$TOTAL_MEMORY_SIZE" -lt 4000 ]; then # 显存小于4GB
+    echo "您当前的显存为 $TOTAL_MEMORY_SIZE MiB 不足以部署本项目，建议升级到GTX 1050Ti或以上级别的显卡"
     exit 1
 elif [ "$model_size_num" -eq 0 ]; then  # 模型大小为0B, 表示使用openai api，4G显存就够了
-    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 可以使用在线的OpenAI API"
-elif [ "$GPU1_MEMORY_SIZE" -lt 8000 ]; then  # 显存小于8GB
+    echo "您当前的显存为 $TOTAL_MEMORY_SIZE MiB 可以使用在线的OpenAI API"
+elif [ "$TOTAL_MEMORY_SIZE" -lt 8000 ]; then  # 显存小于8GB
     # 显存小于8GB，仅推荐使用在线的OpenAI API
-    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 仅推荐使用在线的OpenAI API"
+    echo "您当前的显存为 $TOTAL_MEMORY_SIZE MiB 仅推荐使用在线的OpenAI API"
     if [ "$model_size_num" -gt 0 ]; then  # 模型大小大于0B
         echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
         exit 1
     fi
-elif [ "$GPU1_MEMORY_SIZE" -ge 8000 ] && [ "$GPU1_MEMORY_SIZE" -le 10240 ]; then  # 显存[8GB-10GB)
+elif [ "$TOTAL_MEMORY_SIZE" -ge 8000 ] && [ "$TOTAL_MEMORY_SIZE" -le 10240 ]; then  # 显存[8GB-10GB)
     # 8GB显存，推荐部署1.8B的大模型
-    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 推荐部署1.8B的大模型，包括在线的OpenAI API"
+    echo "您当前的显存为 $TOTAL_MEMORY_SIZE MiB 推荐部署1.8B的大模型，包括在线的OpenAI API"
     if [ "$model_size_num" -gt 2 ]; then  # 模型大小大于2B
         echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
         exit 1
     fi
-elif [ "$GPU1_MEMORY_SIZE" -ge 10240 ] && [ "$GPU1_MEMORY_SIZE" -le 16384 ]; then  # 显存[10GB-16GB)
+elif [ "$TOTAL_MEMORY_SIZE" -ge 10240 ] && [ "$TOTAL_MEMORY_SIZE" -le 16384 ]; then  # 显存[10GB-16GB)
     # 10GB, 11GB, 12GB显存，推荐部署3B及3B以下的模型
-    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB，推荐部署3B及3B以下的模型，包括在线的OpenAI API"
+    echo "您当前的显存为 $TOTAL_MEMORY_SIZE MiB，推荐部署3B及3B以下的模型，包括在线的OpenAI API"
     if [ "$model_size_num" -gt 3 ]; then  # 模型大小大于3B
         echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
         exit 1
     fi
-elif [ "$GPU1_MEMORY_SIZE" -ge 16384 ] && [ "$GPU1_MEMORY_SIZE" -le 22528 ]; then  # 显存[16-22GB)
+elif [ "$TOTAL_MEMORY_SIZE" -ge 16384 ] && [ "$TOTAL_MEMORY_SIZE" -le 22528 ]; then  # 显存[16-22GB)
     # 16GB显存
-    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 推荐部署小于等于7B的大模型"
+    echo "您当前的显存为 $TOTAL_MEMORY_SIZE MiB 推荐部署小于等于7B的大模型"
     if [ "$model_size_num" -gt 7 ]; then  # 模型大小大于7B
         echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
         exit 1
@@ -276,14 +286,14 @@ elif [ "$GPU1_MEMORY_SIZE" -ge 16384 ] && [ "$GPU1_MEMORY_SIZE" -le 22528 ]; the
             OFFCUT_TOKEN=0
         fi
     fi
-elif [ "$GPU1_MEMORY_SIZE" -ge 22528 ] && [ "$GPU1_MEMORY_SIZE" -le 24576 ]; then  # [22GB, 24GB]
-    echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 推荐部署7B模型"
+elif [ "$TOTAL_MEMORY_SIZE" -ge 22528 ] && [ "$TOTAL_MEMORY_SIZE" -le 24576 ]; then  # [22GB, 24GB]
+    echo "您当前的显存为 $TOTAL_MEMORY_SIZE MiB 推荐部署7B模型"
     if [ "$model_size_num" -gt 7 ]; then  # 模型大小大于7B
         echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
         exit 1
     fi
     OFFCUT_TOKEN=0
-elif [ "$GPU1_MEMORY_SIZE" -gt 24576 ]; then  # 显存大于24GB
+elif [ "$TOTAL_MEMORY_SIZE" -gt 24576 ]; then  # 显存大于24GB
     OFFCUT_TOKEN=0
 fi
 
