@@ -634,12 +634,12 @@ bash ./run.sh -c local -i 0 -b hf -m MiniChat-2-3B -t minichat
 ### 多卡推理
 
 ```bash
-# 当使用默认后端时：（bash run.sh启动时不指定-b参数或-b参数为default）
+# 当使用默认后端或hf后端时时：（bash run.sh启动时不指定-b参数或-b参数为default|hf）
 无法使用多卡推理大模型，仅支持使用两张卡省显存
 bash ./run.sh -c local -i 0,1 -b defaul  # 此时的显存使用逻辑为第一张卡部署大模型，第二张卡部署embedding，rerank，和ocr模型，实际意义不大
-# 当使用huggingface或vllm后端时支持多卡推理大模型
+# 当使用vllm后端时支持多卡推理大模型
 # 以下示例为两张卡启动，默认embedding，部署在第一张卡上，rerank，ocr模型部署在第二张卡上，两张卡剩余显存均会用于LLM推理
-bash ./run.sh -c local -i 0,1 -b hf  # 指定0,1号GPU启动，请确认有多张GPU可用，注意设备数量必须是1，2，4，8，16，否则显存无法正常分配
+bash ./run.sh -c local -i 0,1,2,3 -b vllm  # 指定0,1,2,3号GPU启动，请确认有多张GPU可用，注意设备数量必须是1，2，4，8，16，否则显存无法正常分配
 ```
 
 <span style="color:red;">说明：多卡部署是指大模型运行平均分配显存到多张显卡上，但是由于embedding，rerank和ocr模型也需要占用显存（共需4G+显存，启动时占用2G显存，运行后会逐渐上涨至4G左右），目前这三个模型默认会分配到前两个设备上，所以第一张，第二张显卡的显存占用会比其他卡多2G以上，默认启动参数-r(gpu_memory_utilization)=0.81，如果手动设置为0.9以上可能会存在前两张卡显存不足无法启动或启动后运行时显存不足报错的情况</span>
