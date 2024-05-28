@@ -214,87 +214,97 @@ if [ "$tensor_parallel" -ne 1 ] && [ "$runtime_backend" != "vllm" ]; then
     runtime_backend="vllm"
 fi
 
-# 获取GPU1_MEMORY_SIZE * tensor_parallel * gpu_memory_utilization的值
-TOTAL_MEMORY_SIZE=$(echo "$GPU1_MEMORY_SIZE * $tensor_parallel * $gpu_memory_utilization" | bc)
-
-if [ "$TOTAL_MEMORY_SIZE" -lt 4000 ]; then # 显存小于4GB
-    echo "您当前的显存为 $TOTAL_MEMORY_SIZE MiB 不足以部署本项目，建议升级到GTX 1050Ti或以上级别的显卡"
-    exit 1
-elif [ "$model_size_num" -eq 0 ]; then  # 模型大小为0B, 表示使用openai api，4G显存就够了
-    echo "您当前的显存为 $TOTAL_MEMORY_SIZE MiB 可以使用在线的OpenAI API"
-elif [ "$TOTAL_MEMORY_SIZE" -lt 8000 ]; then  # 显存小于8GB
-    # 显存小于8GB，仅推荐使用在线的OpenAI API
-    echo "您当前的显存为 $TOTAL_MEMORY_SIZE MiB 仅推荐使用在线的OpenAI API"
-    if [ "$model_size_num" -gt 0 ]; then  # 模型大小大于0B
-        echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
+if [ "$tensor_parallel" -eq 1 ]; then
+    if [ "$GPU1_MEMORY_SIZE" -lt 4000 ]; then # 显存小于4GB
+        echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 不足以部署本项目，建议升级到GTX 1050Ti或以上级别的显卡"
         exit 1
-    fi
-elif [ "$TOTAL_MEMORY_SIZE" -ge 8000 ] && [ "$TOTAL_MEMORY_SIZE" -le 10240 ]; then  # 显存[8GB-10GB)
-    # 8GB显存，推荐部署1.8B的大模型
-    echo "您当前的显存为 $TOTAL_MEMORY_SIZE MiB 推荐部署1.8B的大模型，包括在线的OpenAI API"
-    if [ "$model_size_num" -gt 2 ]; then  # 模型大小大于2B
-        echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
-        exit 1
-    fi
-elif [ "$TOTAL_MEMORY_SIZE" -ge 10240 ] && [ "$TOTAL_MEMORY_SIZE" -le 16384 ]; then  # 显存[10GB-16GB)
-    # 10GB, 11GB, 12GB显存，推荐部署3B及3B以下的模型
-    echo "您当前的显存为 $TOTAL_MEMORY_SIZE MiB，推荐部署3B及3B以下的模型，包括在线的OpenAI API"
-    if [ "$model_size_num" -gt 3 ]; then  # 模型大小大于3B
-        echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
-        exit 1
-    fi
-elif [ "$TOTAL_MEMORY_SIZE" -ge 16384 ] && [ "$TOTAL_MEMORY_SIZE" -le 22528 ]; then  # 显存[16-22GB)
-    # 16GB显存
-    echo "您当前的显存为 $TOTAL_MEMORY_SIZE MiB 推荐部署小于等于7B的大模型"
-    if [ "$model_size_num" -gt 7 ]; then  # 模型大小大于7B
-        echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
-        exit 1
-    fi
-    if [ "$runtime_backend" = "default" ]; then  # 默认使用Qwen-7B-QAnything+FasterTransformer
-        if [ -n "$gpu_series" ]; then
-            # Nvidia 30系列或40系列
-            if [ $gpu_id1 -eq $gpu_id2 ]; then
-                echo "为了防止显存溢出，tokens上限默认设置为2700"
-                OFFCUT_TOKEN=1400
+    elif [ "$model_size_num" -eq 0 ]; then  # 模型大小为0B, 表示使用openai api，4G显存就够了
+        echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 可以使用在线的OpenAI API"
+    elif [ "$GPU1_MEMORY_SIZE" -lt 8000 ]; then  # 显存小于8GB
+        # 显存小于8GB，仅推荐使用在线的OpenAI API
+        echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 仅推荐使用在线的OpenAI API"
+        if [ "$model_size_num" -gt 0 ]; then  # 模型大小大于0B
+            echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
+            exit 1
+        fi
+    elif [ "$GPU1_MEMORY_SIZE" -ge 8000 ] && [ "$GPU1_MEMORY_SIZE" -le 10240 ]; then  # 显存[8GB-10GB)
+        # 8GB显存，推荐部署1.8B的大模型
+        echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 推荐部署1.8B的大模型，包括在线的OpenAI API"
+        if [ "$model_size_num" -gt 2 ]; then  # 模型大小大于2B
+            echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
+            exit 1
+        fi
+    elif [ "$GPU1_MEMORY_SIZE" -ge 10240 ] && [ "$GPU1_MEMORY_SIZE" -le 16384 ]; then  # 显存[10GB-16GB)
+        # 10GB, 11GB, 12GB显存，推荐部署3B及3B以下的模型
+        echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB，推荐部署3B及3B以下的模型，包括在线的OpenAI API"
+        if [ "$model_size_num" -gt 3 ]; then  # 模型大小大于3B
+            echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
+            exit 1
+        fi
+    elif [ "$GPU1_MEMORY_SIZE" -ge 16384 ] && [ "$GPU1_MEMORY_SIZE" -le 22528 ]; then  # 显存[16-22GB)
+        # 16GB显存
+        echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 推荐部署小于等于7B的大模型"
+        if [ "$model_size_num" -gt 7 ]; then  # 模型大小大于7B
+            echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
+            exit 1
+        fi
+        if [ "$runtime_backend" = "default" ]; then  # 默认使用Qwen-7B-QAnything+FasterTransformer
+            if [ -n "$gpu_series" ]; then
+                # Nvidia 30系列或40系列
+                if [ $gpu_id1 -eq $gpu_id2 ]; then
+                    echo "为了防止显存溢出，tokens上限默认设置为2700"
+                    OFFCUT_TOKEN=1400
+                else
+                    echo "tokens上限默认设置为4096"
+                    OFFCUT_TOKEN=0
+                fi
+            else
+                echo "您的显卡型号 $gpu_model 不支持部署Qwen-7B-QAnything模型"
+                exit 1
+            fi
+        elif [ "$runtime_backend" = "hf" ]; then  # 使用Huggingface Transformers后端
+            if [ "$model_size_num" -le 7 ] && [ "$model_size_num" -gt 3 ]; then  # 模型大小大于3B，小于等于7B
+                if [ $gpu_id1 -eq $gpu_id2 ]; then
+                    echo "为了防止显存溢出，tokens上限默认设置为1400"
+                    OFFCUT_TOKEN=2700
+                else
+                    echo "为了防止显存溢出，tokens上限默认设置为2300"
+                    OFFCUT_TOKEN=1800
+                fi
             else
                 echo "tokens上限默认设置为4096"
                 OFFCUT_TOKEN=0
             fi
-        else
-            echo "您的显卡型号 $gpu_model 不支持部署Qwen-7B-QAnything模型"
-            exit 1
-        fi
-    elif [ "$runtime_backend" = "hf" ]; then  # 使用Huggingface Transformers后端
-        if [ "$model_size_num" -le 7 ] && [ "$model_size_num" -gt 3 ]; then  # 模型大小大于3B，小于等于7B
-            if [ $gpu_id1 -eq $gpu_id2 ]; then
-                echo "为了防止显存溢出，tokens上限默认设置为1400"
-                OFFCUT_TOKEN=2700
+        elif [ "$runtime_backend" = "vllm" ]; then  # 使用VLLM后端
+            if [ "$model_size_num" -gt 3 ]; then  # 模型大小大于3B
+                echo "您的显存不足以使用vllm后端部署 $model_size 模型"
+                exit 1
             else
-                echo "为了防止显存溢出，tokens上限默认设置为2300"
-                OFFCUT_TOKEN=1800
+                echo "tokens上限默认设置为4096"
+                OFFCUT_TOKEN=0
             fi
-        else
-            echo "tokens上限默认设置为4096"
-            OFFCUT_TOKEN=0
         fi
-    elif [ "$runtime_backend" = "vllm" ]; then  # 使用VLLM后端
-        if [ "$model_size_num" -gt 3 ]; then  # 模型大小大于3B
-            echo "您的显存不足以使用vllm后端部署 $model_size 模型"
+    elif [ "$GPU1_MEMORY_SIZE" -ge 22528 ] && [ "$GPU1_MEMORY_SIZE" -le 24576 ]; then  # [22GB, 24GB]
+        echo "您当前的显存为 $GPU1_MEMORY_SIZE MiB 推荐部署7B模型"
+        if [ "$model_size_num" -gt 7 ]; then  # 模型大小大于7B
+            echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
             exit 1
-        else
-            echo "tokens上限默认设置为4096"
-            OFFCUT_TOKEN=0
         fi
+        OFFCUT_TOKEN=0
+    elif [ "$GPU1_MEMORY_SIZE" -gt 24576 ]; then  # 显存大于24GB
+        OFFCUT_TOKEN=0
     fi
-elif [ "$TOTAL_MEMORY_SIZE" -ge 22528 ] && [ "$TOTAL_MEMORY_SIZE" -le 24576 ]; then  # [22GB, 24GB]
-    echo "您当前的显存为 $TOTAL_MEMORY_SIZE MiB 推荐部署7B模型"
-    if [ "$model_size_num" -gt 7 ]; then  # 模型大小大于7B
-        echo "您的显存不足以部署 $model_size 模型，请重新选择模型大小"
+else
+    # 获取GPU1_MEMORY_SIZE * tensor_parallel * gpu_memory_utilization的值，并改为整数
+    TOTAL_MEMORY_SIZE=$(echo "$GPU1_MEMORY_SIZE * $tensor_parallel * $gpu_memory_utilization" | bc)
+    TOTAL_MEMORY_SIZE=${TOTAL_MEMORY_SIZE%.*}  # 去掉小数部分
+    echo "Total Memory Size: $TOTAL_MEMORY_SIZE MiB"
+    ## 判断TOTAL_MEMORY_SIZE 是否小于 model_size_num * 2 * 1024
+    if [ $(echo "$TOTAL_MEMORY_SIZE < $model_size_num * 2 * 1024" | bc) -eq 1 ]; then
+        echo "您的显存 $TOTAL_MEMORY_SIZE MiB 不足以部署 $model_size 模型，请重新选择模型大小"
+        echo "如果您确认显存足够，比如模型已量化为8精度及以下，则可以在启动服务时手动输入[请输入您使用的大模型B数(示例：1.8B/3B/7B):]为0B，可跳过显存检查逻辑"
         exit 1
     fi
-    OFFCUT_TOKEN=0
-elif [ "$TOTAL_MEMORY_SIZE" -gt 24576 ]; then  # 显存大于24GB
-    OFFCUT_TOKEN=0
 fi
 
 update_or_append_to_env "OFFCUT_TOKEN" "$OFFCUT_TOKEN"
