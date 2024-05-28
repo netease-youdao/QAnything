@@ -129,10 +129,10 @@ if [ $llm_api = 'cloud' ]; then
 elif [ $runtime_backend = 'default' ]; then
     model_size='7B'
 else
-    read -p "请输入您使用的大模型B数(示例：1.8B/3B/7B): " model_size
+    read -p "请输入您使用的大模型B数(示例：1.8B/3B/7B/14B/32B/...): " model_size
     # 检查是否合法，必须输入数字+B的形式，可以是小数
     if ! [[ $model_size =~ ^[0-9]+(\.[0-9]+)?B$ ]]; then
-        echo "Invalid model size. Please enter a number like '1.8B' or '3B' or '7B'."
+        echo "Invalid model size. Please enter a number like 'xB' where x is a number."
         exit 1
     fi
 fi
