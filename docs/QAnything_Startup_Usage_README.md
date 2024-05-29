@@ -64,7 +64,10 @@ Note: You can choose the most suitable Service Startup Command based on your own
 ## (Optional) Download Qwen-7B-QAnything from ModelScope: https://www.modelscope.cn/models/netease-youdao/Qwen-7B-QAnything
 ## (Optional) Download Qwen-7B-QAnything from Hugging Face: https://huggingface.co/netease-youdao/Qwen-7B-QAnything
 cd /path/to/QAnything/assets/custom_models
-git clone https://huggingface.co/netease-youdao/Qwen-7B-QAnything
+git lfs install
+# git clone https://huggingface.co/netease-youdao/Qwen-7B-QAnything 
+# 使用huggingface地址速度较慢，推荐使用ModelScope地址下载
+git clone https://www.modelscope.cn/netease-youdao/Qwen-7B-QAnything.git
 
 ## Step 2. Execute the service startup command.  Here we use "-b hf" to specify the Hugging Face transformers backend.
 ## Here we use "-b hf" to specify the transformers backend that will load model in 8 bits but do bf16 inference as default for saving VRAM.
@@ -77,7 +80,10 @@ bash ./run.sh -c local -i 0 -b hf -m Qwen-7B-QAnything -t qwen-7b-qanything
 ```bash
 ## Step 1. Download the public LLM model (e.g., MiniChat-2-3B) and save to "/path/to/QAnything/assets/custom_models"
 cd /path/to/QAnything/assets/custom_models
-git lfs clone https://huggingface.co/GeneZC/MiniChat-2-3B
+git lfs install
+# git clone https://huggingface.co/GeneZC/MiniChat-2-3B
+# 使用huggingface地址速度较慢，推荐使用ModelScope地址下载
+git clone https://www.modelscope.cn/netease-youdao/MiniChat-2-3B.git
 
 ## Step 2. Execute the service startup command.  Here we use "-b hf" to specify the Hugging Face transformers backend.
 ## Here we use "-b hf" to specify the transformers backend that will load model in 8 bits but do bf16 inference as default for saving VRAM.
@@ -93,7 +99,10 @@ bash ./run.sh -c local -i 0 -b hf -m MiniChat-2-3B -t minichat
 ## (Optional) Download Qwen-7B-QAnything from ModelScope: https://www.modelscope.cn/models/netease-youdao/Qwen-7B-QAnything
 ## (Optional) Download Qwen-7B-QAnything from Hugging Face: https://huggingface.co/netease-youdao/Qwen-7B-QAnything
 cd /path/to/QAnything/assets/custom_models
-git clone https://huggingface.co/netease-youdao/Qwen-7B-QAnything
+git lfs install
+# git clone https://huggingface.co/netease-youdao/Qwen-7B-QAnything 
+# 使用huggingface地址速度较慢，推荐使用ModelScope地址下载
+git clone https://www.modelscope.cn/netease-youdao/Qwen-7B-QAnything.git
 
 ## Step 2. Execute the service startup command.  Here we use "-b vllm" to specify the vllm backend.
 ## Here we use "-b vllm" to specify the vllm backend that will do bf16 inference as default.
@@ -107,7 +116,10 @@ bash ./run.sh -c local -i 0 -b vllm -m Qwen-7B-QAnything -t qwen-7b-qanything -p
 ```bash
 ## Step 1. Download the public LLM model (e.g., MiniChat-2-3B) and save to "/path/to/QAnything/assets/custom_models"
 cd /path/to/QAnything/assets/custom_models
-git clone https://huggingface.co/GeneZC/MiniChat-2-3B
+git lfs install
+# git clone https://huggingface.co/GeneZC/MiniChat-2-3B
+# 使用huggingface地址速度较慢，推荐使用ModelScope地址下载
+git clone https://www.modelscope.cn/netease-youdao/MiniChat-2-3B.git
 
 ## Step 2. Execute the service startup command. 
 ## Here we use "-b vllm" to specify the vllm backend that will do bf16 inference as default.
