@@ -20,7 +20,7 @@ class LayoutRecognizer(Recognizer):
         super().__init__(self.labels, domain, model_dir)
         self.garbage_layouts = ["footer", "header"]
 
-    def __call__(self, image_list, ocr_res, scale_factor=3, thr=0.25, batch_size=16, drop=True):
+    def __call__(self, image_list, ocr_res, scale_factor=3, thr=0.4, batch_size=16, drop=True):
         def __is_garbage(b):
             patt = ['\* Corresponding Author', '\*Corresponding to']
             return any([re.search(p, b["text"]) for p in patt])

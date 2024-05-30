@@ -264,7 +264,7 @@ class LocalDocQA:
         if custom_prompt is None:
             prompt_template = PROMPT_TEMPLATE
         else:
-            prompt_template = custom_prompt
+            prompt_template = custom_prompt + '\n' + PROMPT_TEMPLATE
 
         source_documents = self.reprocess_source_documents(query=query,
                                                            source_docs=retrieval_documents,

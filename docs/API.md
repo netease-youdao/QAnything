@@ -451,15 +451,17 @@ print(response.text)
 
 ### <h3><p id="-问答请求参数body"> 问答请求参数（Body）</p></h3>
 
-| 参数名        | 示例参数值                                                                   | 是否必填 | 参数类型     | 描述说明                   |
-|------------| ---------------------------------------------------------------------------- | -------- | ------------ |------------------------|
-| user_id    | "zzp"                                                                        | 是       | String       | 用户 id                  |
-| kb_ids     | ["KBb1dd58e8485443ce81166d24f6febda7", "KB633c69d07a2446b39b3a38e3628b8ada"] | 是       | Array        | 知识库 id 的列表，支持多个知识库联合问答 |
-| question   | "保险单号是多少？"                                                           | 是       | String       | 知识库 id 的列表，支持多个知识库联合问答 |
-| history    | [["question1","answer1"],["question2","answer2"]]                            | 否       | Array[Array] | 历史对话                   |
-| rerank     | True                                                                         | 否       | Bool         | 是否开启 rerank，默认为 True   |
-| streaming  | False                                                                        | 否       | Bool         | 是否开启流式输出，默认为 False     |
-| networking | False                                                                        | 否       | Bool         | 是否开启联网搜索，默认为 False     |
+| 参数名           | 示例参数值                                                                        | 是否必填 | 参数类型         | 描述说明                   |
+|---------------|------------------------------------------------------------------------------|------|--------------|------------------------|
+| user_id       | "zzp"                                                                        | 是    | String       | 用户 id                  |
+| kb_ids        | ["KBb1dd58e8485443ce81166d24f6febda7", "KB633c69d07a2446b39b3a38e3628b8ada"] | 是    | Array        | 知识库 id 的列表，支持多个知识库联合问答 |
+| question      | "保险单号是多少？"                                                                   | 是    | String       | 知识库 id 的列表，支持多个知识库联合问答 |
+| history       | [["question1","answer1"],["question2","answer2"]]                            | 否    | Array[Array] | 历史对话                   |
+| rerank        | True                                                                         | 否    | Bool         | 是否开启 rerank，默认为 True   |
+| streaming     | False                                                                        | 否    | Bool         | 是否开启流式输出，默认为 False     |
+| networking    | False                                                                        | 否    | Bool         | 是否开启联网搜索，默认为 False     |
+| custom_prompt | "你是一个耐心、友好、专业的编程机器人，能够准确的回答用户的各种编程问题。"                                       | 否    | String       | 使用自定义prompt            |
+
 
 
 ### <h3><p id="-问答非流式请求示例"> 问答非流式请求示例</p></h3>

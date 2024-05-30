@@ -278,59 +278,30 @@ class Recognizer(object):
 
     def preprocess(self, image_list):
         inputs = []
-        if "scale_factor" in self.input_names:
-            preprocess_ops = []
-            for op_info in [
-                {'interp': 2, 'keep_ratio': False, 'target_size': [800, 608], 'type': 'LinearResize'},
-                {'is_scale': True, 'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225], 'type': 'StandardizeImage'},
-                {'type': 'Permute'},
-                {'stride': 32, 'type': 'PadStride'}
-            ]:
-                new_op_info = op_info.copy()
-                op_type = new_op_info.pop('type')
-                preprocess_ops.append(eval(op_type)(**new_op_info))
+        hh, ww = self.input_shape
+        for img in image_list:
+            h, w = img.shape[:2]
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            scale = min(hh / h, ww / w)
+            img = cv2.resize(np.array(img).astype('float32'), (int(round(scale * w)), int(round(scale * h))))
+            dw, dh = hh - img.shape[1], ww - img.shape[0]    
+            dw /= 2  # divide padding into 2 sides
+            dh /= 2
+            top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
+            left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
+            img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=(114, 114, 114)) 
+            # img = cv2.resize(np.array(img).astype('float32'), (ww, hh))
+            # Scale input pixel values to 0 to 1
 
-            for im_path in image_list:
-                im, im_info = preprocess(im_path, preprocess_ops)
-                inputs.append({"image": np.array((im,)).astype('float32'),
-                               "scale_factor": np.array((im_info["scale_factor"],)).astype('float32')})
-        else:
-            hh, ww = self.input_shape
-            for img in image_list:
-                h, w = img.shape[:2]
-                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                scale = min(hh / h, ww / w)
-                img = cv2.resize(np.array(img).astype('float32'), (int(round(scale * w)), int(round(scale * h))))
-                dw, dh = hh - img.shape[1], ww - img.shape[0]    
-                dw /= 2  # divide padding into 2 sides
-                dh /= 2
-                top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
-                left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
-                img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=(114, 114, 114)) 
-                # img = cv2.resize(np.array(img).astype('float32'), (ww, hh))
-                # Scale input pixel values to 0 to 1
-                img /= 255.0
-                img = img.transpose(2, 0, 1)
-                img = img[np.newaxis, :, :, :].astype(np.float32)
-                inputs.append({self.input_names[0]: img, "scale_factor": [h/hh, w/ww]})
+            input_img = img
+            r_h,r_w = input_img.shape[:2]
+            img /= 255.0
+            img = img.transpose(2, 0, 1)
+            img = img[np.newaxis, :, :, :].astype(np.float32)
+            inputs.append({self.input_names[0]: img, "scale_factor": [r_h,r_w,h,w]})
         return inputs
 
     def postprocess(self, boxes, inputs, thr):
-        if "scale_factor" in self.input_names:
-            bb = []
-            for b in boxes:
-                clsid, bbox, score = int(b[0]), b[2:], b[1]
-                if score < thr:
-                    continue
-                if clsid >= len(self.label_list):
-                    # cron_logger.warning(f"bad category id")
-                    continue
-                bb.append({
-                    "type": self.label_list[clsid].lower(),
-                    "bbox": [float(t) for t in bbox.tolist()],
-                    "score": float(score)
-                })
-            return bb
 
         def xywh2xyxy(x):
             # [x, y, w, h] to [x1, y1, x2, y2]
@@ -392,30 +363,44 @@ class Recognizer(object):
 
             return keep_boxes
 
+        def nms(boxes, scores, iou_threshold):
+            # Sort by score
+            sorted_indices = np.argsort(scores)[::-1]
+            # print(boxes.shape)
+            # print(scores.shape)
+            keep_boxes = []
+            while sorted_indices.size > 0:
+                # Pick the last box
+                box_id = sorted_indices[0]
+                keep_boxes.append(box_id)
+
+                # Compute IoU of the picked box with the rest
+                ious = compute_iou(boxes[box_id, :], boxes[sorted_indices[1:], :])
+
+                # Remove boxes with IoU over the threshold
+                keep_indices = np.where(ious < iou_threshold)[0]
+
+                # print(keep_indices.shape, sorted_indices.shape)
+                sorted_indices = sorted_indices[keep_indices + 1]
+
+            return keep_boxes
+
+
         boxes = np.squeeze(boxes).T
         # Filter out object confidence scores below threshold
         scores = np.max(boxes[:, 4:], axis=1)
         boxes = boxes[scores > thr, :]
         scores = scores[scores > thr]
         if len(boxes) == 0: return []
-
         # Get the class with the highest confidence
         class_ids = np.argmax(boxes[:, 4:], axis=1)
         boxes = boxes[:, :4]
-        input_shape = np.array([inputs["scale_factor"][0]*self.input_shape[0], inputs["scale_factor"][1]*self.input_shape[1]])
+        r_input_shape = np.array([inputs["scale_factor"][0], inputs["scale_factor"][1]])
+        o_input_shape = np.array([inputs["scale_factor"][2], inputs["scale_factor"][3]])
         # boxes = np.multiply(boxes, input_shape, dtype=np.float32)
         boxes = xywh2xyxy(boxes)
-        boxes = scale_boxes(self.input_shape, boxes, input_shape)
-
-        unique_class_ids = np.unique(class_ids)
-        indices = []
-        for class_id in unique_class_ids:
-            class_indices = np.where(class_ids == class_id)[0]
-            class_boxes = boxes[class_indices, :]
-            class_scores = scores[class_indices]
-            class_keep_boxes = iou_filter(class_boxes, class_scores, 0.7)
-            indices.extend(class_indices[class_keep_boxes])
-
+        boxes = scale_boxes(r_input_shape, boxes, o_input_shape)
+        indices = nms(boxes, scores, 0.65)
         return [{
             "type": self.label_list[class_ids[i]].lower(),
             "bbox": [float(t) for t in boxes[i].tolist()],

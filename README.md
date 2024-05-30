@@ -36,6 +36,10 @@ cd QAnything
 pip install -e .
 ```
 
+## PDF parser ++
+
+If you want to use a more powerful PDF parsing function, please download the [corresponding checkpoints](https://www.modelscope.cn/models/netease-youdao/QAnything-pdf-parser/files) in modelscope and put it in the path qanything_kernel/utils/loader/pdf_to_markdown/checkpoints/
+
 ## Run With 3B LLM (MiniChat-2-3B) On Windows WSL or Linux (Require GPU with >=10GB Memory)
 
 ```bash
