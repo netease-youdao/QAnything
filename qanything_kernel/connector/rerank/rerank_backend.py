@@ -67,6 +67,8 @@ class RerankBackend(ABC):
             passage_inputs_length = len(passage_inputs['input_ids'])
 
             if passage_inputs_length <= max_passage_inputs_length:
+                if passage_inputs['attention_mask'] is None or len(passage_inputs['attention_mask']) == 0:
+                    continue
                 qp_merge_inputs = self.merge_inputs(query_inputs, passage_inputs)
                 merge_inputs.append(qp_merge_inputs)
                 merge_inputs_idxs.append(pid)
