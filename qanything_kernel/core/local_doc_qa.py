@@ -118,21 +118,10 @@ class LocalDocQA:
                 deduplicated_docs.append(doc)
         return deduplicated_docs
 
-    async def local_doc_search(self, query, kb_ids, score_threshold=0.35):
+    async def local_doc_search(self, query, kb_ids):
         source_documents = await self.get_source_documents(query, kb_ids)
         deduplicated_docs = self.deduplicate_documents(source_documents)
         retrieval_documents = sorted(deduplicated_docs, key=lambda x: x.metadata['score'], reverse=True)
-        if len(retrieval_documents) > 1:
-            debug_logger.info(f"use rerank, rerank docs num: {len(retrieval_documents)}")
-            # rerank需要的query必须是改写后的, 不然会丢一些信息
-            retrieval_documents = self.rerank_documents(query, retrieval_documents)
-        # 删除掉分数低于阈值的文档
-        if score_threshold:
-            tmp_documents = [item for item in retrieval_documents if float(item.metadata['score']) > score_threshold]
-            if tmp_documents:
-                retrieval_documents = tmp_documents
-        
-        retrieval_documents = retrieval_documents[: self.rerank_top_k]
         debug_logger.info(f"local doc search retrieval_documents: {retrieval_documents}")
         return retrieval_documents
 
@@ -242,12 +231,20 @@ class LocalDocQA:
         source_documents = sorted(source_documents, key=lambda x: x.metadata['score'], reverse=True)
         return source_documents
 
-    async def retrieve(self, query, kb_ids, need_web_search=False):
+    async def retrieve(self, query, kb_ids, need_web_search=False, score_threshold=0.35):
         retrieval_documents = await self.local_doc_search(query, kb_ids)
         if need_web_search:
             retrieval_documents.extend(self.web_page_search(query, top_k=3))
         debug_logger.info(f"retrieval_documents: {retrieval_documents}")
-        retrieval_documents = self.rerank_documents(query, retrieval_documents)
+        if len(retrieval_documents) > 1:
+            retrieval_documents = self.rerank_documents(query, retrieval_documents)
+            # 删除掉分数低于阈值的文档
+            tmp_documents = [item for item in retrieval_documents if float(item.metadata['score']) > score_threshold]
+            if tmp_documents:
+                retrieval_documents = tmp_documents
+
+        # retrieval_documents = retrieval_documents[: self.rerank_top_k]
+
         debug_logger.info(f"reranked retrieval_documents: {retrieval_documents}")
         return retrieval_documents
 
