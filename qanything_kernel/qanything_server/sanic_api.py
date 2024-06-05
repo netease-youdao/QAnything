@@ -87,7 +87,7 @@ if os_system != 'Darwin':
         if not check_package_version("onnxruntime", "1.16.3"):
             print(f"当前系统glibc版本为{glibc_version}<2.28，无法使用onnxruntime-gpu(cuda12.x)，将安装onnxruntime来代替", flush=True)
             os.system("pip install onnxruntime")
-    else:
+    elif not args.use_cpu:
         # 官方发布的1.17.1不支持cuda12以上的系统，需要根据官方文档:https://onnxruntime.ai/docs/install/里提到的地址手动下载whl
         if not check_package_version("onnxruntime-gpu", "1.17.1"):
             download_url = f"https://aiinfra.pkgs.visualstudio.com/PublicPackages/_apis/packaging/feeds/9387c3aa-d9ad-4513-968c-383f6f7f53b8/pypi/packages/onnxruntime-gpu/versions/1.17.1/onnxruntime_gpu-1.17.1-cp3{python3_version}-cp3{python3_version}-{system_name}.whl/content"
@@ -203,7 +203,7 @@ async def init_local_doc_qa(app, loop):
 @app.after_server_start
 async def print_info(app, loop):
     print("已启动后端服务，请复制[  http://0.0.0.0:8777/qanything/  ]到浏览器进行测试。", flush=True)
-    os.system("tail -f logs/debug_log/debug.log")
+    os.system("tail -f logs/debug_logs/debug.log")
 
 app.add_route(document, "/api/docs", methods=['GET'])
 app.add_route(new_knowledge_base, "/api/local_doc_qa/new_knowledge_base", methods=['POST'])  # tags=["新建知识库"]
