@@ -86,10 +86,7 @@ class RerankBackend(ABC):
         return merge_inputs, merge_inputs_idxs
 
     @get_time
-    def predict(self,
-                query: str,
-                passages: List[str],
-                ):
+    def get_rerank(self, query: str, passages: List[str]):
         tot_batches, merge_inputs_idxs_sort = self.tokenize_preproc(query, passages)
 
         tot_scores = []
