@@ -85,11 +85,12 @@ class LocalFile:
         elif self.file_path.lower().endswith(".xlsx"):
             # loader = UnstructuredExcelLoader(self.file_path, mode="elements")
             docs = []
-            csv_file_path = self.file_path[:-5] + '.csv'
             xlsx = pd.read_excel(self.file_path, engine='openpyxl', sheet_name=None)
             for sheet in xlsx.keys():
+                df = xlsx[sheet]
+                df.dropna(how='all', inplace=True)
                 csv_file_path = self.file_path[:-5] + '_' + sheet + '.csv'
-                xlsx[sheet].to_csv(csv_file_path, index=False)
+                df.to_csv(csv_file_path, index=False)
                 loader = CSVLoader(csv_file_path, csv_args={"delimiter": ",", "quotechar": '"'})
                 docs += loader.load()
         elif self.file_path.lower().endswith(".pptx"):
