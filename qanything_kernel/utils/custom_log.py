@@ -1,7 +1,33 @@
 import logging
+import sys
+
 from concurrent_log_handler import ConcurrentRotatingFileHandler
 import time
 import os
+
+# 创建自定义过滤器
+class FilterOutMessages(logging.Filter):
+    def filter(self, record):
+
+        exclude_keywords = [
+            "local doc search retrieval_documents",
+            "prompt: 参考信息：",
+            "[debug] event_text =",
+            "retrieval_documents: [Document(page_content",
+            "reranked retrieval_documents: [Document(page_content=",
+            "'role': 'user'",
+        ]
+
+        # 检查日志消息中是否包含要过滤掉的关键词
+        for keyword in exclude_keywords:
+            if keyword in record.msg:
+                return False  # 如果包含关键词，则不记录该日志消息
+
+        if isinstance(record.msg, list):
+            return False
+
+        return True  # 如果日志消息中不包含任何要过滤掉的关键词，则记录该消息
+
 
 
 class CustomConcurrentRotatingFileHandler(ConcurrentRotatingFileHandler):
@@ -23,6 +49,7 @@ class CustomConcurrentRotatingFileHandler(ConcurrentRotatingFileHandler):
 
         if not self.delay:
             self.stream = self._open()
+
 
 # 这是LogHandler的代码，用于将日志写入文件
 # 获取当前时间作为日志文件名的一部分
@@ -73,7 +100,32 @@ qa_handler.setFormatter(formatter)
 
 # 将 handler 添加到 logger 中，这样 logger 就可以使用这个 handler 来记录日志了
 qa_logger.addHandler(qa_handler)
-print(debug_logger, qa_logger)
+
+
+''''''
+# filter_out_messages = FilterOutMessages()
+# 添加控制台日志处理器
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setLevel(logging.INFO)  # 可以根据需要设置适当的日志级别
+console_handler.setFormatter(formatter)  # 使用与文件日志相同的格式
+console_handler.addFilter(FilterOutMessages())
+# 添加过滤器到处理器
+debug_handler.addFilter(FilterOutMessages())
+qa_handler.addFilter(FilterOutMessages())
+# 将控制台处理器添加到日志记录器
+# qa_logger.addHandler(console_handler)
+debug_logger.addHandler(console_handler)
+
+
+
+# 原来的 print，但是好像不能输出日志
+# print(debug_logger, qa_logger)
+
+
+# 测试日志输出
+# debug_logger.info("This is a debug message")
+# qa_logger.info("This is a QA message")
+
 
 qa_logger.propagate = False  # 关闭日志传播
 debug_logger.propagate = False  # 关闭日志传播
