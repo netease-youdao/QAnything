@@ -203,6 +203,7 @@ async def init_local_doc_qa(app, loop):
 @app.after_server_start
 async def print_info(app, loop):
     print("已启动后端服务，请复制[  http://0.0.0.0:8777/qanything/  ]到浏览器进行测试。", flush=True)
+    os.system("tail -f logs/debug_log/debug.log")
 
 app.add_route(document, "/api/docs", methods=['GET'])
 app.add_route(new_knowledge_base, "/api/local_doc_qa/new_knowledge_base", methods=['POST'])  # tags=["新建知识库"]
