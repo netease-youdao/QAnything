@@ -23,15 +23,20 @@ import subprocess
 import pandas as pd
 import os
 import re
+import config
 
 text_splitter = RecursiveCharacterTextSplitter(
     separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
-    chunk_size=400,
-    chunk_overlap=100,
+    chunk_size=config.text_splitter_config['chunk_size'],
+    chunk_overlap=config.text_splitter_config['chunk_overlap'],
     length_function=num_tokens,
 )
 
-pdf_text_splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=0, length_function=num_tokens)
+pdf_text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=config.pdf_splitter_config['chunk_size'],
+    chunk_overlap=config.pdf_splitter_config['chunk_overlap'],
+    length_function=num_tokens
+)
 
 
 # 下载pdf解析相关的模型

@@ -6,19 +6,20 @@ from llama_cpp import Llama
 from abc import ABC
 from typing import List
 import json
+import config
 
 
 class LlamaCPPCustomLLM(BaseAnswer, ABC):
     n_gpu_layers: int = -1
     n_ctx: int = 4096
-    token_window: int = 4096
-    max_token: int = 512
+    token_window: int = config.llm_config['token_window']
+    max_token: int = config.llm_config['max_token']
     offcut_token: int = 50
     truncate_len: int = 50
     temperature: float = 0
     stop_words: str = None
     history: List[List[str]] = []
-    history_len: int = 3
+    history_len: int = config.llm_config['history_len']
 
     def __init__(self, args):
         super().__init__()

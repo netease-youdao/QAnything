@@ -22,19 +22,20 @@ load_dotenv()
 # debug_logger.info(f"OPENAI_API_BASE = {OPENAI_API_BASE}")
 # debug_logger.info(f"OPENAI_API_MODEL_NAME = {OPENAI_API_MODEL_NAME}")
 
+import config
+
 
 class OpenAILLM(BaseAnswer, ABC):
     model: str = None
     token_window: int = None
-    max_token: int = 512
+    max_token: int = config.llm_config['max_token']
     offcut_token: int = 50
     truncate_len: int = 50
     temperature: float = 0
-    top_p: float = 1.0 # top_p must be (0,1]
+    top_p: float = config.llm_config['top_p']    # top_p must be (0,1]
     stop_words: str = None
     history: List[List[str]] = []
-    history_len: int = 2
-
+    history_len: int = config.llm_config['history_len']
     def __init__(self, args):
         super().__init__()
         base_url = args.openai_api_base
