@@ -16,19 +16,20 @@ from vllm.engine.async_llm_engine import AsyncLLMEngine
 from vllm.utils import random_uuid
 from qanything_kernel.configs.conversation import get_conv_template
 from qanything_kernel.utils.custom_log import debug_logger
+import config
 
 load_dotenv()
 
 
 class OpenAICustomLLM(BaseAnswer, ABC):
-    token_window: int = 4096
-    max_token: int = 512
+    token_window: int = config.llm_config['token_window']
+    max_token: int = config.llm_config['max_token']
     offcut_token: int = 50
     truncate_len: int = 50
     temperature: float = 0
     stop_words: str = None
     history: List[List[str]] = []
-    history_len: int = 2
+    history_len: int = config.llm_config['history_len']
 
     def __init__(self, args):
         super().__init__()
