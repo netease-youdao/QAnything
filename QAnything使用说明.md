@@ -820,18 +820,28 @@ bash scripts/base_run.sh -s "M1mac" -w 2 -m 19530 -q 8777 -o -b 'http://localhos
 原理：快速解析器主要依赖PyMuPDF，强力解析器则使用了表格解析模型和版面分析模型，并做了后处理优化
 
 #### 开启强力解析器的方式：
-[设置此处的 USE_FAST_PDF_PARSER = False](https://github.com/netease-youdao/QAnything/blob/qanything-python/qanything_kernel/configs/model_config.py#L13)
+在项目的根目录下的config.py配置文件中将USE_FAST_PDF_PARSER的值修改为False
 
 ### 用户自定义配置（实验性：提升速度）
-[代码位置](https://github.com/netease-youdao/QAnything/blob/qanything-python/qanything_kernel/configs/model_config.py#L15)
+项目的根目录下的config.py配置文件中的配置参数都可以更改，用户可以根据自己的需求实现自定义更改
 ```bash
 # 根据实际情况调整以下参数，对硬件要求更高，但是速度更快
 # 设置rerank的batch大小，16GB内存建议设置为8，32GB内存建议设置为16
-LOCAL_RERANK_BATCH = 8
+"LOCAL_RERANK_BATCH": 8,
 # 设置rerank的多线程worker数量，默认设置为4，根据机器性能调整
-LOCAL_RERANK_WORKERS = 4
+"LOCAL_RERANK_WORKERS": 4,
 # 设置embed的batch大小，16GB内存建议设置为8，32GB内存建议设置为16
-LOCAL_EMBED_BATCH = 8
+"LOCAL_EMBED_BATCH": 8,
 # 设置embed的多线程worker数量，默认设置为4，根据机器性能调整
-LOCAL_EMBED_WORKERS = 4
+"LOCAL_EMBED_WORKERS": 4
+```
+```bash
+# 回答的最大token数，一般来说对于国内模型一个中文不到1个token，国外模型一个中文1.5-2个token
+"max_token": 512,
+# 附带的上下文数目
+"history_len": 2,
+# 总共的token数，如果遇到电脑显存不够的情况可以将此数字改小，如果低于3000仍然无法使用，就更换模型
+"token_window": 4096,
+# 如果报错显示top_p值必须在0到1，可以在这里修改
+"top_p": 1.0
 ```
