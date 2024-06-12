@@ -29,7 +29,7 @@
 | 支持解析语音文件（依赖faster_whisper，解析速度慢）  | ✅                                                                                     | ❌                                                                           | docker版本计划中，上传文件时可支持mp3，wav格式文件                                |
 | 支持OpenCloudOS                     | ✅[详情](#支持OpenCloudOS)                                                                 | ❌                                                                           |                                                                |
 | 支持与OpenAI接口兼容的其他开源大模型服务(包括ollama) | ✅ [详情](#python版OpenaiAI接口兼容)                                                          | ✅ [详情](#docker版OpenaiAI接口兼容)                                                | 需手动修改api_key，base_url，model等参数                                 |
-| pdf（包含表格）解析效果+++                  | ✅ [详情:需手动开启](#pdf包含表格解析效果)                                                            | ❌                                                                           |                                                                |
+| pdf（包含表格）解析效果+++                  | ✅ [详情:需手动开启](#pdf包含表格解析效果)                                                            | ❌                                                                           |             [单独使用pdf解析器](#如何在项目外单独使用pdf解析器)                                                 |
 | 用户自定义配置（实验性：提升速度）                 | ✅ [详情:需手动开启](#用户自定义配置实验性提升速度)                                                         | ❌                                                                           |                                                                |
 | 其他文件类型解析效果+++                     | ❌                                                                                     | ❌                                                                           | 预计下个版本发布（15d）                                                  |
 
@@ -844,4 +844,21 @@ bash scripts/base_run.sh -s "M1mac" -w 2 -m 19530 -q 8777 -o -b 'http://localhos
 "token_window": 4096,
 # 如果报错显示top_p值必须在0到1，可以在这里修改
 "top_p": 1.0
+```
+
+
+## 如何在项目外单独使用pdf解析器：
+#### 在项目根目录下运行以下命令，可以将pdf_to_markdown模块安装到python环境中
+```bash
+pip install -e .
+```
+在同一python环境就可以使用以下实例代码使用pdf解析器
+```python
+from qanything_kernel.utils.loader import PdfLoader
+# 创建 PdfLoader 类的实例
+# 可以自由更改路径,filename为需要解析的pdf文件路径，save_dir_为解析后保存文件的路径
+pdf_loader = PdfLoader(filename='xxx.pdf', save_dir_='/to/path/output')
+# 调用 load_to_markdown 方法进行转换
+markdown_directory = pdf_loader.load_to_markdown()
+print(f"Markdown文件在: {markdown_directory}")
 ```
