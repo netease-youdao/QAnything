@@ -149,6 +149,15 @@
         <div class="question">
           <a-popover placement="topLeft">
             <template #content>
+              <p v-if="network">退出混合检索</p>
+              <p v-else>开启混合检索</p>
+            </template>
+            <span :class="['hybrid', `hybrid-${hybrid}`]">
+              <SvgIcon name="hybrid_search" @click="hybridChat" />
+            </span>
+          </a-popover>
+          <a-popover placement="topLeft">
+            <template #content>
               <p v-if="network">退出联网检索</p>
               <p v-else>开启联网检索</p>
             </template>
@@ -245,6 +254,9 @@ const control = ref(true);
 
 //当前是否开启链网检索
 const network = ref(false);
+
+//当前是否开启混合检索
+const hybrid = ref(false);
 
 //当前问的问题
 const question = ref('');
@@ -368,6 +380,7 @@ const send = () => {
       question: q,
       streaming: true,
       networking: network.value,
+      hybrid_search: hybrid.value,
       product_source: 'saas',
     }),
     signal: ctrl.signal,
@@ -587,6 +600,10 @@ function getB64Type(suffix) {
 
 const networkChat = () => {
   network.value = !network.value;
+};
+
+const hybridChat = () => {
+  hybrid.value = !hybrid.value;
 };
 
 scrollBottom();
@@ -874,6 +891,7 @@ scrollBottom();
     .download,
     .delete,
     .network,
+    .hybrid,
     .control {
       cursor: pointer;
       padding: 8px;
@@ -906,6 +924,14 @@ scrollBottom();
         color: #5a47e5;
       }
       &.control-false {
+        border: 1px solid #e5e5e5;
+        color: #666666;
+      }
+      &.hybrid-true {
+        border: 1px solid #5a47e5;
+        color: #5a47e5;
+      }
+      &.hybrid-false {
         border: 1px solid #e5e5e5;
         color: #666666;
       }

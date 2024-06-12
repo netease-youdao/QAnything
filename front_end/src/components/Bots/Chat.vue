@@ -155,15 +155,61 @@
       </div>
       <div class="question-box">
         <div class="question">
-          <a-popover placement="topLeft">
-            <template #content>
-              <p v-if="network">退出联网检索</p>
-              <p v-else>开启联网检索</p>
+          <a-dropdown v-model:open="visible" overlay-class-name="custom-dropdown">
+            <template #overlay>
+              <a-menu>
+                <a-menu-item key="1">
+                  <a-popover
+                    placement="right"
+                    :get-container="getContainer"
+                    overlay-class-name="custom-popover"
+                  >
+                    <template #content>
+                      <p v-if="network">退出混合检索</p>
+                      <p v-else>开启混合检索</p>
+                    </template>
+                    <span :class="['hybrid', `hybrid-${hybrid}`]">
+                      <SvgIcon name="hybrid_search" @click="hybridChat" />
+                    </span>
+                  </a-popover>
+                </a-menu-item>
+                <a-menu-item key="2">
+                  <a-popover
+                    placement="right"
+                    :get-container="getContainer"
+                    overlay-class-name="custom-popover"
+                  >
+                    <template #content>
+                      <p v-if="network">退出联网检索</p>
+                      <p v-else>开启联网检索</p>
+                    </template>
+                    <span :class="['network', `network-${network}`]">
+                      <SvgIcon name="network" @click="networkChat" />
+                    </span>
+                  </a-popover>
+                </a-menu-item>
+                <a-menu-item key="3">
+                  <a-popover
+                    placement="right"
+                    :get-container="getContainer"
+                    overlay-class-name="custom-popover"
+                  >
+                    <template #content>
+                      <p v-if="control">退出多轮对话</p>
+                      <p v-else>开启多轮对话</p>
+                    </template>
+                    <span :class="['control', `control-${control}`]">
+                      <SvgIcon name="chat-control" @click="controlChat" />
+                    </span>
+                  </a-popover>
+                </a-menu-item>
+              </a-menu>
             </template>
-            <span :class="['network', `network-${network}`]">
-              <SvgIcon name="network" @click="networkChat" />
-            </span>
-          </a-popover>
+            <a-button class="operation-btn">
+              操作
+              <DownOutlined />
+            </a-button>
+          </a-dropdown>
           <a-popover v-if="chatType === 'share'" placement="topLeft">
             <template #content>
               <p v-if="control">{{ bots.multiTurnConversation2 }}</p>
@@ -220,6 +266,7 @@ import { useLanguage } from '@/store/useLanguage';
 import { userId } from '@/services/urlConfig';
 import urlResquest from '@/services/urlConfig';
 import { resultControl } from '@/utils/utils';
+import { DownOutlined } from '@ant-design/icons-vue';
 
 const props = defineProps({
   chatType: {
@@ -245,11 +292,14 @@ const { QA_List } = storeToRefs(useBotsChat());
 const { copy } = useClipboard();
 const { setChatSourceVisible, setSourceType, setSourceUrl, setTextContent } = useChatSource();
 const { language } = storeToRefs(useLanguage());
+//当前是否开启链网检索
+const network = ref(false);
+
 //当前是否多轮对话
 const control = ref(true);
 
-//当前是否开启链网检索
-const network = ref(false);
+//当前是否开启混合检索
+const hybrid = ref(false);
 
 //当前问的问题
 const question = ref('');
@@ -261,6 +311,8 @@ const history = ref([]);
 const showLoading = ref(false);
 
 const showSourceIdxs = ref([]);
+
+const visible = ref(false);
 
 //取消请求用
 let ctrl: AbortController;
@@ -370,6 +422,7 @@ const send = () => {
       question: q,
       streaming: true,
       networking: network.value,
+      hybrid_search: hybrid.value,
       product_source: 'saas',
     }),
     signal: ctrl.signal,
@@ -583,6 +636,15 @@ function getB64Type(suffix) {
 const networkChat = () => {
   network.value = !network.value;
 };
+
+const hybridChat = () => {
+  hybrid.value = !hybrid.value;
+};
+
+function getContainer() {
+  const node = document.getElementsByClassName('question-box')[0];
+  return node;
+}
 
 scrollBottom();
 </script>
@@ -877,37 +939,6 @@ scrollBottom();
     display: flex;
     align-items: center;
 
-    .download,
-    .delete,
-    .network {
-      cursor: pointer;
-      padding: 8px;
-      display: flex;
-      margin-right: 16px;
-      border-radius: 8px;
-      background: #ffffff;
-      border: 1px solid #e5e5e5;
-      color: #666666;
-
-      &:hover {
-        border: 1px solid #5a47e5;
-        color: #5a47e5;
-      }
-
-      svg {
-        width: 24px;
-        height: 24px;
-      }
-      &.network-true {
-        border: 1px solid #5a47e5;
-        color: #5a47e5;
-      }
-      &.network-false {
-        border: 1px solid #e5e5e5;
-        color: #666666;
-      }
-    }
-
     .send-plane {
       width: 56px;
       height: 36px;
@@ -992,8 +1023,87 @@ scrollBottom();
 .sourceitem-enter {
   opacity: 0;
 }
+
+:deep(.ant-popover-content) {
+  z-index: 1001;
+}
+
+.operation-btn {
+  padding: 4px 10px;
+  margin-right: 16px;
+}
+
+.operation-btn:hover {
+  color: #5a47e5;
+  border-color: #5a47e5;
+}
+
+.custom-dropdown {
+  .download,
+  .delete,
+  .control,
+  .hybrid,
+  .network {
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    // margin-right: 8px;
+    border-radius: 8px;
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
+    color: #666666;
+
+    &:hover {
+      border: 1px solid #5a47e5;
+      color: #5a47e5;
+    }
+
+    svg {
+      width: 24px;
+      height: 24px;
+    }
+    &.control-true {
+      border: 1px solid #5a47e5;
+      color: #5a47e5;
+    }
+    &.control-false {
+      border: 1px solid #e5e5e5;
+      color: #666666;
+    }
+    &.network-true {
+      border: 1px solid #5a47e5;
+      color: #5a47e5;
+    }
+    &.network-false {
+      border: 1px solid #e5e5e5;
+      color: #666666;
+    }
+    &.hybrid-true {
+      border: 1px solid #5a47e5;
+      color: #5a47e5;
+    }
+    &.hybrid-false {
+      border: 1px solid #e5e5e5;
+      color: #666666;
+    }
+  }
+
+  .ant-dropdown-menu-item-active {
+    background: transparent !important;
+  }
+}
 </style>
 <style lang="scss">
+.custom-popover {
+  z-index: 10001 !important;
+}
+
+.custom-dropdown {
+  .ant-dropdown-menu-item-active {
+    background: transparent !important;
+  }
+}
+
 @keyframes shake {
   0% {
     transform: rotate(0deg);

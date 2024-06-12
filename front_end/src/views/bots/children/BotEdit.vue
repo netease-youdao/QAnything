@@ -5,8 +5,11 @@
     </div>
     <div v-else>
       <div class="header">
-        <img src="@/assets/bots/bot-avatar.png" alt="avatar" />
-        <div class="name">{{ curBot?.bot_name }}</div>
+        <div class="name-box">
+          <img src="@/assets/bots/bot-avatar.png" alt="avatar" />
+          <div class="name">{{ curBot?.bot_name }}</div>
+          <div class="bot-id">bot_id：{{ curBot?.bot_id }}</div>
+        </div>
         <div class="tabs">
           <div
             :class="[
@@ -135,20 +138,33 @@ function changeEditTab(value) {
   .header {
     width: 100%;
     height: 40px;
-    padding: 0 32px;
+    padding: 0 26px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     margin-bottom: 26px;
-    img {
-      width: 40px;
-      height: 40px;
-      margin-right: 16px;
-    }
-    .name {
-      flex-grow: 1;
-      font-size: 24px;
-      font-weight: 500;
-      color: #222222;
+    .name-box {
+      height: 64px;
+      display: flex;
+      align-items: center;
+
+      img {
+        width: 40px;
+        height: 40px;
+        margin-right: 12px;
+      }
+      .name {
+        flex-grow: 1;
+        font-size: 20px;
+        font-weight: 500;
+        color: #222222;
+      }
+      .bot-id {
+        font-size: 14px;
+        font-weight: normal;
+        color: #222222;
+        margin-left: 20px;
+      }
     }
     .tabs {
       width: 120px;

@@ -16,7 +16,7 @@
         </div>
         <p class="kb-name">
           <span class="name">{{ currentKbName }}</span>
-          <!-- <span class="id">{{ home.knowledgeID }} {{ currentId }}</span> -->
+          <span class="id">kb_id:{{ currentId }}</span>
         </p>
       </div>
       <div class="nav-info">
@@ -492,7 +492,7 @@ onBeforeUnmount(() => {
     }
 
     .id {
-      font-size: 12px;
+      font-size: 14px;
     }
   }
 }
