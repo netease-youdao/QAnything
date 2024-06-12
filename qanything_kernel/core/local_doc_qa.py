@@ -224,7 +224,7 @@ class LocalDocQA:
         if num_tokens(query) > 300:  # tokens数量超过300时不使用local rerank
             return source_documents
 
-        scores = self.local_rerank_backend.predict(query, [doc.page_content for doc in source_documents])
+        scores = self.local_rerank_backend.get_rerank(query, [doc.page_content for doc in source_documents])
         debug_logger.info(f"rerank scores: {scores}")
         for idx, score in enumerate(scores):
                 source_documents[idx].metadata['score'] = score
