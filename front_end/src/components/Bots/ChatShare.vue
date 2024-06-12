@@ -360,6 +360,7 @@ const send = () => {
   fetchEventSource(apiBase + '/local_doc_qa/local_doc_chat', {
     method: 'POST',
     headers: headers,
+    openWhenHidden: true,
     body: JSON.stringify({
       user_id: props.virtualUserId,
       bot_id: props.botInfo.bot_id,

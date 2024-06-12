@@ -313,6 +313,7 @@ const send = () => {
       'Content-Type': 'application/json',
       Accept: ['text/event-stream', 'application/json'],
     },
+    openWhenHidden: true,
     body: JSON.stringify({
       user_id: userId,
       kb_ids: selectList.value,
