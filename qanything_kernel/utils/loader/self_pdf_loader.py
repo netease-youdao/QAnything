@@ -10,11 +10,10 @@ import time
 
 
 class PdfLoader(PdfParser):
-    def __init__(self, filename, binary=None, from_page=0, to_page=10000, zoomin=3, save_dir_='results/', callback=None):
+    def __init__(self, filename, binary=None, from_page=0, to_page=10000, zoomin=3, save_dir='results/', callback=None):
         super().__init__()
         timestamp = int(time.time())
         # save_dir = os.path.join(root_dir, filename.split('.')[0] + '_' + str(timestamp))
-        save_dir = save_dir_
         os.makedirs(save_dir, exist_ok=True)
 
         self.json_dir = os.path.join(save_dir, os.path.basename(filename)[:-4]) + '.json'

@@ -13,12 +13,9 @@ class Pdf(PdfParser):
     def __init__(self):
         super().__init__()
 
-    def __call__(self, filename, output_dir=None, binary=None, from_page=0,
+    def __call__(self, filename, binary=None, from_page=0,
                  to_page=100000, zoomin=3, callback=None):
-        if output_dir is None:
-            res_dir = 'results/'
-        else:
-            res_dir = output_dir
+        res_dir = 'results/'
         timestamp = int(time.time())
         save_dir = os.path.join(res_dir,filename.split('.')[0]+'_'+str(timestamp))
         os.makedirs(save_dir,exist_ok=True)
