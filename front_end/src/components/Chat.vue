@@ -17,8 +17,10 @@
                     !item.source.length ? 'change-radius' : '',
                     item.showTools ? '' : 'flashing',
                   ]"
-                  v-html="item.answer"
-                ></p>
+                >
+                  <HighLightMarkDown v-if="item.answer" :content="item.answer" />
+                  <span v-else>{{ item.answer }}</span>
+                </p>
               </div>
               <template v-if="item.source.length">
                 <div
@@ -78,7 +80,9 @@
                     </p>
                     <Transition name="sourceitem">
                       <div v-show="sourceItem.showDetailDataSource" class="source-content">
-                        <p v-html="sourceItem.content?.replaceAll('\n', '<br/>')"></p>
+                        <HighLightMarkDown
+                          :content="sourceItem.content ? sourceItem.content : ''"
+                        />
                         <p class="score">
                           <span class="tips">{{ common.correlation }}</span
                           >{{ sourceItem.score }}
@@ -201,6 +205,7 @@ import { getLanguage } from '@/language/index';
 import { useLanguage } from '@/store/useLanguage';
 import urlResquest from '@/services/urlConfig';
 import { resultControl } from '@/utils/utils';
+import HighLightMarkDown from '@/components/HighLightMarkDown.vue';
 
 const common = getLanguage().common;
 
