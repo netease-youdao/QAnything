@@ -1,12 +1,15 @@
 import random
 from langchain.schema.document import Document
 import re
+
 RANDOM_NUMBER_SET = set()
+
 
 def remove_escapes(markdown_text):
     pattern = r'\\(.)'
     cleaned_text = re.sub(pattern, r'\1', markdown_text)
     return cleaned_text
+
 
 def contains_table(text):
     lines = text.split('\n')
@@ -60,18 +63,21 @@ def _init_node(node_type, title, id_len=4):
 
 def _get_content_dfs(item):
     def dfs_child(child, lines):
-        if 'children' in child:
-            for c in child['children']:
-                dfs_child(c, lines)
+        if child['type'] == 'image':
+            lines.append("![figure]" + '(' + child['attrs']['url'] + ' ' + child['attrs']['title'] + ' ' + ')')
         else:
-            if 'raw' in child:
-                lines.append(child['raw'])
+            if 'children' in child:
+                for c in child['children']:
+                    dfs_child(c, lines)
+            else:
+                if 'raw' in child:
+                    lines.append(child['raw'])
         return lines
 
     text_lines = dfs_child(item, [])
     content = '\n'.join(text_lines) + '\n'
-
-    return content
+    coord = [item['page_id'], item['bbox'], 'content']
+    return content, coord
 
 
 def _add_content_to_block(content, block):
@@ -240,7 +246,7 @@ def convert_node_to_document(node_lists):
             if item['node_type'] == 'ContentNode':
                 title_lst = []
                 for index, title in enumerate(item['title'][:-1]):
-                    title_lst.append('#' * (index + 1) + ' ' +  title)
+                    title_lst.append('#' * (index + 1) + ' ' + title)
                 has_table = contains_table(item['content'])
                 doc = Document(page_content=item['content'], metadata={'title_lst': title_lst, 'has_table': has_table})
                 doc_lst.append(doc)
