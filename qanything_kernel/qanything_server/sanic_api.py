@@ -63,6 +63,9 @@ args = parser.parse_args()
 print('use_cpu:', args.use_cpu, flush=True)
 print('use_openai_api:', args.use_openai_api, flush=True)
 
+# 输出用户启动的端口
+print(f"The server is starting on port: {args.port}")
+
 if os_system != 'Darwin':
     if not args.use_cpu:
         cuda_version = torch.version.cuda
@@ -202,7 +205,7 @@ async def init_local_doc_qa(app, loop):
 
 @app.after_server_start
 async def print_info(app, loop):
-    print("已启动后端服务，请复制[  http://0.0.0.0:8777/qanything/  ]到浏览器进行测试。", flush=True)
+    print(f"已启动后端服务，请复制[  http://0.0.0.0:{args.port}/qanything/  ]到浏览器进行测试。", flush=True)
     print("详细调试日志请查看 logs/debug_logs/debug.log，问答日志请查看logs/qa_logs/qa.log", flush=True)
     # os.system("tail -f logs/debug_logs/debug.log")
 
