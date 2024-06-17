@@ -63,21 +63,18 @@ def _init_node(node_type, title, id_len=4):
 
 def _get_content_dfs(item):
     def dfs_child(child, lines):
-        if child['type'] == 'image':
-            lines.append("![figure]" + '(' + child['attrs']['url'] + ' ' + child['attrs']['title'] + ' ' + ')')
+        if 'children' in child:
+            for c in child['children']:
+                dfs_child(c, lines)
         else:
-            if 'children' in child:
-                for c in child['children']:
-                    dfs_child(c, lines)
-            else:
-                if 'raw' in child:
-                    lines.append(child['raw'])
+            if 'raw' in child:
+                lines.append(child['raw'])
         return lines
 
     text_lines = dfs_child(item, [])
     content = '\n'.join(text_lines) + '\n'
-    coord = [item['page_id'], item['bbox'], 'content']
-    return content, coord
+
+    return content
 
 
 def _add_content_to_block(content, block):
