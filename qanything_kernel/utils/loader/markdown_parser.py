@@ -1,12 +1,15 @@
 import random
 from langchain.schema.document import Document
 import re
+
 RANDOM_NUMBER_SET = set()
+
 
 def remove_escapes(markdown_text):
     pattern = r'\\(.)'
     cleaned_text = re.sub(pattern, r'\1', markdown_text)
     return cleaned_text
+
 
 def contains_table(text):
     lines = text.split('\n')
@@ -240,7 +243,7 @@ def convert_node_to_document(node_lists):
             if item['node_type'] == 'ContentNode':
                 title_lst = []
                 for index, title in enumerate(item['title'][:-1]):
-                    title_lst.append('#' * (index + 1) + ' ' +  title)
+                    title_lst.append('#' * (index + 1) + ' ' + title)
                 has_table = contains_table(item['content'])
                 doc = Document(page_content=item['content'], metadata={'title_lst': title_lst, 'has_table': has_table})
                 doc_lst.append(doc)
