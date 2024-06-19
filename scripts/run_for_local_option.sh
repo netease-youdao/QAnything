@@ -363,7 +363,7 @@ else
         CUDA_VISIBLE_DEVICES=$gpus nohup python3 -m fastchat.serve.model_worker --host 0.0.0.0 --port 7801 \
             --controller-address http://0.0.0.0:7800 --worker-address http://0.0.0.0:7801 \
             --model-path /model_repos/CustomLLM/$LLM_API_SERVE_MODEL --load-8bit \
-            --gpus $gpus --num-gpus $tensor_parallel --dtype bfloat16 --conv-template $LLM_API_SERVE_CONV_TEMPLATE > /workspace/qanything_local/logs/debug_logs/fastchat_logs/fschat_model_worker_7801.log 2>&1 &
+            --gpus $gpus --num-gpus $tensor_parallel --dtype float16 --conv-template $LLM_API_SERVE_CONV_TEMPLATE > /workspace/qanything_local/logs/debug_logs/fastchat_logs/fschat_model_worker_7801.log 2>&1 &
 
         ;;
     "vllm")
@@ -372,7 +372,7 @@ else
         CUDA_VISIBLE_DEVICES=$gpus nohup python3 -m fastchat.serve.vllm_worker --host 0.0.0.0 --port 7801 \
             --controller-address http://0.0.0.0:7800 --worker-address http://0.0.0.0:7801 \
             --model-path /model_repos/CustomLLM/$LLM_API_SERVE_MODEL --trust-remote-code --block-size 32 --tensor-parallel-size $tensor_parallel \
-            --max-model-len 4096 --gpu-memory-utilization $gpu_memory_utilization --dtype bfloat16 --conv-template $LLM_API_SERVE_CONV_TEMPLATE > /workspace/qanything_local/logs/debug_logs/fastchat_logs/fschat_model_worker_7801.log 2>&1 &
+            --max-model-len 4096 --gpu-memory-utilization $gpu_memory_utilization --dtype float16 --conv-template $LLM_API_SERVE_CONV_TEMPLATE > /workspace/qanything_local/logs/debug_logs/fastchat_logs/fschat_model_worker_7801.log 2>&1 &
 
         ;;
     "sglang")
@@ -408,7 +408,7 @@ while ! grep -q "Starting worker" /workspace/qanything_local/logs/debug_logs/san
     elapsed_time=$((current_time - backend_start_time))
 
     # 检查是否超时
-    if [ $elapsed_time -ge 120 ]; then
+    if [ $elapsed_time -ge 1200 ]; then
         echo "启动后端服务超时，请检查日志文件 /workspace/qanything_local/logs/debug_logs/sanic_api.log 获取更多信息。"
         exit 1
     fi
@@ -481,7 +481,7 @@ while true; do
     elapsed_time=$((current_time - now_time))
 
     # 检查是否超时
-    if [ $elapsed_time -ge 300 ]; then
+    if [ $elapsed_time -ge 3000 ]; then
         kill $tail_pid  # 关闭后台的tail命令
         echo "启动 LLM 服务超时，自动检查 $llm_log_file 中是否存在Error..."
 

@@ -183,7 +183,7 @@ while ! grep -q "Starting worker" /workspace/qanything_local/logs/debug_logs/san
     elapsed_time=$((current_time - backend_start_time))
 
     # 检查是否超时
-    if [ $elapsed_time -ge 120 ]; then
+    if [ $elapsed_time -ge 1200 ]; then
         echo "启动后端服务超时，请检查日志文件 /workspace/qanything_local/logs/debug_logs/sanic_api.log 获取更多信息。"
         exit 1
     fi
@@ -208,7 +208,7 @@ while true; do
         echo "health response_embed_rerank = $response_embed_rerank"
 
         # 检查是否超时
-        if [ $elapsed_time -ge 120 ]; then
+        if [ $elapsed_time -ge 1200 ]; then
             kill $tail_pid  # 关闭后台的tail命令
             echo "启动 embedding and rerank 服务超时，自动检查 $embed_rerank_log_file 中是否存在Error..."
 
