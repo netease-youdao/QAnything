@@ -1,7 +1,7 @@
 services:
     qanything:
         container_name: qanything-container
-        image: freeren/qanything-opencloud:v1.0.1
+        image: freeren/qanything-opencloud:v1.0.2
         deploy:
             resources:
                 reservations:
