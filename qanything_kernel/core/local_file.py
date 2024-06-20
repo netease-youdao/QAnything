@@ -41,7 +41,7 @@ pdf_text_splitter = RecursiveCharacterTextSplitter(
 
 # 下载pdf解析相关的模型
 pdf_models_path = os.path.join(PDF_MODEL_PATH, 'checkpoints')
-if not USE_FAST_PDF_PARSER and not os.path.exists(pdf_models_path):
+if not USE_FAST_PDF_PARSER and not os.path.islink(pdf_models_path):
     debug_logger.info(f'开始从modelscope上下载强力PDF解析相关模型: netease-youdao/QAnything-pdf-parser')
     model_dir = snapshot_download('netease-youdao/QAnything-pdf-parser')
     subprocess.check_output(['ln', '-s', model_dir, pdf_models_path], text=True)
