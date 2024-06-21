@@ -8,14 +8,14 @@ openai_api_base_with_key=$(python config.py)
 
 # 使用 read 命令分割字符串
 read -r openai_api_base openai_api_key openai_api_model_name openai_api_context_length workers milvus_port qanything_port use_cpu <<< "$openai_api_base_with_key"
-echo "openai_api_base" $openai_api_base
-echo "openai_api_key" $openai_api_key
-echo "openai_api_model_name" $openai_api_model_name
-echo "openai_api_context_length" $openai_api_context_length
-echo "workers" $workers
-echo "milvus_port" $milvus_port
-echo "qanything_port" $qanything_port
-echo "use_cpu" $use_cpu
+echo "openai_api_base: " $openai_api_base
+echo "openai_api_key: " $openai_api_key
+echo "openai_api_model_name: " $openai_api_model_name
+echo "openai_api_context_length: " $openai_api_context_length
+echo "workers: " $workers
+echo "milvus_port: " $milvus_port
+echo "qanything_port: " $qanything_port
+echo "use_cpu: " $use_cpu
 
 
 # 检查 Conda 是否安装，如果安装就执行一下逻辑，使用原有的conda进行安装
@@ -25,7 +25,7 @@ if command -v conda >/dev/null 2>&1; then
     echo "Checking for Conda updates..."
     if conda update --no-deps --dry-run -n base -c defaults conda | grep -q "will be updated"; then
         echo "An update is available for Conda."
-        echo "Would you like to update it? (y/n)"
+        echo "是否更新 Codna 为新版本 (y/n)"
         read -r user_response
 
         if [[ "$user_response" =~ ^[Yy] ]]; then
@@ -51,6 +51,7 @@ if command -v conda >/dev/null 2>&1; then
             echo "Conda environment '$ENV_NAME' created successfully."
         else
             echo "Failed to create Conda environment '$ENV_NAME'."
+            echo "创建conda环境失败 '$ENV_NAME'."
             exit 1
         fi
     fi
@@ -64,6 +65,7 @@ if command -v conda >/dev/null 2>&1; then
     source "$CONDA_INSTALL_PATH/bin/activate" "$ENV_NAME"
     if [ $? -ne 0 ]; then
         echo "Failed to activate conda environment '$ENV_NAME'."
+        echo "激活conda环境失败 '$ENV_NAME'."
         exit 1
     fi
     echo "Conda environment '$ENV_NAME' activated."
@@ -151,7 +153,7 @@ if command -v conda &> /dev/null; then
     echo "Checking for Conda updates..."
     if conda update --no-deps --dry-run -n base -c defaults conda | grep -q "will be updated"; then
         echo "An update is available for Conda."
-        echo "Would you like to update it? (y/n)"
+        echo "是否更新 Codna 为新版本 (y/n)"
         read -r user_response
 
         if [[ "$user_response" =~ ^[Yy] ]]; then
@@ -167,7 +169,7 @@ if command -v conda &> /dev/null; then
 else
     echo "Conda is not installed. Proceeding with a fresh installation."
     # 下载 Anaconda 安装程序
-    echo "Downloading Anaconda installer for $OS_TYPE..."
+    echo "下载Anaconda安装程序到 $OS_TYPE..."
     wget "$INSTALLER_URL" -O "anaconda_installer.sh"
 
     # 提示用户输入以确认安装
@@ -194,6 +196,7 @@ else
     fi
 
     # 仅在脚本运行期间设置局部环境变量，不修改全局环境变量
+    echo "仅在脚本运行期间为conda设置局部环境变量，不修改全局环境变量"
     echo "Setting up local environment for Anaconda access."
     export PATH="$INSTALL_PATH/bin:$PATH"
 

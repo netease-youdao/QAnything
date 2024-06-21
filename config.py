@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function  # 确保 print 函数在 Python 2 中的行为与 Python 3 一致
+
 def get_run_config_params():
     openai_api_base = "https://api.openai.com/v1"
     openai_api_key = "sk-xxxxxxx"
@@ -8,7 +10,9 @@ def get_run_config_params():
     milvus_port = 19530
     qanything_port = 8777
     use_cpu = True
-    return f"{openai_api_base},{openai_api_key},{openai_api_model_name},{openai_api_context_length},{workers},{milvus_port},{qanything_port},{use_cpu}"
+    # 使用 .format() 方法格式化字符串，以兼容 Python 2
+    return "{},{},{},{},{},{},{}".format(openai_api_base, openai_api_key, openai_api_model_name,
+                                         openai_api_context_length, workers, milvus_port, qanything_port, use_cpu)
 
 # 模型参数
 llm_config = {
