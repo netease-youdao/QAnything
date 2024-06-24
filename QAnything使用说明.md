@@ -438,7 +438,7 @@ python scripts/list_files.py <kb_id>  # print files status
 python scripts/stream_file.py <kb_id> # print llm res
 ```
 
-## Python版本使用指南：
+# Python版本使用指南：
 
 ### 必要条件:
 
@@ -448,6 +448,24 @@ python scripts/stream_file.py <kb_id> # print llm res
   - Windows: CPU模式：WSL with Ubuntu 18.04+ ，非CPU模式：WSL with Ubuntu 20.04+ 和 桌面版GEFORCE EXPERIENCE 535.104+
   - MacOS（M1/M2/M3）: 使用Openai-API兼容接口模式：无，本地大模型模式：Xcode 15.0+（llamacpp依赖Xcode）
 
+## 运行Openai API的使用快速启动方法
+先下载代码并进入项目目录
+```bash
+git clone -b qanything-python https://github.com/netease-youdao/QAnything.git
+cd QAnything
+```
+在config.py中补充api-key等参数，然后选择下面两条命令中的一条执行
+### 使用CPU运行
+```bash
+bash scripts/run_for_CPU.sh
+```
+### 使用GPU运行
+```bash
+bash scripts/run_for_GPU.sh
+```
+执行之后脚本会自动识别用户当前的操作系统，创建并激活相应的虚拟环境（如果当前电脑没有安装conda环境则会在当前目录下安装一个conda并使用）。项目成功启动后会自动跳转到浏览器并打开QAnything的界面
+
+## 如果不想使用Openai API，或者想用原先版本的启动方式，可以参考以下方法
 <h3><span style="color:red;">请创建一个干净的Python虚拟环境，以避免潜在冲突（推荐使用Anaconda3）。</span></h3>
 
 安装软件包，请运行: 
