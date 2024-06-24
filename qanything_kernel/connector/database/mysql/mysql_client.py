@@ -70,6 +70,21 @@ class KnowledgeBaseManager:
         """
         self.execute_query_(query, (), commit=True)
 
+        # 旧的File不存在reason，补上默认值：' '
+        # 如果存在File表，但是没有reason字段，那么添加reason字段
+        query = "PRAGMA table_info(File)"
+        result = self.execute_query_(query, (), fetch=True)
+        if result:
+            reason_exist = False
+            for column_info in result:
+                if column_info[1] == 'reason':
+                    reason_exist = True
+                    break
+            if not reason_exist:
+                query = "ALTER TABLE File ADD COLUMN reason VARCHAR(512) DEFAULT ' '"
+                self.execute_query_(query, (), commit=True)
+
+
         query = """
             CREATE TABLE IF NOT EXISTS Document (
                 docstore_id VARCHAR(64) PRIMARY KEY,
@@ -424,9 +439,9 @@ class KnowledgeBaseManager:
         query = "UPDATE File SET chunk_size = ? WHERE file_id = ?"
         self.execute_query_(query, (chunk_size, file_id), commit=True)
 
-    def update_file_status(self, file_id, status):
-        query = "UPDATE File SET status = ? WHERE file_id = ?"
-        self.execute_query_(query, (status, file_id), commit=True)
+    def update_file_status(self, file_id, status, reason):
+        query = "UPDATE File SET status = ?, reason = ? WHERE file_id = ?"
+        self.execute_query_(query, (status, reason, file_id), commit=True)
 
     def from_status_to_status(self, file_ids, from_status, to_status):
         file_ids_str = ','.join("'{}'".format(str(x)) for x in file_ids)
@@ -436,7 +451,7 @@ class KnowledgeBaseManager:
 
     # [文件] 获取指定知识库下面所有文件的id和名称
     def get_files(self, user_id, kb_id):
-        query = "SELECT file_id, file_name, status, file_size, content_length, timestamp FROM File WHERE kb_id = ? AND kb_id IN (SELECT kb_id FROM KnowledgeBase WHERE user_id = ?) AND deleted = 0"
+        query = "SELECT file_id, file_name, status, file_size, content_length, timestamp, reason FROM File WHERE kb_id = ? AND kb_id IN (SELECT kb_id FROM KnowledgeBase WHERE user_id = ?) AND deleted = 0"
         return self.execute_query_(query, (kb_id, user_id), fetch=True)
 
     def get_file_path(self, file_id):

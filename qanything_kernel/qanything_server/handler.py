@@ -191,12 +191,13 @@ async def list_docs(req: request):
                'yellow': "faiss插入失败，请稍后再试", 'green': "上传成功"}
     for file_info in file_infos:
         status = file_info[2]
+        print(file_info)
         if status not in status_count:
             status_count[status] = 1
         else:
             status_count[status] += 1
         data.append({"file_id": file_info[0], "file_name": file_info[1], "status": file_info[2], "bytes": file_info[3],
-                     "content_length": file_info[4], "timestamp": file_info[5], "msg": msg_map[file_info[2]]})
+                     "content_length": file_info[4], "timestamp": file_info[5], "msg": file_info[6]})
         file_name = file_info[1]
         file_id = file_info[0]
         if file_name.endswith('.faq'):
