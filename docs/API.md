@@ -455,7 +455,7 @@ print(response.text)
 |---------------|------------------------------------------------------------------------------|------|--------------|------------------------|
 | user_id       | "zzp"                                                                        | 是    | String       | 用户 id                  |
 | kb_ids        | ["KBb1dd58e8485443ce81166d24f6febda7", "KB633c69d07a2446b39b3a38e3628b8ada"] | 是    | Array        | 知识库 id 的列表，支持多个知识库联合问答 |
-| question      | "保险单号是多少？"                                                                   | 是    | String       | 知识库 id 的列表，支持多个知识库联合问答 |
+| question      | "保险单号是多少？"                                                                   | 是    | String       | 用户的问题 |
 | history       | [["question1","answer1"],["question2","answer2"]]                            | 否    | Array[Array] | 历史对话                   |
 | rerank        | True                                                                         | 否    | Bool         | 是否开启 rerank，默认为 True   |
 | streaming     | False                                                                        | 否    | Bool         | 是否开启流式输出，默认为 False     |
