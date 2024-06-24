@@ -191,7 +191,6 @@ async def list_docs(req: request):
                'yellow': "faiss插入失败，请稍后再试", 'green': "上传成功"}
     for file_info in file_infos:
         status = file_info[2]
-        print(file_info)
         if status not in status_count:
             status_count[status] = 1
         else:
