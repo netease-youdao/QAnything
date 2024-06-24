@@ -146,7 +146,6 @@ class LocalDocQA:
         web_content, web_documents = duckduckgo_search(query)
         source_documents = []
         for doc in web_documents:
-            debug_logger.info(doc)
             doc.metadata['retrieval_query'] = query  # 添加查询到文档的元数据中
             file_name = re.sub(r'[\uFF01-\uFF5E\u3000-\u303F]', '', doc.metadata['title'])
             doc.metadata['file_name'] = file_name + '.web'
