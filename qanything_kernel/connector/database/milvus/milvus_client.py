@@ -223,12 +223,10 @@ class MilvusClient:
                 data[4].append(timestamp)
                 data[5].append(cont)
                 data[6].append(emb)
-                debug_logger.info('docs[idx].metadata:{}'.format(docs[idx].metadata))
                 question = docs[idx].metadata['faq_dict']['question'] if 'faq_dict' in docs[idx].metadata else ''
                 data[7].append(question)
                 answer = docs[idx].metadata['faq_dict']['answer'] if 'faq_dict' in docs[idx].metadata else ''
                 data[8].append(answer)
-            debug_logger.info('data:{}'.format(data))
             # 执行插入操作
             try:
                 debug_logger.info('Inserting into Milvus...')
