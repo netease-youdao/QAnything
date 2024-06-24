@@ -33,6 +33,7 @@ class OpenAILLM(BaseAnswer, ABC):
     truncate_len: int = 50
     temperature: float = 0
     top_p: float = 1.0 # top_p must be (0,1]
+    top_p: float = 0.9 # top_p must be (0,1]
     stop_words: str = None
     history: List[List[str]] = []
     history_len: int = 2

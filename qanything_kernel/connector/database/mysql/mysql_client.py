@@ -1,4 +1,5 @@
-from qanything_kernel.configs.model_config import MYSQL_DATABASE, MYSQL_HOST_LOCAL, MYSQL_HOST_ONLINE, MYSQL_PASSWORD, MYSQL_PORT, MYSQL_USER
+from qanything_kernel.configs.model_config import MYSQL_DATABASE, MYSQL_HOST_LOCAL, MYSQL_HOST_ONLINE, MYSQL_PASSWORD, \
+    MYSQL_PORT, MYSQL_USER
 from qanything_kernel.utils.custom_log import debug_logger
 import mysql.connector
 from mysql.connector import pooling
@@ -35,12 +36,12 @@ class KnowledgeBaseManager:
             user=user,
             password=password
         )
-        
+
         # 检查数据库是否存在
         cursor = cnx.cursor(buffered=True)
         cursor.execute('SHOW DATABASES')
         databases = [database[0] for database in cursor]
-        
+
         if database_name not in databases:
             # 如果数据库不存在，则新建数据库
             cursor.execute('CREATE DATABASE IF NOT EXISTS {}'.format(database_name))
@@ -102,6 +103,7 @@ class KnowledgeBaseManager:
                 file_size INT DEFAULT -1,
                 content_length INT DEFAULT -1,
                 chunk_size INT DEFAULT -1,
+                file_path VARCHAR(512),
                 FOREIGN KEY (kb_id) REFERENCES KnowledgeBase(kb_id) ON DELETE CASCADE
             );
 
@@ -123,7 +125,20 @@ class KnowledgeBaseManager:
                 debug_logger.info(e)
             else:
                 raise e
-        
+
+
+        query = """
+            CREATE TABLE IF NOT EXISTS Faqs (
+                faq_id  VARCHAR(255) PRIMARY KEY,
+                user_id VARCHAR(255) NOT NULL,
+                kb_id VARCHAR(255) NOT NULL,
+                question VARCHAR(512) NOT NULL, 
+                answer VARCHAR(2048) NOT NULL, 
+                nos_keys VARCHAR(768) 
+            );
+        """
+        self.execute_query_(query, (), commit=True)
+
     def check_user_exist_(self, user_id):
         query = "SELECT user_id FROM User WHERE user_id = %s"
         result = self.execute_query_(query, (user_id,), fetch=True)
@@ -145,7 +160,8 @@ class KnowledgeBaseManager:
     def get_file_by_status(self, kb_ids, status):
         # query = "SELECT file_name FROM File WHERE kb_id = %s AND deleted = 0 AND status = %s"
         kb_ids_str = ','.join("'{}'".format(str(x)) for x in kb_ids)
-        query = "SELECT file_id, file_name FROM File WHERE kb_id IN ({}) AND deleted = 0 AND status = %s".format(kb_ids_str)
+        query = "SELECT file_id, file_name FROM File WHERE kb_id IN ({}) AND deleted = 0 AND status = %s".format(
+            kb_ids_str)
         result = self.execute_query_(query, (status,), fetch=True)
         # result = self.execute_query_(query, (kb_id, "gray"), fetch=True)
         return result
@@ -155,7 +171,7 @@ class KnowledgeBaseManager:
         if not file_ids:
             debug_logger.info("check_file_exist skipped because of empty file_ids")
             return []
-        
+
         file_ids_str = ','.join("'{}'".format(str(x)) for x in file_ids)
         query = """SELECT file_id, status FROM File 
                  WHERE deleted = 0
@@ -206,7 +222,7 @@ class KnowledgeBaseManager:
     def get_knowledge_bases(self, user_id):
         query = "SELECT kb_id, kb_name FROM KnowledgeBase WHERE user_id = %s AND deleted = 0"
         return self.execute_query_(query, (user_id,), fetch=True)
-    
+
     def get_users(self):
         query = "SELECT user_id FROM User"
         return self.execute_query_(query, (), fetch=True)
@@ -215,7 +231,8 @@ class KnowledgeBaseManager:
     def get_knowledge_base_name(self, kb_ids):
         # 使用参数化查询
         placeholders = ','.join(['%s'] * len(kb_ids))
-        query = "SELECT user_id, kb_id, kb_name FROM KnowledgeBase WHERE kb_id IN ({}) AND deleted = 0".format(placeholders)
+        query = "SELECT user_id, kb_id, kb_name FROM KnowledgeBase WHERE kb_id IN ({}) AND deleted = 0".format(
+            placeholders)
         query_params = kb_ids
         return self.execute_query_(query, query_params, fetch=True)
 
@@ -228,10 +245,11 @@ class KnowledgeBaseManager:
         self.execute_query_(query, query_params, commit=True)
 
         # 更新文件的删除状态也需要使用参数化查询
-        query = "UPDATE File SET deleted = 1 WHERE kb_id IN ({}) AND kb_id IN (SELECT kb_id FROM KnowledgeBase WHERE user_id = %s)".format(placeholders)
+        query = "UPDATE File SET deleted = 1 WHERE kb_id IN ({}) AND kb_id IN (SELECT kb_id FROM KnowledgeBase WHERE user_id = %s)".format(
+            placeholders)
         debug_logger.info("delete_knowledge_base: {}".format(kb_ids))
         self.execute_query_(query, query_params, commit=True)
-    
+
     # [知识库] 重命名知识库
     def rename_knowledge_base(self, user_id, kb_id, kb_name):
         query = "UPDATE KnowledgeBase SET kb_name = %s WHERE kb_id = %s AND user_id = %s"
@@ -256,12 +274,16 @@ class KnowledgeBaseManager:
     def update_file_size(self, file_id, file_size):
         query = "UPDATE File SET file_size = %s WHERE file_id = %s"
         self.execute_query_(query, (file_size, file_id), commit=True)
-    
+
     #  更新file中的content_length
     def update_content_length(self, file_id, content_length):
         query = "UPDATE File SET content_length = %s WHERE file_id = %s"
         self.execute_query_(query, (content_length, file_id), commit=True)
-    
+
+    def update_file_path(self, file_id, file_path):
+        query = "UPDATE File SET file_path = %s WHERE file_id = %s"
+        self.execute_query_(query, (file_path, file_id), commit=True)
+
     #  更新file中的chunk_size
     def update_chunk_size(self, file_id, chunk_size):
         query = "UPDATE File SET chunk_size = %s WHERE file_id = %s"
@@ -275,12 +297,15 @@ class KnowledgeBaseManager:
         file_ids_str = ','.join("'{}'".format(str(x)) for x in file_ids)
         query = "UPDATE File SET status = %s WHERE file_id IN ({}) AND status = %s".format(file_ids_str)
         self.execute_query_(query, (to_status, from_status), commit=True)
-        
 
     # [文件] 获取指定知识库下面所有文件的id和名称
     def get_files(self, user_id, kb_id):
         query = "SELECT file_id, file_name, status, file_size, content_length, timestamp FROM File WHERE kb_id = %s AND kb_id IN (SELECT kb_id FROM KnowledgeBase WHERE user_id = %s) AND deleted = 0"
         return self.execute_query_(query, (kb_id, user_id), fetch=True)
+
+    def get_file_path(self, file_id):
+        query = "SELECT file_path FROM File WHERE file_id = %s AND deleted = 0"
+        return self.execute_query_(query, (file_id,), fetch=True)[0][0]
 
     # [文件] 删除指定文件
     def delete_files(self, kb_id, file_ids):
@@ -288,3 +313,31 @@ class KnowledgeBaseManager:
         query = "UPDATE File SET deleted = 1 WHERE kb_id = %s AND file_id IN ({})".format(file_ids_str)
         debug_logger.info("delete_files: {}".format(file_ids))
         self.execute_query_(query, (kb_id,), commit=True)
+
+    def get_faq(self, faq_id) -> tuple:
+        query = "SELECT user_id, kb_id, question, answer, nos_keys FROM Faqs WHERE faq_id = %s"
+        faq_all = self.execute_query_(query, (faq_id,), fetch=True)
+        if faq_all:
+            faq = faq_all[0]
+            debug_logger.info(f"get_faq: faq_id: {faq_id}, mysql res: {faq}")
+            return faq
+        else:
+            debug_logger.error(f"get_faq: faq_id: {faq_id} not found")
+            return None
+
+    def delete_faqs(self, faq_ids):
+        # 分批，因为多个faq_id的加一起可能会超过sql的最大长度
+        batch_size = 100
+        total_deleted = 0
+        for i in range(0, len(faq_ids), batch_size):
+            batch_faq_ids = faq_ids[i:i + batch_size]
+            placeholders = ','.join(['%s'] * len(batch_faq_ids))
+            query = "DELETE FROM Faqs WHERE faq_id IN ({})".format(placeholders)
+            res = self.execute_query_(query, (batch_faq_ids), commit=True, check=True)
+            total_deleted += res
+        debug_logger.info(f"delete_faqs count: {total_deleted}")
+
+    def add_faq(self, faq_id, user_id, kb_id, question, answer, nos_keys):
+        # debug_logger.info(f"add_faq: {faq_id}, {user_id}, {kb_id}, {question}, {answer}, {nos_keys}")
+        query = "INSERT INTO Faqs (faq_id, user_id, kb_id, question, answer, nos_keys) VALUES (%s, %s, %s, %s, %s, %s)"
+        self.execute_query_(query, (faq_id, user_id, kb_id, question, answer, nos_keys), commit=True)

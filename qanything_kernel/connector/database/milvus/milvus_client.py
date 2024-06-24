@@ -6,7 +6,8 @@ from functools import partial
 import time
 import copy
 from datetime import datetime
-from qanything_kernel.configs.model_config import MILVUS_HOST_LOCAL, MILVUS_HOST_ONLINE, MILVUS_PORT, MILVUS_USER, MILVUS_PASSWORD, MILVUS_DB_NAME, CHUNK_SIZE, VECTOR_SEARCH_TOP_K
+from qanything_kernel.configs.model_config import MILVUS_HOST_LOCAL, MILVUS_HOST_ONLINE, MILVUS_PORT, MILVUS_USER, \
+    MILVUS_PASSWORD, MILVUS_DB_NAME, CHUNK_SIZE, VECTOR_SEARCH_TOP_K
 from qanything_kernel.utils.custom_log import debug_logger
 from langchain.docstore.document import Document
 import math
@@ -64,8 +65,9 @@ class MilvusClient:
             FieldSchema(name='file_path', dtype=DataType.VARCHAR, max_length=640),
             FieldSchema(name='timestamp', dtype=DataType.VARCHAR, max_length=64),
             FieldSchema(name='content', dtype=DataType.VARCHAR, max_length=4000),
-            FieldSchema(name='embedding', dtype=DataType.FLOAT_VECTOR, dim=768)
-        ]
+            FieldSchema(name='embedding', dtype=DataType.FLOAT_VECTOR, dim=768),
+            FieldSchema(name='question', dtype=DataType.VARCHAR, max_length=4000),
+            FieldSchema(name='answer', dtype=DataType.VARCHAR, max_length=4000)]
         return fields
 
     def parse_batch_result(self, batch_result):
@@ -80,7 +82,9 @@ class MilvusClient:
                 doc = Document(page_content=cand.entity.get('content'),
                                metadata={"score": cand.score, "file_id": cand.entity.get('file_id'),
                                          "file_name": cand.entity.get('file_name'),
-                                         "chunk_id": cand.entity.get('chunk_id')})
+                                         "chunk_id": cand.entity.get('chunk_id'),
+                                         "question": cand.entity.get('question'),
+                                         "answer": cand.entity.get('answer')})
                 new_cands.append(doc)
             # csv和xlsx文件不做expand_cand_docs
             need_expand, not_need_expand = [], []
@@ -90,11 +94,13 @@ class MilvusClient:
                     not_need_expand.append(doc)
                 else:
                     need_expand.append(doc)
+            debug_logger.info('need_expand: {}'.format(need_expand))
             expand_res = self.expand_cand_docs(need_expand)
+            debug_logger.info('expand_res: {}'.format(expand_res))
             new_cands = not_need_expand + expand_res
             new_result.append(new_cands)
         return new_result
-    
+
     # 混合检索
     def parse_es_batch_result(self, es_records, milvus_records):
         milvus_records_seen = set()
@@ -108,16 +114,18 @@ class MilvusClient:
             if flag:
                 for cand in result[:self.top_k]:
                     milvus_records_seen.add(cand.entity.get('chunk_id'))
-        
+
         new_cands = []
         for es_record in es_records:
             if es_record['id'] not in milvus_records_seen:
                 doc = Document(page_content=es_record['content'],
                                metadata={"score": es_record['score'], "file_id": es_record['file_id'],
                                          "file_name": es_record['metadata']['file_name'],
-                                         "chunk_id": es_record['metadata']['chunk_id']})
+                                         "chunk_id": es_record['metadata']['chunk_id'],
+                                         "question": es_record['metadata']['question'],
+                                         "answer": es_record['metadata']['answer']})
                 new_cands.append(doc)
-            
+
         # csv和xlsx文件不做expand_cand_docs
         need_expand, not_need_expand = [], []
         for doc in new_cands:
@@ -133,7 +141,7 @@ class MilvusClient:
 
     @property
     def output_fields(self):
-        return ['chunk_id', 'file_id', 'file_name', 'file_path', 'timestamp', 'content']
+        return ['chunk_id', 'file_id', 'file_name', 'file_path', 'timestamp', 'content', 'question', 'answer']
 
     def init(self):
         try:
@@ -163,12 +171,13 @@ class MilvusClient:
                                           param=self.search_params, limit=top_k,
                                           output_fields=self.output_fields, expr=expr, timeout=client_timeout)
         milvus_records_proc = self.parse_batch_result(milvus_records)
-        # debug_logger.info(milvus_records)
-
+        debug_logger.info('milvus_records:{}'.format(milvus_records))
+        debug_logger.info('milvus_records_proc:{}'.format(milvus_records_proc))
         # 混合检索
         if self.hybrid_search:
             es_records = self.client.search(queries)
             es_records_proc = self.parse_es_batch_result(es_records, milvus_records)
+            debug_logger.info('es_records_proc:{}'.format(es_records_proc))
             milvus_records_proc.extend(es_records_proc)
 
         return milvus_records_proc
@@ -191,15 +200,17 @@ class MilvusClient:
         return future.result()
 
     async def insert_files(self, file_id, file_name, file_path, docs, embs, batch_size=1000):
-        debug_logger.info(f'now inser_file {file_name}')
+        debug_logger.info(f'now insert_file {file_name}')
         now = datetime.now()
         timestamp = now.strftime("%Y%m%d%H%M")
         loop = asyncio.get_running_loop()
         contents = [doc.page_content for doc in docs]
-        num_docs = len(docs)
+        num_docs = len(docs)  # 这里的doc直接来自LocalFile
+        debug_logger.info('docs:{}'.format(docs))
         for batch_start in range(0, num_docs, batch_size):
             batch_end = min(batch_start + batch_size, num_docs)
             data = [[] for _ in range(len(self.sess.schema))]
+            debug_logger.info(f'self.sess.schema: {self.sess.schema}')
 
             for idx in range(batch_start, batch_end):
                 cont = contents[idx]
@@ -212,7 +223,12 @@ class MilvusClient:
                 data[4].append(timestamp)
                 data[5].append(cont)
                 data[6].append(emb)
-
+                debug_logger.info('docs[idx].metadata:{}'.format(docs[idx].metadata))
+                question = docs[idx].metadata['faq_dict']['question'] if 'faq_dict' in docs[idx].metadata else ''
+                data[7].append(question)
+                answer = docs[idx].metadata['faq_dict']['answer'] if 'faq_dict' in docs[idx].metadata else ''
+                data[8].append(answer)
+            debug_logger.info('data:{}'.format(data))
             # 执行插入操作
             try:
                 debug_logger.info('Inserting into Milvus...')
@@ -225,7 +241,7 @@ class MilvusClient:
 
         # 混合检索
         if self.hybrid_search:
-            debug_logger.info(f'now inser_file for es: {file_name}')
+            debug_logger.info(f'now insert_file for es: {file_name}')
             for batch_start in range(0, num_docs, batch_size):
                 batch_end = min(batch_start + batch_size, num_docs)
                 data_es = []
@@ -238,13 +254,17 @@ class MilvusClient:
                             'file_path': file_path,
                             'chunk_id': f'{file_id}_{idx}',
                             'timestamp': timestamp,
+                            'question': docs[idx].metadata['faq_dict']['question'] if 'faq_dict' in docs[
+                                idx].metadata else '',
+                            'answer': docs[idx].metadata['faq_dict']['answer'] if 'faq_dict' in docs[
+                                idx].metadata else ''
                         }
                     }
                     data_es.append(data_es_item)
 
                 try:
                     debug_logger.info('Inserting into es ...')
-                    mr = await self.client.insert(data=data_es, refresh=batch_end==num_docs)
+                    mr = await self.client.insert(data=data_es, refresh=batch_end == num_docs)
                     debug_logger.info(f'{file_name} {mr}')
                 except Exception as e:
                     debug_logger.error(f'ES insert file_id: {file_id}\nfile_name: {file_name}\nfailed: {e}')
@@ -291,7 +311,7 @@ class MilvusClient:
                 if record['index'] not in delete_index_ids:
                     delete_index_ids[record['index']] = []
                 delete_index_ids[record['index']].append(record['id'])
-            
+
             for index, ids in delete_index_ids.items():
                 self.client.delete_chunks(index_name=index, ids=ids)
             debug_logger.info(f"##ES## - success delete files_id: {files_id}")
@@ -320,6 +340,8 @@ class MilvusClient:
         id_set = set()
         file_id = group[0].metadata['file_id']
         file_name = group[0].metadata['file_name']
+        question = group[0].metadata['question']
+        answer = group[0].metadata['answer']
         group_scores_map = {}
         # 先找出该文件所有需要搜索的chunk_id
         cand_chunks_set = set()  # 使用集合而不是列表
@@ -363,8 +385,10 @@ class MilvusClient:
                 for id in id_seq:
                     if id == id_seq[0]:
                         doc = Document(page_content=group_chunk_map[id],
-                                    metadata={"score": 0, "file_id": file_id,
-                                                "file_name": file_name})
+                                       metadata={"score": 0, "file_id": file_id,
+                                                 "file_name": file_name,
+                                                 "question": question,
+                                                 "answer": answer})
                     else:
                         doc.page_content += " " + group_chunk_map[id]
                 doc_score = min([group_scores_map[id] for id in id_seq if id in group_scores_map])
@@ -372,7 +396,8 @@ class MilvusClient:
                 doc.metadata["kernel"] = '|'.join([group_chunk_map[id] for id in id_seq if id in group_scores_map])
                 new_cands.append(doc)
             except Exception as e:
-                debug_logger.error(f"process_group error: {e}. maybe chunks in ES not exists in Milvus. Please delete the file and upload again.")
+                debug_logger.error(
+                    f"process_group error: {e}. maybe chunks in ES not exists in Milvus. Please delete the file and upload again.")
         return new_cands
 
     def expand_cand_docs(self, cand_docs):
@@ -380,7 +405,6 @@ class MilvusClient:
         # 按照file_id进行分组
         m_grouped = [list(group) for key, group in groupby(cand_docs, key=lambda x: x.metadata['file_id'])]
         debug_logger.info('milvus group number: %s', len(m_grouped))
-
         with ThreadPoolExecutor(max_workers=10) as executor:
             futures = []
             for group in m_grouped:

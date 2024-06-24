@@ -13,10 +13,11 @@ import urllib.parse
 import re
 from datetime import datetime
 import os
+from tqdm import tqdm
 
 __all__ = ["new_knowledge_base", "upload_files", "list_kbs", "list_docs", "delete_knowledge_base", "delete_docs",
            "rename_knowledge_base", "get_total_status", "clean_files_by_status", "upload_weblink", "local_doc_chat",
-           "document"]
+           "document", "upload_faqs"]
 
 INVALID_USER_ID = f"fail, Invalid user_id: . user_id 必须只含有字母，数字和下划线且字母开头"
 
@@ -483,3 +484,83 @@ https://qanything.youdao.com
 
 """
     return sanic_text(description)
+
+
+async def upload_faqs(req: request):
+    local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
+    user_id = safe_get(req, 'user_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
+    is_valid = validate_user_id(user_id)
+    if not is_valid:
+        return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
+    debug_logger.info("upload_faqs %s", user_id)
+    kb_id = safe_get(req, 'kb_id')
+    debug_logger.info("kb_id %s", kb_id)
+    faqs = safe_get(req, 'faqs')
+    file_status = {}
+    if faqs is None:
+        files = req.files.getlist('files')
+        faqs = []
+        for file in files:
+            debug_logger.info('ori name: %s', file.name)
+            file_name = urllib.parse.unquote(file.name, encoding='UTF-8')
+            debug_logger.info('decode name: %s', file_name)
+            # 删除掉全角字符
+            file_name = re.sub(r'[\uFF01-\uFF5E\u3000-\u303F]', '', file_name)
+            file_name = file_name.replace("/", "_")
+            debug_logger.info('cleaned name: %s', file_name)
+            file_name = truncate_filename(file_name)
+            file_faqs = check_and_transform_excel(file.body)
+            if isinstance(file_faqs, str):
+                file_status[file_name] = file_faqs
+            else:
+                faqs.extend(file_faqs)
+                file_status[file_name] = "success"
+
+    if len(faqs) > 1000:
+        return sanic_json({"code": 2002, "msg": f"fail, faqs too many, The maximum length of each request is 1000."})
+
+    not_exist_kb_ids = local_doc_qa.milvus_summary.check_kb_exist(user_id, [kb_id])
+    if not_exist_kb_ids:
+        msg = "invalid kb_id: {}, please check...".format(not_exist_kb_ids)
+        return sanic_json({"code": 2001, "msg": msg})
+
+    data = []
+    now = datetime.now()
+    local_files = []
+    timestamp = now.strftime("%Y%m%d%H%M")
+    debug_logger.info(f"start insert {len(faqs)} faqs to mysql, user_id: {user_id}, kb_id: {kb_id}")
+    debug_logger.info(f"faqs: {faqs}")
+    exist_questions = []
+    for faq in tqdm(faqs):
+        ques = faq['question']
+        if ques not in exist_questions:
+            exist_questions.append(ques)
+        else:
+            debug_logger.info(f"question {ques} already exists, skip it")
+            continue
+        if len(ques) > 512 or len(faq['answer']) > 2048:
+            return sanic_json(
+                {"code": 2003, "msg": f"fail, faq too long, max length of question is 512, answer is 2048."})
+        content_length = len(ques) + len(faq['answer'])
+        file_name = f"FAQ_{ques}.faq"
+        file_name = file_name.replace("/", "_").replace(":", "_")  # 文件名中的/和：会导致写入时出错
+        file_name = simplify_filename(file_name)
+        file_id, msg = local_doc_qa.milvus_summary.add_file(user_id, kb_id, file_name, timestamp, status='green')
+        debug_logger.info('file_name:{}'.format(file_name))
+        debug_logger.info('file_id:{}'.format(file_id))
+        local_file = LocalFile(user_id, kb_id, faq, file_id, file_name, local_doc_qa.embeddings)
+        local_doc_qa.milvus_summary.update_file_path(file_id, local_file.file_path)
+        local_files.append(local_file)
+        local_doc_qa.milvus_summary.add_faq(file_id, user_id, kb_id, ques, faq['answer'], faq.get("nos_keys", ""))
+        # debug_logger.info(f"{file_name}, {file_id}, {msg}, {faq}")
+        data.append(
+            {"file_id": file_id, "file_name": file_name, "status": "gray", "length": content_length,
+             "timestamp": timestamp})
+    debug_logger.info(f"end insert {len(faqs)} faqs to mysql, user_id: {user_id}, kb_id: {kb_id}")
+
+    asyncio.create_task(local_doc_qa.insert_files_to_milvus(user_id, kb_id, local_files))
+
+    msg = "success，后台正在飞速上传文件，请耐心等待"
+    return sanic_json({"code": 200, "msg": msg, "file_status": file_status, "data": data})

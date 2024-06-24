@@ -26,7 +26,7 @@ text_splitter = RecursiveCharacterTextSplitter(
 
 
 class LocalFile:
-    def __init__(self, user_id, kb_id, file: Union[File, str], file_id, file_name, embedding, is_url=False, in_milvus=False):
+    def __init__(self, user_id, kb_id, file: Union[File, str, dict], file_id, file_name, embedding, is_url=False, in_milvus=False):
         self.user_id = user_id
         self.kb_id = kb_id
         self.file_id = file_id
@@ -40,6 +40,9 @@ class LocalFile:
             self.url = file
             self.file_path = "URL"
             self.file_content = b''
+        elif isinstance(file, dict):
+            self.file_path = "FAQ"
+            self.file_content = file
         else:
             if isinstance(file, str):
                 self.file_path = file
@@ -62,6 +65,8 @@ class LocalFile:
             loader = MyRecursiveUrlLoader(url=self.url)
             textsplitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
             docs = loader.load_and_split(text_splitter=textsplitter)
+        elif self.file_path == 'FAQ':
+            docs = [Document(page_content=self.file_content['question'], metadata={"faq_dict": self.file_content})]
         elif self.file_path.lower().endswith(".md"):
             loader = UnstructuredFileLoader(self.file_path, mode="elements")
             docs = loader.load()

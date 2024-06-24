@@ -29,8 +29,12 @@ WorkerManager.THRESHOLD = 6000
 parser = argparse.ArgumentParser()
 # mode必须是local或online
 parser.add_argument('--mode', type=str, default='local', help='local or online')
+parser.add_argument('--workers', dest='workers', default=4, type=int, help='sanic server workers number')
+parser.add_argument('--use_cpu', dest='use_cpu', action='store_true', help='use gpu')
+
 # 检查是否是local或online，不是则报错
 args = parser.parse_args()
+print('args:{}'.format(args))
 if args.mode not in ['local', 'online']:
     raise ValueError('mode must be local or online')
 
@@ -83,7 +87,9 @@ app.add_route(get_total_status, "/api/local_doc_qa/get_total_status", methods=['
 app.add_route(clean_files_by_status, "/api/local_doc_qa/clean_files_by_status", methods=['POST'])  # tags=["清理数据库"]
 app.add_route(delete_docs, "/api/local_doc_qa/delete_files", methods=['POST'])  # tags=["删除文件"] 
 app.add_route(delete_knowledge_base, "/api/local_doc_qa/delete_knowledge_base", methods=['POST'])  # tags=["删除知识库"] 
-app.add_route(rename_knowledge_base, "/api/local_doc_qa/rename_knowledge_base", methods=['POST'])  # tags=["重命名知识库"] 
+app.add_route(rename_knowledge_base, "/api/local_doc_qa/rename_knowledge_base", methods=['POST'])  # tags=["重命名知识库"]
+app.add_route(upload_faqs, "/api/local_doc_qa/upload_faqs", methods=['POST'])  # tags=["上传FAQ"]
+
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8777, workers=10, access_log=False)
+    app.run(host='0.0.0.0', port=8777, workers=1, access_log=False)

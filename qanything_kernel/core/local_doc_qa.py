@@ -78,8 +78,10 @@ class LocalDocQA:
             start = time.time()
             try:
                 local_file.split_file_to_docs(self.get_ocr_result)
-                content_length = sum([len(doc.page_content) for doc in local_file.docs])
-
+                if local_file.file_name.endswith('.faq'):
+                    content_length = len(local_file.docs[0].metadata['faq_dict']['question']) + len(local_file.docs[0].metadata['faq_dict']['answer'])
+                else:
+                    content_length = sum([len(doc.page_content) for doc in local_file.docs])
             except Exception as e:
                 error_info = f'split error: {traceback.format_exc()}'
                 debug_logger.error(error_info)
@@ -136,6 +138,15 @@ class LocalDocQA:
         debug_logger.info(f"milvus search time: {t2 - t1}")
         for query, query_docs in zip(queries, batch_result):
             for doc in query_docs:
+                if doc.metadata['file_name'].endswith('.faq'):
+                    debug_logger.info(f"doc: {doc}")
+
+                    # faq_dict = doc.metadata['faq_dict']
+                    # doc.page_content = f"{faq_dict['question']}：{faq_dict['answer']}"
+
+                    doc.page_content = f"{doc.metadata['question']}：{doc.metadata['answer']}"
+                    # nos_keys = faq_dict.get('nos_keys')
+                    # doc.metadata['nos_keys'] = nos_keys
                 doc.metadata['retrieval_query'] = query  # 添加查询到文档的元数据中
                 doc.metadata['embed_version'] = self.embeddings.embed_version
                 source_documents.append(doc)

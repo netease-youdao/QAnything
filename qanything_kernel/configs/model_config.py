@@ -2,7 +2,10 @@ import os
 import logging
 import uuid
 from dotenv import load_dotenv
+import platform
+
 load_dotenv()
+os_system = platform.system()
 
 # LOG_FORMAT = "%(levelname) -5s %(asctime)s" "-1d: %(message)s"
 # logger = logging.getLogger()
@@ -65,6 +68,7 @@ MILVUS_PORT = 19530
 MILVUS_USER = ''
 MILVUS_PASSWORD = ''
 MILVUS_DB_NAME = ''
+
 
 # ES bm25检索相关配置
 HYBRID_SEARCH = True  # 是否启用es的BM25检索
