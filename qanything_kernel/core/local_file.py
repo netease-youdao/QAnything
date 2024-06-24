@@ -224,7 +224,7 @@ class LocalFile:
                     new_docs.append(doc)
                 else:
                     last_doc = new_docs[-1]
-                    if len(last_doc.page_content) + len(doc.page_content) < min_length:
+                    if num_tokens(last_doc.page_content) + num_tokens(doc.page_content) < min_length:
                         last_doc.page_content += '\n' + doc.page_content
                     else:
                         new_docs.append(doc)
