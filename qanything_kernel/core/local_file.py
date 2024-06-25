@@ -170,7 +170,7 @@ class LocalFile:
             else:
                 try:
                     from qanything_kernel.utils.loader.self_pdf_loader import PdfLoader
-                    loader = PdfLoader(filename=self.file_path, root_dir=os.path.dirname(self.file_path))
+                    loader = PdfLoader(filename=self.file_path, save_dir=os.path.dirname(self.file_path))
                     markdown_dir = loader.load_to_markdown()
                     docs = convert_markdown_to_langchaindoc(markdown_dir)
                     docs = self.pdf_process(docs)
