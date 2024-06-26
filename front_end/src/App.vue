@@ -70,6 +70,7 @@ route.beforeEach(async (to, from, next) => {
   }
   // 然后进行URL解码
   loginName = decodeURIComponent(loginName).replace(/\s/g, '+');
+  console.log('loginName', loginName);
 
   let currentTime = to.query.currentTime;
   if (Array.isArray(currentTime)) {
@@ -79,7 +80,7 @@ route.beforeEach(async (to, from, next) => {
   console.log('currentTime', currentTime);
 
   // query有登录信息，调用第三方登录验证
-  const boolean = await getTokenInfo(to.query.loginName, currentTime, 0);
+  const boolean = await getTokenInfo(loginName, currentTime, 0);
   console.log('boolean', boolean);
   if (boolean) {
     setIsLogin(true);
