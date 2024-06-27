@@ -126,7 +126,6 @@ class KnowledgeBaseManager:
             else:
                 raise e
 
-
         query = """
             CREATE TABLE IF NOT EXISTS Faqs (
                 faq_id  VARCHAR(255) PRIMARY KEY,
@@ -214,8 +213,12 @@ class KnowledgeBaseManager:
     def new_milvus_base(self, kb_id, user_id, kb_name, user_name=None):
         if not self.check_user_exist_(user_id):
             self.add_user_(user_id, user_name)
-        query = "INSERT INTO KnowledgeBase (kb_id, user_id, kb_name) VALUES (%s, %s, %s)"
-        self.execute_query_(query, (kb_id, user_id, kb_name), commit=True)
+        try:
+            query = "INSERT INTO KnowledgeBase (kb_id, user_id, kb_name) VALUES (%s, %s, %s)"
+            self.execute_query_(query, (kb_id, user_id, kb_name), commit=True)
+        except Exception as e:
+            debug_logger.info("new_milvus_base error: {}".format(e))
+            return None, "error, kb_id already exist"
         return kb_id, "success"
 
     # [知识库] 获取指定用户的所有知识库 
@@ -270,6 +273,24 @@ class KnowledgeBaseManager:
         debug_logger.info("add_file: {}".format(file_id))
         return file_id, "success"
 
+    # [文件] 向指定知识库下面增加文件,指定file_id
+    def add_fileid(self, user_id, kb_id, file_id, file_name, timestamp, status="gray"):
+        # 如果他传回来了一个id, 那就说明这个表里肯定有
+        if not self.check_user_exist_(user_id):
+            return None, "invalid user_id, please check..."
+        not_exist_kb_ids = self.check_kb_exist(user_id, [kb_id])
+        if not_exist_kb_ids:
+            return None, f"invalid kb_id, please check {not_exist_kb_ids}"
+
+        try:
+            query = "INSERT INTO File (file_id, kb_id, file_name, status, timestamp) VALUES (%s, %s, %s, %s, %s)"
+            self.execute_query_(query, (file_id, kb_id, file_name, status, timestamp), commit=True)
+            debug_logger.info("add_fileid: {}".format(file_id))
+        except Exception as e:
+            debug_logger.error("add_fileid: {}".format(e))
+            return None, "file_id already exist"
+        return file_id, "success"
+
     #  更新file中的file_size
     def update_file_size(self, file_id, file_size):
         query = "UPDATE File SET file_size = %s WHERE file_id = %s"
@@ -306,6 +327,14 @@ class KnowledgeBaseManager:
     def get_file_path(self, file_id):
         query = "SELECT file_path FROM File WHERE file_id = %s AND deleted = 0"
         return self.execute_query_(query, (file_id,), fetch=True)[0][0]
+
+    # [文件] 获取指定知识库下面指定文件的id和名称
+    def get_files_info(self, user_id, kb_id, file_ids):
+        file_ids_str = ','.join("'{}'".format(str(x)) for x in file_ids)
+        query = "SELECT file_id, file_name, status, file_size, content_length, timestamp FROM File WHERE kb_id = %s AND kb_id IN (SELECT kb_id FROM KnowledgeBase WHERE user_id = %s) AND file_id IN ({}) AND deleted = 0".format(
+            file_ids_str)
+
+        return self.execute_query_(query, (kb_id, user_id), fetch=True)
 
     # [文件] 删除指定文件
     def delete_files(self, kb_id, file_ids):

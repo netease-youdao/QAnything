@@ -20,7 +20,7 @@ if [ -e /proc/version ]; then
     $DOCKER_COMPOSE_CMD -p user -f docker-compose-windows.yaml down
   else
     echo "Running under native Linux"
-    $DOCKER_COMPOSE_CMD -p user -f docker-compose-linux.yaml down
+    $DOCKER_COMPOSE_CMD -p user -f docker-compose-linux-search.yaml down
   fi
 else
   echo "/proc/version 文件不存在。请确认自己位于Linux或Windows的WSL环境下"

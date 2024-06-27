@@ -138,6 +138,7 @@ def read_files_with_extensions():
 
 
 def validate_user_id(user_id):
+    return True
     # 定义正则表达式模式
     pattern = r'^[A-Za-z][A-Za-z0-9_]*$'
     # 检查是否匹配
