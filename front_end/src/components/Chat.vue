@@ -379,7 +379,7 @@ const send = () => {
       console.log('message');
       const res: any = JSON.parse(msg.data);
       console.log(res);
-      if (res?.code == 200 && res?.response) {
+      if (res?.code == 200 && res?.response && !res?.history?.length) {
         // QA_List.value[QA_List.value.length - 1].answer += res.result.response;
         typewriter.add(res?.response.replaceAll('\n', '<br/>'));
         scrollBottom();

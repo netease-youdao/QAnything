@@ -75,6 +75,10 @@ watch(
 .hight-light-comp li {
   list-style-position: inside;
   list-style-type: disc;
+  p {
+    margin: 0;
+    display: inline;
+  }
 }
 
 .hight-light-comp table {

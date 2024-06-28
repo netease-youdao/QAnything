@@ -27,6 +27,7 @@ export default {
     addUrl: '添加网址',
     urlPlaceholder: '请输入网址',
     uploading: '上传中',
+    uploaded: '已上传',
     parsing: '解析中',
     failed: '解析失败',
     succeeded: '解析成功',

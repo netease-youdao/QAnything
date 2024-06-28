@@ -27,6 +27,7 @@ export default {
     addUrl: 'Add URL',
     urlPlaceholder: 'Please enter the URL',
     uploading: 'Uploading',
+    uploaded: 'Uploaded',
     parsing: 'Parsing',
     failed: 'Failed',
     succeeded: 'Succeeded',

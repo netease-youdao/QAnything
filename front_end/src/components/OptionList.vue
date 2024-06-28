@@ -67,7 +67,7 @@
               <div class="status-box">
                 <span class="icon-file-status">
                   <img
-                    v-if="record.status === 'gray'"
+                    v-if="record.status === 'gray' || record.status === 'yellow'"
                     class="loading file-status"
                     src="../assets/home/icon-loading.png"
                     alt="loading"
@@ -338,6 +338,9 @@ const parseStatus = status => {
   let str = common.failed;
   switch (status) {
     case 'gray':
+      str = common.uploaded;
+      break;
+    case 'yellow':
       str = common.parsing;
       break;
     case 'green':
@@ -353,6 +356,9 @@ const parseFaqStatus = status => {
   let str = common.failed;
   switch (status) {
     case 'gray':
+      str = common.uploadCompleted;
+      break;
+    case 'yellow':
       str = common.uploadCompleted;
       break;
     case 'green':
