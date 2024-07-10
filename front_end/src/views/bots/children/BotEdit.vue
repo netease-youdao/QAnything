@@ -1,28 +1,30 @@
 <template>
-  <div class="bot-edit">
-    <div v-if="isLoading" class="loading">
-      <a-spin :indicator="indicator" />
-    </div>
-    <div v-else>
-      <div class="header">
-        <img src="@/assets/bots/bot-avatar.png" alt="avatar" />
-        <div class="name">{{ curBot?.bot_name }}</div>
-        <div class="tabs">
-          <div
-            :class="[
-              'tab-item',
-              tabIndex === item.value ? 'tab-active' : '',
-              (!curBot.kb_ids || !curBot.kb_ids.length) && item.value === 1 ? 'tab-disable' : '',
-            ]"
-            v-for="item in tabList"
-            :key="item.name"
-            @click="changeEditTab(item.value)"
-          >
-            {{ item.name }}
+  <div class="container">
+    <div class="bot-edit">
+      <div v-if="isLoading" class="loading">
+        <a-spin :indicator="indicator" />
+      </div>
+      <div v-else>
+        <div class="header">
+          <img src="@/assets/bots/bot-avatar.png" alt="avatar" />
+          <div class="name">{{ curBot?.bot_name }}</div>
+          <div class="tabs">
+            <div
+              v-for="item in tabList"
+              :key="item.name"
+              :class="[
+                'tab-item',
+                tabIndex === item.value ? 'tab-active' : '',
+                (!curBot.kb_ids || !curBot.kb_ids.length) && item.value === 1 ? 'tab-disable' : '',
+              ]"
+              @click="changeEditTab(item.value)"
+            >
+              {{ item.name }}
+            </div>
           </div>
         </div>
+        <router-view></router-view>
       </div>
-      <router-view></router-view>
     </div>
   </div>
 </template>
@@ -126,10 +128,14 @@ function changeEditTab(value) {
 }
 </script>
 <style lang="scss" scoped>
+.container {
+  background-color: #26293b;
+}
 .bot-edit {
   width: 100%;
   height: calc(100vh - 64px);
   background: #f3f6fd;
+  border-radius: 12px 0 0 0;
   font-family: PingFang SC;
   padding: 22px 26px;
   .header {

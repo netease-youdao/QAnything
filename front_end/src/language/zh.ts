@@ -4,6 +4,8 @@ export default {
     cooperation: '合作咨询',
     cooperationMore: '更多合作请咨询',
     cooperationTips: '意见反馈及技术支持群',
+    knowledge: '知识库',
+    setting: '环境配置',
   },
   common: {
     type: 'zh',

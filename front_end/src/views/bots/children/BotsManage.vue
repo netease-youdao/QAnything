@@ -1,11 +1,13 @@
 <template>
-  <div class="bots-manage">
-    <div v-if="isLoading" class="loading">
-      <a-spin :indicator="indicator" />
-    </div>
-    <div v-else>
-      <BotList v-if="botList.length" @getBotList="getBotList" />
-      <BotsHome v-else />
+  <div class="container">
+    <div class="bots-manage">
+      <div v-if="isLoading" class="loading">
+        <a-spin :indicator="indicator" />
+      </div>
+      <div v-else>
+        <BotList v-if="botList.length" @getBotList="getBotList" />
+        <BotsHome v-else />
+      </div>
     </div>
   </div>
 </template>
@@ -42,11 +44,15 @@ const getBotList = async () => {
 getBotList();
 </script>
 <style lang="scss" scoped>
+.container {
+  background-color: #26293b;
+}
 .bots-manage {
   width: 100%;
   height: calc(100vh - 64px);
   overflow: auto;
   background: #f3f6fd;
+  border-radius: 12px 0 0 0;
   font-family: PingFang SC;
   .loading {
     width: 100%;

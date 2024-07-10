@@ -18,11 +18,12 @@
     <div class="header-navs">
       <div
         v-for="item in navList"
-        :class="['nav-item', navIndex === item.value ? 'nav-item-active' : '']"
         :key="item.name"
+        :class="['nav-item', navIndex === item.value ? 'nav-item-active' : '']"
         @click="setNavIdx(item.value)"
       >
-        <div :class="['item-icon', item.value === 0 ? 'knowledge-icon' : 'bot-icon']"></div>
+        <!--        <div :class="['item-icon', item.value === 0 ? 'knowledge-icon' : 'bot-icon']"></div>-->
+        <div :class="['item-icon', getIcon(item.value)]"></div>
         {{ item.name }}
       </div>
     </div>
@@ -74,12 +75,16 @@ const { changePage } = routeController();
 
 const navList = [
   {
-    name: '知识库',
+    name: getLanguage().header.knowledge,
     value: 0,
   },
   {
     name: 'Bots',
     value: 1,
+  },
+  {
+    name: getLanguage().header.setting,
+    value: 2,
   },
 ];
 
@@ -104,6 +109,16 @@ const setNavIdx = value => {
     changePage('/bots');
   }
 };
+
+// header的item-icon选择
+const iconMap = new Map([
+  [0, 'knowledge-icon'],
+  [1, 'bot-icon'],
+  [2, 'setting-icon'],
+]);
+const getIcon = itemValue => {
+  return iconMap.get(itemValue);
+};
 </script>
 <style lang="scss" scoped>
 .header {
@@ -114,14 +129,16 @@ const setNavIdx = value => {
   align-items: center;
   background: #26293b;
   .header-navs {
-    width: 234px;
+    //width: 234px;
     height: 50px;
     margin-left: 158px;
     display: flex;
-    justify-content: space-between;
+    flex: 1;
+    //justify-content: space-between;
     .nav-item {
-      width: 80px;
+      //width: 80px;
       height: 50px;
+      margin-right: 40px;
       color: #999999;
       font-size: 18px;
       display: flex;
@@ -145,6 +162,9 @@ const setNavIdx = value => {
       .knowledge-icon {
         background-image: url('@/assets/header/knowledge-icon.png');
       }
+      .setting-icon {
+        background-image: url('@/assets/header/setting-icon.png');
+      }
     }
     .nav-item-active {
       color: #fff;
@@ -153,6 +173,9 @@ const setNavIdx = value => {
       }
       .knowledge-icon {
         background-image: url('@/assets/header/knowledge-active-icon.png');
+      }
+      .setting-icon {
+        background-image: url('@/assets/header/setting-active-icon.png');
       }
     }
   }

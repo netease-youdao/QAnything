@@ -4,6 +4,8 @@ export default {
     cooperation: 'Cooperation',
     cooperationMore: 'Contact us ',
     cooperationTips: 'Feedback and technical support',
+    knowledge: 'Knowledge',
+    setting: 'Setting',
   },
   common: {
     type: 'en',

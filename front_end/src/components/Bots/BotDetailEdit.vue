@@ -1,46 +1,48 @@
 <template>
-  <div class="bot-detail-edit-comp">
-    <div class="name-avatar">
-      <img src="@/assets/bots/bot-avatar.png" alt="avatar" />
-      <a-input v-model:value="name" :placeholder="bots.inputBotName" show-count :maxlength="20" />
-    </div>
-    <div class="title">{{ bots.roleSetting }}</div>
-    <a-textarea
-      class="role-setting-input"
-      v-model:value="roleSetting"
-      :auto-size="{ minRows: 7, maxRows: 7 }"
-      :rows="7"
-    />
-    <div :class="['role-setting-length', matches && matches.length > 2000 ? 'over-length' : '']">
-      {{ matches ? matches.length : 0 }} / 2000
-    </div>
-    <div class="title">{{ bots.welcomeMessage }}</div>
-    <a-textarea
-      class="greeting-input"
-      v-model:value="welcomeMessage"
-      show-count
-      :maxlength="100"
-      :placeholder="bots.inputWelcomMsg"
-      :auto-size="{ minRows: 6, maxRows: 6 }"
-      :rows="6"
-    />
-    <div class="title">{{ bots.associatedKb }}<span>*</span></div>
-    <div class="knowedge-item knowledge-info" v-for="(item, index) in curBot.kb_ids" :key="item">
-      <img class="knowledge-icon" src="@/assets/bots/knowledge.png" alt="knowledge" />
-      <div class="kb-name">{{ curBot.kb_names[index] }}</div>
-      <img
-        class="remove-icon"
-        src="@/assets/bots/remove.png"
-        alt="remove"
-        @click="removeKb(item)"
+  <div class="container">
+    <div class="bot-detail-edit-comp">
+      <div class="name-avatar">
+        <img src="@/assets/bots/bot-avatar.png" alt="avatar" />
+        <a-input v-model:value="name" :placeholder="bots.inputBotName" show-count :maxlength="20" />
+      </div>
+      <div class="title">{{ bots.roleSetting }}</div>
+      <a-textarea
+        v-model:value="roleSetting"
+        class="role-setting-input"
+        :auto-size="{ minRows: 7, maxRows: 7 }"
+        :rows="7"
       />
-    </div>
-    <div class="knowedge-item add-knowledge-content" @click="setSelectKnowledgeVisible(true)">
-      <img class="add-knowedge" src="@/assets/bots/add-knowedge.png" alt="icon" />
-      {{ bots.clickAssociatedKb }}
-    </div>
-    <div class="save">
-      <a-button class="save-btn" type="primary" @click="saveBotInfo">{{ bots.save }}</a-button>
+      <div :class="['role-setting-length', matches && matches.length > 2000 ? 'over-length' : '']">
+        {{ matches ? matches.length : 0 }} / 2000
+      </div>
+      <div class="title">{{ bots.welcomeMessage }}</div>
+      <a-textarea
+        v-model:value="welcomeMessage"
+        class="greeting-input"
+        show-count
+        :maxlength="100"
+        :placeholder="bots.inputWelcomMsg"
+        :auto-size="{ minRows: 6, maxRows: 6 }"
+        :rows="6"
+      />
+      <div class="title">{{ bots.associatedKb }}<span>*</span></div>
+      <div v-for="(item, index) in curBot.kb_ids" :key="item" class="knowedge-item knowledge-info">
+        <img class="knowledge-icon" src="@/assets/bots/knowledge.png" alt="knowledge" />
+        <div class="kb-name">{{ curBot.kb_names[index] }}</div>
+        <img
+          class="remove-icon"
+          src="@/assets/bots/remove.png"
+          alt="remove"
+          @click="removeKb(item)"
+        />
+      </div>
+      <div class="knowedge-item add-knowledge-content" @click="setSelectKnowledgeVisible(true)">
+        <img class="add-knowedge" src="@/assets/bots/add-knowedge.png" alt="icon" />
+        {{ bots.clickAssociatedKb }}
+      </div>
+      <div class="save">
+        <a-button class="save-btn" type="primary" @click="saveBotInfo">{{ bots.save }}</a-button>
+      </div>
     </div>
   </div>
 </template>
@@ -121,11 +123,14 @@ const removeKb = async data => {
 };
 </script>
 <style lang="scss" scoped>
+.container {
+  background-color: #26293b;
+}
 .bot-detail-edit-comp {
   width: calc(58% - 20px);
   height: calc(100% - 22px);
   padding: 26px;
-  border-radius: 12px;
+  border-radius: 12px 0 0 0;
   background: #fff;
   overflow: auto;
   .name-avatar {

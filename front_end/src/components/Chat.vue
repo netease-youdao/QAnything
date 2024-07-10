@@ -541,13 +541,14 @@ scrollBottom();
 
 <style lang="scss" scoped>
 .container {
-  padding-top: 16px;
+  //padding-top: 0;
   background-color: #26293b;
 }
 .my-page {
   position: relative;
   margin: 0 auto;
   border-radius: 12px 0 0 0;
+  //border-top-color: #26293b;
   background: #f3f6fd;
 }
 .chat {
