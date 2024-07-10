@@ -84,7 +84,7 @@ export const useOptiionList = defineStore(
         });
 
         const flag = res?.details.some(item => {
-          return item.status === 'gray';
+          return item.status === 'gray' || item.status === 'yellow';
         });
         console.log(flag);
         if (flag) {
