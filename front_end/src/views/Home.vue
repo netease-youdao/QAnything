@@ -9,9 +9,11 @@
 
 <template>
   <div class="page">
-    <DefaultPage v-if="showDefault === pageStatus.default" @change="change" />
-    <Chat v-else-if="showDefault === pageStatus.normal" />
-    <OptionList v-else-if="showDefault === pageStatus.optionlist" />
+    <div class="container">
+      <DefaultPage v-if="showDefault === pageStatus.default" @change="change" />
+      <Chat v-else-if="showDefault === pageStatus.normal" />
+      <OptionList v-else-if="showDefault === pageStatus.optionlist" />
+    </div>
   </div>
 </template>
 <script lang="ts" setup>
@@ -34,6 +36,7 @@ const change = str => {
 };
 
 onMounted(() => {
+  console.log(showDefault.value);
   getList();
 });
 </script>
@@ -42,5 +45,10 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   background: #f3f6fd;
+}
+
+.container {
+  //padding-top: 0;
+  background-color: #26293b;
 }
 </style>

@@ -75,15 +75,15 @@ const { changePage } = routeController();
 
 const navList = [
   {
-    name: getLanguage().header.knowledge,
+    name: getLanguage().header.quickStart,
     value: 0,
   },
   {
-    name: 'Bots',
+    name: getLanguage().header.knowledge,
     value: 1,
   },
   {
-    name: getLanguage().header.setting,
+    name: 'Bots',
     value: 2,
   },
 ];
@@ -103,18 +103,18 @@ const setNavIdx = value => {
     return;
   }
   setNavIndex(value);
-  if (value === 0) {
+  if (value === 1) {
     changePage('/home');
-  } else {
+  } else if (value === 2) {
     changePage('/bots');
   }
 };
 
 // header的item-icon选择
 const iconMap = new Map([
-  [0, 'knowledge-icon'],
-  [1, 'bot-icon'],
-  [2, 'setting-icon'],
+  [0, 'quick-icon'],
+  [1, 'knowledge-icon'],
+  [2, 'bot-icon'],
 ]);
 const getIcon = itemValue => {
   return iconMap.get(itemValue);
@@ -128,6 +128,7 @@ const getIcon = itemValue => {
   display: flex;
   align-items: center;
   background: #26293b;
+
   .header-navs {
     //width: 234px;
     height: 50px;
@@ -144,11 +145,13 @@ const getIcon = itemValue => {
       display: flex;
       align-items: center;
       cursor: pointer;
+
       img {
         width: 20px;
         height: 20px;
         margin-right: 4px;
       }
+
       .item-icon {
         width: 20px;
         height: 20px;
@@ -156,26 +159,33 @@ const getIcon = itemValue => {
         background-size: cover;
         background-repeat: no-repeat;
       }
+
       .bot-icon {
         background-image: url('@/assets/header/bots-icon.png');
       }
+
       .knowledge-icon {
         background-image: url('@/assets/header/knowledge-icon.png');
       }
-      .setting-icon {
-        background-image: url('@/assets/header/setting-icon.png');
+
+      .quick-icon {
+        background-image: url('@/assets/header/quick-icon.png');
       }
     }
+
     .nav-item-active {
       color: #fff;
+
       .bot-icon {
         background-image: url('@/assets/header/bots-active-icon.png');
       }
+
       .knowledge-icon {
         background-image: url('@/assets/header/knowledge-active-icon.png');
       }
-      .setting-icon {
-        background-image: url('@/assets/header/setting-active-icon.png');
+
+      .quick-icon {
+        background-image: url('@/assets/header/quick-active-icon.png');
       }
     }
   }
@@ -191,16 +201,19 @@ const getIcon = itemValue => {
       height: 100%;
     }
   }
+
   .toggle-button {
     font-size: 14px;
     font-weight: 300;
     line-height: 22px;
     color: #cccccc;
     cursor: pointer;
+
     .active {
       color: #ffffff;
       font-weight: 500;
     }
+
     .line {
       width: 1px;
       height: 14px;
@@ -208,6 +221,7 @@ const getIcon = itemValue => {
       margin: 0px 8px;
     }
   }
+
   ul {
     display: flex;
     margin-left: auto;

@@ -112,6 +112,7 @@ export default defineConfig(({ mode }) => {
 
     base: env.VITE_APP_WEB_PREFIX,
     server: {
+      hmr: true,
       usePolling: true,
       port: 5052,
       host: '0.0.0.0',

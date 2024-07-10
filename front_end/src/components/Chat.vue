@@ -1,165 +1,163 @@
 <template>
-  <div class="container">
-    <div class="my-page">
-      <div id="chat" class="chat">
-        <ul id="chat-ul" ref="scrollDom">
-          <li v-for="(item, index) in QA_List" :key="index">
-            <div v-if="item.type === 'user'" class="user">
-              <img class="avatar" src="../assets/home/avatar.png" alt="头像" />
-              <p class="question-text">{{ item.question }}</p>
+  <div class="my-page">
+    <div id="chat" class="chat">
+      <ul id="chat-ul" ref="scrollDom">
+        <li v-for="(item, index) in QA_List" :key="index">
+          <div v-if="item.type === 'user'" class="user">
+            <img class="avatar" src="../assets/home/avatar.png" alt="头像" />
+            <p class="question-text">{{ item.question }}</p>
+          </div>
+          <div v-else class="ai">
+            <div class="content">
+              <img class="avatar" src="../assets/home/ai-avatar.png" alt="头像" />
+              <p
+                class="question-text"
+                :class="[
+                  !item.source.length ? 'change-radius' : '',
+                  item.showTools ? '' : 'flashing',
+                ]"
+                v-html="item.answer"
+              ></p>
             </div>
-            <div v-else class="ai">
-              <div class="content">
-                <img class="avatar" src="../assets/home/ai-avatar.png" alt="头像" />
-                <p
-                  class="question-text"
-                  :class="[
-                    !item.source.length ? 'change-radius' : '',
-                    item.showTools ? '' : 'flashing',
-                  ]"
-                  v-html="item.answer"
-                ></p>
+            <template v-if="item.source.length">
+              <div
+                :class="[
+                  'source-total',
+                  !showSourceIdxs.includes(index) ? 'source-total-last' : '',
+                ]"
+              >
+                <span v-if="language === 'zh'">找到了{{ item.source.length }}个信息来源：</span>
+                <span v-else>Found {{ item.source.length }} source of information</span>
+                <SvgIcon
+                  v-show="!showSourceIdxs.includes(index)"
+                  name="down"
+                  @click="showSourceList(index)"
+                />
+                <SvgIcon
+                  v-show="showSourceIdxs.includes(index)"
+                  name="up"
+                  @click="hideSourceList(index)"
+                />
               </div>
-              <template v-if="item.source.length">
+              <div v-show="showSourceIdxs.includes(index)" class="source-list">
                 <div
-                  :class="[
-                    'source-total',
-                    !showSourceIdxs.includes(index) ? 'source-total-last' : '',
-                  ]"
+                  v-for="(sourceItem, sourceIndex) in item.source"
+                  :key="sourceIndex"
+                  class="data-source"
                 >
-                  <span v-if="language === 'zh'">找到了{{ item.source.length }}个信息来源：</span>
-                  <span v-else>Found {{ item.source.length }} source of information</span>
-                  <SvgIcon
-                    v-show="!showSourceIdxs.includes(index)"
-                    name="down"
-                    @click="showSourceList(index)"
-                  />
-                  <SvgIcon
-                    v-show="showSourceIdxs.includes(index)"
-                    name="up"
-                    @click="hideSourceList(index)"
-                  />
+                  <p v-show="sourceItem.file_name" class="control">
+                    <span class="tips">{{ common.dataSource }}{{ sourceIndex + 1 }}:</span>
+                    <a
+                      v-if="sourceItem.file_id.startsWith('http')"
+                      :href="sourceItem.file_id"
+                      target="_blank"
+                    >
+                      {{ sourceItem.file_name }}
+                    </a>
+                    <span
+                      v-else
+                      :class="[
+                        'file',
+                        checkFileType(sourceItem.file_name) ? 'filename-active' : '',
+                      ]"
+                      @click="handleChatSource(sourceItem)"
+                    >
+                      {{ sourceItem.file_name }}
+                    </span>
+                    <SvgIcon
+                      v-show="sourceItem.showDetailDataSource"
+                      name="iconup"
+                      @click="hideDetail(item, sourceIndex)"
+                    />
+                    <SvgIcon
+                      v-show="!sourceItem.showDetailDataSource"
+                      name="icondown"
+                      @click="showDetail(item, sourceIndex)"
+                    />
+                  </p>
+                  <Transition name="sourceitem">
+                    <div v-show="sourceItem.showDetailDataSource" class="source-content">
+                      <p v-html="sourceItem.content?.replaceAll('\n', '<br/>')"></p>
+                      <p class="score">
+                        <span class="tips">{{ common.correlation }}</span
+                        >{{ sourceItem.score }}
+                      </p>
+                    </div>
+                  </Transition>
                 </div>
-                <div v-show="showSourceIdxs.includes(index)" class="source-list">
-                  <div
-                    v-for="(sourceItem, sourceIndex) in item.source"
-                    :key="sourceIndex"
-                    class="data-source"
-                  >
-                    <p v-show="sourceItem.file_name" class="control">
-                      <span class="tips">{{ common.dataSource }}{{ sourceIndex + 1 }}:</span>
-                      <a
-                        v-if="sourceItem.file_id.startsWith('http')"
-                        :href="sourceItem.file_id"
-                        target="_blank"
-                      >
-                        {{ sourceItem.file_name }}
-                      </a>
-                      <span
-                        v-else
-                        :class="[
-                          'file',
-                          checkFileType(sourceItem.file_name) ? 'filename-active' : '',
-                        ]"
-                        @click="handleChatSource(sourceItem)"
-                      >
-                        {{ sourceItem.file_name }}
-                      </span>
-                      <SvgIcon
-                        v-show="sourceItem.showDetailDataSource"
-                        name="iconup"
-                        @click="hideDetail(item, sourceIndex)"
-                      />
-                      <SvgIcon
-                        v-show="!sourceItem.showDetailDataSource"
-                        name="icondown"
-                        @click="showDetail(item, sourceIndex)"
-                      />
-                    </p>
-                    <Transition name="sourceitem">
-                      <div v-show="sourceItem.showDetailDataSource" class="source-content">
-                        <p v-html="sourceItem.content?.replaceAll('\n', '<br/>')"></p>
-                        <p class="score">
-                          <span class="tips">{{ common.correlation }}</span
-                          >{{ sourceItem.score }}
-                        </p>
-                      </div>
-                    </Transition>
-                  </div>
-                </div>
-              </template>
-              <div v-if="item.showTools" class="feed-back">
-                <div class="reload-box" @click="reAnswer(item)">
-                  <SvgIcon name="reload"></SvgIcon>
-                  <span class="reload-text">{{ common.regenerate }}</span>
-                </div>
-                <div class="tools">
-                  <SvgIcon
-                    :style="{
-                      color: item.copied ? '#4D71FF' : '',
-                    }"
-                    name="copy"
-                    @click="myCopy(item)"
-                  ></SvgIcon>
-                  <SvgIcon
-                    :style="{
-                      color: item.like ? '#4D71FF' : '',
-                    }"
-                    name="like"
-                    @click="like(item, $event)"
-                  ></SvgIcon>
-                  <SvgIcon
-                    :style="{
-                      color: item.unlike ? '#4D71FF' : '',
-                    }"
-                    name="unlike"
-                    @click="unlike(item)"
-                  ></SvgIcon>
-                </div>
+              </div>
+            </template>
+            <div v-if="item.showTools" class="feed-back">
+              <div class="reload-box" @click="reAnswer(item)">
+                <SvgIcon name="reload"></SvgIcon>
+                <span class="reload-text">{{ common.regenerate }}</span>
+              </div>
+              <div class="tools">
+                <SvgIcon
+                  :style="{
+                    color: item.copied ? '#4D71FF' : '',
+                  }"
+                  name="copy"
+                  @click="myCopy(item)"
+                ></SvgIcon>
+                <SvgIcon
+                  :style="{
+                    color: item.like ? '#4D71FF' : '',
+                  }"
+                  name="like"
+                  @click="like(item, $event)"
+                ></SvgIcon>
+                <SvgIcon
+                  :style="{
+                    color: item.unlike ? '#4D71FF' : '',
+                  }"
+                  name="unlike"
+                  @click="unlike(item)"
+                ></SvgIcon>
               </div>
             </div>
-          </li>
-        </ul>
-      </div>
-      <div class="stop-btn">
-        <a-button v-show="showLoading" @click="stopChat">
-          <template #icon>
-            <SvgIcon name="stop" :class="showLoading ? 'loading' : ''"></SvgIcon> </template
-          >{{ common.stop }}</a-button
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="stop-btn">
+      <a-button v-show="showLoading" @click="stopChat">
+        <template #icon>
+          <SvgIcon name="stop" :class="showLoading ? 'loading' : ''"></SvgIcon> </template
+        >{{ common.stop }}</a-button
+      >
+    </div>
+    <div class="question-box">
+      <div class="question">
+        <a-popover placement="topLeft">
+          <template #content>
+            <p v-if="network">退出联网检索</p>
+            <p v-else>开启联网检索</p>
+          </template>
+          <span :class="['network', `network-${network}`]">
+            <SvgIcon name="network" @click="networkChat" />
+          </span>
+        </a-popover>
+        <span class="download" @click="downloadChat">
+          <SvgIcon name="chat-download" />
+        </span>
+        <span class="delete" @click="deleteChat">
+          <SvgIcon name="chat-delete" />
+        </span>
+        <a-input
+          v-model:value="question"
+          max-length="200"
+          :placeholder="common.problemPlaceholder"
+          @keyup.enter="send"
         >
-      </div>
-      <div class="question-box">
-        <div class="question">
-          <a-popover placement="topLeft">
-            <template #content>
-              <p v-if="network">退出联网检索</p>
-              <p v-else>开启联网检索</p>
-            </template>
-            <span :class="['network', `network-${network}`]">
-              <SvgIcon name="network" @click="networkChat" />
-            </span>
-          </a-popover>
-          <span class="download" @click="downloadChat">
-            <SvgIcon name="chat-download" />
-          </span>
-          <span class="delete" @click="deleteChat">
-            <SvgIcon name="chat-delete" />
-          </span>
-          <a-input
-            v-model:value="question"
-            max-length="200"
-            :placeholder="common.problemPlaceholder"
-            @keyup.enter="send"
-          >
-            <template #suffix>
-              <div class="send-plane">
-                <a-button type="primary" :disabled="showLoading" @click="send">
-                  <SvgIcon name="sendplane"></SvgIcon>
-                </a-button>
-              </div>
-            </template>
-          </a-input>
-        </div>
+          <template #suffix>
+            <div class="send-plane">
+              <a-button type="primary" :disabled="showLoading" @click="send">
+                <SvgIcon name="sendplane"></SvgIcon>
+              </a-button>
+            </div>
+          </template>
+        </a-input>
       </div>
     </div>
   </div>
@@ -540,10 +538,6 @@ scrollBottom();
 </script>
 
 <style lang="scss" scoped>
-.container {
-  //padding-top: 0;
-  background-color: #26293b;
-}
 .my-page {
   position: relative;
   margin: 0 auto;

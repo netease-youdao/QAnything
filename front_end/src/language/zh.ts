@@ -5,7 +5,7 @@ export default {
     cooperationMore: '更多合作请咨询',
     cooperationTips: '意见反馈及技术支持群',
     knowledge: '知识库',
-    setting: '环境配置',
+    quickStart: '快速开始',
   },
   common: {
     type: 'zh',

@@ -5,7 +5,7 @@ export default {
     cooperationMore: 'Contact us ',
     cooperationTips: 'Feedback and technical support',
     knowledge: 'Knowledge',
-    setting: 'Setting',
+    quickStart: 'QuickStart',
   },
   common: {
     type: 'en',
