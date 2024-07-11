@@ -33,9 +33,9 @@ class WebSearchInput(BaseModel):
     query: str = Field(..., description=f"search query")
 
 
-def duckduckgo_search(query: str):
+def duckduckgo_search(query: str, top_k: int):
 
-    results = api_wrapper.results(query, max_results=3)
+    results = api_wrapper.results(query, max_results=top_k)
     #print(results)
     urls = [res["link"] for res in results]
     #loader = AsyncChromiumLoader(urls)

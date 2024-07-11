@@ -30,13 +30,13 @@ class CSVLoader(BaseLoader):
     """
 
     def __init__(
-            self,
-            file_path: str,
-            source_column: Optional[str] = None,
-            metadata_columns: Sequence[str] = (),
-            csv_args: Optional[Dict] = None,
-            encoding: Optional[str] = None,
-            autodetect_encoding: bool = False,
+        self,
+        file_path: str,
+        source_column: Optional[str] = None,
+        metadata_columns: Sequence[str] = (),
+        csv_args: Optional[Dict] = None,
+        encoding: Optional[str] = None,
+        autodetect_encoding: bool = False,
     ):
         """
 
@@ -70,7 +70,7 @@ class CSVLoader(BaseLoader):
                 for encoding in detected_encodings:
                     try:
                         with open(
-                                self.file_path, newline="", encoding=encoding.encoding
+                            self.file_path, newline="", encoding=encoding.encoding
                         ) as csvfile:
                             docs = self.__read_file(csvfile)
                             break
@@ -86,7 +86,7 @@ class CSVLoader(BaseLoader):
     def __read_file(self, csvfile: TextIOWrapper) -> List[Document]:
         docs = []
         csv_reader = csv.DictReader(csvfile, **self.csv_args)  # type: ignore
-        # 初始化一个字典，用于存储每一列最后一次的非空值
+         # 初始化一个字典，用于存储每一列最后一次的非空值
         last_non_empty_values = {}
         for i, row in enumerate(csv_reader):
             try:
@@ -99,7 +99,7 @@ class CSVLoader(BaseLoader):
                 raise ValueError(
                     f"Source column '{self.source_column}' not found in CSV file."
                 )
-
+            
             line_contents = []
             for k, v in row.items():
                 if k in self.metadata_columns:
@@ -115,8 +115,8 @@ class CSVLoader(BaseLoader):
             # )
             content += ' & '.join(line_contents)
             content += '\n------------------------'
-
-            metadata = {"source": source, "row": i}
+                
+            metadata = {"csv_source": source, "row": i}
             for col in self.metadata_columns:
                 try:
                     metadata[col] = row[col]

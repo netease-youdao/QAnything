@@ -1,47 +1,33 @@
 from sanic.request import Request
 from sanic.exceptions import BadRequest
+from qanything_kernel.utils.custom_log import debug_logger, insert_logger, qa_logger
+from qanything_kernel.configs.model_config import (KB_SUFFIX, UPLOAD_ROOT_PATH, LOCAL_EMBED_PATH)
+from transformers import AutoTokenizer
+import pandas as pd
+import inspect
 import traceback
 from urllib.parse import urlparse
 import time
 import os
 import logging
 import re
+import aiohttp
+from functools import wraps
 import tiktoken
-import requests
-from tqdm import tqdm
-import pkg_resources
-import torch
-import math
-import packaging.version
-import pandas as pd
-from io import BytesIO
-from qanything_kernel.utils.custom_log import debug_logger
-from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH
 from openpyxl.utils import get_column_letter
 from openpyxl import load_workbook
+import numpy as np
+from datetime import datetime, timedelta
 
-__all__ = ['write_check_file', 'isURL', 'format_source_documents', 'get_time', 'safe_get', 'truncate_filename',
-           'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens', 'download_file', 
-           'get_gpu_memory_utilization', 'check_package_version', 'simplify_filename', 'check_and_transform_excel',
-           'export_qalogs_to_excel', 'get_table_infos']
+__all__ = ['isURL', 'get_time', 'get_time_async', 'format_source_documents', 'safe_get', 'truncate_filename',
+           'shorten_data', 'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens',
+           'clear_string', 'simplify_filename', 'string_bytes_length', 'correct_kb_id', 'clear_kb_id',
+           'clear_string_is_equal', 'export_qalogs_to_excel', 'num_tokens_local',
+           'check_user_id_and_user_info', 'get_table_infos', 'format_time_record', 'get_time_range']
 
 
 def get_invalid_user_id_msg(user_id):
-    return "fail, Invalid user_id: {}. user_id 必须只含有字母，数字和下划线且字母开头".format(user_id)
-
-
-def write_check_file(filepath, docs):
-    folder_path = os.path.join(os.path.dirname(filepath), "tmp_files")
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-    fp = os.path.join(folder_path, 'load_file.txt')
-    with open(fp, 'a+', encoding='utf-8') as fout:
-        fout.write("filepath=%s,len=%s" % (filepath, len(docs)))
-        fout.write('\n')
-        for i in docs:
-            fout.write(str(i))
-            fout.write('\n')
-        fout.close()
+    return "fail, Invalid user_id: {}. user_id 长度必须小于64，且必须只含有字母，数字和下划线且字母开头".format(user_id)
 
 
 def isURL(string):
@@ -52,30 +38,42 @@ def isURL(string):
 def format_source_documents(ori_source_documents):
     source_documents = []
     for inum, doc in enumerate(ori_source_documents):
-        # for inum, doc in enumerate(answer_source_documents):
-        # doc_source = doc.metadata['source']
-        # source_str = doc_source if isURL(doc_source) else os.path.split(doc_source)[-1]
-        source_info = {'file_id': doc.metadata.get('source', doc.metadata.get('file_id','')),
-                       'file_name': doc.metadata.get('title', doc.metadata.get('file_name','')),
+        source_info = {'file_id': doc.metadata.get('file_id', ''),
+                       'file_name': doc.metadata.get('file_name', ''),
                        'content': doc.page_content,
-                       'retrieval_query': doc.metadata['retrieval_query'],
+                       'retrieval_query': doc.metadata.get('retrieval_query', ''),
                        # 'kernel': doc.metadata['kernel'],
-                       'file_path': doc.metadata.get('file_path', ''),
-                       'score': str(doc.metadata.get('score','')),
-                       'embed_version': doc.metadata.get('embed_version','')}
+                       'file_url': doc.metadata.get('file_url', ''),
+                       'score': str(doc.metadata['score']),
+                       'embed_version': doc.metadata.get('embed_version', ''),
+                       'pdf_source_info': doc.metadata.get('source_info', {}),
+                       'nos_keys': doc.metadata.get('nos_keys', ''),
+                       'doc_id': doc.metadata.get('doc_id', ''),
+                       'retrieval_source': doc.metadata.get('retrieval_source', ''),
+                       }
         source_documents.append(source_info)
     return source_documents
 
 
-def get_time(func):
-    def inner(*arg, **kwargs):
-        s_time = time.time()
-        res = func(*arg, **kwargs)
-        e_time = time.time()
-        debug_logger.info('函数 {} 执行耗时: {} 秒'.format(func.__name__, e_time - s_time))
-        return res
-
-    return inner
+def format_time_record(time_record):
+    token_usage = {}
+    time_usage = {}
+    for k, v in time_record.items():
+        if 'tokens' in k:
+            token_usage[k] = v
+        else:
+            time_usage[k] = v
+    if 'rewrite_prompt_tokens' in token_usage:
+        if 'prompt_tokens' in token_usage:
+            token_usage['prompt_tokens'] += token_usage['rewrite_prompt_tokens']
+        if 'total_tokens' in token_usage:
+            token_usage['total_tokens'] += token_usage['rewrite_prompt_tokens']
+    if 'rewrite_completion_tokens' in token_usage:
+        if 'completion_tokens' in token_usage:
+            token_usage['completion_tokens'] += token_usage['rewrite_completion_tokens']
+        if 'total_tokens' in token_usage:
+            token_usage['total_tokens'] += token_usage['rewrite_completion_tokens']
+    return {"time_usage": time_usage, "token_usage": token_usage}
 
 
 def safe_get(req: Request, attr: str, default=None):
@@ -113,6 +111,7 @@ def truncate_filename(filename, max_length=200):
 
     # 如果文件名长度超过最大长度限制
     if filename_length > max_length:
+        debug_logger.warning("文件名长度超过最大长度限制，将截取文件名")
         # 生成一个时间戳标记
         timestamp = str(int(time.time()))
         # 截取文件名
@@ -126,6 +125,31 @@ def truncate_filename(filename, max_length=200):
     return new_filename
 
 
+# 同步执行环境下的耗时统计装饰器
+def get_time(func):
+    def inner(*arg, **kwargs):
+        s_time = time.time()
+        res = func(*arg, **kwargs)
+        e_time = time.time()
+        debug_logger.info('函数 {} 执行耗时: {:.2f} 毫秒'.format(func.__name__, (e_time - s_time) * 1000))
+        return res
+
+    return inner
+
+
+# 异步执行环境下的耗时统计装饰器
+def get_time_async(func):
+    @wraps(func)
+    async def inner(*args, **kwargs):
+        s_time = time.perf_counter()
+        res = await func(*args, **kwargs)  # 注意这里使用 await 来调用异步函数
+        e_time = time.perf_counter()
+        debug_logger.info('函数 {} 执行耗时: {:.2f} 毫秒'.format(func.__name__, (e_time - s_time) * 1000))
+        return res
+
+    return inner
+
+
 def read_files_with_extensions():
     # 获取当前脚本文件的路径
     current_file = os.path.abspath(__file__)
@@ -134,11 +158,11 @@ def read_files_with_extensions():
     current_dir = os.path.dirname(current_file)
 
     # 获取项目根目录
-    project_dir = os.path.dirname(current_dir)
+    project_dir = os.path.dirname(os.path.dirname(current_dir))
 
     directory = project_dir + '/data'
-    print(f'now reading {directory}')
-    extensions = ['.md', '.txt', '.pdf', '.jpg', '.docx', '.xlsx', '.eml', '.csv', '.mp3', '.wav']
+
+    extensions = ['.md', '.txt', '.pdf', '.jpg', '.docx', '.xlsx', '.eml', '.csv']
     for root, dirs, files in os.walk(directory):
         for file in files:
             if file.endswith(tuple(extensions)):
@@ -147,6 +171,8 @@ def read_files_with_extensions():
 
 
 def validate_user_id(user_id):
+    if len(user_id) > 64:
+        return False
     # 定义正则表达式模式
     pattern = r'^[A-Za-z][A-Za-z0-9_]*$'
     # 检查是否匹配
@@ -156,61 +182,65 @@ def validate_user_id(user_id):
         return False
 
 
-def num_tokens(text: str, model: str = 'gpt-3.5-turbo-0613') -> int:
+embedding_tokenizer = AutoTokenizer.from_pretrained(LOCAL_EMBED_PATH, local_files_only=True)
+
+# def num_tokens(text: str, model: str = 'gpt-3.5-turbo-0613') -> int:
+#     """Return the number of tokens in a string."""
+#     encoding = tiktoken.encoding_for_model(model)
+#     return len(encoding.encode(text, disallowed_special=()))
+
+def num_tokens(text: str):
     """Return the number of tokens in a string."""
-    encoding = tiktoken.encoding_for_model(model)
-    return len(encoding.encode(text))
+    return len(embedding_tokenizer.encode(text, add_special_tokens=True))
+
+def num_tokens_local(text, tokenizer: AutoTokenizer) -> int:
+    """Return the number of tokens in a string."""
+    return len(tokenizer.encode(text, add_special_tokens=True))
 
 
-def download_file(url, filename):
-    response = requests.get(url, stream=True)
-    total_size_in_bytes = int(response.headers.get('content-length', 0))
-    progress_bar = tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
-
-    with open(filename, 'wb') as file:
-        for data in response.iter_content(chunk_size=1024):
-            progress_bar.update(len(data))
-            file.write(data)
-
-    progress_bar.close()
-    if total_size_in_bytes != 0 and progress_bar.n != total_size_in_bytes:
-        print("ERROR, something went wrong")
-
-
-def check_package_version(package_name, version):
+def shorten_data(data):
+    # copy data，不要修改原始数据
+    data = data.copy()
     try:
-        package_version = pkg_resources.get_distribution(package_name).version
-        if packaging.version.parse(package_version) >= packaging.version.parse(version):
-            print(f"{package_name} {package_version} 已经安装。")
-            return True
-        else:
-            print(f"{package_name} 版本过低，当前版本为 {package_version}，需要安装 {version} 版本。")
-            return False
-    except pkg_resources.DistributionNotFound:
-        print(f"{package_name} 未安装。")
-    return False
+        for k, v in data.items():
+            if len(str(v)) > 100:
+                data[k] = str(v)[:100] + '...'
+    except Exception as e:
+        debug_logger.error('shorten_data error:', traceback.format_exc())
+    return data
 
 
-def get_gpu_memory_utilization(model_size, device_id):
-    if not torch.cuda.is_available():
-        raise ValueError("CUDA is not available: torch.cuda.is_available(): return False")
-    gpu_memory = torch.cuda.get_device_properties(int(device_id)).total_memory
-    gpu_memory_in_GB = math.ceil(gpu_memory / (1024 ** 3))  # 将字节转换为GB
-    debug_logger.info(f"GPU memory: {gpu_memory_in_GB}GB")
-    if model_size == '3B':
-        if gpu_memory_in_GB < 10:  # 显存最低需要10GB
-            raise ValueError(
-                f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 10GB is required with 3B Model.")
-        # gpu_memory_utilization = round(8 / gpu_memory_in_GB, 2)
-        gpu_memory_utilization = 0.81
-    elif model_size == '7B':
-        if gpu_memory_in_GB < 24:  # 显存最低需要20GB
-            raise ValueError(
-                f"GPU memory is not enough: {gpu_memory_in_GB} GB, at least 24GB is required with 7B Model.")
-        gpu_memory_utilization = 0.9
-    else:
-        raise ValueError(f"Unsupported model size: {model_size}, supported model size: 3B, 7B")
-    return gpu_memory_utilization
+def cur_func_name():
+    return inspect.currentframe().f_back.f_code.co_name
+
+
+def num_tokens_from_messages(message_texts, model="gpt-3.5-turbo-0301"):
+    encoding = tiktoken.encoding_for_model(model)
+    num_tokens = 0
+    for message in message_texts:
+        # num_tokens += 4  # every message follows <im_start>{role/name}\n{content}<im_end>\n
+        # for key, value in message.items():
+        num_tokens += len(encoding.encode(message, disallowed_special=()))
+        # if key == "name":  # if there's a name, the role is omitted
+        # num_tokens += -1  # role is always required and always 1 token
+    # num_tokens += 2  # every reply is primed with <im_start>assistant
+    return num_tokens
+
+
+def sent_tokenize(x):
+    #  sents_temp = re.split('(：|:|,|，|。|！|\!|\.|？|\?)', x)
+    sents_temp = re.split('(。|！|\!|\.|？|\?)', x)
+    sents = []
+    for i in range(len(sents_temp) // 2):
+        sent = sents_temp[2 * i] + sents_temp[2 * i + 1]
+        sents.append(sent)
+    return sents
+
+
+def clear_string(str):
+    # 只保留中文、英文、数字
+    str = re.sub(r"[^\u4e00-\u9fa5a-zA-Z0-9]", "", str)
+    return str
 
 
 def simplify_filename(filename, max_length=40):
@@ -232,38 +262,35 @@ def simplify_filename(filename, max_length=40):
     return f"{simplified_name}{extension}"
 
 
-def check_and_transform_excel(binary_data):
-    # 使用BytesIO读取二进制数据
-    try:
-        data_io = BytesIO(binary_data)
-        df = pd.read_excel(data_io)
-    except Exception as e:
-        return f"读取文件时出错: {e}"
-
-    # 检查列数
-    if len(df.columns) != 2:
-        return "格式错误：文件应该只有两列"
-
-    # 检查列标题
-    if df.columns[0] != "问题" or df.columns[1] != "答案":
-        return "格式错误：第一列标题应为'问题'，第二列标题应为'答案'"
-
-    # 检查每行长度
-    for index, row in df.iterrows():
-        question_len = len(row['问题'])
-        answer_len = len(row['答案'])
-        if question_len > 512 or answer_len > 2048:
-            return f"行{index + 1}长度超出限制：问题长度={question_len}，答案长度={answer_len}"
-
-    # 转换数据格式
-    transformed_data = []
-    for _, row in df.iterrows():
-        transformed_data.append({"question": row['问题'], "answer": row['答案']})
-
-    return transformed_data
+# 对比两个字符串，只保留字母数字和中文，返回是否一致
+def clear_string_is_equal(str1, str2):
+    str1 = clear_string(str1)
+    str2 = clear_string(str2)
+    return str1 == str2
 
 
-# 使用 pandas 将数据写入 Excel
+def correct_kb_id(kb_id):
+    if not kb_id:
+        return kb_id
+    # kb_id = kb_id.replace(KB_PRE_SUFFIX, KB_SUFFIX)
+    # 如果kb_id末尾不是KB_SUFFIX,则加上
+    if KB_SUFFIX not in kb_id:
+        if kb_id.endswith('_FAQ'):  # KBc86eaa3f278f4ef9908780e8e558c6eb_FAQ
+            return kb_id.split('_FAQ')[0] + KB_SUFFIX + '_FAQ'
+        else:  # KBc86eaa3f278f4ef9908780e8e558c6eb
+            return kb_id + KB_SUFFIX
+    else:
+        return kb_id
+
+
+def clear_kb_id(kb_id):
+    return kb_id.replace(KB_SUFFIX, '')
+
+
+def string_bytes_length(string):
+    return len(string.encode('utf-8'))
+
+
 def export_qalogs_to_excel(qalogs, columns, filename: str):
     # 将查询结果转换为 DataFrame
     df = pd.DataFrame(qalogs, columns=columns)
@@ -289,6 +316,34 @@ def export_qalogs_to_excel(qalogs, columns, filename: str):
     return file_path
 
 
+def check_user_id_and_user_info(user_id, user_info):
+    if user_id is None or user_info is None:
+        msg = "fail, user_id 或 user_info 为 None"
+        return False, msg
+    if not validate_user_id(user_id):
+        msg = get_invalid_user_id_msg(user_id)
+        return False, msg
+    if not user_info.isdigit():
+        msg = "fail, user_info 必须是纯数字"
+        return False, msg
+    return True, 'success'
+
+
+def cosine_similarity(embedding1, embedding2):
+    embedding1 = np.array(embedding1)
+    embedding2 = np.array(embedding2)
+    # 计算两个向量的点积
+    dot_product = np.dot(embedding1, embedding2)
+    # 计算两个向量的模
+    norm_embedding1 = np.linalg.norm(embedding1)
+    norm_embedding2 = np.linalg.norm(embedding2)
+    # 计算余弦相似度
+    similarity = dot_product / (norm_embedding1 * norm_embedding2)
+    # 将余弦相似度映射到0-1之间
+    similarity_mapped = (similarity + 1) / 2
+    return similarity_mapped
+
+
 def get_table_infos(markdown_str):
     lines = markdown_str.split('\n')
     if len(lines) < 2:
@@ -310,4 +365,39 @@ def get_table_infos(markdown_str):
                 end_line = i
     if head_line is None or end_line is None:
         return None
-    return {"head_line": head_line, "end_line": end_line, "head": lines[head_line] + '\n' + lines[head_line + 1], "lines": lines}
+    return {"head_line": head_line, "end_line": end_line, "head": lines[head_line] + '\n' + lines[head_line + 1],
+            "lines": lines}
+
+
+def get_time_range(time_start=None, time_end=None, default_days=7):
+    """
+    获取时间范围。如果给定的时间范围不完整，将使用默认值（最近7天）。
+
+    :param time_start: 起始时间，格式为 "YYYY-MM-DD" 或 "YYYY-MM-DD HH:MM:SS"
+    :param time_end: 结束时间，格式为 "YYYY-MM-DD" 或 "YYYY-MM-DD HH:MM:SS"
+    :param default_days: 如果未提供时间范围，默认的天数范围
+    :return: 包含起始时间和结束时间的元组，格式为 ("YYYY-MM-DD HH:MM:SS", "YYYY-MM-DD HH:MM:SS")
+    """
+
+    date_pattern = r'^\d{4}-\d{2}-\d{2}$'
+    now = datetime.now()
+
+    # 验证 time_start 格式
+    if time_start:
+        if not re.match(date_pattern, time_start):
+            return None
+        if len(time_start) == 10:
+            time_start = time_start + " 00:00:00"
+    else:
+        time_start = (now - timedelta(days=default_days)).strftime("%Y-%m-%d 00:00:00")
+
+    # 验证 time_end 格式
+    if time_end:
+        if not re.match(date_pattern, time_end):
+            return None
+        if len(time_end) == 10:
+            time_end = time_end + " 23:59:59"
+    else:
+        time_end = now.strftime("%Y-%m-%d 23:59:59")
+
+    return (time_start, time_end)

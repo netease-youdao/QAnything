@@ -7,8 +7,6 @@ import os
 import fitz
 from tqdm import tqdm
 from typing import Union, Any
-import numpy as np
-import base64
 
 
 class UnstructuredPaddlePDFLoader(UnstructuredFileLoader):
@@ -16,16 +14,10 @@ class UnstructuredPaddlePDFLoader(UnstructuredFileLoader):
     def __init__(
         self,
         file_path: Union[str, List[str]],
-        ocr_engine: Callable,
-        use_cpu: bool = True,
         mode: str = "single",
         **unstructured_kwargs: Any,
     ):
         """Initialize with file path."""
-        self.ocr_engine = ocr_engine
-        self.use_cpu = use_cpu
-        if self.use_cpu:
-            os.environ["CUDA_VISIBLE_DEVICES"] = ""
         super().__init__(file_path=file_path, mode=mode, **unstructured_kwargs)
 
     def _get_elements(self) -> List:
@@ -41,7 +33,7 @@ class UnstructuredPaddlePDFLoader(UnstructuredFileLoader):
                     page = doc.load_page(i)
                     # pix = page.get_pixmap(dpi=300)
                     # img = np.frombuffer(pix.samples, dtype=np.uint8).reshape((pix.h, pix.w, pix.n))
-                    # 
+                    #
                     # img_data = {"img64": base64.b64encode(img).decode("utf-8"), "height": pix.h, "width": pix.w,
                     #             "channels": pix.n}
                     # result = self.ocr_engine(img_data)

@@ -47,7 +47,7 @@ def is_possible_title(
 
     # 文本长度为0的话，肯定不是title
     if len(text) == 0:
-        print("Not a title. Text is empty.")
+        # print("Not a title. Text is empty.")
         return False
 
     # 文本中有标点符号，就不是title
@@ -71,7 +71,7 @@ def is_possible_title(
         return False
 
     if text.isnumeric():
-        print(f"Not a title. Text is all numeric:\n\n{text}")  # type: ignore
+        # print(f"Not a title. Text is all numeric:\n\n{text}")  # type: ignore
         return False
 
     # 开头的字符内应该有数字，默认5个字符内
@@ -96,5 +96,5 @@ def zh_title_enhance(docs: List[Document]) -> List[Document]:
             elif title:
                 doc.page_content = f"下文与({title})有关。{doc.page_content}"
         return docs
-    else:
-        print("文件不存在")
+    # else:
+    #     print("文件不存在")

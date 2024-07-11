@@ -1,28 +1,40 @@
 from langchain.text_splitter import CharacterTextSplitter
+from langchain.docstore.document import Document
+from typing import Iterable, Optional
 import re
+import threading
+import copy
 from typing import List
+from qanything_kernel.utils.custom_log import insert_logger
 from qanything_kernel.configs.model_config import SENTENCE_SIZE
 
 
 class ChineseTextSplitter(CharacterTextSplitter):
-    def __init__(self, pdf: bool = False, sentence_size: int = SENTENCE_SIZE, **kwargs):
+    def __init__(self, pdf: bool = False, sentence_size: int = SENTENCE_SIZE, event: threading.Event = None, **kwargs):
         super().__init__(**kwargs)
         self.pdf = pdf
         self.sentence_size = sentence_size
-
-    def split_text1(self, text: str) -> List[str]:
-        if self.pdf:
-            text = re.sub(r"\n{3,}", "\n", text)
-            text = re.sub('\s', ' ', text)
-            text = text.replace("\n\n", "")
-        sent_sep_pattern = re.compile('([﹒﹔﹖﹗．。！？]["’”」』]{0,2}|(?=["‘“「『]{1,2}|$))')  # del ：；
-        sent_list = []
-        for ele in sent_sep_pattern.split(text):
-            if sent_sep_pattern.match(ele) and sent_list:
-                sent_list[-1] += ele
-            elif ele:
-                sent_list.append(ele)
-        return sent_list
+        self.event = event
+    
+    def create_documents(
+        self, texts: List[str], metadatas: Optional[List[dict]] = None
+    ) -> List[Document]:
+        """Create documents from a list of texts."""
+        _metadatas = metadatas or [{}] * len(texts)
+        documents = []
+        for i, text in enumerate(texts):
+            if self.event.is_set():
+                insert_logger.warning('Event is set!') 
+                break
+            index = -1
+            for chunk in self.split_text(text):
+                metadata = copy.deepcopy(_metadatas[i])
+                if self._add_start_index:
+                    index = text.find(chunk, index + 1)
+                    metadata["start_index"] = index
+                new_doc = Document(page_content=chunk, metadata=metadata)
+                documents.append(new_doc)
+        return documents
 
     def split_text(self, text: str) -> List[str]:   ##此处需要进一步优化逻辑
         if self.pdf:

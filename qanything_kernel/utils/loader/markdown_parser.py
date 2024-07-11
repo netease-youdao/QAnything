@@ -1,7 +1,7 @@
 import random
 from langchain.schema.document import Document
 import re
-
+# import json
 RANDOM_NUMBER_SET = set()
 
 
@@ -63,14 +63,19 @@ def _init_node(node_type, title, id_len=4):
 
 def _get_content_dfs(item):
     def dfs_child(child, lines):
-        if 'children' in child:
-            for c in child['children']:
-                dfs_child(c, lines)
+        if child['type'] == 'image':
+            if 'title' in child['attrs']:
+                lines.append("![figure]" + '(' + child['attrs']['url'] + ' ' + child['attrs']['title'] + ' ' + ')')
+            else:
+                lines.append("![figure]" + '(' + child['attrs']['url']+ ')')
         else:
-            if 'raw' in child:
-                lines.append(child['raw'])
+            if 'children' in child:
+                for c in child['children']:
+                    dfs_child(c, lines)
+            else:
+                if 'raw' in child:
+                    lines.append(child['raw'])
         return lines
-
     text_lines = dfs_child(item, [])
     content = '\n'.join(text_lines) + '\n'
 
@@ -186,6 +191,7 @@ def parse_markdown_mistune(file_path, doc_title=None, max_heading_depth=2):
     mistune_parser = mistune.Markdown()
     document = mistune_parser.parse(markdown_content)
     print('Markdown parsing done.')
+
     document, level_offset, max_depth = _get_heading_level_offset(document)
     if max_heading_depth is None or max_heading_depth <= 0:
         max_heading_depth = max_depth
@@ -259,5 +265,5 @@ def convert_markdown_to_langchaindoc(md_file):
 
 if __name__ == '__main__':
     doc_lst = convert_markdown_to_langchaindoc(
-        '/ssd8/exec/qinhaibo/code/RAG/release/git/document-layout-parser/results/樊昊天个人简历_1715841225/樊昊天个人简历_md/樊昊天个人简历.md')
+        '/ssd8/exec/qinhaibo/code/RAG/release/git/gitlab/qanything/qanything_kernel/utils/loader/17-如何进行两种数据的叠合透明显示.docx.md')
     print(doc_lst)

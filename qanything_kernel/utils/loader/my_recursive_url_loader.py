@@ -4,7 +4,9 @@ from urllib.parse import urljoin, urldefrag
 import requests
 
 from langchain.docstore.document import Document
-from langchain.document_loaders.base import BaseLoader
+from langchain_community.document_loaders.base import BaseLoader
+from langchain_community.document_loaders import WebBaseLoader
+from bs4 import BeautifulSoup
 
 
 class MyRecursiveUrlLoader(BaseLoader):
@@ -36,15 +38,6 @@ class MyRecursiveUrlLoader(BaseLoader):
             url: The URL to crawl.
             visited: A set of visited URLs.
         """
-
-        from langchain.document_loaders import WebBaseLoader
-
-        try:
-            from bs4 import BeautifulSoup
-        except ImportError:
-            raise ImportError(
-                "The BeautifulSoup package is required for the RecursiveUrlLoader."
-            )
 
         # Exclude the root and parent from a list
         visited = set() if visited is None else visited
