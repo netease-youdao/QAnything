@@ -21,6 +21,7 @@ class EmbeddingOnnxBackend(EmbeddingBackend):
 
     def get_embedding(self, sentences, max_length):
         inputs_onnx = self._tokenizer(sentences, padding=True, truncation=True, max_length=max_length, return_tensors=self.return_tensors)
+        debug_logger.info(f'embedding input shape: {inputs_onnx["input_ids"].shape}')
         inputs_onnx = {k: v for k, v in inputs_onnx.items()}
         start_time = time.time()
         outputs_onnx = self._session.run(output_names=['output'], input_feed=inputs_onnx)

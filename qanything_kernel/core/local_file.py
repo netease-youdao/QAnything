@@ -122,9 +122,9 @@ class LocalFile:
         return new_docs
 
     @staticmethod
-    def pdf_process(dos: List[Document]):
+    def pdf_process(docs: List[Document]):
         new_docs = []
-        for doc in dos:
+        for doc in docs:
             # metadata={'title_lst': ['#樊昊天个人简历', '##教育经历'], 'has_table': False}
             title_lst = doc.metadata['title_lst']
             # 删除所有仅有多个#的title
