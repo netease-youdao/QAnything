@@ -32,6 +32,7 @@ export interface IChatItem {
   like?: boolean; //点赞
   unlike?: boolean; //点踩
   copied?: boolean; //点拷贝置为true 提示拷贝成功 然后置为false  重置原因:点击拷贝后添加颜色提示拷贝过了 1s后置为普通颜色
+  onlySearch?: boolean; // 只检索知识库来源不回答
 
   showTools?: boolean; //当期问答是否结束 结束展示复制等小工具和取消闪烁
   source?: Array<IDataSourceItem>;

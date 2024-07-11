@@ -50,7 +50,7 @@
             </span>
           </div>
         </div>
-        <div class="time">{{ item.createTime }}</div>
+        <!--        <div class="time">{{ item.createTime }}</div>-->
       </div>
     </a-popover>
   </div>
@@ -156,9 +156,8 @@ const close = (item: IKnowledgeItem) => {
 .card {
   overflow: hidden;
   position: relative;
-  height: 72px;
-  margin: 0 auto;
-  margin-bottom: 16px;
+  height: 48px;
+  margin: 0 auto 16px;
   border-radius: 8px;
   background: #333647;
   cursor: pointer;
@@ -172,7 +171,7 @@ const close = (item: IKnowledgeItem) => {
     font-size: 14px;
     height: 22px;
     line-height: 22px;
-    margin: 14px 1px 0px 12px;
+    margin: 12px 1px 0px 12px;
 
     .normal {
       .title-text {
@@ -231,7 +230,7 @@ const close = (item: IKnowledgeItem) => {
   }
 }
 .active {
-  background: #7261e9;
+  background: linear-gradient(284deg, #7b5ef2 -1%, #c383fe 97%);
 }
 
 .fade-enter-active {

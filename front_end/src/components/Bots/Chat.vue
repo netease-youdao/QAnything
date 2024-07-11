@@ -340,6 +340,7 @@ const stopChat = () => {
 //发送问答消息
 const send = () => {
   if (!question.value.length) {
+    message.warn('正在聊天中...请等待结束');
     return;
   }
   const q = question.value;
@@ -707,7 +708,7 @@ scrollBottom();
       }
     }
     .source-total-last {
-      border-radius: 0px 12px 12px 12px;
+      border-radius: 0px 0 12px 12px;
     }
 
     .source-list {

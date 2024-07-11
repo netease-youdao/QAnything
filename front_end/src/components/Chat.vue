@@ -1,170 +1,205 @@
 <template>
-  <div class="my-page">
-    <div id="chat" class="chat">
-      <ul id="chat-ul" ref="scrollDom">
-        <li v-for="(item, index) in QA_List" :key="index">
-          <div v-if="item.type === 'user'" class="user">
-            <img class="avatar" src="../assets/home/avatar.png" alt="头像" />
-            <p class="question-text">{{ item.question }}</p>
-          </div>
-          <div v-else class="ai">
-            <div class="content">
-              <img class="avatar" src="../assets/home/ai-avatar.png" alt="头像" />
-              <p
-                class="question-text"
-                :class="[
-                  !item.source.length ? 'change-radius' : '',
-                  item.showTools ? '' : 'flashing',
-                ]"
-                v-html="item.answer"
-              ></p>
+  <HistoryChat
+    :observer="observer"
+    :observe-dom="observeDom"
+    :qa-observe-dom="qaObserveDom"
+    :qa-observer="qaObserver"
+    :show-loading="showLoading"
+    @scrollBottom="scrollBottom"
+    @setObserveDom="setObserveDom"
+    @setQaObserverDom="setQaObserverDom"
+    @clearHistory="clearHistory"
+  />
+  <div class="container showSider">
+    <div class="my-page">
+      <div id="chat" class="chat showSider">
+        <ul id="chat-ul" ref="scrollDom">
+          <li v-for="(item, index) in QA_List" :key="index">
+            <div v-if="item.type === 'user'" class="user">
+              <img class="avatar" src="../assets/home/avatar.png" alt="头像" />
+              <p class="question-text">{{ item.question }}</p>
             </div>
-            <template v-if="item.source.length">
-              <div
-                :class="[
-                  'source-total',
-                  !showSourceIdxs.includes(index) ? 'source-total-last' : '',
-                ]"
-              >
-                <span v-if="language === 'zh'">找到了{{ item.source.length }}个信息来源：</span>
-                <span v-else>Found {{ item.source.length }} source of information</span>
-                <SvgIcon
-                  v-show="!showSourceIdxs.includes(index)"
-                  name="down"
-                  @click="showSourceList(index)"
-                />
-                <SvgIcon
-                  v-show="showSourceIdxs.includes(index)"
-                  name="up"
-                  @click="hideSourceList(index)"
-                />
-              </div>
-              <div v-show="showSourceIdxs.includes(index)" class="source-list">
-                <div
-                  v-for="(sourceItem, sourceIndex) in item.source"
-                  :key="sourceIndex"
-                  class="data-source"
-                >
-                  <p v-show="sourceItem.file_name" class="control">
-                    <span class="tips">{{ common.dataSource }}{{ sourceIndex + 1 }}:</span>
-                    <a
-                      v-if="sourceItem.file_id.startsWith('http')"
-                      :href="sourceItem.file_id"
-                      target="_blank"
-                    >
-                      {{ sourceItem.file_name }}
-                    </a>
-                    <span
-                      v-else
+            <div v-else class="ai">
+              <img class="avatar" src="../assets/home/ai-avatar.png" alt="头像" />
+              <div class="content">
+                <div class="ai-right">
+                  <p
+                    v-if="!item.onlySearch"
+                    class="question-text"
+                    :class="[
+                      !item.source.length ? 'change-radius' : '',
+                      item.showTools ? '' : 'flashing',
+                    ]"
+                    v-html="item.answer"
+                  ></p>
+                  <template v-if="item.source.length">
+                    <div
                       :class="[
-                        'file',
-                        checkFileType(sourceItem.file_name) ? 'filename-active' : '',
+                        'source-total',
+                        !showSourceIdxs.includes(index) ? 'source-total-last' : '',
                       ]"
-                      @click="handleChatSource(sourceItem)"
                     >
-                      {{ sourceItem.file_name }}
-                    </span>
-                    <SvgIcon
-                      v-show="sourceItem.showDetailDataSource"
-                      name="iconup"
-                      @click="hideDetail(item, sourceIndex)"
-                    />
-                    <SvgIcon
-                      v-show="!sourceItem.showDetailDataSource"
-                      name="icondown"
-                      @click="showDetail(item, sourceIndex)"
-                    />
-                  </p>
-                  <Transition name="sourceitem">
-                    <div v-show="sourceItem.showDetailDataSource" class="source-content">
-                      <p v-html="sourceItem.content?.replaceAll('\n', '<br/>')"></p>
-                      <p class="score">
-                        <span class="tips">{{ common.correlation }}</span
-                        >{{ sourceItem.score }}
-                      </p>
+                      <span v-if="language === 'zh'">
+                        <span v-if="item.onlySearch">检索完成，</span>找到了{{
+                          item.source.length
+                        }}个信息来源：</span
+                      >
+                      <span v-else>Found {{ item.source.length }} source of information</span>
+                      <SvgIcon
+                        v-show="!showSourceIdxs.includes(index)"
+                        name="down"
+                        @click="showSourceList(index)"
+                      />
+                      <SvgIcon
+                        v-show="showSourceIdxs.includes(index)"
+                        name="up"
+                        @click="hideSourceList(index)"
+                      />
                     </div>
-                  </Transition>
+                    <div v-show="showSourceIdxs.includes(index)" class="source-list">
+                      <div
+                        v-for="(sourceItem, sourceIndex) in item.source"
+                        :key="sourceIndex"
+                        class="data-source"
+                      >
+                        <p v-show="sourceItem.file_name" class="control">
+                          <span class="tips">{{ common.dataSource }}{{ sourceIndex + 1 }}:</span>
+                          <a
+                            v-if="sourceItem.file_id.startsWith('http')"
+                            :href="sourceItem.file_id"
+                            target="_blank"
+                          >
+                            {{ sourceItem.file_name }}
+                          </a>
+                          <span
+                            v-else
+                            :class="[
+                              'file',
+                              checkFileType(sourceItem.file_name) ? 'filename-active' : '',
+                            ]"
+                            @click="handleChatSource(sourceItem)"
+                          >
+                            {{ sourceItem.file_name }}
+                          </span>
+                          <SvgIcon
+                            v-show="sourceItem.showDetailDataSource"
+                            name="iconup"
+                            @click="hideDetail(item, sourceIndex)"
+                          />
+                          <SvgIcon
+                            v-show="!sourceItem.showDetailDataSource"
+                            name="icondown"
+                            @click="showDetail(item, sourceIndex)"
+                          />
+                        </p>
+                        <Transition name="sourceitem">
+                          <div v-show="sourceItem.showDetailDataSource" class="source-content">
+                            <p v-html="sourceItem.content?.replaceAll('\n', '<br/>')"></p>
+                            <p class="score">
+                              <span class="tips">{{ common.correlation }}</span
+                              >{{ sourceItem.score }}
+                            </p>
+                          </div>
+                        </Transition>
+                      </div>
+                    </div>
+                  </template>
+                  <div v-if="item.showTools" class="feed-back">
+                    <div class="reload-box" @click="reAnswer(item)">
+                      <SvgIcon name="reload"></SvgIcon>
+                      <span class="reload-text">{{ common.regenerate }}</span>
+                    </div>
+                    <div class="tools">
+                      <SvgIcon
+                        :style="{
+                          color: item.copied ? '#4D71FF' : '',
+                        }"
+                        name="copy"
+                        @click="myCopy(item)"
+                      ></SvgIcon>
+                      <SvgIcon
+                        :style="{
+                          color: item.like ? '#4D71FF' : '',
+                        }"
+                        name="like"
+                        @click="like(item, $event)"
+                      ></SvgIcon>
+                      <SvgIcon
+                        :style="{
+                          color: item.unlike ? '#4D71FF' : '',
+                        }"
+                        name="unlike"
+                        @click="unlike(item)"
+                      ></SvgIcon>
+                    </div>
+                  </div>
                 </div>
               </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div class="stop-btn">
+        <a-button v-show="showLoading" @click="stopChat">
+          <template #icon>
+            <SvgIcon name="stop" :class="showLoading ? 'loading' : ''"></SvgIcon>
+          </template>
+          {{ common.stop }}
+        </a-button>
+      </div>
+      <div class="question-box">
+        <div class="question">
+          <a-popover placement="topLeft">
+            <template #content>
+              <p v-if="network">退出联网检索</p>
+              <p v-else>开启联网检索</p>
             </template>
-            <div v-if="item.showTools" class="feed-back">
-              <div class="reload-box" @click="reAnswer(item)">
-                <SvgIcon name="reload"></SvgIcon>
-                <span class="reload-text">{{ common.regenerate }}</span>
+            <span :class="['network', `network-${network}`]">
+              <SvgIcon name="network" @click="networkChat" />
+            </span>
+          </a-popover>
+          <a-popover placement="topLeft">
+            <template #content>
+              <p v-if="onlySearch">退出仅检索模式</p>
+              <p v-else>开启仅检索模式，此模式不会返回说明文字</p>
+            </template>
+            <span :class="['only-search', `only-search-${onlySearch}`]">
+              <SvgIcon name="search" @click="changeOnlySearch" />
+            </span>
+          </a-popover>
+          <a-popover placement="topLeft">
+            <template #content>将会话保存为图片</template>
+            <span class="download" @click="downloadChat">
+              <SvgIcon name="chat-download" />
+            </span>
+          </a-popover>
+          <a-popover>
+            <template #content>清空会话</template>
+            <span class="delete" @click="deleteChat">
+              <SvgIcon name="chat-delete" />
+            </span>
+          </a-popover>
+          <a-input
+            v-model:value="question"
+            max-length="200"
+            :placeholder="common.problemPlaceholder"
+            @keyup.enter="send"
+          >
+            <template #suffix>
+              <div class="send-plane">
+                <a-button type="primary" :disabled="showLoading" @click="send">
+                  <SvgIcon name="sendplane"></SvgIcon>
+                </a-button>
               </div>
-              <div class="tools">
-                <SvgIcon
-                  :style="{
-                    color: item.copied ? '#4D71FF' : '',
-                  }"
-                  name="copy"
-                  @click="myCopy(item)"
-                ></SvgIcon>
-                <SvgIcon
-                  :style="{
-                    color: item.like ? '#4D71FF' : '',
-                  }"
-                  name="like"
-                  @click="like(item, $event)"
-                ></SvgIcon>
-                <SvgIcon
-                  :style="{
-                    color: item.unlike ? '#4D71FF' : '',
-                  }"
-                  name="unlike"
-                  @click="unlike(item)"
-                ></SvgIcon>
-              </div>
-            </div>
-          </div>
-        </li>
-      </ul>
-    </div>
-    <div class="stop-btn">
-      <a-button v-show="showLoading" @click="stopChat">
-        <template #icon>
-          <SvgIcon name="stop" :class="showLoading ? 'loading' : ''"></SvgIcon>
-        </template>
-        {{ common.stop }}
-      </a-button>
-    </div>
-    <div class="question-box">
-      <div class="question">
-        <a-popover placement="topLeft">
-          <template #content>
-            <p v-if="network">退出联网检索</p>
-            <p v-else>开启联网检索</p>
-          </template>
-          <span :class="['network', `network-${network}`]">
-            <SvgIcon name="network" @click="networkChat" />
-          </span>
-        </a-popover>
-        <span class="download" @click="downloadChat">
-          <SvgIcon name="chat-download" />
-        </span>
-        <span class="delete" @click="deleteChat">
-          <SvgIcon name="chat-delete" />
-        </span>
-        <a-input
-          v-model:value="question"
-          max-length="200"
-          :placeholder="common.problemPlaceholder"
-          @keyup.enter="send"
-        >
-          <template #suffix>
-            <div class="send-plane">
-              <a-button type="primary" :disabled="showLoading" @click="send">
-                <SvgIcon name="sendplane"></SvgIcon>
-              </a-button>
-            </div>
-          </template>
-        </a-input>
-        <a-popover placement="topLeft">
-          <template #content>
-            <p>可以设置混合检索、联网检索、模型大小哦！</p>
-          </template>
-          <div class="model-set" @click="handleModalChange(true)">模型设置</div>
-        </a-popover>
+            </template>
+          </a-input>
+          <a-popover placement="topLeft">
+            <template #content>
+              <p>可以设置混合检索、联网检索、模型大小哦！</p>
+            </template>
+            <div class="model-set" @click="handleModalChange(true)">模型设置</div>
+          </a-popover>
+        </div>
       </div>
     </div>
   </div>
@@ -190,6 +225,7 @@ import { useLanguage } from '@/store/useLanguage';
 import urlResquest from '@/services/urlConfig';
 import { resultControl } from '@/utils/utils';
 import ChatSettingDialog from '@/components/ChatSettingDialog.vue';
+import HistoryChat from '@/components/Home/HistoryChat.vue';
 
 const common = getLanguage().common;
 
@@ -210,6 +246,11 @@ declare module _czc {
 
 //当前是否开启链网检索
 const network = ref(false);
+
+// 当前是否开启仅返回检索结果 false正常，true只检索
+const onlySearch = ref(false);
+// 检索副本，因为要把检索加到question里，用户中途改动这个会将用户改后的加进去
+const onlySearchCopy = ref(false);
 
 //当前问的问题
 const question = ref('');
@@ -272,6 +313,7 @@ const addQuestion = q => {
     question: q,
     type: 'user',
   });
+  console.log('QALIST------', QA_List.value);
   scrollBottom();
 };
 
@@ -279,6 +321,7 @@ const addAnswer = (question: string) => {
   QA_List.value.push({
     answer: '',
     question,
+    onlySearch: onlySearchCopy.value,
     type: 'ai',
     copied: false,
     like: false,
@@ -299,6 +342,10 @@ const stopChat = () => {
 
 //发送问答消息
 const send = () => {
+  if (showLoading.value) {
+    message.warn('正在聊天中...请等待结束');
+    return;
+  }
   if (!question.value.length) {
     return;
   }
@@ -308,6 +355,8 @@ const send = () => {
   const q = question.value;
   question.value = '';
   addQuestion(q);
+  // 将检索结果存为副本
+  onlySearchCopy.value = onlySearch.value;
   if (history.value.length >= 3) {
     history.value = [];
   }
@@ -329,6 +378,7 @@ const send = () => {
       streaming: true,
       networking: network.value,
       product_source: 'saas',
+      only_need_search_results: onlySearch.value,
     }),
     signal: ctrl.signal,
     onopen(e: any) {
@@ -337,6 +387,7 @@ const send = () => {
         console.log("everything's good");
         // addAnswer(question.value);
         // question.value = '';
+        console.log('chufaAddAnswer', q);
         addAnswer(q);
         typewriter.start();
       } else if (e.headers.get('content-type') === 'application/json') {
@@ -555,14 +606,29 @@ const networkChat = () => {
   network.value = !network.value;
 };
 
+const changeOnlySearch = () => {
+  onlySearch.value = !onlySearch.value;
+};
+
 scrollBottom();
 </script>
 
 <style lang="scss" scoped>
+.container {
+  // padding-top: 16px;
+  height: 100%;
+  // margin-top: 65px;
+
+  &.showSider {
+    height: calc(100vh);
+  }
+}
+
 .my-page {
   position: relative;
+  height: 100%;
   margin: 0 auto;
-  border-radius: 12px 0 0 0;
+  //border-radius: 12px 0 0 0;
   //border-top-color: #26293b;
   background: #f3f6fd;
 }
@@ -575,6 +641,10 @@ scrollBottom();
   height: calc(100vh - 54px - 48px - 28px - 28px - 32px - 50px);
   overflow-y: auto;
   padding-top: 28px;
+
+  &.showSider {
+    height: calc(100vh - 280px);
+  }
 
   #chat-ul {
     background: #f3f6fd;
@@ -604,9 +674,11 @@ scrollBottom();
 
   .ai {
     margin: 16px 0 28px 0;
+    display: flex;
 
     .content {
       display: flex;
+      flex-direction: column;
 
       .question-text {
         flex: 1;
@@ -637,7 +709,6 @@ scrollBottom();
 
     .source-total {
       padding: 13px 20px;
-      margin-left: 48px;
       background: #fff;
       display: flex;
       align-items: center;
@@ -654,11 +725,10 @@ scrollBottom();
     }
 
     .source-total-last {
-      border-radius: 0px 12px 12px 12px;
+      border-radius: 0px 0 12px 12px;
     }
 
     .source-list {
-      margin-left: 48px;
       background: #fff;
       border-radius: 0px 12px 12px 12px;
     }
@@ -718,7 +788,6 @@ scrollBottom();
       display: flex;
       height: 20px;
       margin-top: 8px;
-      margin-left: 48px;
 
       .reload-box {
         display: flex;
@@ -791,7 +860,8 @@ scrollBottom();
 
     .download,
     .delete,
-    .network {
+    .network,
+    .only-search {
       cursor: pointer;
       padding: 8px;
       display: flex;
@@ -811,12 +881,14 @@ scrollBottom();
         height: 24px;
       }
 
-      &.network-true {
+      &.network-true,
+      &.only-search-true {
         border: 1px solid #5a47e5;
         color: #5a47e5;
       }
 
-      &.network-false {
+      &.network-false,
+      &.only-search-false {
         border: 1px solid #e5e5e5;
         color: #666666;
       }
