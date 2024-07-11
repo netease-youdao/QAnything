@@ -8,7 +8,7 @@
 -->
 <template>
   <div class="sider">
-    <div v-if="navIndex === 1" class="knowledge">
+    <div v-if="navIndex === 0" class="knowledge">
       <div class="add-btn">
         <!-- <AddInput @add="addKb" /> -->
         <AddInput />
@@ -29,7 +29,7 @@
       <UrlUploadDialog />
       <EditQaSetDialog />
     </div>
-    <div v-else-if="navIndex === 2" class="bots">
+    <div v-else-if="navIndex === 1" class="bots">
       <div class="bots-tab" @click="changePage('/bots')">我的Bots</div>
       <NewBotsDialog />
       <SelectKnowledgeDialog />

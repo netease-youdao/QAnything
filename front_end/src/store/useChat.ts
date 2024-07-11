@@ -20,10 +20,14 @@ export const useChat = defineStore(
 
     const showModal = ref(false);
 
+    // 模型配置弹窗
+    const showSettingModal = ref(false);
+
     return {
       QA_List,
       clearQAList,
       showModal,
+      showSettingModal,
     };
   },
   {

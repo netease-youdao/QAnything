@@ -74,17 +74,17 @@ const { setNavIndex } = useHeader();
 const { changePage } = routeController();
 
 const navList = [
+  // {
+  //   name: getLanguage().header.quickStart,
+  //   value: 0,
+  // },
   {
-    name: getLanguage().header.quickStart,
+    name: getLanguage().header.knowledge,
     value: 0,
   },
   {
-    name: getLanguage().header.knowledge,
-    value: 1,
-  },
-  {
     name: 'Bots',
-    value: 2,
+    value: 1,
   },
 ];
 
@@ -103,18 +103,18 @@ const setNavIdx = value => {
     return;
   }
   setNavIndex(value);
-  if (value === 1) {
+  if (value === 0) {
     changePage('/home');
-  } else if (value === 2) {
+  } else if (value === 1) {
     changePage('/bots');
   }
 };
 
 // header的item-icon选择
 const iconMap = new Map([
-  [0, 'quick-icon'],
-  [1, 'knowledge-icon'],
-  [2, 'bot-icon'],
+  // [0, 'quick-icon'],
+  [0, 'knowledge-icon'],
+  [1, 'bot-icon'],
 ]);
 const getIcon = itemValue => {
   return iconMap.get(itemValue);

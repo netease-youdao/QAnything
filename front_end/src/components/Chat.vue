@@ -123,9 +123,10 @@
     <div class="stop-btn">
       <a-button v-show="showLoading" @click="stopChat">
         <template #icon>
-          <SvgIcon name="stop" :class="showLoading ? 'loading' : ''"></SvgIcon> </template
-        >{{ common.stop }}</a-button
-      >
+          <SvgIcon name="stop" :class="showLoading ? 'loading' : ''"></SvgIcon>
+        </template>
+        {{ common.stop }}
+      </a-button>
     </div>
     <div class="question-box">
       <div class="question">
@@ -158,9 +159,16 @@
             </div>
           </template>
         </a-input>
+        <a-popover placement="topLeft">
+          <template #content>
+            <p>可以设置混合检索、联网检索、模型大小哦！</p>
+          </template>
+          <div class="model-set" @click="handleModalChange(true)">模型设置</div>
+        </a-popover>
       </div>
     </div>
   </div>
+  <ChatSettingDialog @confirm="handleConfirm" />
   <DefaultModal :content="content" :confirm-loading="confirmLoading" @ok="confirm" />
 </template>
 <script lang="ts" setup>
@@ -181,6 +189,7 @@ import { getLanguage } from '@/language/index';
 import { useLanguage } from '@/store/useLanguage';
 import urlResquest from '@/services/urlConfig';
 import { resultControl } from '@/utils/utils';
+import ChatSettingDialog from '@/components/ChatSettingDialog.vue';
 
 const common = getLanguage().common;
 
@@ -465,6 +474,17 @@ const confirm = async () => {
   showModal.value = false;
 };
 
+// 模型设置弹窗相关
+const { showSettingModal } = storeToRefs(useChat());
+
+const handleModalChange = newVal => {
+  showSettingModal.value = newVal;
+};
+
+const handleConfirm = data => {
+  console.log('data', data);
+};
+
 // 检查信息来源的文件是否支持窗口化渲染
 let supportSourceTypes = ['pdf', 'docx', 'xlsx', 'txt', 'jpg', 'png', 'jpeg'];
 const checkFileType = filename => {
@@ -525,6 +545,7 @@ let b64Types = [
   'image/png',
   'image/jpeg',
 ];
+
 function getB64Type(suffix) {
   const index = supportSourceTypes.indexOf(suffix);
   return b64Types[index];
@@ -545,6 +566,7 @@ scrollBottom();
   //border-top-color: #26293b;
   background: #f3f6fd;
 }
+
 .chat {
   margin: 0 auto;
   width: 75.36%;
@@ -582,6 +604,7 @@ scrollBottom();
 
   .ai {
     margin: 16px 0 28px 0;
+
     .content {
       display: flex;
 
@@ -618,15 +641,18 @@ scrollBottom();
       background: #fff;
       display: flex;
       align-items: center;
+
       span {
         margin-right: 5px;
       }
+
       svg {
         width: 16px !important;
         height: 16px !important;
         cursor: pointer !important;
       }
     }
+
     .source-total-last {
       border-radius: 0px 12px 12px 12px;
     }
@@ -680,6 +706,7 @@ scrollBottom();
         color: $baseColor;
         cursor: pointer;
       }
+
       a {
         color: #5a47e5;
         text-decoration: underline;
@@ -699,6 +726,7 @@ scrollBottom();
         align-items: center;
         margin-right: auto;
         color: #5a47e5;
+
         .reload-text {
           height: 22px;
           line-height: 22px;
@@ -727,12 +755,14 @@ scrollBottom();
   display: flex;
   justify-content: center;
   margin-top: 38px;
+
   :deep(.ant-btn) {
     width: 92px;
     height: 32px;
     border: 1px solid #e2e2e2;
     color: $title2;
   }
+
   svg {
     width: 12px;
     height: 12px;
@@ -780,14 +810,31 @@ scrollBottom();
         width: 24px;
         height: 24px;
       }
+
       &.network-true {
         border: 1px solid #5a47e5;
         color: #5a47e5;
       }
+
       &.network-false {
         border: 1px solid #e5e5e5;
         color: #666666;
       }
+    }
+
+    .model-set {
+      height: 48px;
+      line-height: 48px;
+      display: inline-block;
+      text-wrap: nowrap;
+      box-sizing: border-box;
+      font-size: 14px;
+      padding: 0 19px;
+      margin-left: 18px;
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid #e5e5e5;
+      cursor: pointer;
     }
 
     .send-plane {
@@ -798,9 +845,16 @@ scrollBottom();
       background: #5a47e5;
 
       :deep(.ant-btn-primary) {
+        height: 100%;
+        display: flex;
+        align-items: center;
         background-color: #5a47e5 !important;
       }
+
       :deep(.ant-btn-primary:disabled) {
+        height: 100%;
+        display: flex;
+        align-items: center;
         background-color: #5a47e5 !important;
         color: #fff !important;
         border-color: transparent !important;
@@ -817,6 +871,7 @@ scrollBottom();
       max-width: 1108px;
       border-color: #e5e5e5;
       box-shadow: none !important;
+
       &:hover,
       &:focus,
       &:active {
@@ -828,20 +883,23 @@ scrollBottom();
     :deep(.ant-input:hover) {
       border-color: $baseColor;
     }
+
     :deep(.ant-input:focused) {
       border-color: $baseColor;
     }
   }
 }
 
-.sourceitem-leave,   // 离开前,进入后透明度是1
+.sourceitem-leave, // 离开前,进入后透明度是1
 .sourceitem-enter-to {
   opacity: 1;
 }
+
 .sourceitem-leave-active,
 .sourceitem-enter-active {
   transition: opacity 0.5s; //过度是.5s秒
 }
+
 .sourceitem-leave-to,
 .sourceitem-enter {
   opacity: 0;
