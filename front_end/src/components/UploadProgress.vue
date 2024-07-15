@@ -119,9 +119,9 @@ const computedPercent = () => {
 
   // 计算每个的长度
   /*
-   * 红 z-index 101 base1
-   * 黄 z-index 102 base2 = 黄自己 + base1
-   * 绿 z-index 103 base3 = 绿自己 + base2
+   * 绿 z-index 101 base1
+   * 红 z-index 102 base2 = 红自己 + base1
+   * 黄 z-index 103 base3 = 黄自己 + base2
    * 灰 z-index 104 base4 = 灰自己 + base3
    */
   progressLength.value.green = progressPercent.value.green;
