@@ -101,6 +101,7 @@ export const getStatus = (item: IFileListItem) => {
 
 //对接口的返回值作统一处理
 export const resultControl = async res => {
+  console.log('zhijiefuzhi');
   return new Promise((resolve, reject) => {
     if (res.errorCode === '0' || res.code === 200) {
       resolve(res.result || res.data || res);

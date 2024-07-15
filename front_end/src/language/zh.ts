@@ -65,9 +65,11 @@ export default {
     exitPrivatization: '退出私有化模型',
   },
   home: {
+    newConversation: '新建对话',
     documentId: '文档ID',
     documentName: '文档名称',
-    documentStatus: '文档状态(解析成功后可问答)',
+    documentStatus: '文档状态',
+    documentStatusNode: '解析成功后可问答',
     fileSize: '文件大小',
     creationDate: '创建日期',
     remark: '备注',

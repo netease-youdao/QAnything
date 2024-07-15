@@ -13,10 +13,21 @@ import { message } from 'ant-design-vue';
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
 const { currentId } = storeToRefs(useKnowledgeBase());
 
+type Status = 'green' | 'yellow' | 'red' | 'gray';
+interface IDataSource {
+  id: number;
+  bytes: number | string;
+  fileId: string;
+  fileIdName: string;
+  status: Status;
+  createtime: string;
+  errortext: string;
+}
+
 export const useOptiionList = defineStore(
   'option-list',
   () => {
-    const dataSource = ref([]);
+    const dataSource = ref<IDataSource[]>([]);
     const setDataSource = (array: []) => {
       dataSource.value = array;
     };
@@ -88,12 +99,12 @@ export const useOptiionList = defineStore(
         });
         console.log(flag);
         if (flag) {
-          console.log('有解析中的  10后再次请求');
+          console.log('有解析中的  5后再次请求');
           //有解析中的
           timer.value = setTimeout(() => {
             clearTimeout(timer.value);
             getDetails();
-          }, 10000);
+          }, 5000);
         } else {
           console.log('全部解析完成');
         }
@@ -117,7 +128,6 @@ export const useOptiionList = defineStore(
 
         setFaqList([]);
         if (!res?.details) {
-          console.log('res?.details', res?.details);
           setTotal(0);
           setLoading(false);
           return;

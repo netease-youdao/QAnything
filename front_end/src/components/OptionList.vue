@@ -22,13 +22,16 @@
       <div class="nav-info">
         <div class="navs">
           <div
-            :class="['nav-item', navIndex === item.value ? 'nav-item-active' : '']"
             v-for="item in navList"
             :key="item.name"
+            :class="['nav-item', navIndex === item.value ? 'nav-item-active' : '']"
             @click="navClick(item.value)"
           >
             {{ item.name }}
           </div>
+        </div>
+        <div v-if="navIndex === 0" class="nav-progress">
+          <UploadProgress :data-source="dataSource" />
         </div>
         <div class="handle-btn">
           <div v-if="navIndex === 0" class="upload" @click="showFileUpload">{{ home.upload }}</div>
@@ -46,19 +49,30 @@
         >
           <template #headerCell="{ column }">
             <template v-if="column.key === 'status'">
-              <span>{{ home.documentStatus }}</span
-              ><span
-                class="small"
-                style="
-                   {
-                    font-size: 12px;
-                    font-weight: normal;
-                    line-height: 18px;
-                    color: #44464e;
-                  }
-                "
-                >(解析成功后可问答)</span
-              >
+              <span>{{ home.documentStatus }}</span>
+              <a-tooltip color="#5a47e5">
+                <template #title>
+                  {{ home.documentStatusNode }}
+                </template>
+                <img
+                  src="@/assets/home/icon-question.png"
+                  style="width: 18px; margin-left: 5px"
+                  alt="&copy"
+                />
+              </a-tooltip>
+              <!--              <span-->
+              <!--                class="small"-->
+              <!--                style="-->
+              <!--                   {-->
+              <!--                    font-size: 12px;-->
+              <!--                    font-weight: normal;-->
+              <!--                    line-height: 18px;-->
+              <!--                    color: #44464e;-->
+              <!--                  }-->
+              <!--                "-->
+              <!--              >-->
+              <!--                (解析成功后可问答)-->
+              <!--              </span>-->
             </template>
           </template>
 
@@ -66,12 +80,7 @@
             <template v-if="column.key === 'status'">
               <div class="status-box">
                 <span class="icon-file-status">
-                  <img
-                    v-if="record.status === 'gray'"
-                    class="loading file-status"
-                    src="../assets/home/icon-loading.png"
-                    alt="loading"
-                  />
+                  <LoadingImg v-if="record.status === 'gray'" class="file-status" />
                   <SvgIcon
                     v-else
                     class="file-status"
@@ -113,8 +122,8 @@
                 <a-button
                   class="edit-item"
                   type="link"
-                  @click="editQaItem(record)"
                   :disabled="record.status !== 'green'"
+                  @click="editQaItem(record)"
                 >
                   {{ bots.edit }}
                 </a-button>
@@ -155,7 +164,9 @@ const { dataSource, faqList, timer, faqTimer, total, pageNum, loading } = storeT
   useOptiionList()
 );
 
-import { getLanguage } from '@/language/index';
+import { getLanguage } from '@/language';
+import LoadingImg from '@/components/LoadingImg.vue';
+import UploadProgress from '@/components/UploadProgress.vue';
 
 const home = getLanguage().home;
 const common = getLanguage().common;
@@ -430,6 +441,10 @@ watch(
   }
 );
 
+onMounted(() => {
+  console.log(dataSource.value);
+});
+
 onBeforeUnmount(() => {
   clearTimeout(timer.value);
   clearTimeout(faqTimer.value);
@@ -526,6 +541,11 @@ onBeforeUnmount(() => {
       color: #5a47e5;
     }
   }
+  .nav-progress {
+    width: 40%;
+    display: flex;
+    align-items: center;
+  }
   .handle-btn {
     display: flex;
     .upload {
@@ -604,6 +624,10 @@ onBeforeUnmount(() => {
         height: 16px;
       }
     }
+  }
+  :deep(.ant-table-cell-ellipsis[colstart='2']) {
+    display: flex;
+    align-items: center;
   }
 }
 

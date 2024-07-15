@@ -66,9 +66,11 @@ export default {
     exitPrivatization: 'Exit privatization model',
   },
   home: {
+    newConversation: 'newConversation',
     documentId: 'Document ID',
     documentName: 'Document Name',
-    documentStatus: 'Document Status(Q&A after successful parsing)',
+    documentStatus: 'Document Status',
+    documentStatusNode: 'Q&A after successful parsing',
     fileSize: 'File Size',
     creationDate: 'Creation Date',
     remark: 'Remarks or Notes',

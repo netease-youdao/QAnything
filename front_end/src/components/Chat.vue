@@ -12,7 +12,7 @@
   />
   <div class="container showSider">
     <div class="my-page">
-      <div id="chat" class="chat showSider">
+      <div id="chat" ref="chatContainer" class="chat showSider">
         <ul id="chat-ul" ref="scrollDom">
           <li v-for="(item, index) in QA_List" :key="index">
             <div v-if="item.type === 'user'" class="user">
@@ -226,6 +226,7 @@ import urlResquest from '@/services/urlConfig';
 import { resultControl } from '@/utils/utils';
 import ChatSettingDialog from '@/components/ChatSettingDialog.vue';
 import HistoryChat from '@/components/Home/HistoryChat.vue';
+import { useHomeChat } from '@/store/useHomeChat';
 
 const common = getLanguage().common;
 
@@ -236,8 +237,9 @@ const typewriter = new Typewriter((str: string) => {
 });
 
 const { selectList } = storeToRefs(useKnowledgeBase());
-const { QA_List } = storeToRefs(useChat());
+// const { QA_List } = storeToRefs(useChat());
 const { copy } = useClipboard();
+const { QA_List, chatId, pageId, chatList, qaPageId } = storeToRefs(useHomeChat());
 const { setChatSourceVisible, setSourceType, setSourceUrl, setTextContent } = useChatSource();
 const { language } = storeToRefs(useLanguage());
 declare module _czc {
@@ -249,7 +251,7 @@ const network = ref(false);
 
 // 当前是否开启仅返回检索结果 false正常，true只检索
 const onlySearch = ref(false);
-// 检索副本，因为要把检索加到question里，用户中途改动这个会将用户改后的加进去
+// 检索副本，因为要把检索加到answer里，用户中途改动这个会将用户改后的加进去
 const onlySearchCopy = ref(false);
 
 //当前问的问题
@@ -261,10 +263,18 @@ const history = ref([]);
 //当前是否回答中
 const showLoading = ref(false);
 
+const showSourceIdxs = ref([]);
+
+// 被监听的元素
+const observeDom = ref(null);
+
+// 问答列表被监听的元素
+const qaObserveDom = ref(null);
+
 //取消请求用
 let ctrl: AbortController;
 
-const showSourceIdxs = ref([]);
+const chatContainer = ref(null);
 
 const scrollDom = ref(null);
 
@@ -273,6 +283,45 @@ const scrollBottom = () => {
     scrollDom.value?.scrollIntoView(false);
   });
 };
+
+// 创建 Intersection Observer 对象
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    // 判断元素是否在可视范围内
+    if (entry.isIntersecting) {
+      console.log('entry.isIntersecting');
+      pageId.value++;
+      getChatList(pageId.value);
+    }
+  });
+});
+
+// 问答观察者
+const qaObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    // 判断元素是否在可视范围内
+    if (entry.isIntersecting) {
+      console.log('qa entry.isIntersecting');
+      qaPageId.value++;
+      getChatDetail(qaPageId.value);
+    }
+  });
+});
+
+onMounted(() => {
+  getChatList(pageId.value);
+  // getPrivatizationInfo();
+  scrollBottom();
+});
+
+onBeforeUnmount(() => {
+  if (observeDom.value) {
+    observer.unobserve(observeDom.value);
+  }
+  if (qaObserveDom.value) {
+    qaObserver.unobserve(qaObserveDom.value);
+  }
+});
 
 const like = useThrottleFn((item, e) => {
   item.like = !item.like;
@@ -330,6 +379,102 @@ const addAnswer = (question: string) => {
     showTools: false,
   });
 };
+
+const addHistoryQuestion = q => {
+  QA_List.value.unshift({
+    question: q,
+    type: 'user',
+  });
+};
+
+function addHistoryAnswer(question: string, answer: string, picList, qaId, source) {
+  QA_List.value.unshift({
+    answer,
+    question,
+    type: 'ai',
+    qaId,
+    copied: false,
+    like: false,
+    unlike: false,
+    source: source ? source : [],
+    showTools: true,
+    picList,
+  });
+}
+
+const setObserveDom = value => {
+  observeDom.value = value;
+};
+
+const setQaObserverDom = value => {
+  qaObserveDom.value = value;
+};
+
+const getChatList = async pageId => {
+  try {
+    const res: any = await resultControl(
+      await urlResquest.chatList({ page: pageId, pageSize: 50 })
+    );
+    // pageId等于1说明是新建对话  直接赋值
+    if (pageId === 1) {
+      chatList.value = [...res.list];
+    } else {
+      chatList.value.push(...res.list);
+    }
+    // 清除上次监听的dom元素
+    if (observeDom.value !== null) {
+      observer.unobserve(observeDom.value);
+      observeDom.value = null;
+    }
+    // 当前页内容长度大于50时 代表下一页还有元素 则继续监听
+    if (res.list.length >= 50) {
+      await nextTick(() => {
+        // 监听新的dom元素
+        const eles: any = document.getElementsByClassName('chat-item');
+        if (eles.length) {
+          observer.observe(eles[eles.length - 1]);
+          observeDom.value = eles[eles.length - 1];
+        }
+      });
+    }
+  } catch (e) {
+    message.error(e.msg || '获取对话列表失败');
+  }
+};
+
+async function getChatDetail(page) {
+  try {
+    const res: any = await resultControl(
+      await urlResquest.chatDetail({ historyId: chatId.value, page, pageSize: 50 })
+    );
+    // 清除上次监听的dom元素
+    if (qaObserveDom.value !== null) {
+      qaObserver.unobserve(qaObserveDom.value);
+      qaObserveDom.value = null;
+    }
+    const oldScrollHeight = chatContainer.value.scrollHeight; // 获取旧的滚动高度
+    res.detail.forEach(item => {
+      addHistoryAnswer(item.question, item.answer, item.picList, item.qaId, item.source);
+      addHistoryQuestion(item.question);
+    });
+    await nextTick(); // 等待DOM更新
+    // 调整滚动位置以保持视图位置
+    const newScrollHeight = chatContainer.value.scrollHeight;
+    chatContainer.value.scrollTop = newScrollHeight - oldScrollHeight;
+    if (res.detail.length >= 50) {
+      nextTick(() => {
+        // 监听新的dom元素
+        const eles: any = document.getElementsByClassName('chat-li');
+        if (eles.length) {
+          qaObserver.observe(eles[0]);
+          qaObserveDom.value = eles[0];
+        }
+      });
+    }
+  } catch (e) {
+    message.error(e.msg || '获取问答历史失败');
+  }
+}
 
 const stopChat = () => {
   if (ctrl) {
@@ -609,6 +754,11 @@ const networkChat = () => {
 const changeOnlySearch = () => {
   onlySearch.value = !onlySearch.value;
 };
+
+// 清空多轮问答历史
+function clearHistory() {
+  history.value = [];
+}
 
 scrollBottom();
 </script>

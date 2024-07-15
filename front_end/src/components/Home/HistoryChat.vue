@@ -8,7 +8,7 @@
           @click="newChat"
         >
           <SvgIcon name="new-chat" />
-          新建对话
+          {{ getLanguage().home.newConversation }}
         </div>
         <div
           v-for="(item, index) in chatList"
@@ -40,6 +40,7 @@ import urlResquest from '@/services/urlConfig';
 import { resultControl } from '@/utils/utils';
 import { message } from 'ant-design-vue';
 import SvgIcon from '@/components/SvgIcon.vue';
+import { getLanguage } from '@/language';
 
 const props = defineProps({
   observer: {
@@ -122,7 +123,7 @@ async function changeChat(item) {
     });
     emits('scrollBottom');
     if (res.detail.length >= 50) {
-      nextTick(() => {
+      await nextTick(() => {
         // 监听新的dom元素
         const eles: any = document.getElementsByClassName('chat-li');
         if (eles.length) {
@@ -162,13 +163,14 @@ async function deleteChat(item, index) {
     }
     message.success('删除成功');
     chatList.value.splice(index, 1);
-    nextTick(() => {
+    await nextTick(() => {
       resetObserve();
     });
   } catch (e) {
     message.error(e.msg || '删除失败');
   }
 }
+
 function resetObserve() {
   if (props.qaObserveDom !== null) {
     props.qaObserver.unobserve(props.qaObserveDom);
@@ -190,6 +192,7 @@ function resetObserve() {
   border-radius: 12px 0 0 0;
   display: flex;
   align-items: center;
+
   &::-webkit-scrollbar {
     display: none;
   }
@@ -197,21 +200,26 @@ function resetObserve() {
   .close {
     margin-right: 16px;
     margin-top: 4px;
+
     img {
       cursor: pointer;
       width: 16px;
       height: 16px;
     }
   }
+
   .history-chat-content {
     width: 100%;
     overflow-x: auto;
+
     &::-webkit-scrollbar {
       display: none;
     }
   }
+
   .list {
     display: flex;
+
     .new-chat {
       flex-shrink: 0;
       font-size: 16px;
@@ -221,6 +229,7 @@ function resetObserve() {
       cursor: pointer;
       display: flex;
       align-items: center;
+
       svg {
         width: 16px;
         height: 16px;
@@ -228,20 +237,24 @@ function resetObserve() {
         margin-top: 2px;
       }
     }
+
     .new-active {
       color: #5a47e5;
     }
+
     .chat-item {
       max-width: 160px;
       // margin-left: 56px;
       display: flex;
       align-items: center;
+
       .line {
         width: 1px;
         height: 16px;
         background: #d8d8d8;
         margin: 0 20px;
       }
+
       span {
         font-size: 16px;
         font-weight: normal;
@@ -252,6 +265,7 @@ function resetObserve() {
         white-space: nowrap;
         cursor: pointer;
       }
+
       img {
         width: 16px;
         height: 16px;
@@ -259,25 +273,31 @@ function resetObserve() {
         margin-top: 2px;
         cursor: pointer;
       }
+
       .close-icon:hover {
         background: #f0f0f0;
         border-radius: 3px;
       }
     }
+
     .item-active {
       span {
         color: #5a47e5;
       }
     }
   }
+
   .disabled {
     cursor: not-allowed !important;
+
     span {
       cursor: not-allowed !important;
     }
+
     .close-icon {
       cursor: not-allowed !important;
     }
+
     .close-icon:hover {
       background: transparent !important;
     }
