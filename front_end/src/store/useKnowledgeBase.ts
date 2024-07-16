@@ -25,7 +25,7 @@ export const useKnowledgeBase = defineStore('knowledgeBase', () => {
   };
 
   //选中的知识库id
-  const selectList = ref([]);
+  const selectList = ref<string[]>([]);
   const setSelectList = list => {
     selectList.value = list;
   };

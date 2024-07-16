@@ -151,8 +151,8 @@
         <div class="question">
           <a-popover placement="topLeft">
             <template #content>
-              <p v-if="network">退出联网检索</p>
-              <p v-else>开启联网检索</p>
+              <p v-if="network">{{ common.networkOff }}</p>
+              <p v-else>{{ common.networkOn }}</p>
             </template>
             <span :class="['network', `network-${network}`]">
               <SvgIcon name="network" @click="networkChat" />
@@ -160,21 +160,21 @@
           </a-popover>
           <a-popover placement="topLeft">
             <template #content>
-              <p v-if="onlySearch">退出仅检索模式</p>
-              <p v-else>开启仅检索模式，此模式不会返回说明文字</p>
+              <p v-if="onlySearch">{{ common.onlySearchOn }}</p>
+              <p v-else>{{ common.onlySearchOff }}</p>
             </template>
             <span :class="['only-search', `only-search-${onlySearch}`]">
               <SvgIcon name="search" @click="changeOnlySearch" />
             </span>
           </a-popover>
           <a-popover placement="topLeft">
-            <template #content>将会话保存为图片</template>
+            <template #content>{{ common.chatToPic }}</template>
             <span class="download" @click="downloadChat">
               <SvgIcon name="chat-download" />
             </span>
           </a-popover>
           <a-popover>
-            <template #content>清空会话</template>
+            <template #content>{{ common.clearChat }}</template>
             <span class="delete" @click="deleteChat">
               <SvgIcon name="chat-delete" />
             </span>
@@ -209,7 +209,7 @@
 <script lang="ts" setup>
 import { apiBase } from '@/services';
 import { IChatItem } from '@/utils/types';
-import { useThrottleFn, useClipboard } from '@vueuse/core';
+import { useClipboard, useThrottleFn } from '@vueuse/core';
 import { message } from 'ant-design-vue';
 import SvgIcon from './SvgIcon.vue';
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
@@ -219,10 +219,9 @@ import { useChatSource } from '@/store/useChatSource';
 import { Typewriter } from '@/utils/typewriter';
 import DefaultModal from './DefaultModal.vue';
 import html2canvas from 'html2canvas';
-import { userId } from '@/services/urlConfig';
-import { getLanguage } from '@/language/index';
+import urlResquest, { userId } from '@/services/urlConfig';
+import { getLanguage } from '@/language';
 import { useLanguage } from '@/store/useLanguage';
-import urlResquest from '@/services/urlConfig';
 import { resultControl } from '@/utils/utils';
 import ChatSettingDialog from '@/components/ChatSettingDialog.vue';
 import HistoryChat from '@/components/Home/HistoryChat.vue';
@@ -233,13 +232,14 @@ const common = getLanguage().common;
 const typewriter = new Typewriter((str: string) => {
   if (str) {
     QA_List.value[QA_List.value.length - 1].answer += str || '';
+    console.log(QA_List.value);
   }
 });
 
-const { selectList } = storeToRefs(useKnowledgeBase());
-// const { QA_List } = storeToRefs(useChat());
+const { selectList, knowledgeBaseList } = storeToRefs(useKnowledgeBase());
 const { copy } = useClipboard();
-const { QA_List, chatId, pageId, chatList, qaPageId } = storeToRefs(useHomeChat());
+const { QA_List, chatId, pageId, qaPageId, historyList } = storeToRefs(useHomeChat());
+const { addHistoryList, getChatById, updateHistoryList, addChatList } = useHomeChat();
 const { setChatSourceVisible, setSourceType, setSourceUrl, setTextContent } = useChatSource();
 const { language } = storeToRefs(useLanguage());
 declare module _czc {
@@ -251,7 +251,7 @@ const network = ref(false);
 
 // 当前是否开启仅返回检索结果 false正常，true只检索
 const onlySearch = ref(false);
-// 检索副本，因为要把检索加到answer里，用户中途改动这个会将用户改后的加进去
+// 检索副本，因为要把检索加到answer里，用户中途改动这个会将用户改后的加进去, 所以需要一个copy副本
 const onlySearchCopy = ref(false);
 
 //当前问的问题
@@ -291,7 +291,7 @@ const observer = new IntersectionObserver(entries => {
     if (entry.isIntersecting) {
       console.log('entry.isIntersecting');
       pageId.value++;
-      getChatList(pageId.value);
+      // getHistoryList(pageId.value);
     }
   });
 });
@@ -303,14 +303,16 @@ const qaObserver = new IntersectionObserver(entries => {
     if (entry.isIntersecting) {
       console.log('qa entry.isIntersecting');
       qaPageId.value++;
-      getChatDetail(qaPageId.value);
+      // getChatDetail(qaPageId.value);
+      getChatDetail();
     }
   });
 });
 
 onMounted(() => {
-  getChatList(pageId.value);
+  // getHistoryList(pageId.value);
   // getPrivatizationInfo();
+  console.log('------chatId', chatId.value);
   scrollBottom();
 });
 
@@ -410,50 +412,56 @@ const setQaObserverDom = value => {
   qaObserveDom.value = value;
 };
 
-const getChatList = async pageId => {
-  try {
-    const res: any = await resultControl(
-      await urlResquest.chatList({ page: pageId, pageSize: 50 })
-    );
-    // pageId等于1说明是新建对话  直接赋值
-    if (pageId === 1) {
-      chatList.value = [...res.list];
-    } else {
-      chatList.value.push(...res.list);
-    }
-    // 清除上次监听的dom元素
-    if (observeDom.value !== null) {
-      observer.unobserve(observeDom.value);
-      observeDom.value = null;
-    }
-    // 当前页内容长度大于50时 代表下一页还有元素 则继续监听
-    if (res.list.length >= 50) {
-      await nextTick(() => {
-        // 监听新的dom元素
-        const eles: any = document.getElementsByClassName('chat-item');
-        if (eles.length) {
-          observer.observe(eles[eles.length - 1]);
-          observeDom.value = eles[eles.length - 1];
-        }
-      });
-    }
-  } catch (e) {
-    message.error(e.msg || '获取对话列表失败');
-  }
-};
+// 获取历史记录列表 (本地存, pinia直接暴露出来了)
+// const getHistoryList = async pageId => {
+//   try {
+//     // const res: any = await resultControl(
+//     //   await urlResquest.chatList({ page: pageId, pageSize: 50 })
+//     // );
+//     // const historyList2 = historyList.value;
+//     const res = getChatById(his);
+//     // pageId等于1说明是新建对话  直接赋值
+//     if (pageId === 1) {
+//       chatList.value = [...historyList];
+//       addHistoryList();
+//     } else {
+//       chatList.value.push(...historyList);
+//     }
+//     // 清除上次监听的dom元素
+//     if (observeDom.value !== null) {
+//       observer.unobserve(observeDom.value);
+//       observeDom.value = null;
+//     }
+//     // 当前页内容长度大于50时 代表下一页还有元素 则继续监听
+//     if (historyList.value.length >= 50) {
+//       await nextTick(() => {
+//         // 监听新的dom元素
+//         const eles: any = document.getElementsByClassName('chat-item');
+//         if (eles.length) {
+//           observer.observe(eles[eles.length - 1]);
+//           observeDom.value = eles[eles.length - 1];
+//         }
+//       });
+//     }
+//   } catch (e) {
+//     message.error(e.msg || '获取对话列表失败');
+//   }
+// };
 
-async function getChatDetail(page) {
+// 获取当前对话之前记录的列表
+async function getChatDetail() {
   try {
-    const res: any = await resultControl(
-      await urlResquest.chatDetail({ historyId: chatId.value, page, pageSize: 50 })
-    );
+    // const res: any = await resultControl(
+    //   await urlResquest.chatDetail({ historyId: chatId.value, page, pageSize: 50 })
+    // );
+    const chat = getChatById(chatId.value);
     // 清除上次监听的dom元素
     if (qaObserveDom.value !== null) {
       qaObserver.unobserve(qaObserveDom.value);
       qaObserveDom.value = null;
     }
     const oldScrollHeight = chatContainer.value.scrollHeight; // 获取旧的滚动高度
-    res.detail.forEach(item => {
+    chat.list.forEach(item => {
       addHistoryAnswer(item.question, item.answer, item.picList, item.qaId, item.source);
       addHistoryQuestion(item.question);
     });
@@ -461,19 +469,51 @@ async function getChatDetail(page) {
     // 调整滚动位置以保持视图位置
     const newScrollHeight = chatContainer.value.scrollHeight;
     chatContainer.value.scrollTop = newScrollHeight - oldScrollHeight;
-    if (res.detail.length >= 50) {
-      nextTick(() => {
-        // 监听新的dom元素
-        const eles: any = document.getElementsByClassName('chat-li');
-        if (eles.length) {
-          qaObserver.observe(eles[0]);
-          qaObserveDom.value = eles[0];
-        }
-      });
-    }
+    // if (detail.length >= 50) {
+    //   nextTick(() => {
+    //     // 监听新的dom元素
+    //     const eles: any = document.getElementsByClassName('chat-li');
+    //     if (eles.length) {
+    //       qaObserver.observe(eles[0]);
+    //       qaObserveDom.value = eles[0];
+    //     }
+    //   });
+    // }
   } catch (e) {
     message.error(e.msg || '获取问答历史失败');
   }
+}
+
+const updateChat = (title: string, chatId: number, knowledgeListSelect) => {
+  try {
+    updateHistoryList(title, chatId, knowledgeListSelect);
+  } catch (e) {
+    message.error(e.msg || '更新对话失败');
+  }
+};
+
+function checkKbSelect() {
+  if (!selectList.value.length) {
+    return;
+  }
+  // 删除知识库时不会删除对话里表中已经选中的知识库id  所以每次问答前都要校验一下这个知识库id还存不存在
+  const list = [];
+  selectList.value.forEach(kbId => {
+    if (knowledgeBaseList.value.some(item => item.kb_id === kbId)) {
+      list.push(kbId);
+    }
+  });
+  selectList.value = list;
+  // 如果当前对话选中的知识库有变化 就更新一下
+  historyList.value.forEach(item => {
+    if (
+      chatId.value !== null &&
+      item.historyId === chatId.value &&
+      item.kbIds.join('') !== selectList.value.join('')
+    ) {
+      updateChat(item.title, item.historyId, selectList.value);
+    }
+  });
 }
 
 const stopChat = () => {
@@ -485,6 +525,25 @@ const stopChat = () => {
   QA_List.value[QA_List.value.length - 1].showTools = true;
 };
 
+// 问答前处理 判断创建对话
+const beforeSend = title => {
+  try {
+    console.log('chat-title=', title);
+    // 判断需不需要新建对话, 为null直接跳出
+    if (chatId.value !== null) return;
+    if (title.length > 100) {
+      title = title.substring(0, 100);
+    }
+    // const res: any = await resultControl(await urlResquest.createChat({ title }));
+    // 当前对话id为新建的historyId
+    chatId.value = addHistoryList(title);
+    updateChat(title, chatId.value, selectList.value);
+    // await getChatList(1); 直接从缓存拿，不用调用
+  } catch (e) {
+    message.error(e.msg || '创建对话失败');
+  }
+};
+
 //发送问答消息
 const send = () => {
   if (showLoading.value) {
@@ -494,12 +553,25 @@ const send = () => {
   if (!question.value.length) {
     return;
   }
+  checkKbSelect();
   if (!selectList.value.length) {
     return message.warning(common.chooseError);
+  } else {
+    // 校验选中的知识库
+    message.info({
+      content:
+        common.type === 'zh'
+          ? `已选择 ${selectList.value.length} 个知识库进行问答`
+          : ` ${selectList.value.length} knowledge base has been selected`,
+      icon: ' ',
+    });
   }
   const q = question.value;
+  beforeSend(q);
   question.value = '';
   addQuestion(q);
+  // 更新最大的chatList
+  addChatList(chatId.value, QA_List.value);
   // 将检索结果存为副本
   onlySearchCopy.value = onlySearch.value;
   if (history.value.length >= 3) {
@@ -529,10 +601,8 @@ const send = () => {
     onopen(e: any) {
       console.log('open');
       if (e.ok && e.headers.get('content-type') === 'text/event-stream') {
-        console.log("everything's good");
         // addAnswer(question.value);
         // question.value = '';
-        console.log('chufaAddAnswer', q);
         addAnswer(q);
         typewriter.start();
       } else if (e.headers.get('content-type') === 'application/json') {
@@ -573,6 +643,8 @@ const send = () => {
       ctrl.abort();
       showLoading.value = false;
       QA_List.value[QA_List.value.length - 1].showTools = true;
+      // 更新最大的chatList
+      addChatList(chatId.value, QA_List.value);
       nextTick(() => {
         scrollBottom();
       });
@@ -584,6 +656,8 @@ const send = () => {
       showLoading.value = false;
       QA_List.value[QA_List.value.length - 1].showTools = true;
       message.error(err.msg || '出错了');
+      // 更新最大的chatList
+      addChatList(chatId.value, QA_List.value);
       nextTick(() => {
         scrollBottom();
       });
@@ -1106,7 +1180,7 @@ scrollBottom();
       border-color: $baseColor;
     }
 
-    :deep(.ant-input:focused) {
+    :deep(.ant-input:focus) {
       border-color: $baseColor;
     }
   }

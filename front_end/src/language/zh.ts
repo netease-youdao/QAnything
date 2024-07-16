@@ -63,6 +63,12 @@ export default {
     privatization: '私有化',
     openPrivatization: '开启私有化模型',
     exitPrivatization: '退出私有化模型',
+    networkOn: '开启联网检索',
+    networkOff: '退出联网检索',
+    onlySearchOn: '开启仅检索模式，此模式不会返回说明文字',
+    onlySearchOff: '退出仅检索模式',
+    chatToPic: '将会话保存为图片',
+    clearChat: '清空会话',
   },
   home: {
     newConversation: '新建对话',

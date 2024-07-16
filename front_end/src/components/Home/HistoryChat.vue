@@ -11,7 +11,7 @@
           {{ getLanguage().home.newConversation }}
         </div>
         <div
-          v-for="(item, index) in chatList"
+          v-for="(item, index) in historyList"
           :key="item.historyId"
           :class="[
             'chat-item',
@@ -36,8 +36,6 @@
 <script lang="ts" setup>
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
 import { useHomeChat } from '@/store/useHomeChat';
-import urlResquest from '@/services/urlConfig';
-import { resultControl } from '@/utils/utils';
 import { message } from 'ant-design-vue';
 import SvgIcon from '@/components/SvgIcon.vue';
 import { getLanguage } from '@/language';
@@ -65,7 +63,8 @@ const props = defineProps({
   },
 });
 
-const { chatList, chatId, QA_List, qaPageId, pageId } = storeToRefs(useHomeChat());
+const { chatList, chatId, QA_List, qaPageId, pageId, historyList } = storeToRefs(useHomeChat());
+const { deleteHistoryList, getChatById } = useHomeChat();
 const { setSelectList } = useKnowledgeBase();
 
 const emits = defineEmits(['scrollBottom', 'setObserveDom', 'setQaObserverDom', 'clearHistory']);
@@ -105,24 +104,32 @@ async function changeChat(item) {
   setSelectList([...item.kbIds]);
   emits('clearHistory');
   try {
-    const res: any = await resultControl(
-      await urlResquest.chatDetail({
-        historyId: chatId.value,
-        page: qaPageId.value,
-        pageSize: 50,
-      })
-    );
+    // const res: any = await resultControl(
+    //   await urlResquest.chatDetail({
+    //     historyId: chatId.value,
+    //     page: qaPageId.value,
+    //     pageSize: 50,
+    //   })
+    // );
+    const chat = getChatById(chatId.value);
     // 清除上次监听的dom元素
     if (props.qaObserveDom !== null) {
       props.qaObserver.unobserve(props.qaObserveDom);
       emits('setQaObserverDom', null);
     }
-    res.detail.reverse().forEach(item => {
-      addQuestion(item.question);
-      addAnswer(item.question, item.answer, item.picList, item.qaId, item.source);
+    // chat.list.reverse().forEach(item => {
+    //   addQuestion(item.question);
+    //   addAnswer(item.question, item.answer, item.picList, item.qaId, item.source);
+    // });
+    chat.list.forEach(item => {
+      if (item.type === 'user') {
+        addQuestion(item.question);
+      } else if (item.type === 'ai') {
+        addAnswer(item.question, item.answer, item.picList, item.qaId, item.source);
+      }
     });
     emits('scrollBottom');
-    if (res.detail.length >= 50) {
+    if (chat.list.length >= 50) {
       await nextTick(() => {
         // 监听新的dom元素
         const eles: any = document.getElementsByClassName('chat-li');
@@ -157,7 +164,8 @@ async function deleteChat(item, index) {
     return;
   }
   try {
-    await resultControl(await urlResquest.deleteChat({ historyId: item.historyId }));
+    // await resultControl(await urlResquest.deleteChat({ historyId: item.historyId }));
+    deleteHistoryList(item.historyId);
     if (item.historyId === chatId.value) {
       newChat();
     }

@@ -64,6 +64,12 @@ export default {
     privatization: 'Privatization',
     openPrivatization: 'Opening the privatization model',
     exitPrivatization: 'Exit privatization model',
+    networkOn: 'Enable online search',
+    networkOff: 'Exit online search',
+    onlySearchOn: 'Enable search-only mode. This mode will not return description text',
+    onlySearchOff: 'Exit search-only mode',
+    chatToPic: 'Save chat as picture',
+    clearChat: 'clear chat',
   },
   home: {
     newConversation: 'newConversation',

@@ -159,31 +159,6 @@ const urlConfig: IUrlConfig = {
       user_id: userId,
     },
   },
-  // 新建对话
-  createChat: {
-    type: EUrlType.POST,
-    url: '/q_anything/saas/create_history',
-  },
-  // 删除对话
-  deleteChat: {
-    type: EUrlType.POST,
-    url: '/q_anything/saas/history_delete',
-  },
-  // 查询对话列表
-  chatList: {
-    type: EUrlType.GET,
-    url: '/q_anything/saas/history_list',
-  },
-  // 查询对话详情
-  chatDetail: {
-    type: EUrlType.GET,
-    url: '/q_anything/saas/history_detail',
-  },
-  // 更新对话
-  updateChat: {
-    type: EUrlType.POST,
-    url: '/q_anything/saas/update_history',
-  },
 };
 const urlResquest: any = {};
 Object.keys(urlConfig).forEach(key => {
