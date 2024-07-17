@@ -6,26 +6,15 @@
  * @FilePath: /QAnything/front_end/src/store/useChat.ts
  * @Description:
  */
-
-import { IChatItem } from '@/utils/types';
-
 export const useChat = defineStore(
   'useChat',
   () => {
-    //对话列表
-    const QA_List = ref<Array<IChatItem>>([]);
-    const clearQAList = () => {
-      QA_List.value = [];
-    };
-
     const showModal = ref(false);
 
     // 模型配置弹窗
     const showSettingModal = ref(false);
 
     return {
-      QA_List,
-      clearQAList,
       showModal,
       showSettingModal,
     };

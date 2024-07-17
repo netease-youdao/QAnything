@@ -100,7 +100,7 @@ const { changePage } = routeController();
   flex-direction: column;
   width: 280px;
   height: calc(100vh - 64px);
-  background-color: $baseColor;
+  background-color: #26293b;
 
   .knowledge {
     height: 100%;
