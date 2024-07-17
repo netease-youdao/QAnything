@@ -1,5 +1,5 @@
 <template>
-  <div class="hight-light-comp" v-html="html"></div>
+  <div class="high-light-comp" v-html="html"></div>
 </template>
 <script setup lang="ts">
 import { nextTick, watch } from 'vue';
@@ -52,8 +52,8 @@ watch(
   newvalue => {
     nextTick(() => {
       if (newvalue) {
-        document.querySelectorAll('pre code').forEach((el: any) => {
-          hljs.highlightAll(el);
+        document.querySelectorAll('pre code').forEach(() => {
+          hljs.highlightAll();
         });
       }
     });
@@ -62,18 +62,18 @@ watch(
 );
 </script>
 <style>
-.hight-light-comp {
+.high-light-comp {
   user-select: text;
   word-break: break-all;
 }
-.hight-light-comp ul,
-.hight-light-comp ol {
+.high-light-comp ul,
+.high-light-comp ol {
   padding-left: 20px;
   margin-top: 0.5em;
   margin-bottom: 0.5em;
 }
 
-.hight-light-comp li {
+.high-light-comp li {
   list-style-position: inside;
   list-style-type: disc;
   word-break: break-all;
@@ -84,15 +84,15 @@ watch(
   }
 }
 
-.hight-light-comp table {
+.high-light-comp table {
   border-collapse: collapse;
   border-spacing: 0;
 }
 
-.hight-light-comp tr th {
+.high-light-comp tr th {
   background-color: #f0f0f0;
-  border-bottom: solid 2px #bfbfbf;
   border: 1px solid #dbdbdb;
+  border-bottom: solid 2px #bfbfbf;
   padding: 8px;
   /* text-align: left; */
   margin: 0;
