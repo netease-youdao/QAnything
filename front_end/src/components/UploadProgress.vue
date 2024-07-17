@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div v-if="dataSource.length !== 0" class="container">
     <span class="title">上传总进度：</span>
     <a-tooltip
       :title="`成功入库：${progressPercentCount.green},
