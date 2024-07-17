@@ -23,15 +23,26 @@
               <img class="avatar" src="../assets/home/ai-avatar.png" alt="头像" />
               <div class="content">
                 <div class="ai-right">
+                  <!--                  <p-->
+                  <!--                    v-if="!item.onlySearch"-->
+                  <!--                    class="question-text"-->
+                  <!--                    :class="[-->
+                  <!--                      !item.source.length ? 'change-radius' : '',-->
+                  <!--                      item.showTools ? '' : 'flashing',-->
+                  <!--                    ]"-->
+                  <!--                    v-html="item.answer"-->
+                  <!--                  ></p>-->
                   <p
                     v-if="!item.onlySearch"
                     class="question-text"
                     :class="[
-                      !item.source.length ? 'change-radius' : '',
+                      !item.source.length && !item?.picList?.length ? 'change-radius' : '',
                       item.showTools ? '' : 'flashing',
                     ]"
-                    v-html="item.answer"
-                  ></p>
+                  >
+                    <HighLightMarkDown v-if="item.answer" :content="item.answer" />
+                    <span v-else>{{ item.answer }}</span>
+                  </p>
                   <template v-if="item.source.length">
                     <div
                       :class="[
@@ -226,6 +237,7 @@ import { resultControl } from '@/utils/utils';
 import ChatSettingDialog from '@/components/ChatSettingDialog.vue';
 import HistoryChat from '@/components/Home/HistoryChat.vue';
 import { useHomeChat } from '@/store/useHomeChat';
+import HighLightMarkDown from '@/components/HighLightMarkDown.vue';
 
 const common = getLanguage().common;
 
@@ -624,7 +636,8 @@ const send = () => {
       console.log(res);
       if (res?.code == 200 && res?.response) {
         // QA_List.value[QA_List.value.length - 1].answer += res.result.response;
-        typewriter.add(res?.response.replaceAll('\n', '<br/>'));
+        // typewriter.add(res?.response.replaceAll('\n', '<br/>'));
+        typewriter.add(res?.response);
         scrollBottom();
       }
 

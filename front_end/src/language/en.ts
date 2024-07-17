@@ -69,7 +69,7 @@ export default {
     onlySearchOn: 'Enable search-only mode. This mode will not return description text',
     onlySearchOff: 'Exit search-only mode',
     chatToPic: 'Save chat as picture',
-    clearChat: 'clear chat',
+    clearChat: 'Clear chat',
   },
   home: {
     newConversation: 'newConversation',
