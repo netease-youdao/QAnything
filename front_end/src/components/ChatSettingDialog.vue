@@ -4,12 +4,15 @@
       v-model:open="showSettingModal"
       :title="'模型设置'"
       centered
-      width="480px"
+      width="600px"
       wrap-class-name="model-set-modal"
       :footer="null"
     >
       <div class="model-set-dialog-comp">
-        <!--          <div class="select-model">-->
+        <div class="select-model">
+          <ChatSettingForm :contextLength="contextLength" />
+        </div>
+
         <!--            <div class="title">选择模型</div>-->
         <!--            <a-select-->
         <!--              ref="select"-->
@@ -44,7 +47,6 @@
         <!--                <img src="@/assets/home/tip-icon.png" alt="icon" />-->
         <!--              </a-tooltip>-->
         <!--            </div>-->
-        <!--          </div>-->
         <div class="footer">
           <a-button @click="handleCancel">取消</a-button>
           <a-button type="primary" @click="handleOk">确定</a-button>
@@ -56,9 +58,18 @@
 
 <script setup lang="ts">
 import { useChat } from '@/store/useChat';
+import ChatSettingForm from '@/components/ChatSettingForm.vue';
 
 const { showSettingModal } = storeToRefs(useChat());
 
+const props = defineProps({
+  contextLength: {
+    type: Number,
+    require: true,
+    default: 0,
+  },
+});
+const contextLength = ref(props.contextLength);
 const emit = defineEmits(['confirm']);
 
 // const settingData = reactive({});

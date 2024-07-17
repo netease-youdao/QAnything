@@ -214,7 +214,7 @@
       </div>
     </div>
   </div>
-  <ChatSettingDialog @confirm="handleConfirm" />
+  <ChatSettingDialog @confirm="handleConfirm" :contextLength="QA_List.length" />
   <DefaultModal :content="content" :confirm-loading="confirmLoading" @ok="confirm" />
 </template>
 <script lang="ts" setup>
@@ -704,7 +704,6 @@ const hideSourceList = index => {
 
 //下载 清除聊天记录相关
 const { showModal } = storeToRefs(useChat());
-const { clearQAList } = useChat();
 const confirmLoading = ref(false);
 const content = ref('');
 const type = ref('');
@@ -749,7 +748,6 @@ const confirm = async () => {
   } else if (type.value === 'delete') {
     console.log('delete');
     history.value = [];
-    clearQAList();
   }
   type.value = '';
   content.value = '';

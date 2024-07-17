@@ -58,3 +58,39 @@ export interface IFileListItem {
   percent?: number;
   errorText?: string;
 }
+
+// 模型设置
+type ICapabilities = {
+  /* 是否联网搜索 */
+  onlineSearch: boolean;
+  /* 是否混合搜索 */
+  mixedSearch: boolean;
+  /* 是否仅检索 */
+  onlySearch: boolean;
+};
+export interface IChatSetting {
+  /* 模型类型，不用传 */
+  modelType: 'openAI' | 'ollama' | 'custom';
+  /* 自定义模型id，如果不是自定义就没有，不用传 */
+  customId?: number;
+  /* 自定义的模型名称，只有自定义时候用 */
+  modelName?: string;
+  /* 秘钥，openAI用 */
+  apiKey?: string;
+  /* api路径 */
+  apiBase: string;
+  /* 模型名称 */
+  apiModelName: string;
+  /* 上下文token数量 */
+  apiContextLength: number;
+  /* 上下文的消息数量上限条数，不用传 */
+  context: number;
+  /*  */
+  maxToken: number;
+  /* 联想与发散 0~1 */
+  temperature: number;
+  /* top_P 0~1 */
+  top_P: number;
+  /* 模型能力 */
+  capabilities: ICapabilities;
+}
