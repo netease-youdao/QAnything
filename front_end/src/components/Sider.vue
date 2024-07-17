@@ -109,7 +109,7 @@ const { changePage } = routeController();
   }
 
   .add-btn {
-    margin: 28px 24px 20px 24px;
+    margin: 14px 24px 20px 24px;
     width: calc(100% - 48px);
 
     :deep(.ant-input-affix-wrapper) {

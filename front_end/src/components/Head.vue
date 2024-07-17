@@ -132,7 +132,7 @@ const getIcon = itemValue => {
   .header-navs {
     //width: 234px;
     height: 50px;
-    margin-left: 158px;
+    margin-left: 58px;
     display: flex;
     flex: 1;
     //justify-content: space-between;
@@ -191,14 +191,17 @@ const getIcon = itemValue => {
   }
 
   .logo {
-    width: 146px;
-    height: 28px;
-    margin-left: 32px;
+    width: 280px;
+    height: 64px;
     cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 
     img {
-      width: 100%;
-      height: 100%;
+      width: 146px;
+      height: 28px;
+      margin-top: 14px;
     }
   }
 

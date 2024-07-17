@@ -917,11 +917,14 @@ scrollBottom();
       background: #5a47e5;
 
       :deep(.ant-btn-primary) {
-        background-color: #5a47e5 !important;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        background: linear-gradient(300deg, #7b5ef2 1%, #c383fe 97%);
       }
 
       :deep(.ant-btn-primary:disabled) {
-        background-color: #5a47e5 !important;
+        background: linear-gradient(300deg, #7b5ef2 1%, #c383fe 97%);
         color: #fff !important;
         border-color: transparent !important;
       }
