@@ -2,7 +2,7 @@ import { IChatSetting } from '@/utils/types';
 
 export const useChatSetting = (storeId: string) =>
   defineStore(
-    'useChat',
+    'useChatSetting',
     () => {
       // 模型配置参数
       const chatSettingFormBase: IChatSetting = {

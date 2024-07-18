@@ -169,10 +169,11 @@ import { message } from 'ant-design-vue';
 
 const common = getLanguage().common;
 
-const { chatSettingConfigured } = storeToRefs(useChat());
+const { useHomeChatSetting } = useChat();
 const { contextLength } = storeToRefs(useHomeChat());
 
-const { setChatSettingConfigured } = useChat();
+const { chatSettingConfigured } = storeToRefs(useHomeChatSetting());
+const { setChatSettingConfigured } = useHomeChatSetting();
 
 const formRef = ref(null);
 const capabilitiesOptionsState = ref([]);
