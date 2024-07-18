@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+import platform
 
 load_dotenv()
 # LOG_FORMAT = "%(levelname) -5s %(asctime)s" "-1d: %(message)s"
@@ -138,7 +139,7 @@ ES_PASSWORD = None
 ES_TOP_K = 30
 ES_INDEX_NAME = 'qanything_es_index' + KB_SUFFIX
 
-MYSQL_HOST_LOCAL = 'mysql-container-local'
+MYSQL_HOST_LOCAL = '0.0.0.0'
 MYSQL_PORT_LOCAL = 3306
 MYSQL_USER_LOCAL = 'root'
 MYSQL_PASSWORD_LOCAL = '123456'
@@ -206,3 +207,36 @@ BOT_PROMPT = """
 - 不要编造答案，如果答案不在经核实的资料中或无法从经核实的资料中得出，请回答“我无法回答您的问题。”（或者您可以修改为：如果给定的检索结果无法回答问题，可以利用你的知识尽可能回答用户的问题。)
 """
 BOT_WELCOME = "您好，我是您的专属机器人，请问有什么可以帮您呢？"
+
+
+
+
+os_system = platform.system()
+# LOCAL_RERANK_PATH = os.path.join(root_path, 'qanything_kernel/connector/rerank', 'rerank_model_configs_v0.0.1')
+# todo 之后要更换
+# if os_system == 'Darwin':
+#     LOCAL_RERANK_REPO = "maidalun/bce-reranker-base_v1"
+#     LOCAL_RERANK_MODEL_PATH = os.path.join(LOCAL_RERANK_PATH, "pytorch_model.bin")
+# else:
+#     LOCAL_RERANK_REPO = "netease-youdao/bce-reranker-base_v1"
+#     LOCAL_RERANK_MODEL_PATH = os.path.join(LOCAL_RERANK_PATH, "rerank.onnx")
+LOCAL_RERANK_REPO = "maidalun/bce-reranker-base_v1"
+LOCAL_RERANK_MODEL_PATH = os.path.join(LOCAL_RERANK_PATH, "pytorch_model.bin")
+print('LOCAL_RERANK_REPO:', LOCAL_RERANK_REPO)
+LOCAL_RERANK_MODEL_NAME = 'rerank'
+LOCAL_RERANK_MAX_LENGTH = 512
+
+# LOCAL_EMBED_PATH = os.path.join(root_path, 'qanything_kernel/connector/embedding', 'embedding_model_configs_v0.0.1')
+# todo
+# if os_system == 'Darwin':
+#     LOCAL_EMBED_REPO = "maidalun/bce-embedding-base_v1"
+#     LOCAL_EMBED_MODEL_PATH = os.path.join(LOCAL_EMBED_PATH, "pytorch_model.bin")
+# else:
+#     LOCAL_EMBED_REPO = "netease-youdao/bce-embedding-base_v1"
+#     LOCAL_EMBED_MODEL_PATH = os.path.join(LOCAL_EMBED_PATH, "embed.onnx")
+LOCAL_EMBED_REPO = "maidalun/bce-embedding-base_v1"
+LOCAL_EMBED_MODEL_PATH = os.path.join(LOCAL_EMBED_PATH, "pytorch_model.bin")
+
+print('LOCAL_EMBED_REPO:', LOCAL_EMBED_REPO)
+LOCAL_EMBED_MODEL_NAME = 'embed'
+LOCAL_EMBED_MAX_LENGTH = 512

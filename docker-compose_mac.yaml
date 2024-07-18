@@ -1,9 +1,5 @@
 version: '3.5'
 
-networks:
-  default:
-    name: QAnything
-
 services:
   elasticsearch:
     container_name: es-container-local
@@ -94,8 +90,8 @@ services:
     container_name: mysql-container-local
     privileged: true
     image: mysql:8.4
-    ports:
-      - "3306:3306"
+    #     ports:
+    #       - "3306:3306"
     command: --max-connections=10000
     environment:
       - MYSQL_ROOT_PASSWORD=123456
@@ -105,9 +101,10 @@ services:
 
   qanything_local:
     container_name: qanything-container-local
-    image: qanything-privatization:v1.5.0
+    image: qanything-privatization:v1.3
+
     # command: /bin/bash -c "cd /workspace/QAnything && bash scripts/entrypoint.sh"
-    network_mode: "host"
+
     privileged: true
     shm_size: '8gb'
     volumes:
@@ -115,6 +112,7 @@ services:
     ports:
       - "8777:8777"
     environment:
+      - NCCL_LAUNCH_MODE=PARALLEL
       - USER_IP=${USER_IP:-localhost}
     depends_on:
       standalone:
@@ -126,5 +124,7 @@ services:
     tty: true
     stdin_open: true
 
-
+networks:
+  default:
+    name: QAnything
 

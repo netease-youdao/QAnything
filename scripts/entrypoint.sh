@@ -22,25 +22,6 @@ check_log_errors() {
 
 start_time=$(date +%s)  # 记录开始时间
 
-# 设置默认值
-default_gpu_id1=0
-default_gpu_id2=1
-
-# 检查环境变量GPUID1是否存在，并读取其值或使用默认值
-if [ -z "${GPUID1}" ]; then
-    gpu_id1=$default_gpu_id1
-else
-    gpu_id1=${GPUID1}
-fi
-
-# 检查环境变量GPUID2是否存在，并读取其值或使用默认值
-if [ -z "${GPUID2}" ]; then
-    gpu_id2=$default_gpu_id2
-else
-    gpu_id2=${GPUID2}
-fi
-echo "GPU ID: $gpu_id1, $gpu_id2"
-
 DIR="/workspace/QAnything/logs/debug_logs"
 
 # 检查目录是否存在
@@ -54,22 +35,60 @@ fi
 
 # 创建软连接
 if [ ! -L "/workspace/QAnything/qanything_kernel/dependent_server/embedding_server/embedding_model_configs_v0.0.1" ]; then  # 如果不存在软连接
-  cd /workspace/QAnything/qanything_kernel/dependent_server/embedding_server && ln -s /root/bce-embedding-base_v1 embedding_model_configs_v0.0.1  # 创建软连接
+  # 判断操作系统类型并创建相应的符号链接
+#  if [ "$(uname)" = "Linux" ]; then
+#      echo "2222222222222222222222"
+#      cd /workspace/QAnything/qanything_kernel/dependent_server/embedding_server && ln -s /workspace/models/embedding_model_configs_v0.0.1 .
+#  elif [ "$(uname)" = "Darwin" ]; then
+      cd /workspace/QAnything/qanything_kernel/dependent_server/embedding_server && ln -s /workspace/models/mac/embedding_model_configs_v0.0.1 .
+#      cd /workspace/QAnything/qanything_kernel/dependent_server/embedding_server && ln -s /workspace/models/embedding_model_configs_v0.0.1 .
+#  else
+#      echo "Unsupported operating system."
+#  fi
+#  cd /workspace/QAnything/qanything_kernel/dependent_server/embedding_server && ln -s /workspace/models/embedding_model_configs_v0.0.1 .  # 创建软连接
 fi
+
 if [ ! -L "/workspace/QAnything/qanything_kernel/dependent_server/rerank_server/rerank_model_configs_v0.0.1" ]; then  # 如果不存在软连接
-  cd /workspace/QAnything/qanything_kernel/dependent_server/rerank_server && ln -s /root/bce-reranker-base_v1 rerank_model_configs_v0.0.1  # 创建软连接
+#   判断操作系统类型并创建相应的符号链接
+#  if [ "$(uname)" = "Linux" ]; then
+#      echo "2222222222222222222222"
+#      cd /workspace/QAnything/qanything_kernel/dependent_server/rerank_server && ln -s /workspace/models/rerank_model_configs_v0.0.1 .
+#  elif [ "$(uname)" = "Darwin" ]; then
+      cd /workspace/QAnything/qanything_kernel/dependent_server/rerank_server && ln -s /workspace/models/mac/rerank_model_configs_v0.0.1 .
+#      cd /workspace/QAnything/qanything_kernel/dependent_server/rerank_server && ln -s /workspace/models/rerank_model_configs_v0.0.1 .
+#  else
+#      echo "Unsupported operating system."
+#  fi
+#  cd /workspace/QAnything/qanything_kernel/dependent_server/rerank_server && ln -s /workspace/models/rerank_model_configs_v0.0.1 .  # 创建软连接
 fi
-if [ ! -L "/workspace/QAnything/qanything_kernel/dependent_server/ocr_server/ocr_models" ]; then  # 如果不存在软连接
-  cd /workspace/QAnything/qanything_kernel/dependent_server/ocr_server && ln -s /root/ocr_models .  # 创建软连接
+
+if [ ! -L "/workspace/QAnything/qanything_kernel/dependent_server/ocr_server/ocr_models.0.1" ]; then  # 如果不存在软连接
+  cd /workspace/QAnything/qanything_kernel/dependent_server/ocr_server && ln -s /workspace/models/ocr_models .  # 创建软连接
 fi
+
 if [ ! -L "/workspace/QAnything/qanything_kernel/utils/loader/pdf_to_markdown/checkpoints" ]; then  # 如果不存在软连接
-  cd /workspace/QAnything/qanything_kernel/utils/loader/pdf_to_markdown && ln -s /root/pdf_models checkpoints  # 创建软连接
+  cd /workspace/QAnything/qanything_kernel/utils/loader/pdf_to_markdown && ln -s /workspace/models/checkpoints .  # 创建软连接
 fi
 
 cd /workspace/QAnything
 
-CUDA_VISIBLE_DEVICES=$gpu_id1 nohup python3 -u qanything_kernel/dependent_server/rerank_server/rerank_server.py > /workspace/QAnything/logs/debug_logs/rerank_server.log 2>&1 &
-CUDA_VISIBLE_DEVICES=$gpu_id2 nohup python3 -u qanything_kernel/dependent_server/embedding_server/embedding_server.py > /workspace/QAnything/logs/debug_logs/embedding_server.log 2>&1 &
+#pip install onnxruntime
+#pip install modelscope
+# 这俩东西依赖冲突了
+#pip uninstall transformers
+#pip uninstall huggingface_hub
+#pip install transformers
+#pip install huggingface_hub
+# 文件名不匹配
+#mv /root/.cache/modelscope/hub/._____temp/netease-youdao/bce-reranker-base_v1/configuration.json /root/.cache/modelscope/hub/._____temp/netease-youdao/bce-reranker-base_v1/config.json
+# 少个opencv的
+
+pip uninstall opencv-python
+pip install opencv-python
+pip install opencv-python-headless
+
+nohup python3 -u qanything_kernel/dependent_server/rerank_server/rerank_server.py > /workspace/QAnything/logs/debug_logs/rerank_server.log 2>&1 &
+nohup python3 -u qanything_kernel/dependent_server/embedding_server/embedding_server.py > /workspace/QAnything/logs/debug_logs/embedding_server.log 2>&1 &
 nohup python3 -u qanything_kernel/dependent_server/ocr_server/ocr_server.py > /workspace/QAnything/logs/debug_logs/ocr_server.log 2>&1 &
 nohup python3 -u qanything_kernel/dependent_server/insert_files_serve/insert_files_server.py --port 8110 --workers 4 > /workspace/QAnything/logs/debug_logs/insert_files_server.log 2>&1 &
 nohup python3 -u qanything_kernel/qanything_server/sanic_api.py --port 8777 --workers 4 > /workspace/QAnything/logs/debug_logs/main_server.log 2>&1 &

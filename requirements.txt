@@ -13,7 +13,7 @@ mysql-connector-python==8.2.0
 pymilvus==2.3.6
 langchain-openai==0.0.8
 aiomysql==0.2.0
-PyMuPDFb==1.24.3
+PyMuPDFb==1.24.3  #
 openpyxl==3.1.2
 networkx==3.2.1
 python-docx==1.1.0
@@ -43,3 +43,16 @@ streamlit==1.34.0
 openai==1.13.4
 zhipuai==2.0.1.20240429
 langchain_elasticsearch==0.2.2
+modelscope
+onnxruntime
+cryptography
+shapely
+pyclipper
+frontend
+xgboost
+pdfplumber
+PyPDF2
+markdownify
+datrie
+hanziconv
+lxml_html_clean
