@@ -69,8 +69,8 @@ type ICapabilities = {
   onlySearch: boolean;
 };
 export interface IChatSetting {
-  /* 模型类型，不用传 */
-  modelType: 'openAI' | 'ollama' | 'custom';
+  /* 模型类型，string为自定义名称，不用传 */
+  modelType: 'openAI' | 'ollama' | '自定义模型配置' | string;
   /* 自定义模型id，如果不是自定义就没有，不用传 */
   customId?: number;
   /* 自定义的模型名称，只有自定义时候用 */
@@ -93,4 +93,6 @@ export interface IChatSetting {
   top_P: number;
   /* 模型能力 */
   capabilities: ICapabilities;
+  /* 是否开启（只有一个） */
+  active: boolean;
 }

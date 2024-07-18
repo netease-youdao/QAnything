@@ -2,10 +2,10 @@ import { IChatSetting } from '@/utils/types';
 /*
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2024-01-09 15:28:56
- * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2024-01-11 10:45:28
+ * @LastEditors: 李浩坤 lihaokun@corp.netease.com
+ * @LastEditTime: 2024-07-18 18:00:00
  * @FilePath: /QAnything/front_end/src/store/useChat.ts
- * @Description:
+ * @Description: 注意，修改这里的配置参数时一定要清除localStorage缓存
  */
 export const useChat = defineStore(
   'useChat',
@@ -17,8 +17,7 @@ export const useChat = defineStore(
 
     // 模型配置参数
     const chatSettingFormBase: IChatSetting = {
-      modelType: 'openAI', // 默认openAi
-      modelName: '',
+      modelType: '',
       apiKey: '',
       apiBase: '',
       apiModelName: '',
@@ -32,6 +31,7 @@ export const useChat = defineStore(
         mixedSearch: false,
         onlySearch: false,
       },
+      active: false,
     };
 
     // 配置好的模型，包括 openAi Ollama 自定义
@@ -39,34 +39,48 @@ export const useChat = defineStore(
       {
         ...chatSettingFormBase,
         modelType: 'openAI',
+        active: false, // 默认openAi
       },
       {
         ...chatSettingFormBase,
         modelType: 'ollama',
+        active: true,
       },
       {
         ...chatSettingFormBase,
-        modelType: 'custom',
+        modelName: '',
+        modelType: '自定义模型配置',
         customId: 0,
+        active: false,
       },
     ]);
     const setChatSettingConfigured = (chatSetting: IChatSetting) => {
-      if (chatSetting.modelType === 'custom') {
-        const index = chatSettingConfigured.value.findIndex(
-          item => item.customId === chatSetting.customId
-        );
-        if (index !== -1) {
-          // 找到相同 id 的自定义，替换
-          chatSettingConfigured.value[index] = chatSetting;
-        } else {
-          // 没有找到相同 id 的自定义，添加
-          chatSetting.customId = chatSettingConfigured.value.at(-1).customId++;
-          chatSettingConfigured.value.push(chatSetting);
-        }
-      } else if (chatSetting.modelType === 'openAI') {
+      console.log('chatSetting-------', chatSetting);
+      // 先把所有active设置为false;
+      chatSettingConfigured.value.forEach(item => {
+        item.active = false;
+      });
+      // 再把当前的active设置为true
+      chatSetting.active = true;
+      if (chatSetting.modelType === 'openAI') {
         chatSettingConfigured.value[0] = chatSetting;
       } else if (chatSetting.modelType === 'ollama') {
         chatSettingConfigured.value[1] = chatSetting;
+      } else {
+        debugger;
+        // 自定义
+        chatSetting.modelType = chatSetting.modelName;
+        const index = chatSettingConfigured.value.findIndex(
+          item => item.customId === chatSetting.customId
+        );
+        if (index !== -1 && chatSetting.customId !== 0) {
+          // 找到相同 id 的自定义，替换
+          chatSettingConfigured.value[index] = chatSetting;
+        } else {
+          // 没有找到相同 id 的自定义或为第一个，添加
+          chatSetting.customId = chatSettingConfigured.value.at(-1).customId + 1;
+          chatSettingConfigured.value.push(chatSetting);
+        }
       }
     };
 
@@ -74,6 +88,7 @@ export const useChat = defineStore(
       showModal,
       showSettingModal,
       setChatSettingConfigured,
+      chatSettingConfigured,
     };
   },
   {

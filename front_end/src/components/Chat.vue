@@ -160,24 +160,24 @@
       </div>
       <div class="question-box">
         <div class="question">
-          <a-popover placement="topLeft">
-            <template #content>
-              <p v-if="network">{{ common.networkOff }}</p>
-              <p v-else>{{ common.networkOn }}</p>
-            </template>
-            <span :class="['network', `network-${network}`]">
-              <SvgIcon name="network" @click="networkChat" />
-            </span>
-          </a-popover>
-          <a-popover placement="topLeft">
-            <template #content>
-              <p v-if="onlySearch">{{ common.onlySearchOn }}</p>
-              <p v-else>{{ common.onlySearchOff }}</p>
-            </template>
-            <span :class="['only-search', `only-search-${onlySearch}`]">
-              <SvgIcon name="search" @click="changeOnlySearch" />
-            </span>
-          </a-popover>
+          <!--          <a-popover placement="topLeft">-->
+          <!--            <template #content>-->
+          <!--              <p v-if="network">{{ common.networkOff }}</p>-->
+          <!--              <p v-else>{{ common.networkOn }}</p>-->
+          <!--            </template>-->
+          <!--            <span :class="['network', `network-${network}`]">-->
+          <!--              <SvgIcon name="network" @click="networkChat" />-->
+          <!--            </span>-->
+          <!--          </a-popover>-->
+          <!--          <a-popover placement="topLeft">-->
+          <!--            <template #content>-->
+          <!--              <p v-if="onlySearch">{{ common.onlySearchOn }}</p>-->
+          <!--              <p v-else>{{ common.onlySearchOff }}</p>-->
+          <!--            </template>-->
+          <!--            <span :class="['only-search', `only-search-${onlySearch}`]">-->
+          <!--              <SvgIcon name="search" @click="changeOnlySearch" />-->
+          <!--            </span>-->
+          <!--          </a-popover>-->
           <a-popover placement="topLeft">
             <template #content>{{ common.chatToPic }}</template>
             <span class="download" @click="downloadChat">
@@ -214,7 +214,7 @@
       </div>
     </div>
   </div>
-  <ChatSettingDialog @confirm="handleConfirm" :contextLength="QA_List.length" />
+  <ChatSettingDialog />
   <DefaultModal :content="content" :confirm-loading="confirmLoading" @ok="confirm" />
 </template>
 <script lang="ts" setup>
@@ -762,10 +762,6 @@ const handleModalChange = newVal => {
   showSettingModal.value = newVal;
 };
 
-const handleConfirm = data => {
-  console.log('data', data);
-};
-
 // 检查信息来源的文件是否支持窗口化渲染
 let supportSourceTypes = ['pdf', 'docx', 'xlsx', 'txt', 'jpg', 'png', 'jpeg'];
 const checkFileType = filename => {
@@ -832,13 +828,13 @@ function getB64Type(suffix) {
   return b64Types[index];
 }
 
-const networkChat = () => {
-  network.value = !network.value;
-};
-
-const changeOnlySearch = () => {
-  onlySearch.value = !onlySearch.value;
-};
+// const networkChat = () => {
+//   network.value = !network.value;
+// };
+//
+// const changeOnlySearch = () => {
+//   onlySearch.value = !onlySearch.value;
+// };
 
 // 清空多轮问答历史
 function clearHistory() {

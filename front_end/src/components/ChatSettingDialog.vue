@@ -4,52 +4,18 @@
       v-model:open="showSettingModal"
       :title="'模型设置'"
       centered
-      width="600px"
+      width="700px"
       wrap-class-name="model-set-modal"
       :footer="null"
+      :destroy-on-close="true"
     >
       <div class="model-set-dialog-comp">
         <div class="select-model">
-          <ChatSettingForm :contextLength="contextLength" />
+          <ChatSettingForm ref="chatSettingFormRef" @confirm="confirm" />
         </div>
-
-        <!--            <div class="title">选择模型</div>-->
-        <!--            <a-select-->
-        <!--              ref="select"-->
-        <!--              v-model:value="selectValue"-->
-        <!--              class="model-set-select"-->
-        <!--              :options="privatizationInfo?.status === 2 ? options : optionsNoPriv"-->
-        <!--              :get-popup-container="getContainer"-->
-        <!--              @change="handleChange"-->
-        <!--            />-->
-        <!--            <div class="tokens-points">{{ tokensObj[selectValue] }}</div>-->
-        <!--          </div>-->
-        <!--          <div class="token-length">-->
-        <!--            <div class="title">回复上限</div>-->
-        <!--            <div class="slider">-->
-        <!--              <a-slider-->
-        <!--                v-if="selectValue === 'QAnything 16k'"-->
-        <!--                v-model:value="maxToken"-->
-        <!--                :min="1024"-->
-        <!--                :max="4096"-->
-        <!--                :marks="marks16K"-->
-        <!--              />-->
-        <!--              <a-slider v-else v-model:value="maxToken" :min="512" :max="1024" :marks="marks" />-->
-        <!--            </div>-->
-        <!--          </div>-->
-        <!--          <div class="model-ability">-->
-        <!--            <div class="title">模型能力</div>-->
-        <!--            <a-checkbox v-model:checked="isNetwork" @change="changeNetwork">联网检索</a-checkbox>-->
-        <!--            <div class="hybrid">-->
-        <!--              <a-checkbox v-model:checked="isHybrid">混合检索</a-checkbox>-->
-        <!--              <a-tooltip>-->
-        <!--                <template #title>使用向量检索与全文<br />检索的综合结果返回</template>-->
-        <!--                <img src="@/assets/home/tip-icon.png" alt="icon" />-->
-        <!--              </a-tooltip>-->
-        <!--            </div>-->
         <div class="footer">
           <a-button @click="handleCancel">取消</a-button>
-          <a-button type="primary" @click="handleOk">确定</a-button>
+          <a-button type="primary" style="width: auto" @click="handleOk">确认应用</a-button>
         </div>
       </div>
     </a-modal>
@@ -57,32 +23,32 @@
 </template>
 
 <script setup lang="ts">
+import { message } from 'ant-design-vue';
 import { useChat } from '@/store/useChat';
 import ChatSettingForm from '@/components/ChatSettingForm.vue';
 
 const { showSettingModal } = storeToRefs(useChat());
+const { setChatSettingConfigured } = useChat();
 
-const props = defineProps({
-  contextLength: {
-    type: Number,
-    require: true,
-    default: 0,
-  },
-});
-const contextLength = ref(props.contextLength);
-const emit = defineEmits(['confirm']);
+const chatSettingFormRef = ref('');
 
-// const settingData = reactive({});
-
-const handleOk = () => {
-  emit('confirm');
-  // 关闭弹窗
+const handleCancel = () => {
   showSettingModal.value = false;
 };
 
-const handleCancel = () => {
-  // 关闭弹窗
-  showSettingModal.value = false;
+const handleOk = async () => {
+  // @ts-ignore 这里确定有onCheck，因为暴露出来了
+  const checkRes = await chatSettingFormRef.value.onCheck();
+  console.log('checkRes', checkRes, Object.hasOwn(checkRes, 'errorFields'));
+  if (!Object.hasOwn(checkRes, 'errorFields')) {
+    showSettingModal.value = false;
+    setChatSettingConfigured(checkRes);
+    message.success('应用成功');
+  }
+};
+
+const confirm = data => {
+  console.log(data);
 };
 </script>
 
