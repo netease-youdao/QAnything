@@ -9,10 +9,10 @@
     label-align="left"
     @finish="onSubmit"
   >
-    <a-form-item label="模型提供方" name="modelType">
+    <a-form-item :label="common.modelProviderLabel" name="modelType">
       <a-select
         v-model:value="chatSettingForm.modelType"
-        placeholder="请选择你的模型"
+        :placeholder="common.selectModel"
         @select="selectChange"
       >
         <a-select-option value="openAI">openAI</a-select-option>
@@ -24,14 +24,14 @@
           :key="item.customId"
           :value="item.customId"
         >
-          {{ item.modelName.length === 0 ? '自定义模型配置' : item.modelName }}
+          {{ item.modelName.length === 0 ? common.customModelType : item.modelName }}
         </a-select-option>
       </a-select>
     </a-form-item>
     <a-form-item
       v-if="chatSettingForm.modelType === '自定义模型配置'"
       ref="modelName"
-      label="自定义模型名称"
+      :label="common.modelNameLabel"
       name="modelName"
     >
       <a-input v-model:value="chatSettingForm.modelName" aria-autocomplete="none" />
@@ -39,7 +39,7 @@
     <a-form-item
       v-if="chatSettingForm.modelType !== 'ollama'"
       ref="apiKey"
-      label="API密钥"
+      :label="common.apiKeyLabel"
       name="apiKey"
     >
       <a-input-password
@@ -47,14 +47,18 @@
         placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx"
       />
     </a-form-item>
-    <a-form-item ref="apiBase" label="API路径" name="apiBase">
+    <a-form-item ref="apiBase" :label="common.apiPathLabel" name="apiBase">
       <a-input v-model:value="chatSettingForm.apiBase" aria-autocomplete="none" />
     </a-form-item>
-    <a-form-item ref="apiModelName" label="模型名称" name="apiModelName">
+    <a-form-item ref="apiModelName" :label="common.apiModelNameLabel" name="apiModelName">
       <a-input v-model:value="chatSettingForm.apiModelName" aria-autocomplete="none" />
     </a-form-item>
     <div class="form-item-inline">
-      <a-form-item ref="apiContextLength" label="上下文token数" name="apiContextLength">
+      <a-form-item
+        ref="apiContextLength"
+        :label="common.apiContextLengthLabel"
+        name="apiContextLength"
+      >
         <a-slider
           v-model:value="chatSettingForm.apiContextLength"
           :min="4096"
@@ -73,7 +77,7 @@
       </a-form-item>
     </div>
     <div class="form-item-inline">
-      <a-form-item ref="maxToken" label="最大token数" name="maxToken">
+      <a-form-item ref="maxToken" :label="common.maxTokenLabel" name="maxToken">
         <a-slider
           v-model:value="chatSettingForm.maxToken"
           :min="1"
@@ -93,7 +97,11 @@
       </a-form-item>
     </div>
     <div class="form-item-inline">
-      <a-form-item ref="context" :label="`上下文数量（${contextLength}）`" name="context">
+      <a-form-item
+        ref="context"
+        :label="`${common.contextLabel}（${contextLength}）`"
+        name="context"
+      >
         <a-slider v-model:value="chatSettingForm.context" :min="0" :max="contextLength" :step="1" />
       </a-form-item>
       <a-form-item name="context">
@@ -134,31 +142,31 @@
         />
       </a-form-item>
     </div>
-    <a-form-item label="模型能力" name="capabilities">
+    <a-form-item :label="common.capabilitiesLabel" name="capabilities">
       <a-checkbox-group v-model:value="capabilitiesOptionsState" style="width: 100%">
         <a-row>
           <a-col :span="8">
             <a-popover placement="topLeft">
               <template #content>
-                <p>{{ common.networkSearch }}</p>
+                <p>{{ common.networkSearchDescription }}</p>
               </template>
-              <a-checkbox value="onlineSearch">联网检索</a-checkbox>
+              <a-checkbox value="onlineSearch">{{ common.networkSearch }}</a-checkbox>
             </a-popover>
           </a-col>
           <a-col :span="8">
             <a-popover placement="topLeft">
               <template #content>
-                <p>{{ common.mixedSearch }}</p>
+                <p>{{ common.mixedSearchDescription }}</p>
               </template>
-              <a-checkbox value="mixedSearch">混合检索</a-checkbox>
+              <a-checkbox value="mixedSearch">{{ common.mixedSearch }}</a-checkbox>
             </a-popover>
           </a-col>
           <a-col :span="8">
             <a-popover placement="topLeft">
               <template #content>
-                <p>{{ common.onlySearch }}</p>
+                <p>{{ common.onlySearchDescription }}</p>
               </template>
-              <a-checkbox value="onlySearch">仅检索模式</a-checkbox>
+              <a-checkbox value="onlySearch">{{ common.onlySearch }}</a-checkbox>
             </a-popover>
           </a-col>
         </a-row>
@@ -166,7 +174,7 @@
     </a-form-item>
     <a-form-item v-if="chatSettingForm.modelType === '自定义模型配置'" :wrapper-col="{ span: 24 }">
       <a-button type="primary" html-type="submit" style="margin-left: 0 !important; width: auto">
-        保存当前自定义模型
+        {{ common.saveModel }}
       </a-button>
     </a-form-item>
   </a-form>
@@ -202,13 +210,23 @@ const chatSettingForm = ref<IChatSetting>();
 const TOKENRATIO = 2;
 
 const rules: Record<string, Rule[]> = {
-  modelType: [{ required: true, message: '请选择模型提供方', trigger: 'change' }],
-  modelName: [{ required: true, message: '请输入当前自定义模型名称', trigger: 'change' }],
-  apiKey: [{ required: true, message: '请输入密钥', trigger: 'change' }],
-  apiBase: [{ required: true, message: '请输入API地址', trigger: 'change' }],
-  apiModelName: [{ required: true, message: '请输入模型名称', trigger: 'change' }],
-  apiContextLength: [{ required: true, message: '请输入上下文token数', trigger: 'change' }],
-  maxToken: [{ required: true, message: '请输入maxToken', trigger: 'change' }],
+  modelType: [
+    { required: true, message: `Please Select ${common.modelProviderLabel}`, trigger: 'change' },
+  ],
+  modelName: [
+    { required: true, message: `Please Input ${common.modelNameLabel}`, trigger: 'change' },
+  ],
+  apiKey: [{ required: true, message: `Please Input ${common.apiKeyLabel}`, trigger: 'change' }],
+  apiBase: [{ required: true, message: `Please Input ${common.apiPathLabel}`, trigger: 'change' }],
+  apiModelName: [
+    { required: true, message: `Please Input ${common.apiModelNameLabel}`, trigger: 'change' },
+  ],
+  apiContextLength: [
+    { required: true, message: `Please Input ${common.apiContextLengthLabel}`, trigger: 'change' },
+  ],
+  maxToken: [
+    { required: true, message: `Please Input ${common.maxTokenLabel}`, trigger: 'change' },
+  ],
 };
 
 // 主动检测是否通过

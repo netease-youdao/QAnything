@@ -42,10 +42,12 @@
     <div class="save">
       <a-button class="save-btn" type="primary" @click="saveBotInfo">{{ bots.save }}</a-button>
     </div>
-    <div class="title">{{ bots.modelSettingTitle }}</div>
+    <div class="title">{{ common.modelSettingTitle }}</div>
     <ChatSettingForm ref="chatSettingFormRef" :context-length="QA_List.length" />
     <div class="chat-setting-form-footer">
-      <a-button type="primary" style="width: auto" @click="handleOk">确认应用</a-button>
+      <a-button type="primary" style="width: auto" @click="handleOk">
+        {{ common.confirmApplication }}
+      </a-button>
     </div>
   </div>
 </template>
@@ -61,13 +63,10 @@ import { useBotsChat } from '@/store/useBotsChat';
 
 const { curBot, knowledgeList } = storeToRefs(useBots());
 const { QA_List } = storeToRefs(useBotsChat());
-watchEffect(() => {
-  console.log('lenghth0-----', QA_List.value.length);
-});
 const { setSelectKnowledgeVisible, setCurBot } = useBots();
 const { setChatSettingConfigured } = useChatSetting();
 
-const bots = getLanguage().bots;
+const { bots, common } = getLanguage();
 
 const name = ref('');
 const roleSetting = ref('');

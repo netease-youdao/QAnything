@@ -2,7 +2,7 @@
   <Teleport to="body">
     <a-modal
       v-model:open="showSettingModal"
-      :title="'模型设置'"
+      :title="common.modelSettingTitle"
       centered
       width="700px"
       wrap-class-name="model-set-modal"
@@ -14,9 +14,9 @@
           <ChatSettingForm ref="chatSettingFormRef" :context-length="contextLength" />
         </div>
         <div class="footer">
-          <a-button @click="handleCancel">取消</a-button>
+          <a-button @click="handleCancel">{{ common.cancel }}</a-button>
           <a-button type="primary" style="width: auto; margin-left: 10px" @click="handleOk">
-            确认应用
+            {{ common.confirmApplication }}
           </a-button>
         </div>
       </div>
@@ -30,12 +30,14 @@ import { useChat } from '@/store/useChat';
 import { useChatSetting } from '@/store/useChatSetting';
 import ChatSettingForm from '@/components/ChatSettingForm.vue';
 import { useHomeChat } from '@/store/useHomeChat';
+import { getLanguage } from '@/language';
 
 const { contextLength } = storeToRefs(useHomeChat());
 const { showSettingModal } = storeToRefs(useChat());
 const { setChatSettingConfigured } = useChatSetting();
 
 const chatSettingFormRef = ref('');
+const { common } = getLanguage();
 
 const handleCancel = () => {
   showSettingModal.value = false;

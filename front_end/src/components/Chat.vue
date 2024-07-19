@@ -43,6 +43,17 @@
                     <HighLightMarkDown v-if="item.answer" :content="item.answer" />
                     <span v-else>{{ item.answer }}</span>
                   </p>
+                  <p
+                    v-if="!item.onlySearch && !item.source.length"
+                    class="question-text"
+                    :class="[
+                      !item.source.length && !item?.picList?.length ? 'change-radius' : '',
+                      item.showTools ? '' : 'flashing',
+                    ]"
+                  >
+                    <span v-if="language === 'zh'">未找到信息来源</span>
+                    <span v-else>Information source not found</span>
+                  </p>
                   <template v-if="item.source.length">
                     <div
                       :class="[
@@ -51,11 +62,13 @@
                       ]"
                     >
                       <span v-if="language === 'zh'">
-                        <span v-if="item.onlySearch">检索完成，</span>找到了{{
-                          item.source.length
-                        }}个信息来源：</span
-                      >
-                      <span v-else>Found {{ item.source.length }} source of information</span>
+                        <span v-if="item.onlySearch">检索完成，</span>
+                        找到了{{ item.source.length }}个信息来源：
+                      </span>
+                      <span v-else>
+                        <span v-if="item.onlySearch">Search completed，</span>
+                        Found {{ item.source.length }} source of information
+                      </span>
                       <SvgIcon
                         v-show="!showSourceIdxs.includes(index)"
                         name="down"

@@ -1,4 +1,7 @@
 import { IChatSetting } from '@/utils/types';
+import { getLanguage } from '@/language';
+
+const common = getLanguage().common;
 
 export const useChatSetting = defineStore(
   'useChatSetting',
@@ -27,17 +30,17 @@ export const useChatSetting = defineStore(
       {
         ...chatSettingFormBase,
         modelType: 'openAI',
-        active: false, // 默认openAi
+        active: true, // 默认openAi
       },
       {
         ...chatSettingFormBase,
         modelType: 'ollama',
-        active: true,
+        active: false,
       },
       {
         ...chatSettingFormBase,
         modelName: '',
-        modelType: '自定义模型配置',
+        modelType: common.customModelType,
         customId: 0,
         active: false,
       },
