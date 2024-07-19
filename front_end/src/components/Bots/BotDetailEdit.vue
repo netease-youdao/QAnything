@@ -42,6 +42,11 @@
     <div class="save">
       <a-button class="save-btn" type="primary" @click="saveBotInfo">{{ bots.save }}</a-button>
     </div>
+    <div class="title">{{ bots.modelSettingTitle }}</div>
+    <ChatSettingForm ref="chatSettingFormRef" :context-length="QA_List.length" />
+    <div class="chat-setting-form-footer">
+      <a-button type="primary" style="width: auto" @click="handleOk">确认应用</a-button>
+    </div>
   </div>
 </template>
 <script lang="ts" setup>
@@ -50,9 +55,17 @@ import urlResquest from '@/services/urlConfig';
 import { resultControl } from '@/utils/utils';
 import { message } from 'ant-design-vue';
 import { getLanguage } from '@/language/index';
+import ChatSettingForm from '@/components/ChatSettingForm.vue';
+import { useChatSetting } from '@/store/useChatSetting';
+import { useBotsChat } from '@/store/useBotsChat';
 
 const { curBot, knowledgeList } = storeToRefs(useBots());
+const { QA_List } = storeToRefs(useBotsChat());
+watchEffect(() => {
+  console.log('lenghth0-----', QA_List.value.length);
+});
 const { setSelectKnowledgeVisible, setCurBot } = useBots();
+const { setChatSettingConfigured } = useChatSetting();
 
 const bots = getLanguage().bots;
 
@@ -119,6 +132,17 @@ const removeKb = async data => {
     message.error(e.msg || '请求失败');
   }
 };
+
+// 模型设置
+const chatSettingFormRef = ref('');
+const handleOk = async () => {
+  // @ts-ignore 这里确定有onCheck，因为暴露出来了
+  const checkRes = await chatSettingFormRef.value.onCheck();
+  if (!Object.hasOwn(checkRes, 'errorFields')) {
+    setChatSettingConfigured(checkRes);
+    message.success('应用成功');
+  }
+};
 </script>
 <style lang="scss" scoped>
 .bot-detail-edit-comp {
@@ -127,35 +151,42 @@ const removeKb = async data => {
   padding: 26px;
   background: #fff;
   overflow: auto;
+
   .name-avatar {
     width: 100%;
     height: 56px;
     display: flex;
     align-items: center;
+
     img {
       width: 56px;
       height: 56px;
       margin-right: 16px;
     }
+
     .ant-input-affix-wrapper {
       height: 40px;
     }
   }
+
   .title {
     font-size: 16px;
     font-weight: 500;
     color: #222222;
     margin-top: 24px;
     margin-bottom: 12px;
+
     span {
       color: #ff0000;
     }
   }
+
   .save {
     width: 100%;
     margin-top: 22px;
     display: flex;
     justify-content: end;
+
     .save-btn {
       width: 68px;
       height: 32px;
@@ -170,13 +201,16 @@ const removeKb = async data => {
     margin: 24px 0;
     display: flex;
     align-items: center;
+
     .model-title {
       margin: 0 28px 0 0;
     }
+
     .model-list {
       border-radius: 8px;
       font-size: 14px;
       display: flex;
+
       .model-item {
         height: 40px;
         width: 120px;
@@ -185,13 +219,16 @@ const removeKb = async data => {
         box-sizing: border-box;
         border: 1px solid #ededed;
         cursor: pointer;
+
         &:first-child {
           border-radius: 8px 0 0 8px;
         }
+
         &:last-child {
           border-radius: 0 8px 8px 0;
         }
       }
+
       .model-item-active {
         color: #5a47e5;
         border: 1px solid #5a47e5;
@@ -200,6 +237,7 @@ const removeKb = async data => {
       }
     }
   }
+
   .knowedge-item {
     width: 100%;
     height: 56px;
@@ -211,44 +249,58 @@ const removeKb = async data => {
     display: flex;
     align-items: center;
   }
+
   .add-knowledge-content {
     justify-content: center;
     color: #999999;
     cursor: pointer;
+
     .add-knowedge {
       width: 20px;
       height: 20px;
       margin-right: 8px;
     }
   }
+
   .knowledge-info {
     display: flex;
     align-items: center;
+
     .knowledge-icon {
       width: 32px;
       height: 32px;
       margin-right: 12px;
     }
+
     .kb-name {
       flex-grow: 1;
       color: #222222;
     }
+
     .remove-icon {
       width: 20px;
       height: 20px;
       cursor: pointer;
     }
   }
+
   .role-setting-input {
     overflow: auto !important;
   }
+
   .role-setting-length {
     width: 100%;
     color: rgba(0, 0, 0, 0.45);
     text-align: end;
   }
+
   .over-length {
     color: #ff0000;
+  }
+
+  .chat-setting-form-footer {
+    display: flex;
+    justify-content: flex-end;
   }
 }
 </style>

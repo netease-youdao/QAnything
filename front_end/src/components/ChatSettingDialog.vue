@@ -11,11 +11,13 @@
     >
       <div class="model-set-dialog-comp">
         <div class="select-model">
-          <ChatSettingForm ref="chatSettingFormRef" @confirm="confirm" />
+          <ChatSettingForm ref="chatSettingFormRef" :context-length="contextLength" />
         </div>
         <div class="footer">
           <a-button @click="handleCancel">取消</a-button>
-          <a-button type="primary" style="width: auto" @click="handleOk">确认应用</a-button>
+          <a-button type="primary" style="width: auto; margin-left: 10px" @click="handleOk">
+            确认应用
+          </a-button>
         </div>
       </div>
     </a-modal>
@@ -25,12 +27,13 @@
 <script setup lang="ts">
 import { message } from 'ant-design-vue';
 import { useChat } from '@/store/useChat';
+import { useChatSetting } from '@/store/useChatSetting';
 import ChatSettingForm from '@/components/ChatSettingForm.vue';
+import { useHomeChat } from '@/store/useHomeChat';
 
+const { contextLength } = storeToRefs(useHomeChat());
 const { showSettingModal } = storeToRefs(useChat());
-const { useHomeChatSetting } = useChat();
-
-const { setChatSettingConfigured } = useHomeChatSetting();
+const { setChatSettingConfigured } = useChatSetting();
 
 const chatSettingFormRef = ref('');
 
@@ -47,10 +50,6 @@ const handleOk = async () => {
     setChatSettingConfigured(checkRes);
     message.success('应用成功');
   }
-};
-
-const confirm = data => {
-  console.log(data);
 };
 </script>
 
@@ -130,82 +129,6 @@ const confirm = data => {
       display: flex;
       align-items: center;
     }
-
-    :deep(.ant-select-item-option-selected) {
-      background: #eeecfc !important;
-      color: #5a47e5 !important;
-    }
-  }
-
-  :deep(.ant-btn) {
-    width: 68px;
-    height: 32px;
-  }
-
-  :deep(.ant-btn-primary) {
-    margin-left: 16px !important;
-  }
-
-  :deep(.ant-slider-track) {
-    height: 8px;
-    background: #8868f1;
-    border-radius: 30px;
-  }
-
-  :deep(.ant-slider-rail) {
-    height: 8px;
-    background: #ebeef6;
-    border-radius: 30px;
-  }
-
-  :deep(.ant-slider-step) {
-    display: none;
-  }
-
-  :deep(.ant-slider-handle) {
-    &::after {
-      box-shadow: 0 0 0 2px #8868f1;
-      inset-block-start: 1px;
-    }
-  }
-
-  :deep(.ant-slider-mark-text) {
-    margin-top: 4px;
-    color: #666666;
-    font-size: 14px;
-  }
-
-  :deep(.ant-checkbox-checked .ant-checkbox-inner) {
-    background-color: #5a47e5;
-    border-color: #5a47e5;
-  }
-
-  :deep(.ant-checkbox + span) {
-    padding-inline-end: 0;
-  }
-
-  :deep(
-      .ant-checkbox-wrapper:not(.ant-checkbox-wrapper-disabled):hover
-        .ant-checkbox-checked:not(.ant-checkbox-disabled)
-        .ant-checkbox-inner
-    ) {
-    background-color: #5a47e5;
-    border-color: #5a47e5 !important;
-  }
-
-  :deep(
-      .ant-checkbox-wrapper:not(.ant-checkbox-wrapper-disabled):hover .ant-checkbox-inner,
-      :where(.css-dev-only-do-not-override-3m4nqy).ant-checkbox:not(.ant-checkbox-disabled):hover
-        .ant-checkbox-inner
-    ) {
-    border-color: #5a47e5;
-  }
-
-  :deep(
-      .ant-checkbox-wrapper:not(.ant-checkbox-wrapper-disabled):hover
-        .ant-checkbox-checked:not(.ant-checkbox-disabled):after
-    ) {
-    border-color: #5a47e5;
   }
 }
 </style>

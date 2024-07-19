@@ -20,7 +20,7 @@ export const useHomeChat = defineStore('useHomeChat', () => {
   };
 
   // 上下文数量
-  let contextLength = ref(QA_List.value.length);
+  let contextLength = ref<number>(QA_List.value.length);
   watch(
     () => QA_List.value.length,
     () => {

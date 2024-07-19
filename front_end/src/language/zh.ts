@@ -165,5 +165,6 @@ export default {
     createKb: '创建知识库',
     noMore: '没有更多了',
     creationTime: '创建时间',
+    modelSettingTitle: '模型配置',
   },
 };

@@ -34,7 +34,7 @@
       label="自定义模型名称"
       name="modelName"
     >
-      <a-input v-model:value="chatSettingForm.modelName" />
+      <a-input v-model:value="chatSettingForm.modelName" aria-autocomplete="none" />
     </a-form-item>
     <a-form-item
       v-if="chatSettingForm.modelType !== 'ollama'"
@@ -48,34 +48,47 @@
       />
     </a-form-item>
     <a-form-item ref="apiBase" label="API路径" name="apiBase">
-      <a-input v-model:value="chatSettingForm.apiBase" />
+      <a-input v-model:value="chatSettingForm.apiBase" aria-autocomplete="none" />
     </a-form-item>
     <a-form-item ref="apiModelName" label="模型名称" name="apiModelName">
-      <a-input v-model:value="chatSettingForm.apiModelName" />
+      <a-input v-model:value="chatSettingForm.apiModelName" aria-autocomplete="none" />
     </a-form-item>
     <div class="form-item-inline">
       <a-form-item ref="apiContextLength" label="上下文token数" name="apiContextLength">
-        <a-slider v-model:value="chatSettingForm.apiContextLength" :min="1" :step="1" />
+        <a-slider
+          v-model:value="chatSettingForm.apiContextLength"
+          :min="4096"
+          :max="8192"
+          :step="1"
+        />
       </a-form-item>
       <a-form-item name="apiContextLength">
         <a-input-number
           v-model:value="chatSettingForm.apiContextLength"
-          :min="1"
+          :min="4096"
           :step="1"
           style="margin-left: 16px"
+          :precision="0"
         />
       </a-form-item>
     </div>
     <div class="form-item-inline">
       <a-form-item ref="maxToken" label="最大token数" name="maxToken">
-        <a-slider v-model:value="chatSettingForm.maxToken" :min="1" :step="1" />
+        <a-slider
+          v-model:value="chatSettingForm.maxToken"
+          :min="1"
+          :max="chatSettingForm.apiContextLength / TOKENRATIO"
+          :step="1"
+        />
       </a-form-item>
       <a-form-item name="maxToken">
         <a-input-number
           v-model:value="chatSettingForm.maxToken"
           :min="1"
+          :max="chatSettingForm.apiContextLength / TOKENRATIO"
           :step="1"
           style="margin-left: 16px"
+          :precision="0"
         />
       </a-form-item>
     </div>
@@ -162,25 +175,31 @@
 <script setup lang="ts">
 import { IChatSetting } from '@/utils/types';
 import type { Rule } from 'ant-design-vue/es/form';
-import { useChat } from '@/store/useChat';
-import { useHomeChat } from '@/store/useHomeChat';
+import { useChatSetting } from '@/store/useChatSetting';
 import { getLanguage } from '@/language';
 import { message } from 'ant-design-vue';
 
+defineExpose({ onCheck });
+
 const common = getLanguage().common;
 
-const { useHomeChatSetting } = useChat();
-const { contextLength } = storeToRefs(useHomeChat());
+interface IProps {
+  contextLength: number;
+}
 
-const { chatSettingConfigured } = storeToRefs(useHomeChatSetting());
-const { setChatSettingConfigured } = useHomeChatSetting();
+const props = defineProps<IProps>();
+const contextLength = toRef(props, 'contextLength');
+
+const { chatSettingConfigured } = storeToRefs(useChatSetting());
+const { setChatSettingConfigured } = useChatSetting();
 
 const formRef = ref(null);
 const capabilitiesOptionsState = ref([]);
 
-defineExpose({ onCheck });
-
 const chatSettingForm = ref<IChatSetting>();
+
+// maxToken是上下文token的 1/TOKENRATIO 倍
+const TOKENRATIO = 2;
 
 const rules: Record<string, Rule[]> = {
   modelType: [{ required: true, message: '请选择模型提供方', trigger: 'change' }],
@@ -264,6 +283,14 @@ watch(
   }
 );
 
+// 监听上下文token数，上下文token一变，回复最大token自动变为最大（上下文token / TOKENRATIO）
+watch(
+  () => chatSettingForm.value?.apiContextLength,
+  () => {
+    chatSettingForm.value.maxToken = chatSettingForm.value.apiContextLength / TOKENRATIO;
+  }
+);
+
 // 在dom加载前初始化，onMounted会报错
 onBeforeMount(() => {
   // 初始化表单项
@@ -278,6 +305,90 @@ onBeforeMount(() => {
 </script>
 
 <style lang="scss" scoped>
+:deep(.ant-btn) {
+  width: 68px;
+  height: 32px;
+}
+
+:deep(.ant-select-item-option-selected) {
+  background: #eeecfc !important;
+  color: #5a47e5 !important;
+}
+
+:deep(.ant-btn-primary) {
+  margin-left: 16px !important;
+}
+
+:deep(.ant-slider-track) {
+  height: 8px;
+  background: #8868f1;
+  border-radius: 30px;
+}
+
+:deep(.ant-slider-rail) {
+  height: 8px;
+  background: #ebeef6;
+  border-radius: 30px;
+}
+
+:deep(.ant-slider-step) {
+  display: none;
+}
+
+:deep(.ant-slider-handle) {
+  &::after {
+    box-shadow: 0 0 0 2px #8868f1;
+    inset-block-start: 1px;
+  }
+}
+
+:deep(.ant-slider-mark-text) {
+  margin-top: 4px;
+  color: #666666;
+  font-size: 14px;
+}
+
+:deep(.ant-checkbox-checked .ant-checkbox-inner) {
+  background-color: #5a47e5;
+  border-color: #5a47e5;
+}
+
+:deep(.ant-checkbox + span) {
+  padding-inline-end: 0;
+}
+
+:deep(
+    .ant-checkbox-wrapper:not(.ant-checkbox-wrapper-disabled):hover
+      .ant-checkbox-checked:not(.ant-checkbox-disabled)
+      .ant-checkbox-inner
+  ) {
+  background-color: #5a47e5;
+  border-color: #5a47e5 !important;
+}
+
+:deep(
+    .ant-checkbox-wrapper:not(.ant-checkbox-wrapper-disabled):hover .ant-checkbox-inner,
+    :where(.css-dev-only-do-not-override-3m4nqy).ant-checkbox:not(.ant-checkbox-disabled):hover
+      .ant-checkbox-inner
+  ) {
+  border-color: #5a47e5;
+}
+
+:deep(
+    .ant-checkbox-wrapper:not(.ant-checkbox-wrapper-disabled):hover
+      .ant-checkbox-checked:not(.ant-checkbox-disabled):after
+  ) {
+  border-color: #5a47e5;
+}
+
+:deep(.ant-slider-handle:hover::after) {
+  box-shadow: 0 0 0 4px #5a47e5;
+}
+
+:deep(.ant-slider:hover .ant-slider-track) {
+  background-color: #5a47e5;
+}
+
 .form-item-inline {
   display: flex;
   justify-content: flex-end;

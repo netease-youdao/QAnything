@@ -172,5 +172,6 @@ export default {
     createKb: 'Create knowledge base',
     noMore: 'No more',
     creationTime: 'Creation time',
+    modelSettingTitle: 'Model Setting',
   },
 };
