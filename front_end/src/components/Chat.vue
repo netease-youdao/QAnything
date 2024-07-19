@@ -217,12 +217,14 @@
               </div>
             </template>
           </a-input>
-          <a-popover placement="topLeft">
-            <template #content>
-              <p>可以设置混合检索、联网检索、模型大小哦！</p>
-            </template>
-            <div class="model-set" @click="handleModalChange(true)">模型设置</div>
-          </a-popover>
+          <!--          <a-popover placement="topLeft">-->
+          <!--            <template #content>-->
+          <!--              <p>可以设置混合检索、联网检索、模型大小哦！</p>-->
+          <!--            </template>-->
+          <div class="model-set" @click="handleModalChange(true)">
+            {{ common.modelSettingTitle }}
+          </div>
+          <!--          </a-popover>-->
         </div>
       </div>
     </div>
