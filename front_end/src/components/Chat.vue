@@ -44,7 +44,7 @@
                     <span v-else>{{ item.answer }}</span>
                   </p>
                   <p
-                    v-if="!item.onlySearch && !item.source.length"
+                    v-if="item.onlySearch && !item.source.length"
                     class="question-text"
                     :class="[
                       !item.source.length && !item?.picList?.length ? 'change-radius' : '',
@@ -173,57 +173,43 @@
       </div>
       <div class="question-box">
         <div class="question">
-          <!--          <a-popover placement="topLeft">-->
-          <!--            <template #content>-->
-          <!--              <p v-if="network">{{ common.networkOff }}</p>-->
-          <!--              <p v-else>{{ common.networkOn }}</p>-->
-          <!--            </template>-->
-          <!--            <span :class="['network', `network-${network}`]">-->
-          <!--              <SvgIcon name="network" @click="networkChat" />-->
-          <!--            </span>-->
-          <!--          </a-popover>-->
-          <!--          <a-popover placement="topLeft">-->
-          <!--            <template #content>-->
-          <!--              <p v-if="onlySearch">{{ common.onlySearchOn }}</p>-->
-          <!--              <p v-else>{{ common.onlySearchOff }}</p>-->
-          <!--            </template>-->
-          <!--            <span :class="['only-search', `only-search-${onlySearch}`]">-->
-          <!--              <SvgIcon name="search" @click="changeOnlySearch" />-->
-          <!--            </span>-->
-          <!--          </a-popover>-->
-          <a-popover placement="topLeft">
-            <template #content>{{ common.chatToPic }}</template>
-            <span class="download" @click="downloadChat">
-              <SvgIcon name="chat-download" />
-            </span>
-          </a-popover>
-          <a-popover>
-            <template #content>{{ common.clearChat }}</template>
-            <span class="delete" @click="deleteChat">
-              <SvgIcon name="chat-delete" />
-            </span>
-          </a-popover>
-          <a-input
-            v-model:value="question"
-            max-length="200"
-            :placeholder="common.problemPlaceholder"
-            @keyup.enter="send"
-          >
-            <template #suffix>
-              <div class="send-plane">
-                <a-button type="primary" :disabled="showLoading" @click="send">
-                  <SvgIcon name="sendplane"></SvgIcon>
-                </a-button>
-              </div>
-            </template>
-          </a-input>
+          <div class="send-box">
+            <a-textarea
+              v-model:value="question"
+              class="send-textarea"
+              max-length="200"
+              :placeholder="common.problemPlaceholder"
+              :auto-size="{ minRows: 3, maxRows: 8 }"
+              @keyup.enter="send"
+            />
+            <div class="send-action">
+              <a-popover placement="topLeft">
+                <template #content>{{ common.chatToPic }}</template>
+                <span class="download" @click="downloadChat">
+                  <SvgIcon name="chat-download" />
+                </span>
+              </a-popover>
+              <a-popover>
+                <template #content>{{ common.clearChat }}</template>
+                <span class="delete" @click="deleteChat">
+                  <SvgIcon name="chat-delete" />
+                </span>
+              </a-popover>
+              <a-popover>
+                <template #content>{{ common.modelSettingTitle }}</template>
+                <span class="setting" @click="handleModalChange(true)">
+                  <SvgIcon name="chat-setting" />
+                </span>
+              </a-popover>
+              <a-button type="primary" :disabled="showLoading" shape="circle" @click="send">
+                <SvgIcon name="sendplane" />
+              </a-button>
+            </div>
+          </div>
           <!--          <a-popover placement="topLeft">-->
           <!--            <template #content>-->
           <!--              <p>可以设置混合检索、联网检索、模型大小哦！</p>-->
           <!--            </template>-->
-          <div class="model-set" @click="handleModalChange(true)">
-            {{ common.modelSettingTitle }}
-          </div>
           <!--          </a-popover>-->
         </div>
       </div>
@@ -913,7 +899,7 @@ scrollBottom();
       line-height: 22px;
       color: #222222;
       background: #e9e1ff;
-      border-radius: 0px 12px 12px 12px;
+      border-radius: 12px 12px 12px 12px;
       word-wrap: break-word;
     }
   }
@@ -934,7 +920,7 @@ scrollBottom();
         line-height: 22px;
         color: $title1;
         background: #fff;
-        border-radius: 0px 12px 0px 0px;
+        border-radius: 12px 12px 0px 0px;
         word-wrap: break-word;
       }
 
@@ -1068,6 +1054,7 @@ scrollBottom();
 
 .stop-btn {
   display: flex;
+  height: 40px;
   justify-content: center;
   margin-top: 38px;
 
@@ -1104,86 +1091,6 @@ scrollBottom();
     display: flex;
     align-items: center;
 
-    .download,
-    .delete,
-    .network,
-    .only-search {
-      cursor: pointer;
-      padding: 8px;
-      display: flex;
-      margin-right: 16px;
-      border-radius: 8px;
-      background: #ffffff;
-      border: 1px solid #e5e5e5;
-      color: #666666;
-
-      &:hover {
-        border: 1px solid #5a47e5;
-        color: #5a47e5;
-      }
-
-      svg {
-        width: 24px;
-        height: 24px;
-      }
-
-      &.network-true,
-      &.only-search-true {
-        border: 1px solid #5a47e5;
-        color: #5a47e5;
-      }
-
-      &.network-false,
-      &.only-search-false {
-        border: 1px solid #e5e5e5;
-        color: #666666;
-      }
-    }
-
-    .model-set {
-      height: 48px;
-      line-height: 48px;
-      display: inline-block;
-      text-wrap: nowrap;
-      box-sizing: border-box;
-      font-size: 14px;
-      padding: 0 19px;
-      margin-left: 18px;
-      background: #fff;
-      border-radius: 8px;
-      border: 1px solid #e5e5e5;
-      cursor: pointer;
-    }
-
-    .send-plane {
-      width: 56px;
-      height: 36px;
-      border-radius: 8px;
-      color: #fff;
-      background: #5a47e5;
-
-      :deep(.ant-btn-primary) {
-        height: 100%;
-        display: flex;
-        align-items: center;
-        background: linear-gradient(300deg, #7b5ef2 1%, #c383fe 97%);
-      }
-
-      :deep(.ant-btn-primary:disabled) {
-        height: 100%;
-        display: flex;
-        align-items: center;
-        background: linear-gradient(300deg, #7b5ef2 1%, #c383fe 97%);
-        color: #fff !important;
-        border-color: transparent !important;
-      }
-
-      svg {
-        width: 24px;
-        height: 24px;
-      }
-    }
-
     :deep(.ant-input-affix-wrapper) {
       width: 100%;
       max-width: 1108px;
@@ -1204,6 +1111,83 @@ scrollBottom();
 
     :deep(.ant-input:focus) {
       border-color: $baseColor;
+    }
+
+    .send-box {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+
+      .send-textarea {
+        //position: absolute;
+        //bottom: 0;
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+        line-height: 33px;
+      }
+    }
+
+    .send-action {
+      height: 32px;
+      padding-right: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      z-index: 101;
+
+      .download,
+      .delete,
+      .setting {
+        cursor: pointer;
+        padding: 8px;
+        display: flex;
+        margin-right: 16px;
+        border-radius: 50%;
+        background: #ffffff;
+        //border: 1px solid #e5e5e5;
+        color: #666666;
+
+        &:hover {
+          //border: 1px solid #5a47e5;
+          background-color: #e5e5e5;
+          color: #5a47e5;
+        }
+
+        svg {
+          width: 18px;
+          height: 18px;
+        }
+      }
+
+      :deep(.ant-btn-primary) {
+        width: 36px;
+        height: 36px;
+        padding: 8px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: linear-gradient(300deg, #7b5ef2 1%, #c383fe 97%);
+      }
+
+      :deep(.ant-btn-primary:disabled) {
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: linear-gradient(300deg, #7b5ef2 1%, #c383fe 97%);
+        color: #fff !important;
+        border-color: transparent !important;
+      }
+
+      svg {
+        width: 24px;
+        height: 24px;
+      }
     }
   }
 }

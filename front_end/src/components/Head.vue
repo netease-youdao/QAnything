@@ -74,10 +74,10 @@ const { setNavIndex } = useHeader();
 const { changePage } = routeController();
 
 const navList = [
-  // {
-  //   name: getLanguage().header.quickStart,
-  //   value: 0,
-  // },
+  {
+    name: getLanguage().header.quickStart,
+    value: 2,
+  },
   {
     name: getLanguage().header.knowledge,
     value: 0,
@@ -112,7 +112,7 @@ const setNavIdx = value => {
 
 // header的item-icon选择
 const iconMap = new Map([
-  // [0, 'quick-icon'],
+  [2, 'quick-icon'],
   [0, 'knowledge-icon'],
   [1, 'bot-icon'],
 ]);
