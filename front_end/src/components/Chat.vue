@@ -1139,9 +1139,12 @@ scrollBottom();
         //position: absolute;
         //bottom: 0;
         min-height: 42px;
+        line-height: 33px;
+        padding: 11px 15px;
         display: flex;
         align-items: center;
-        line-height: 33px;
+        font-size: 1rem;
+        border-radius: 18px;
       }
     }
 

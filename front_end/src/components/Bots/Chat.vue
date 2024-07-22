@@ -155,15 +155,15 @@
       </div>
       <div class="question-box">
         <div class="question">
-          <a-popover placement="topLeft">
-            <template #content>
-              <p v-if="network">退出联网检索</p>
-              <p v-else>开启联网检索</p>
-            </template>
-            <span :class="['network', `network-${network}`]">
-              <SvgIcon name="network" @click="networkChat" />
-            </span>
-          </a-popover>
+          <!--          <a-popover placement="topLeft">-->
+          <!--            <template #content>-->
+          <!--              <p v-if="network">退出联网检索</p>-->
+          <!--              <p v-else>开启联网检索</p>-->
+          <!--            </template>-->
+          <!--            <span :class="['network', `network-${network}`]">-->
+          <!--              <SvgIcon name="network" @click="networkChat" />-->
+          <!--            </span>-->
+          <!--          </a-popover>-->
           <a-popover v-if="chatType === 'share'" placement="topLeft">
             <template #content>
               <p v-if="control">{{ bots.multiTurnConversation2 }}</p>
@@ -581,9 +581,9 @@ function getB64Type(suffix) {
   return b64Types[index];
 }
 
-const networkChat = () => {
-  network.value = !network.value;
-};
+// const networkChat = () => {
+//   network.value = !network.value;
+// };
 
 scrollBottom();
 </script>
@@ -951,7 +951,7 @@ scrollBottom();
     :deep(.ant-input:hover) {
       border-color: $baseColor;
     }
-    :deep(.ant-input:focused) {
+    :deep(.ant-input:focus) {
       border-color: $baseColor;
     }
     :deep(.ant-input-affix-wrapper) {

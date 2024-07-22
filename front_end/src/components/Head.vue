@@ -107,14 +107,16 @@ const setNavIdx = value => {
     changePage('/home');
   } else if (value === 1) {
     changePage('/bots');
+  } else if (value === 2) {
+    changePage('/quickstart');
   }
 };
 
 // header的item-icon选择
 const iconMap = new Map([
-  [2, 'quick-icon'],
   [0, 'knowledge-icon'],
   [1, 'bot-icon'],
+  [2, 'quick-icon'],
 ]);
 const getIcon = itemValue => {
   return iconMap.get(itemValue);

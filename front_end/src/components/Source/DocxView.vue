@@ -26,7 +26,11 @@ function errorHandler(e) {
 // .vue-office-docx .docx-wrapper > section.docx {
 //   width: auto !important;
 // }
-// .docx-wrapper {
-//   padding: 0 !important;
-// }
+.docx-wrapper {
+  background-color: white !important;
+
+  .docx {
+    box-shadow: none !important;
+  }
+}
 </style>
