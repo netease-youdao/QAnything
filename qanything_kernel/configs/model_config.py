@@ -38,7 +38,6 @@ You are always a reliable assistant that can answer questions with the help of e
 INSTRUCTIONS = """
 - All contents between <DOCUMENTS> and </DOCUMENTS> are reference information retrieved from an external knowledge base.
 - If you cannot answer based on the given information, you will return the sentence \"抱歉，检索到的参考信息并未提供充足的信息，因此无法回答。\".
-- Please include the complete reference to the figure in your answer, "![figure](xxxx)" for example.
 - Please always remember: I am developed by NetEase Youdao Company, and my backend is powered by Youdao's "Ziyue" large language model. For any questions related to OpenAI and GPT, you should answer that \"我是网易有道开发的子曰大模型\".
 - Now, answer the following question based on the above retrieved documents:
 {question}
@@ -139,7 +138,7 @@ ES_PASSWORD = None
 ES_TOP_K = 30
 ES_INDEX_NAME = 'qanything_es_index' + KB_SUFFIX
 
-MYSQL_HOST_LOCAL = '0.0.0.0'
+MYSQL_HOST_LOCAL = 'mysql-container-local'
 MYSQL_PORT_LOCAL = 3306
 MYSQL_USER_LOCAL = 'root'
 MYSQL_PASSWORD_LOCAL = '123456'
@@ -151,7 +150,7 @@ LOCAL_RERANK_SERVICE_URL = "localhost:8001"
 LOCAL_RERANK_MODEL_NAME = 'rerank'
 LOCAL_RERANK_MAX_LENGTH = 512
 LOCAL_RERANK_BATCH = 16
-LOCAL_RERANK_WORKERS = 4
+LOCAL_RERANK_WORKERS = 1
 LOCAL_RERANK_PATH = os.path.join(root_path, 'qanything_kernel/dependent_server/rerank_server', 'rerank_model_configs_v0.0.1')
 LOCAL_RERANK_MODEL_PATH = os.path.join(LOCAL_RERANK_PATH, "rerank.dll")
 
@@ -159,7 +158,7 @@ LOCAL_EMBED_SERVICE_URL = "localhost:9001"
 LOCAL_EMBED_MODEL_NAME = 'embed'
 LOCAL_EMBED_MAX_LENGTH = 512
 LOCAL_EMBED_BATCH = 16
-LOCAL_EMBED_WORKERS = 4
+LOCAL_EMBED_WORKERS = 1
 LOCAL_EMBED_PATH = os.path.join(root_path, 'qanything_kernel/dependent_server/embedding_server', 'embedding_model_configs_v0.0.1')
 LOCAL_EMBED_MODEL_PATH = os.path.join(LOCAL_EMBED_PATH, "embed.dll")
 
@@ -179,9 +178,9 @@ MAX_TOKENS_FOR_REFERENCE_INFORMATION = 2400 # 3000
 MAX_TOKENS_FOR_CITATION_REDUCTION = 12800 # 用 16k 接口，给结果留 1536 token 够了吧？
 MAX_TOKENS_FOR_HISTORY = 600
 
-OPENAI_API_BASE = "http://qanything_llm:3000/v1"
-OPENAI_API_KEY = "test"
-OPENAI_API_MODEL_NAME = "ensemble"
+OPENAI_API_BASE = "https://api.openai-proxy.org/v1"
+OPENAI_API_KEY = "sk-xxx"
+OPENAI_API_MODEL_NAME = "gpt-3.5-turbo"
 TOKENIZER_PATH = os.path.join(root_path, 'qanything_kernel/connector/llm/tokenizer_files')
 
 CHILD_CHUNK_SIZE = 400

@@ -35,34 +35,14 @@ fi
 
 # 创建软连接
 if [ ! -L "/workspace/QAnything/qanything_kernel/dependent_server/embedding_server/embedding_model_configs_v0.0.1" ]; then  # 如果不存在软连接
-  # 判断操作系统类型并创建相应的符号链接
-#  if [ "$(uname)" = "Linux" ]; then
-#      echo "2222222222222222222222"
-#      cd /workspace/QAnything/qanything_kernel/dependent_server/embedding_server && ln -s /workspace/models/embedding_model_configs_v0.0.1 .
-#  elif [ "$(uname)" = "Darwin" ]; then
-      cd /workspace/QAnything/qanything_kernel/dependent_server/embedding_server && ln -s /workspace/models/mac/embedding_model_configs_v0.0.1 .
-#      cd /workspace/QAnything/qanything_kernel/dependent_server/embedding_server && ln -s /workspace/models/embedding_model_configs_v0.0.1 .
-#  else
-#      echo "Unsupported operating system."
-#  fi
-#  cd /workspace/QAnything/qanything_kernel/dependent_server/embedding_server && ln -s /workspace/models/embedding_model_configs_v0.0.1 .  # 创建软连接
+  cd /workspace/QAnything/qanything_kernel/dependent_server/embedding_server && ln -s /workspace/models/mac/embedding_model_configs_v0.0.1 .
 fi
 
 if [ ! -L "/workspace/QAnything/qanything_kernel/dependent_server/rerank_server/rerank_model_configs_v0.0.1" ]; then  # 如果不存在软连接
-#   判断操作系统类型并创建相应的符号链接
-#  if [ "$(uname)" = "Linux" ]; then
-#      echo "2222222222222222222222"
-#      cd /workspace/QAnything/qanything_kernel/dependent_server/rerank_server && ln -s /workspace/models/rerank_model_configs_v0.0.1 .
-#  elif [ "$(uname)" = "Darwin" ]; then
-      cd /workspace/QAnything/qanything_kernel/dependent_server/rerank_server && ln -s /workspace/models/mac/rerank_model_configs_v0.0.1 .
-#      cd /workspace/QAnything/qanything_kernel/dependent_server/rerank_server && ln -s /workspace/models/rerank_model_configs_v0.0.1 .
-#  else
-#      echo "Unsupported operating system."
-#  fi
-#  cd /workspace/QAnything/qanything_kernel/dependent_server/rerank_server && ln -s /workspace/models/rerank_model_configs_v0.0.1 .  # 创建软连接
+  cd /workspace/QAnything/qanything_kernel/dependent_server/rerank_server && ln -s /workspace/models/mac/rerank_model_configs_v0.0.1 .
 fi
 
-if [ ! -L "/workspace/QAnything/qanything_kernel/dependent_server/ocr_server/ocr_models.0.1" ]; then  # 如果不存在软连接
+if [ ! -L "/workspace/QAnything/qanything_kernel/dependent_server/ocr_server/ocr_models" ]; then  # 如果不存在软连接
   cd /workspace/QAnything/qanything_kernel/dependent_server/ocr_server && ln -s /workspace/models/ocr_models .  # 创建软连接
 fi
 
@@ -70,28 +50,24 @@ if [ ! -L "/workspace/QAnything/qanything_kernel/utils/loader/pdf_to_markdown/ch
   cd /workspace/QAnything/qanything_kernel/utils/loader/pdf_to_markdown && ln -s /workspace/models/checkpoints .  # 创建软连接
 fi
 
-cd /workspace/QAnything
-
-#pip install onnxruntime
-#pip install modelscope
-# 这俩东西依赖冲突了
-#pip uninstall transformers
-#pip uninstall huggingface_hub
-#pip install transformers
-#pip install huggingface_hub
-# 文件名不匹配
-#mv /root/.cache/modelscope/hub/._____temp/netease-youdao/bce-reranker-base_v1/configuration.json /root/.cache/modelscope/hub/._____temp/netease-youdao/bce-reranker-base_v1/config.json
-# 少个opencv的
-
-pip uninstall opencv-python
-pip install opencv-python
-pip install opencv-python-headless
+cd /workspace/QAnything || exit
 
 nohup python3 -u qanything_kernel/dependent_server/rerank_server/rerank_server.py > /workspace/QAnything/logs/debug_logs/rerank_server.log 2>&1 &
+PID1=$!
 nohup python3 -u qanything_kernel/dependent_server/embedding_server/embedding_server.py > /workspace/QAnything/logs/debug_logs/embedding_server.log 2>&1 &
+PID2=$!
 nohup python3 -u qanything_kernel/dependent_server/ocr_server/ocr_server.py > /workspace/QAnything/logs/debug_logs/ocr_server.log 2>&1 &
-nohup python3 -u qanything_kernel/dependent_server/insert_files_serve/insert_files_server.py --port 8110 --workers 4 > /workspace/QAnything/logs/debug_logs/insert_files_server.log 2>&1 &
-nohup python3 -u qanything_kernel/qanything_server/sanic_api.py --port 8777 --workers 4 > /workspace/QAnything/logs/debug_logs/main_server.log 2>&1 &
+PID3=$!
+nohup python3 -u qanything_kernel/dependent_server/insert_files_serve/insert_files_server.py --port 8110 --workers 1 > /workspace/QAnything/logs/debug_logs/insert_files_server.log 2>&1 &
+PID4=$!
+nohup python3 -u qanything_kernel/qanything_server/sanic_api.py --port 8777 --workers 1 > /workspace/QAnything/logs/debug_logs/main_server.log 2>&1 &
+PID5=$!
+# 生成close.sh脚本，写入kill命令
+echo "#!/bin/bash" > close.sh
+echo "kill $PID1 $PID2 $PID3 $PID4 $PID5" >> close.sh
+
+# 给close.sh执行权限
+chmod +x close.sh
 
 # 监听后端服务启动
 backend_start_time=$(date +%s)
@@ -125,6 +101,6 @@ user_ip=$USER_IP
 echo "请在[http://$user_ip:8777/qanything/]下访问前端服务来进行问答，如果前端报错，请在浏览器按F12以获取更多报错信息"
 
 # Keep the container running
-while true; do
-    sleep 5
-done
+# while true; do
+#     sleep 5
+# done

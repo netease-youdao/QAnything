@@ -89,7 +89,7 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
     #                 status="Processing", msg=str(progress))
     # 这里是把文件做向量化，然后写入Milvus的逻辑
     loop = asyncio.get_event_loop()
-    with ThreadPoolExecutor(max_workers=4) as executor:
+    with ThreadPoolExecutor(max_workers=1) as executor:
         task = loop.run_in_executor(executor, local_file.split_file_to_docs)
         start = time.perf_counter()
         try:
@@ -183,17 +183,9 @@ async def check_and_process(pool):
         try:
             async with pool.acquire() as conn:  # 获取连接
                 async with conn.cursor() as cur:  # 创建游标
-                    if args.mode == 'test':
-                        user_id_filter = "LIKE '%%test%%'"
-                    elif args.mode == 'dev':
-                        user_id_filter = "LIKE '%%dev%%'"
-                    else:
-                        user_id_filter = "NOT LIKE '%%test%%' AND user_id NOT LIKE '%%dev%%'"
-                        # user_id_filter = "NOT LIKE '%%dev%%' AND user_id <> 'unknown'"
-
                     query = f"""
                         SELECT id, timestamp, file_id, file_name FROM File
-                        WHERE status = 'gray' AND user_id {user_id_filter} AND MOD(id, %s) = %s
+                        WHERE status = 'gray' AND MOD(id, %s) = %s
                         ORDER BY timestamp ASC LIMIT 1;
                     """
 
@@ -267,7 +259,7 @@ async def close_db(app, loop):
 @app.listener('before_server_start')
 async def setup_workers(app, loop):
     # 创建数据库连接池
-    app.ctx.pool = await aiomysql.create_pool(**db_config, minsize=1, maxsize=32, loop=loop, autocommit=False, init_command='SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED')  # 更改事务隔离级别
+    app.ctx.pool = await aiomysql.create_pool(**db_config, minsize=1, maxsize=16, loop=loop, autocommit=False, init_command='SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED')  # 更改事务隔离级别
     app.add_task(check_and_process(app.ctx.pool))
 
 

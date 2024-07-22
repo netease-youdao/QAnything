@@ -7,7 +7,7 @@ networks:
 services:
   elasticsearch:
     container_name: es-container-local
-    image: "docker.elastic.co/elasticsearch/elasticsearch:8.13.2"
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.2
     privileged: true
     # ports:
     #   - 9200:9200
@@ -22,7 +22,7 @@ services:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/es/data:/usr/share/elasticsearch/data
     healthcheck:
       test: curl --fail http://localhost:9200/_cat/health || exit 1
-      interval: 30s
+      interval: 10s
       timeout: 20s
       retries: 3
 
@@ -45,7 +45,7 @@ services:
 
   minio:
     container_name: milvus-minio-local
-    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+    image: docker.io/minio/minio:RELEASE.2023-03-20T20-16-18Z
     environment:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
@@ -63,7 +63,7 @@ services:
 
   standalone:
     container_name: milvus-standalone-local
-    image: milvusdb/milvus:v2.4.5
+    image: docker.io/milvusdb/milvus:v2.4.5
     logging:
       driver: "json-file"
       options:
@@ -79,7 +79,7 @@ services:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/milvus:/var/lib/milvus
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
-      interval: 30s
+      interval: 10s
       start_period: 90s
       timeout: 20s
       retries: 3
@@ -93,9 +93,9 @@ services:
   mysql:
     container_name: mysql-container-local
     privileged: true
-    image: mysql:8.4
-    ports:
-      - "3306:3306"
+    image: docker.io/library/mysql:8.4
+#    ports:
+#      - "3306:3306"
     command: --max-connections=10000
     environment:
       - MYSQL_ROOT_PASSWORD=123456
@@ -105,9 +105,9 @@ services:
 
   qanything_local:
     container_name: qanything-container-local
-    image: qanything-privatization:v1.5.0
+    image: docker.io/library/qanything_local:v1
     # command: /bin/bash -c "cd /workspace/QAnything && bash scripts/entrypoint.sh"
-    network_mode: "host"
+    # network_mode: "host"
     privileged: true
     shm_size: '8gb'
     volumes:
