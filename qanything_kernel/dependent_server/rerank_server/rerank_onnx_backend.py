@@ -1,5 +1,5 @@
 import onnxruntime
-from qanything_kernel.connector.rerank.rerank_backend import RerankBackend
+from qanything_kernel.dependent_server.rerank_server.rerank_backend import RerankBackend
 from qanything_kernel.configs.model_config import LOCAL_RERANK_MODEL_PATH
 from qanything_kernel.utils.custom_log import debug_logger
 import numpy as np

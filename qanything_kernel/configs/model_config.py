@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+import platform
 
 load_dotenv()
 # LOG_FORMAT = "%(levelname) -5s %(asctime)s" "-1d: %(message)s"
@@ -37,7 +38,6 @@ You are always a reliable assistant that can answer questions with the help of e
 INSTRUCTIONS = """
 - All contents between <DOCUMENTS> and </DOCUMENTS> are reference information retrieved from an external knowledge base.
 - If you cannot answer based on the given information, you will return the sentence \"抱歉，检索到的参考信息并未提供充足的信息，因此无法回答。\".
-- Please include the complete reference to the figure in your answer, "![figure](xxxx)" for example.
 - Please always remember: I am developed by NetEase Youdao Company, and my backend is powered by Youdao's "Ziyue" large language model. For any questions related to OpenAI and GPT, you should answer that \"我是网易有道开发的子曰大模型\".
 - Now, answer the following question based on the above retrieved documents:
 {question}
@@ -150,7 +150,7 @@ LOCAL_RERANK_SERVICE_URL = "localhost:8001"
 LOCAL_RERANK_MODEL_NAME = 'rerank'
 LOCAL_RERANK_MAX_LENGTH = 512
 LOCAL_RERANK_BATCH = 16
-LOCAL_RERANK_WORKERS = 4
+LOCAL_RERANK_WORKERS = 1
 LOCAL_RERANK_PATH = os.path.join(root_path, 'qanything_kernel/dependent_server/rerank_server', 'rerank_model_configs_v0.0.1')
 LOCAL_RERANK_MODEL_PATH = os.path.join(LOCAL_RERANK_PATH, "rerank.dll")
 
@@ -158,7 +158,7 @@ LOCAL_EMBED_SERVICE_URL = "localhost:9001"
 LOCAL_EMBED_MODEL_NAME = 'embed'
 LOCAL_EMBED_MAX_LENGTH = 512
 LOCAL_EMBED_BATCH = 16
-LOCAL_EMBED_WORKERS = 4
+LOCAL_EMBED_WORKERS = 1
 LOCAL_EMBED_PATH = os.path.join(root_path, 'qanything_kernel/dependent_server/embedding_server', 'embedding_model_configs_v0.0.1')
 LOCAL_EMBED_MODEL_PATH = os.path.join(LOCAL_EMBED_PATH, "embed.dll")
 
@@ -178,9 +178,9 @@ MAX_TOKENS_FOR_REFERENCE_INFORMATION = 2400 # 3000
 MAX_TOKENS_FOR_CITATION_REDUCTION = 12800 # 用 16k 接口，给结果留 1536 token 够了吧？
 MAX_TOKENS_FOR_HISTORY = 600
 
-OPENAI_API_BASE = "http://qanything_llm:3000/v1"
-OPENAI_API_KEY = "test"
-OPENAI_API_MODEL_NAME = "ensemble"
+OPENAI_API_BASE = "https://api.openai-proxy.org/v1"
+OPENAI_API_KEY = "sk-xxx"
+OPENAI_API_MODEL_NAME = "gpt-3.5-turbo"
 TOKENIZER_PATH = os.path.join(root_path, 'qanything_kernel/connector/llm/tokenizer_files')
 
 CHILD_CHUNK_SIZE = 400
@@ -206,3 +206,36 @@ BOT_PROMPT = """
 - 不要编造答案，如果答案不在经核实的资料中或无法从经核实的资料中得出，请回答“我无法回答您的问题。”（或者您可以修改为：如果给定的检索结果无法回答问题，可以利用你的知识尽可能回答用户的问题。)
 """
 BOT_WELCOME = "您好，我是您的专属机器人，请问有什么可以帮您呢？"
+
+
+
+
+os_system = platform.system()
+# LOCAL_RERANK_PATH = os.path.join(root_path, 'qanything_kernel/connector/rerank', 'rerank_model_configs_v0.0.1')
+# todo 之后要更换
+# if os_system == 'Darwin':
+#     LOCAL_RERANK_REPO = "maidalun/bce-reranker-base_v1"
+#     LOCAL_RERANK_MODEL_PATH = os.path.join(LOCAL_RERANK_PATH, "pytorch_model.bin")
+# else:
+#     LOCAL_RERANK_REPO = "netease-youdao/bce-reranker-base_v1"
+#     LOCAL_RERANK_MODEL_PATH = os.path.join(LOCAL_RERANK_PATH, "rerank.onnx")
+LOCAL_RERANK_REPO = "maidalun/bce-reranker-base_v1"
+LOCAL_RERANK_MODEL_PATH = os.path.join(LOCAL_RERANK_PATH, "pytorch_model.bin")
+print('LOCAL_RERANK_REPO:', LOCAL_RERANK_REPO)
+LOCAL_RERANK_MODEL_NAME = 'rerank'
+LOCAL_RERANK_MAX_LENGTH = 512
+
+# LOCAL_EMBED_PATH = os.path.join(root_path, 'qanything_kernel/connector/embedding', 'embedding_model_configs_v0.0.1')
+# todo
+# if os_system == 'Darwin':
+#     LOCAL_EMBED_REPO = "maidalun/bce-embedding-base_v1"
+#     LOCAL_EMBED_MODEL_PATH = os.path.join(LOCAL_EMBED_PATH, "pytorch_model.bin")
+# else:
+#     LOCAL_EMBED_REPO = "netease-youdao/bce-embedding-base_v1"
+#     LOCAL_EMBED_MODEL_PATH = os.path.join(LOCAL_EMBED_PATH, "embed.onnx")
+LOCAL_EMBED_REPO = "maidalun/bce-embedding-base_v1"
+LOCAL_EMBED_MODEL_PATH = os.path.join(LOCAL_EMBED_PATH, "pytorch_model.bin")
+
+print('LOCAL_EMBED_REPO:', LOCAL_EMBED_REPO)
+LOCAL_EMBED_MODEL_NAME = 'embed'
+LOCAL_EMBED_MAX_LENGTH = 512

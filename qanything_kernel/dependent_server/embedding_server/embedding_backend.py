@@ -20,17 +20,6 @@ class EmbeddingBackend:
         self.use_cpu = use_cpu
         self._tokenizer = AutoTokenizer.from_pretrained(LOCAL_EMBED_PATH)
         self.workers = LOCAL_EMBED_WORKERS
-        self.return_tensors = "np"
-        sess_options = SessionOptions()
-        sess_options.graph_optimization_level = GraphOptimizationLevel.ORT_ENABLE_ALL
-        if use_cpu:
-            providers = ['CPUExecutionProvider']
-        else:
-            providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
-        f = Fernet(YYY)
-        onnx_file = f.decrypt(open(LOCAL_EMBED_MODEL_PATH, 'rb').read())
-        self._session = InferenceSession(onnx_file, sess_options=sess_options, providers=providers)
-        debug_logger.info(f"EmbeddingClient: model_path: {LOCAL_EMBED_MODEL_PATH}")
 
     def get_embedding(self, sentences, max_length) -> List:
         inputs_onnx = self._tokenizer(sentences, padding=True, truncation=True, max_length=max_length,

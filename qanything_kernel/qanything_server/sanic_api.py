@@ -52,7 +52,7 @@ app.static('/qanything/', 'qanything_kernel/qanything_server/dist/qanything/', n
 async def init_local_doc_qa(app, loop):
     start = time.time()
     local_doc_qa = LocalDocQA(args.port)
-    local_doc_qa.init_cfg()
+    local_doc_qa.init_cfg(args)
     end = time.time()
     print(f'init local_doc_qa cost {end - start}s', flush=True)
     app.ctx.local_doc_qa = local_doc_qa

@@ -24,7 +24,7 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 import traceback
 import re
-
+import platform
 
 def _embeddings_hash(self):
     return hash(self.model_name)
@@ -32,6 +32,8 @@ def _embeddings_hash(self):
 
 YouDaoEmbeddings.__hash__ = _embeddings_hash
 
+from sanic import Sanic
+app = Sanic("rerank_server")
 
 def deduplicate_documents(source_docs):
     unique_docs = set()
@@ -87,11 +89,32 @@ class LocalDocQA:
         session.mount('https://', adapter)
         return session
 
-    def init_cfg(self):
+    def init_cfg(self, args=None):
         self.embeddings = YouDaoEmbeddings()
         self.milvus_summary = KnowledgeBaseManager()
         # self.es_client = StoreElasticSearchClient()
         self.milvus_kb = VectorStoreMilvusClient()
+        self.llm: OpenAILLM = OpenAILLM(args)
+
+        # self.local_rerank_backend: app.ctx.rerank_backend
+
+
+        # if platform.system() == 'Linux':
+        #
+        #     self.llm: OpenAILLM = OpenAILLM(args)
+        #
+        #     from qanything_kernel.dependent_server.rerank_server.rerank_onnx_backend import RerankOnnxBackend
+        #     from qanything_kernel.dependent_server.embedding_server.embedding_onnx_backend import EmbeddingOnnxBackend
+        #     self.local_rerank_backend: RerankOnnxBackend = RerankOnnxBackend(self.use_cpu)
+        #     self.embeddings: EmbeddingOnnxBackend = EmbeddingOnnxBackend(self.use_cpu)
+        # else:
+        #
+        #     self.llm: OpenAILLM = OpenAILLM(args)
+        #
+        #     from qanything_kernel.dependent_server.rerank_server.rerank_torch_backend import RerankTorchBackend
+        #     from qanything_kernel.dependent_server.embedding_server.embedding_torch_backend import EmbeddingTorchBackend
+        #     self.local_rerank_backend: RerankTorchBackend = RerankTorchBackend(self.use_cpu)
+        #     self.embeddings: EmbeddingTorchBackend = EmbeddingTorchBackend(self.use_cpu)
 
     def init_retriever(self, user_id):
         self.es_client = StoreElasticSearchClient(index_name=user_id)

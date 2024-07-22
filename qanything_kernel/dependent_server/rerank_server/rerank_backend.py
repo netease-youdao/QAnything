@@ -21,17 +21,6 @@ class RerankBackend:
         self.max_length = LOCAL_RERANK_MAX_LENGTH
         self.return_tensors = None
         self.workers = LOCAL_RERANK_WORKERS
-        self.return_tensors = "np"
-        # 创建一个ONNX Runtime会话设置，使用GPU执行
-        sess_options = onnxruntime.SessionOptions()
-        sess_options.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_ENABLE_ALL
-        if use_cpu:
-            providers = ['CPUExecutionProvider']
-        else:
-            providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
-        f = Fernet(YYY)
-        onnx_file = f.decrypt(open(LOCAL_RERANK_MODEL_PATH, 'rb').read())
-        self.session = onnxruntime.InferenceSession(onnx_file, sess_options, providers=providers)
     
     def inference(self, batch) -> List:
         # 准备输入数据
