@@ -185,13 +185,16 @@
             <div class="send-action">
               <a-popover placement="topLeft">
                 <template #content>{{ common.chatToPic }}</template>
-                <span class="download" @click="downloadChat">
+                <span
+                  :class="['download', showLoading ? 'isPreventClick' : '']"
+                  @click="downloadChat"
+                >
                   <SvgIcon name="chat-download" />
                 </span>
               </a-popover>
               <a-popover>
                 <template #content>{{ common.clearChat }}</template>
-                <span class="delete" @click="deleteChat">
+                <span :class="['delete', showLoading ? 'isPreventClick' : '']" @click="deleteChat">
                   <SvgIcon name="chat-delete" />
                 </span>
               </a-popover>
@@ -252,7 +255,8 @@ const typewriter = new Typewriter((str: string) => {
 const { selectList, knowledgeBaseList } = storeToRefs(useKnowledgeBase());
 const { copy } = useClipboard();
 const { QA_List, chatId, pageId, qaPageId, historyList } = storeToRefs(useHomeChat());
-const { addHistoryList, getChatById, updateHistoryList, addChatList } = useHomeChat();
+const { addHistoryList, getChatById, updateHistoryList, addChatList, clearChatList } =
+  useHomeChat();
 const { setChatSourceVisible, setSourceType, setSourceUrl, setTextContent } = useChatSource();
 const { language } = storeToRefs(useLanguage());
 declare module _czc {
@@ -559,11 +563,11 @@ const beforeSend = title => {
 
 //发送问答消息
 const send = () => {
-  if (showLoading.value) {
-    message.warn('正在聊天中...请等待结束');
+  if (!question.value.trim().length) {
     return;
   }
-  if (!question.value.length) {
+  if (showLoading.value) {
+    message.warn('正在聊天中...请等待结束');
     return;
   }
   checkKbSelect();
@@ -709,12 +713,14 @@ const confirmLoading = ref(false);
 const content = ref('');
 const type = ref('');
 const downloadChat = () => {
+  if (showLoading.value) return;
   type.value = 'download';
   showModal.value = true;
   content.value = common.saveTip;
 };
 
 const deleteChat = () => {
+  if (showLoading.value) return;
   type.value = 'delete';
   showModal.value = true;
   content.value = common.clearTip;
@@ -749,6 +755,9 @@ const confirm = async () => {
   } else if (type.value === 'delete') {
     console.log('delete');
     history.value = [];
+    clearChatList(chatId.value);
+    chatId.value = null;
+    QA_List.value = [];
   }
   type.value = '';
   content.value = '';
@@ -848,11 +857,11 @@ scrollBottom();
 <style lang="scss" scoped>
 .container {
   // padding-top: 16px;
-  height: 100%;
+  height: calc(100%);
   // margin-top: 65px;
 
   &.showSider {
-    height: calc(100vh);
+    height: calc(100vh - 64px);
   }
 }
 
@@ -862,7 +871,10 @@ scrollBottom();
   margin: 0 auto;
   //border-radius: 12px 0 0 0;
   //border-top-color: #26293b;
+  display: flex;
+  flex-direction: column;
   background: #f3f6fd;
+  overflow: hidden;
 }
 
 .chat {
@@ -870,12 +882,14 @@ scrollBottom();
   width: 75.36%;
   min-width: 900px;
   max-width: 1239px;
-  height: calc(100vh - 54px - 48px - 28px - 28px - 32px - 50px);
-  overflow-y: auto;
   padding-top: 28px;
+  //height: calc(100vh - 54px - 48px - 28px - 28px - 32px - 50px);
+  flex: 1;
+  //overflow: hidden;
+  overflow-y: auto;
 
   &.showSider {
-    height: calc(100vh - 280px);
+    //height: calc(100vh - 280px);
   }
 
   #chat-ul {
@@ -1054,9 +1068,8 @@ scrollBottom();
 
 .stop-btn {
   display: flex;
-  height: 40px;
   justify-content: center;
-  margin-top: 38px;
+  margin: 18px 0;
 
   :deep(.ant-btn) {
     width: 92px;
@@ -1077,16 +1090,17 @@ scrollBottom();
 }
 
 .question-box {
-  position: fixed;
-  bottom: 28px;
-  left: 280px;
-  width: calc(100vw - 280px);
+  //position: fixed;
+  //bottom: 28px;
+  //left: 280px;
+  width: 100%;
+  margin-bottom: 100px;
 
   .question {
     width: 75.36%;
     min-width: 900px;
     max-width: 1239px;
-    height: 48px;
+    //height: 48px;
     margin: 0 auto;
     display: flex;
     align-items: center;
@@ -1132,6 +1146,8 @@ scrollBottom();
     }
 
     .send-action {
+      position: absolute;
+      bottom: 10px;
       height: 32px;
       padding-right: 10px;
       display: flex;
@@ -1139,6 +1155,10 @@ scrollBottom();
       align-items: center;
       color: #fff;
       z-index: 101;
+
+      .isPreventClick {
+        cursor: not-allowed !important;
+      }
 
       .download,
       .delete,
