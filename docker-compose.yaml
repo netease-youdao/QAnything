@@ -45,7 +45,7 @@ services:
 
   minio:
     container_name: milvus-minio-local
-    image: docker.io/minio/minio:RELEASE.2023-03-20T20-16-18Z
+    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
     environment:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
@@ -63,7 +63,7 @@ services:
 
   standalone:
     container_name: milvus-standalone-local
-    image: docker.io/milvusdb/milvus:v2.4.5
+    image: milvusdb/milvus:v2.4.5
     logging:
       driver: "json-file"
       options:
@@ -93,7 +93,7 @@ services:
   mysql:
     container_name: mysql-container-local
     privileged: true
-    image: docker.io/library/mysql:8.4
+    image: mysql:8.4
 #    ports:
 #      - "3306:3306"
     command: --max-connections=10000
@@ -105,7 +105,7 @@ services:
 
   qanything_local:
     container_name: qanything-container-local
-    image: docker.io/library/qanything_local:v1
+    image: localhost/qanything:v1.5.0
     # command: /bin/bash -c "cd /workspace/QAnything && bash scripts/entrypoint.sh"
     # network_mode: "host"
     privileged: true
