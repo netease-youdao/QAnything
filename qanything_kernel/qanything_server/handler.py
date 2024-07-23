@@ -356,8 +356,8 @@ async def list_docs(req: request):
     kb_id = correct_kb_id(kb_id)
     debug_logger.info("kb_id: {}".format(kb_id))
     file_id = safe_get(req, 'file_id')
-    page = safe_get(req, 'pageSize', 1)  # 默认为第一页
-    limit = safe_get(req, 'pageNum', 10)  # 默认每页显示10条记录
+    page = safe_get(req, 'page_size', 1)  # 默认为第一页
+    limit = safe_get(req, 'page_limit', 10)  # 默认每页显示10条记录
     data = []
     if file_id is None:
         file_infos = local_doc_qa.milvus_summary.get_files(user_id, kb_id)
