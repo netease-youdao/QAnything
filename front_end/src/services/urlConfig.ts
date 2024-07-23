@@ -159,6 +159,14 @@ const urlConfig: IUrlConfig = {
       user_id: userId,
     },
   },
+  // 获取文档解析内容
+  getDocCompleted: {
+    type: EUrlType.POST,
+    url: '/local_doc_qa/get_doc_completed',
+    param: {
+      user_id: userId,
+    },
+  },
 };
 const urlResquest: any = {};
 Object.keys(urlConfig).forEach(key => {

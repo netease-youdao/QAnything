@@ -1,9 +1,9 @@
 <!--
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-10 15:02:33
- * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2023-12-26 11:36:00
- * @FilePath: /qanything-open-source/src/components/Head.vue
+ * @LastEditors: Ianarua 306781523@qq.com
+ * @LastEditTime: 2024-07-22 18:14:22
+ * @FilePath: front_end/src/components/Head.vue
  * @Description: 
 -->
 <template>

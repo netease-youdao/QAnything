@@ -16,6 +16,7 @@ export default {
     renameSucceeded: '重命名成功',
     renameFailed: '重命名失败',
     delete: '删除',
+    view: '预览',
     regenerate: '重新生成',
     dragUrl: '将文件拖到此处，或',
     click: '点击上传',
@@ -182,5 +183,12 @@ export default {
     createKb: '创建知识库',
     noMore: '没有更多了',
     creationTime: '创建时间',
+  },
+  progress: {
+    uploadTotalProgress: '上传总进度',
+    putStorage: '成功入库',
+    uploaded: '已上传',
+    parsing: '解析中',
+    failure: '失败',
   },
 };

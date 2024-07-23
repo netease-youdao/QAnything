@@ -16,6 +16,7 @@ export default {
     renameSucceeded: 'Succeeded',
     renameFailed: 'Failed',
     delete: 'delete',
+    view: 'view',
     regenerate: 'regenerate',
     dragUrl: 'or drag and drop to upload',
     click: 'Click',
@@ -190,5 +191,12 @@ export default {
     createKb: 'Create knowledge base',
     noMore: 'No more',
     creationTime: 'Creation time',
+  },
+  progress: {
+    uploadTotalProgress: 'Upload Total Progress',
+    putStorage: 'Successfully put into storage',
+    uploaded: 'Uploaded',
+    parsing: 'Parsing',
+    failure: 'Failure',
   },
 };

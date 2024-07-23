@@ -163,8 +163,8 @@
           </li>
         </ul>
       </div>
-      <div class="stop-btn">
-        <a-button v-show="showLoading" @click="stopChat">
+      <div v-if="showLoading" class="stop-btn">
+        <a-button @click="stopChat">
           <template #icon>
             <SvgIcon name="stop" :class="showLoading ? 'loading' : ''"></SvgIcon>
           </template>
@@ -879,10 +879,11 @@ scrollBottom();
 
 .chat {
   margin: 0 auto;
-  width: 75.36%;
+  //width: 75.36%;
+  width: 50%;
   min-width: 900px;
   max-width: 1239px;
-  padding-top: 28px;
+  padding: 28px 0 14px 0;
   //height: calc(100vh - 54px - 48px - 28px - 28px - 32px - 50px);
   flex: 1;
   //overflow: hidden;
@@ -904,10 +905,17 @@ scrollBottom();
 
   .user {
     display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-start;
     margin-bottom: 16px;
+
+    .avatar {
+      margin: 0 0 0 16px;
+    }
 
     .question-text {
       padding: 13px 20px;
+      margin-left: 48px;
       font-size: 14px;
       font-weight: normal;
       line-height: 22px;
@@ -925,6 +933,7 @@ scrollBottom();
     .content {
       display: flex;
       flex-direction: column;
+      padding-right: 48px;
 
       .question-text {
         flex: 1;
@@ -1097,7 +1106,8 @@ scrollBottom();
   margin-bottom: 100px;
 
   .question {
-    width: 75.36%;
+    //width: 75.36%;
+    width: 70%;
     min-width: 900px;
     max-width: 1239px;
     //height: 48px;
@@ -1131,6 +1141,7 @@ scrollBottom();
       position: relative;
       width: 100%;
       height: 100%;
+      padding-left: 48px;
       display: flex;
       justify-content: flex-end;
       align-items: center;

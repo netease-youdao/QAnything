@@ -35,6 +35,7 @@
       <SelectKnowledgeDialog />
       <CopyUrlDialog />
     </div>
+    <!--    <div v-else-if="navIndex === 2" class="quick-start">123</div>-->
     <ChatSourceDialog />
   </div>
 </template>

@@ -1,11 +1,11 @@
 <template>
   <div v-if="dataSource.length !== 0" class="container">
-    <span class="title">上传总进度：</span>
+    <span class="title">{{ progress.uploadTotalProgress }}：</span>
     <a-tooltip
-      :title="`成功入库：${progressPercentCount.green},
-      已上传：${progressPercentCount.gray},
-      解析中：${progressPercentCount.yellow},
-      失败：${progressPercentCount.red}`"
+      :title="`${progress.putStorage}: ${progressPercentCount.green},
+      ${progress.uploaded}: ${progressPercentCount.gray},
+      ${progress.parsing}: ${progressPercentCount.yellow},
+      ${progress.failure}: ${progressPercentCount.red}`"
     >
       <div class="multi-color-progress">
         <div class="progress-outer">
@@ -52,6 +52,7 @@
  * 灰 z-index 104 base4 = 灰自己 + base3
  */
 import { useOptiionList } from '@/store/useOptiionList';
+import { getLanguage } from '@/language';
 
 type Status = 'green' | 'yellow' | 'red' | 'gray';
 type Percent = {
@@ -64,6 +65,8 @@ const redColor = '#f5222d'; // 入库失败、解析失败
 const grayColor = '#bfbfbf'; // 已上传，正在入库（排队中）
 
 const { dataSource } = storeToRefs(useOptiionList());
+
+const progress = getLanguage().progress;
 
 // 每个颜色的数量
 const progressPercentCount = ref<Percent>({
@@ -148,6 +151,7 @@ watch(
   height: 100%;
   position: relative;
 }
+
 .title {
   width: 130px;
 }

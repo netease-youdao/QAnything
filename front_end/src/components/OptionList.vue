@@ -101,6 +101,7 @@
               >
                 <span class="delete-item" @click="deleteItem(record)">{{ common.delete }}</span>
               </a-popconfirm>
+              <span class="view-item" @click="viewItem(record)">{{ common.view }}</span>
             </template>
           </template>
         </a-table>
@@ -154,10 +155,12 @@ import { useKnowledgeModal } from '@/store/useKnowledgeModal';
 import { pageStatus } from '@/utils/enum';
 import { resultControl } from '@/utils/utils';
 import { message } from 'ant-design-vue';
+
 const { setDefault } = useKnowledgeBase();
 const { currentKbName, currentId } = storeToRefs(useKnowledgeBase());
 const { setModalVisible, setUrlModalVisible, setModalTitle } = useKnowledgeModal();
 import { useOptiionList } from '@/store/useOptiionList';
+
 const { getDetails, setEditQaSet, setEditModalVisible, getFaqList, setFaqType, setPageNum } =
   useOptiionList();
 const { dataSource, faqList, timer, faqTimer, total, pageNum, loading } = storeToRefs(
@@ -285,13 +288,26 @@ const deleteItem = item => {
   optionItem = item;
 };
 
+// 预览chunks
+const viewItem = async item => {
+  console.log('item', item);
+  try {
+    const res = await resultControl(
+      await urlResquest.getDocCompleted({ kb_id: currentId.value, file_id: item.fileId })
+    );
+    console.log(res);
+  } catch (e) {
+    message.error(e.msg || '获取文档解析结果失败');
+  }
+};
+
 const confirm = async () => {
   try {
     await resultControl(
       await urlResquest.deleteFile({ file_ids: [optionItem.fileId], kb_id: currentId.value })
     );
     message.success('删除成功');
-    getDetails();
+    await getDetails();
   } catch (e) {
     message.error(e.msg || '删除失败');
   }
@@ -472,6 +488,7 @@ onBeforeUnmount(() => {
 .options {
   display: flex;
   align-items: center;
+
   .to-chat {
     cursor: pointer;
     display: flex;
@@ -481,11 +498,13 @@ onBeforeUnmount(() => {
     background: #5a47e5;
     border-radius: 6px;
     padding: 8px 20px;
+
     img {
       margin-right: 4px;
       width: 20px;
       height: 20px;
     }
+
     span {
       font-size: 16px;
       font-weight: 500;
@@ -518,12 +537,14 @@ onBeforeUnmount(() => {
   margin: 20px 0 14px 0;
   display: flex;
   justify-content: space-between;
+
   .navs {
     height: 40px;
     padding: 4px;
     border-radius: 8px;
     background: #e4e9f4;
     display: flex;
+
     .nav-item {
       // width: 100px;
       padding: 0 24px;
@@ -535,19 +556,23 @@ onBeforeUnmount(() => {
       line-height: 32px;
       cursor: pointer;
     }
+
     .nav-item-active {
       background: #fff;
       font-weight: 500;
       color: #5a47e5;
     }
   }
+
   .nav-progress {
     width: 40%;
     display: flex;
     align-items: center;
   }
+
   .handle-btn {
     display: flex;
+
     .upload {
       cursor: pointer;
       height: 40px;
@@ -594,8 +619,14 @@ onBeforeUnmount(() => {
     font-size: 14px;
     font-weight: normal;
     line-height: 22px;
+    margin-right: 5px;
     /* 错误颜色 */
     color: #ff524c;
+    cursor: pointer;
+  }
+
+  .view-item {
+    color: #4d71ff;
     cursor: pointer;
   }
 
@@ -611,20 +642,24 @@ onBeforeUnmount(() => {
   .status-box {
     display: flex;
     align-items: center;
+
     .icon-file-status {
       display: flex;
       align-items: center;
     }
+
     span {
       display: block;
 
       margin-right: 8px;
+
       svg {
         width: 16px;
         height: 16px;
       }
     }
   }
+
   :deep(.ant-table-cell-ellipsis[colstart='2']) {
     display: flex;
     align-items: center;
@@ -639,6 +674,7 @@ onBeforeUnmount(() => {
 
   color: #222222 !important;
   background-color: #e9edf7;
+
   .small {
     font-size: 12px !important;
   }
@@ -681,6 +717,7 @@ onBeforeUnmount(() => {
 :deep(.ant-pagination-item-active) {
   background: #5a47e5 !important;
   color: #fff !important;
+
   a {
     color: #fff !important;
   }
@@ -706,6 +743,7 @@ onBeforeUnmount(() => {
 <style lang="scss">
 .del-pop {
   margin-right: 10px;
+
   .ant-popover-content {
     .ant-btn-default {
       padding: 1px 8px;
@@ -715,11 +753,13 @@ onBeforeUnmount(() => {
         line-height: 1;
       }
     }
+
     .ant-btn-primary {
       background-color: rgba(90, 71, 229, 1) !important;
       color: #ffffff;
       padding: 1px 8px;
     }
+
     .ant-popover-inner {
       padding: 12px 16px;
       transform: translateX(44px);
@@ -730,6 +770,7 @@ onBeforeUnmount(() => {
         font-size: 16px;
       }
     }
+
     .ant-popconfirm-message-title {
       width: 168px;
       height: 36px;
@@ -741,22 +782,27 @@ onBeforeUnmount(() => {
     }
   }
 }
+
 .qa-del-pop {
   .ant-popover-inner {
     padding-top: 20px;
     height: 100px;
   }
+
   .ant-popconfirm-buttons {
     margin-top: 16px;
   }
+
   .ant-btn-primary {
     background-color: rgba(90, 71, 229, 1) !important;
     color: #ffffff;
     padding: 1px 8px;
   }
+
   .ant-btn-sm {
     width: 60px;
   }
+
   .ant-btn-sm.ant-btn-loading {
     width: auto !important;
   }

@@ -1,3 +1,11 @@
+/**
+ * @Author: Ianarua 306781523@qq.com
+ * @Date: 2024-07-11 09:39:35
+ * @LastEditors: Ianarua 306781523@qq.com
+ * @LastEditTime: 2024-07-22 18:22:34
+ * @FilePath: front_end/src/store/useHomeChat.ts
+ * @Description: 修改配置记得清除localStorage缓存
+ */
 // import { IChatItem } from '@/utils/types';
 
 interface IHistoryList {
