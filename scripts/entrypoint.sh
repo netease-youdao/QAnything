@@ -35,19 +35,19 @@ fi
 
 # 创建软连接
 if [ ! -L "/workspace/QAnything/qanything_kernel/dependent_server/embedding_server/embedding_model_configs_v0.0.1" ]; then  # 如果不存在软连接
-  cd /workspace/QAnything/qanything_kernel/dependent_server/embedding_server && ln -s /workspace/models/linux_onnx/embedding_model_configs_v0.0.1 .
+  cd /workspace/QAnything/qanything_kernel/dependent_server/embedding_server && ln -s /root/models/linux_onnx/embedding_model_configs_v0.0.1 .
 fi
 
 if [ ! -L "/workspace/QAnything/qanything_kernel/dependent_server/rerank_server/rerank_model_configs_v0.0.1" ]; then  # 如果不存在软连接
-  cd /workspace/QAnything/qanything_kernel/dependent_server/rerank_server && ln -s /workspace/models/linux_onnx/rerank_model_configs_v0.0.1 .
+  cd /workspace/QAnything/qanything_kernel/dependent_server/rerank_server && ln -s /root/models/linux_onnx/rerank_model_configs_v0.0.1 .
 fi
 
 if [ ! -L "/workspace/QAnything/qanything_kernel/dependent_server/ocr_server/ocr_models" ]; then  # 如果不存在软连接
-  cd /workspace/QAnything/qanything_kernel/dependent_server/ocr_server && ln -s /workspace/models/ocr_models .  # 创建软连接
+  cd /workspace/QAnything/qanything_kernel/dependent_server/ocr_server && ln -s /root/models/ocr_models .  # 创建软连接
 fi
 
 if [ ! -L "/workspace/QAnything/qanything_kernel/utils/loader/pdf_to_markdown/checkpoints" ]; then  # 如果不存在软连接
-  cd /workspace/QAnything/qanything_kernel/utils/loader/pdf_to_markdown && ln -s /workspace/models/pdf_models checkpoints  # 创建软连接
+  cd /workspace/QAnything/qanything_kernel/utils/loader/pdf_to_markdown && ln -s /root/models/pdf_models checkpoints  # 创建软连接
 fi
 
 cd /workspace/QAnything || exit
