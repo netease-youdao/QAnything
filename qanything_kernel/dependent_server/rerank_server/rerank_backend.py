@@ -2,13 +2,12 @@ from transformers import AutoTokenizer
 from copy import deepcopy
 from typing import List
 from qanything_kernel.configs.model_config import LOCAL_RERANK_MAX_LENGTH, \
-    LOCAL_RERANK_MODEL_PATH, LOCAL_RERANK_BATCH, LOCAL_RERANK_PATH, LOCAL_RERANK_WORKERS, YYY
+    LOCAL_RERANK_MODEL_PATH, LOCAL_RERANK_BATCH, LOCAL_RERANK_PATH, LOCAL_RERANK_WORKERS
 from qanything_kernel.utils.custom_log import debug_logger
 from qanything_kernel.utils.general_utils import get_time
 import onnxruntime
 import concurrent.futures
 import numpy as np
-from cryptography.fernet import Fernet
 
 
 class RerankBackend:

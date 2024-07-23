@@ -1,7 +1,7 @@
 """Wrapper around YouDao embedding models."""
 from typing import List
 from qanything_kernel.configs.model_config import LOCAL_EMBED_MODEL_PATH, LOCAL_EMBED_MAX_LENGTH, LOCAL_EMBED_BATCH, \
-    LOCAL_EMBED_PATH, LOCAL_EMBED_WORKERS, YYY
+    LOCAL_EMBED_PATH, LOCAL_EMBED_WORKERS
 from qanything_kernel.utils.general_utils import get_time
 from qanything_kernel.utils.custom_log import debug_logger
 from transformers import AutoTokenizer
@@ -10,7 +10,6 @@ from tqdm import tqdm
 from onnxruntime import InferenceSession, SessionOptions, GraphOptimizationLevel
 import time
 import numpy as np
-from cryptography.fernet import Fernet
 
 
 class EmbeddingBackend:
