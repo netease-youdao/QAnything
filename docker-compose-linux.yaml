@@ -1,5 +1,3 @@
-version: '3.5'
-
 services:
   elasticsearch:
     container_name: es-container-local
