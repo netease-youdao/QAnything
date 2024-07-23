@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     vim \
     wget \
     build-essential \
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
 # 创建TikToken缓存目录

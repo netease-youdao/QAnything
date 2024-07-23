@@ -50,6 +50,10 @@ if [ ! -L "/workspace/QAnything/qanything_kernel/utils/loader/pdf_to_markdown/ch
   cd /workspace/QAnything/qanything_kernel/utils/loader/pdf_to_markdown && ln -s /root/models/pdf_models checkpoints  # 创建软连接
 fi
 
+if [ ! -L "/workspace/QAnything/nltk_data" ]; then  # 如果不存在软连接
+  cd /workspace/QAnything/ && ln -s /root/nltk_data .  # 创建软连接
+fi
+
 cd /workspace/QAnything || exit
 
 # 如果GPUID存在且不是-1，则设置CUDA_VISIBLE_DEVICES

@@ -56,3 +56,4 @@ markdownify==0.12.1
 datrie==0.8.2
 hanziconv==0.3.2
 PyPDF2==3.0.1
+lxml_html_clean==0.1.1
