@@ -1,39 +1,26 @@
 """Wrapper around YouDao embedding models."""
 from typing import List
-from qanything_kernel.configs.model_config import LOCAL_EMBED_MODEL_PATH, LOCAL_EMBED_MAX_LENGTH, LOCAL_EMBED_BATCH, \
-    LOCAL_EMBED_PATH, LOCAL_EMBED_WORKERS, YYY
+from qanything_kernel.configs.model_config import LOCAL_EMBED_MAX_LENGTH, LOCAL_EMBED_BATCH, \
+    LOCAL_EMBED_PATH, LOCAL_EMBED_WORKERS
 from qanything_kernel.utils.general_utils import get_time
 from qanything_kernel.utils.custom_log import debug_logger
 from transformers import AutoTokenizer
 import concurrent.futures
 from tqdm import tqdm
-from onnxruntime import InferenceSession, SessionOptions, GraphOptimizationLevel
-import time
-import numpy as np
-from cryptography.fernet import Fernet
+from abc import ABC, abstractmethod
 
 
-class EmbeddingBackend:
+class EmbeddingBackend(ABC):
     embed_version = "local_v0.0.1_20230525_6d4019f1559aef84abc2ab8257e1ad4c"
 
-    def __init__(self, use_cpu):
+    def __init__(self, use_cpu: bool = False):
         self.use_cpu = use_cpu
         self._tokenizer = AutoTokenizer.from_pretrained(LOCAL_EMBED_PATH)
         self.workers = LOCAL_EMBED_WORKERS
 
+    @abstractmethod
     def get_embedding(self, sentences, max_length) -> List:
-        inputs_onnx = self._tokenizer(sentences, padding=True, truncation=True, max_length=max_length,
-                                      return_tensors=self.return_tensors)
-        inputs_onnx = {k: v for k, v in inputs_onnx.items()}
-        start_time = time.time()
-        outputs_onnx = self._session.run(output_names=['output'], input_feed=inputs_onnx)
-        debug_logger.info(f"onnx infer time: {time.time() - start_time}")
-        embedding = outputs_onnx[0][:, 0]
-        debug_logger.info(f'embedding shape: {embedding.shape}')
-        norm_arr = np.linalg.norm(embedding, axis=1, keepdims=True)
-        embeddings_normalized = embedding / norm_arr
-
-        return embeddings_normalized.tolist()
+        pass
 
     @get_time
     def get_len_safe_embeddings(self, texts: List[str]) -> List[List[float]]:

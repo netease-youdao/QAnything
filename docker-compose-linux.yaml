@@ -1,13 +1,9 @@
 version: '3.5'
 
-networks:
-  default:
-    name: QAnything
-
 services:
   elasticsearch:
     container_name: es-container-local
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.2
+    image: "docker.elastic.co/elasticsearch/elasticsearch:8.13.2"
     privileged: true
     # ports:
     #   - 9200:9200
@@ -22,7 +18,7 @@ services:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/es/data:/usr/share/elasticsearch/data
     healthcheck:
       test: curl --fail http://localhost:9200/_cat/health || exit 1
-      interval: 10s
+      interval: 30s
       timeout: 20s
       retries: 3
 
@@ -79,7 +75,7 @@ services:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/milvus:/var/lib/milvus
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
-      interval: 10s
+      interval: 30s
       start_period: 90s
       timeout: 20s
       retries: 3
@@ -94,8 +90,8 @@ services:
     container_name: mysql-container-local
     privileged: true
     image: mysql:8.4
-#    ports:
-#      - "3306:3306"
+    #     ports:
+    #       - "3306:3306"
     command: --max-connections=10000
     environment:
       - MYSQL_ROOT_PASSWORD=123456
@@ -105,9 +101,10 @@ services:
 
   qanything_local:
     container_name: qanything-container-local
-    image: localhost/qanything:v1.5.0
+    image: qanything-privatization:v1.3
+
     # command: /bin/bash -c "cd /workspace/QAnything && bash scripts/entrypoint.sh"
-    # network_mode: "host"
+
     privileged: true
     shm_size: '8gb'
     volumes:
@@ -115,6 +112,7 @@ services:
     ports:
       - "8777:8777"
     environment:
+      - NCCL_LAUNCH_MODE=PARALLEL
       - USER_IP=${USER_IP:-localhost}
     depends_on:
       standalone:
@@ -126,5 +124,7 @@ services:
     tty: true
     stdin_open: true
 
-
+networks:
+  default:
+    name: QAnything
 

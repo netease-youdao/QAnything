@@ -1,6 +1,5 @@
 import sys
 import os
-import webbrowser
 # 获取当前脚本的绝对路径
 current_script_path = os.path.abspath(__file__)
 
@@ -61,16 +60,6 @@ async def init_local_doc_qa(app, loop):
 @app.after_server_start
 async def notify_server_started(app, loop):
     print(f"Server Start Cost {time.time() - start_time} seconds", flush=True)
-
-
-@app.after_server_start
-async def start_server_and_open_browser(app, loop):
-    try:
-        print(f"Opening browser at http://{args.host}:{args.port}/qanything/")
-        webbrowser.open(f"http://{args.host}:{args.port}/qanything/")
-    except Exception as e:
-        # 记录或处理任何异常
-        print(f"Failed to open browser: {e}")
 
 # app.add_route(lambda req: response.redirect('/api/docs'), '/')
 # tags=["新建知识库"]

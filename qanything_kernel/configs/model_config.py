@@ -163,7 +163,6 @@ LOCAL_EMBED_PATH = os.path.join(root_path, 'qanything_kernel/dependent_server/em
 LOCAL_EMBED_MODEL_PATH = os.path.join(LOCAL_EMBED_PATH, "embed.dll")
 
 INSERT_WORKERS = 10
-YYY = b'WPOMN4fi8N8llhkTCv3IbcyqCqtl-0dQHwIH6QKZ65M='
 
 ###########################################################################
 # 速读相关常量
