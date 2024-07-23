@@ -356,6 +356,8 @@ async def list_docs(req: request):
     kb_id = correct_kb_id(kb_id)
     debug_logger.info("kb_id: {}".format(kb_id))
     file_id = safe_get(req, 'file_id')
+    page = safe_get(req, 'page_size', 1)  # 默认为第一页
+    limit = safe_get(req, 'page_limit', 10)  # 默认每页显示10条记录
     data = []
     if file_id is None:
         file_infos = local_doc_qa.milvus_summary.get_files(user_id, kb_id)
@@ -378,7 +380,28 @@ async def list_docs(req: request):
     # data根据timestamp排序，时间越新的越靠前
     data = sorted(data, key=lambda x: int(x['timestamp']), reverse=True)
 
-    return sanic_json({"code": 200, "msg": "success", "data": {'total': status_count, 'details': data}})
+    # 计算总记录数
+    total_count = len(data)
+    # 计算总页数
+    total_pages = (total_count + limit - 1) // limit
+    # 计算当前页的起始和结束索引
+    start_index = (page - 1) * limit
+    end_index = start_index + limit
+    # 截取当前页的数据
+    current_page_data = data[start_index:end_index]
+
+    # return sanic_json({"code": 200, "msg": "success", "data": {'total': status_count, 'details': data}})
+    return sanic_json({
+        "code": 200,
+        "msg": "success",
+        "data": {
+            'total_page': total_pages,  # 总页数
+            "total": total_count,  # 总文件数
+            "status_count": status_count,  # 各状态的文件数
+            "details": current_page_data  # 当前页码下的文件目录
+        }
+    })
+
 
 
 @get_time_async
