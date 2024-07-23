@@ -2,16 +2,15 @@ from transformers import AutoTokenizer
 from copy import deepcopy
 from typing import List
 from qanything_kernel.configs.model_config import LOCAL_RERANK_MAX_LENGTH, \
-    LOCAL_RERANK_MODEL_PATH, LOCAL_RERANK_BATCH, LOCAL_RERANK_PATH, LOCAL_RERANK_WORKERS
+    LOCAL_RERANK_BATCH, LOCAL_RERANK_PATH, LOCAL_RERANK_WORKERS
 from qanything_kernel.utils.custom_log import debug_logger
 from qanything_kernel.utils.general_utils import get_time
-import onnxruntime
 import concurrent.futures
-import numpy as np
+from abc import ABC, abstractmethod
 
 
-class RerankBackend:
-    def __init__(self, use_cpu):
+class RerankBackend(ABC):
+    def __init__(self, use_cpu: bool = False):
         self.use_cpu = use_cpu
         self._tokenizer = AutoTokenizer.from_pretrained(LOCAL_RERANK_PATH)
         self.spe_id = self._tokenizer.sep_token_id
@@ -20,24 +19,11 @@ class RerankBackend:
         self.max_length = LOCAL_RERANK_MAX_LENGTH
         self.return_tensors = None
         self.workers = LOCAL_RERANK_WORKERS
-    
+
+    @abstractmethod
     def inference(self, batch) -> List:
-        # 准备输入数据
-        inputs = {self.session.get_inputs()[0].name: batch['input_ids'],
-                  self.session.get_inputs()[1].name: batch['attention_mask']}
-
-        if 'token_type_ids' in batch:
-            inputs[self.session.get_inputs()[2].name] = batch['token_type_ids']
-
-        # 执行推理 输出为logits
-        result = self.session.run(None, inputs)  # None表示获取所有输出
-        # debug_logger.info(f"rerank result: {result}")
-
-        # 应用sigmoid函数
-        sigmoid_scores = 1 / (1 + np.exp(-np.array(result[0])))
-
-        return sigmoid_scores.reshape(-1).tolist()
-         
+        pass
+    
     def merge_inputs(self, chunk1_raw, chunk2):
         chunk1 = deepcopy(chunk1_raw)
         chunk1['input_ids'].extend(chunk2['input_ids'])

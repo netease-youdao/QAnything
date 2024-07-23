@@ -13,23 +13,18 @@ print(root_dir)
 
 from sanic import Sanic
 from sanic.response import json
-# from qanything_kernel.dependent_server.rerank_server.rerank_backend import RerankBackend
-from qanything_kernel.utils.general_utils import safe_get
 
 app = Sanic("rerank_server")
 
 
 @app.route("/rerank", methods=["POST"])
 async def rerank(request):
-    # query = safe_get(request, "query")
-    # passgaes = safe_get(request, "passages")
     data = request.json
     query = data.get('query')
     passages = data.get('passages')
     rerank_backend: app.ctx.rerank_backend = request.app.ctx.rerank_backend
     print("local rerank query:", query, flush=True)
     print("local rerank passages number:", len(passages), flush=True)
-    # print("local rerank passages:", passages, flush=True)
     result_data = rerank_backend.get_rerank(query, passages)
 
     return json(result_data)
@@ -37,17 +32,13 @@ async def rerank(request):
 
 @app.before_server_start
 async def init_local_doc_qa(app, loop):
-    # todo
-    # if platform.system() == 'Linux':
-    #     from qanything_kernel.dependent_server.rerank_server.rerank_onnx_backend import RerankOnnxBackend
-    #     rerankBackend = RerankOnnxBackend(use_cpu=False)
-    #
-    # else:
-    #     from qanything_kernel.dependent_server.rerank_server.rerank_torch_backend import RerankTorchBackend
-    #     rerankBackend = RerankTorchBackend(use_cpu=False)
-    from qanything_kernel.dependent_server.rerank_server.rerank_torch_backend import RerankTorchBackend
-    rerankBackend = RerankTorchBackend(use_cpu=False)
-    app.ctx.rerank_backend = rerankBackend
+    if platform.system() == 'Darwin':
+        from qanything_kernel.dependent_server.rerank_server.rerank_torch_backend import RerankTorchBackend
+        rerank_backend = RerankTorchBackend(use_cpu=False)
+    else:
+        from qanything_kernel.dependent_server.rerank_server.rerank_onnx_backend import RerankOnnxBackend
+        rerank_backend = RerankOnnxBackend(use_cpu=False)
+    app.ctx.rerank_backend = rerank_backend
 
 
 if __name__ == "__main__":

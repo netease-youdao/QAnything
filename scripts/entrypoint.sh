@@ -35,11 +35,19 @@ fi
 
 # 创建软连接
 if [ ! -L "/workspace/QAnything/qanything_kernel/dependent_server/embedding_server/embedding_model_configs_v0.0.1" ]; then  # 如果不存在软连接
-  cd /workspace/QAnything/qanything_kernel/dependent_server/embedding_server && ln -s /workspace/models/mac/embedding_model_configs_v0.0.1 .
+  if [ "$(uname)" == "Darwin" ]; then
+    cd /workspace/QAnything/qanything_kernel/dependent_server/embedding_server && ln -s /workspace/models/mac_torch/embedding_model_configs_v0.0.1 .
+  else
+    cd /workspace/QAnything/qanything_kernel/dependent_server/embedding_server && ln -s /workspace/models/linux_onnx/embedding_model_configs_v0.0.1 .
+  fi
 fi
 
 if [ ! -L "/workspace/QAnything/qanything_kernel/dependent_server/rerank_server/rerank_model_configs_v0.0.1" ]; then  # 如果不存在软连接
-  cd /workspace/QAnything/qanything_kernel/dependent_server/rerank_server && ln -s /workspace/models/mac/rerank_model_configs_v0.0.1 .
+  if [ "$(uname)" == "Darwin" ]; then
+    cd /workspace/QAnything/qanything_kernel/dependent_server/rerank_server && ln -s /workspace/models/mac_torch/rerank_model_configs_v0.0.1 .
+  else
+    cd /workspace/QAnything/qanything_kernel/dependent_server/rerank_server && ln -s /workspace/models/linux_onnx/rerank_model_configs_v0.0.1 .
+  fi
 fi
 
 if [ ! -L "/workspace/QAnything/qanything_kernel/dependent_server/ocr_server/ocr_models" ]; then  # 如果不存在软连接
@@ -47,15 +55,25 @@ if [ ! -L "/workspace/QAnything/qanything_kernel/dependent_server/ocr_server/ocr
 fi
 
 if [ ! -L "/workspace/QAnything/qanything_kernel/utils/loader/pdf_to_markdown/checkpoints" ]; then  # 如果不存在软连接
-  cd /workspace/QAnything/qanything_kernel/utils/loader/pdf_to_markdown && ln -s /workspace/models/checkpoints .  # 创建软连接
+  cd /workspace/QAnything/qanything_kernel/utils/loader/pdf_to_markdown && ln -s /workspace/models/pdf_models checkpoints  # 创建软连接
 fi
 
 cd /workspace/QAnything || exit
 
-nohup python3 -u qanything_kernel/dependent_server/rerank_server/rerank_server.py > /workspace/QAnything/logs/debug_logs/rerank_server.log 2>&1 &
-PID1=$!
-nohup python3 -u qanything_kernel/dependent_server/embedding_server/embedding_server.py > /workspace/QAnything/logs/debug_logs/embedding_server.log 2>&1 &
-PID2=$!
+# 如果GPUID不是-1，则设置CUDA_VISIBLE_DEVICES
+if [ "$GPUID" != "-1" ]; then
+  echo "embedding和rerank服务将在 $GPUID 号GPU上运行"
+  CUDA_VISIBLE_DEVICES=$GPUID nohup python3 -u qanything_kernel/dependent_server/rerank_server/rerank_server.py > /workspace/QAnything/logs/debug_logs/rerank_server.log 2>&1 &
+  PID1=$!
+  CUDA_VISIBLE_DEVICES=$GPUID nohup python3 -u qanything_kernel/dependent_server/embedding_server/embedding_server.py > /workspace/QAnything/logs/debug_logs/embedding_server.log 2>&1 &
+  PID2=$!
+else
+  echo "embedding和rerank服务将在CPU上运行"
+  nohup python3 -u qanything_kernel/dependent_server/rerank_server/rerank_server.py > /workspace/QAnything/logs/debug_logs/rerank_server.log 2>&1 &
+  PID1=$!
+  nohup python3 -u qanything_kernel/dependent_server/embedding_server/embedding_server.py > /workspace/QAnything/logs/debug_logs/embedding_server.log 2>&1 &
+  PID2=$!
+fi
 nohup python3 -u qanything_kernel/dependent_server/ocr_server/ocr_server.py > /workspace/QAnything/logs/debug_logs/ocr_server.log 2>&1 &
 PID3=$!
 nohup python3 -u qanything_kernel/dependent_server/insert_files_serve/insert_files_server.py --port 8110 --workers 1 > /workspace/QAnything/logs/debug_logs/insert_files_server.log 2>&1 &

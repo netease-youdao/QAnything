@@ -39,7 +39,7 @@ services:
     command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
     healthcheck:
       test: ["CMD", "etcdctl", "endpoint", "health"]
-      interval: 30s
+      interval: 10s
       timeout: 20s
       retries: 3
 
@@ -57,7 +57,7 @@ services:
     command: minio server /minio_data --console-address ":9001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
+      interval: 10s
       timeout: 20s
       retries: 3
 
@@ -106,8 +106,7 @@ services:
   qanything_local:
     container_name: qanything-container-local
     image: docker.io/library/qanything_local:v1
-    # command: /bin/bash -c "cd /workspace/QAnything && bash scripts/entrypoint.sh"
-    # network_mode: "host"
+    command: /bin/bash -c "cd /workspace/QAnything && bash scripts/entrypoint.sh"
     privileged: true
     shm_size: '8gb'
     volumes:

@@ -18,7 +18,7 @@ services:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/es/data:/usr/share/elasticsearch/data
     healthcheck:
       test: curl --fail http://localhost:9200/_cat/health || exit 1
-      interval: 30s
+      interval: 10s
       timeout: 20s
       retries: 3
 
@@ -35,7 +35,7 @@ services:
     command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
     healthcheck:
       test: ["CMD", "etcdctl", "endpoint", "health"]
-      interval: 30s
+      interval: 10s
       timeout: 20s
       retries: 3
 
@@ -53,7 +53,7 @@ services:
     command: minio server /minio_data --console-address ":9001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
+      interval: 10s
       timeout: 20s
       retries: 3
 
@@ -75,7 +75,7 @@ services:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/milvus:/var/lib/milvus
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
-      interval: 30s
+      interval: 10s
       start_period: 90s
       timeout: 20s
       retries: 3
@@ -102,9 +102,7 @@ services:
   qanything_local:
     container_name: qanything-container-local
     image: qanything-privatization:v1.3
-
-    # command: /bin/bash -c "cd /workspace/QAnything && bash scripts/entrypoint.sh"
-
+    command: /bin/bash -c "cd /workspace/QAnything && bash scripts/entrypoint.sh"
     privileged: true
     shm_size: '8gb'
     volumes:
@@ -113,6 +111,7 @@ services:
       - "8777:8777"
     environment:
       - NCCL_LAUNCH_MODE=PARALLEL
+      - GPUID=${GPUID:-0}
       - USER_IP=${USER_IP:-localhost}
     depends_on:
       standalone:
