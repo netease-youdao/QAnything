@@ -1,9 +1,9 @@
 <!--
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-01 14:57:33
- * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2023-12-28 19:35:26
- * @FilePath: /ai-demo/src/components/Sider.vue
+ * @LastEditors: Ianarua 306781523@qq.com
+ * @LastEditTime: 2024-07-23 19:12:01
+ * @FilePath: front_end/src/components/Sider.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
 <template>
@@ -24,19 +24,35 @@
           知识库管理</a-button
         >
       </div> -->
-      <DeleteModal />
-      <FileUploadDialog />
-      <UrlUploadDialog />
-      <EditQaSetDialog />
     </div>
     <div v-else-if="navIndex === 1" class="bots">
-      <div class="bots-tab" @click="changePage('/bots')">我的Bots</div>
+      <div class="bots-tab" @click="changePage('/bots')">{{ getLanguage().bots.myBots }}</div>
       <NewBotsDialog />
       <SelectKnowledgeDialog />
       <CopyUrlDialog />
     </div>
-    <!--    <div v-else-if="navIndex === 2" class="quick-start">123</div>-->
+    <div v-else-if="navIndex === 2" class="quick-start">
+      <div class="content">
+        <div
+          :class="['card-new', chatId === null ? 'active' : '', showLoading ? 'disabled' : '']"
+          @click="quickClickHandle(0)"
+        >
+          <SvgIcon name="new-chat" />
+          {{ getLanguage().home.newConversation }}
+        </div>
+        <SiderCardItem
+          v-for="item of historyList"
+          :key="item.historyId"
+          :card-data="item"
+          @click="quickClickHandle(1, item)"
+        />
+      </div>
+    </div>
     <ChatSourceDialog />
+    <DeleteModal />
+    <FileUploadDialog />
+    <UrlUploadDialog />
+    <EditQaSetDialog />
   </div>
 </template>
 <script lang="ts" setup>
@@ -54,8 +70,13 @@ import CopyUrlDialog from '@/components/Bots/CopyUrlDialog.vue';
 import ChatSourceDialog from '@/components/ChatSourceDialog.vue';
 import { useHeader } from '@/store/useHeader';
 import routeController from '@/controller/router';
-// import { useKnowledgeModal } from '@/store/useKnowledgeModal';
+import SiderCardItem from '@/components/SiderCardItem.vue';
+import { IHistoryList, useQuickStart } from '@/store/useQuickStart';
+import SvgIcon from '@/components/SvgIcon.vue';
+import { getLanguage } from '@/language';
 // import { message } from 'ant-design-vue';
+// import { useKnowledgeModal } from '@/store/useKnowledgeModal';
+import { message } from 'ant-design-vue';
 // import urlResquest from '@/services/urlConfig';
 // import { pageStatus } from '@/utils/enum';
 // import { resultControl } from '@/utils/utils';
@@ -67,8 +88,65 @@ import routeController from '@/controller/router';
 // const { getList, setCurrentId, setCurrentKbName, setDefault } = useKnowledgeBase();
 // const { knowledgeBaseList, selectList } = storeToRefs(useKnowledgeBase());
 const { knowledgeBaseList } = storeToRefs(useKnowledgeBase());
+const { historyList, showLoading, chatId, QA_List, kbId } = storeToRefs(useQuickStart());
+const { getChatById } = useQuickStart();
 const { navIndex } = storeToRefs(useHeader());
 const { changePage } = routeController();
+
+// 快速开始逻辑
+function addQuestion(q) {
+  QA_List.value.push({
+    question: q,
+    type: 'user',
+  });
+  // scrollBottom();
+}
+
+function addAnswer(question: string, answer: string, picList, qaId, source) {
+  QA_List.value.push({
+    answer,
+    question,
+    type: 'ai',
+    qaId,
+    copied: false,
+    like: false,
+    unlike: false,
+    source: source ? source : [],
+    showTools: true,
+    picList,
+  });
+}
+
+// 0新建对话, 1选中对话
+const quickClickHandle = (type: 0 | 1, cardData?: IHistoryList) => {
+  console.log(showLoading.value);
+  if (showLoading.value) return;
+  if (type === 0) {
+    if (chatId.value === null) {
+      message.info('已切换最新对话');
+      return;
+    }
+    chatId.value = null;
+    QA_List.value = [];
+    kbId.value = '';
+  } else if (type === 1) {
+    chatId.value = cardData.historyId;
+    QA_List.value = [];
+    kbId.value = cardData.kbId;
+    // try {
+    const chat = getChatById(chatId.value);
+    chat.list.forEach(item => {
+      if (item.type === 'user') {
+        addQuestion(item.question);
+      } else if (item.type === 'ai') {
+        addAnswer(item.question, item.answer, item.picList, item.qaId, item.source);
+      }
+    });
+    // } catch (e) {
+    //   message.error(e.msg || '获取问答历史失败');
+    // }
+  }
+};
 
 //创建知识库
 // const addKb = async kbName => {
@@ -109,6 +187,54 @@ const { changePage } = routeController();
     flex-direction: column;
   }
 
+  .quick-start {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    .card-new {
+      width: 232px;
+      height: 48px;
+      margin: 0 auto 16px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 16px;
+      overflow: hidden;
+      background: #333647;
+      cursor: pointer;
+      color: #fff;
+
+      svg {
+        width: 16px;
+        height: 16px;
+        margin-right: 4px;
+        margin-top: 2px;
+      }
+    }
+
+    .active {
+      background: linear-gradient(284deg, #7b5ef2 -1%, #c383fe 97%);
+    }
+
+    .disabled {
+      cursor: not-allowed !important;
+
+      span {
+        cursor: not-allowed !important;
+      }
+
+      .close-icon {
+        cursor: not-allowed !important;
+      }
+
+      .close-icon:hover {
+        background: transparent !important;
+      }
+    }
+  }
+
   .add-btn {
     margin: 14px 24px 20px 24px;
     width: calc(100% - 48px);
@@ -123,6 +249,7 @@ const { changePage } = routeController();
       color: #ffffff;
       padding-left: 4px;
       background: linear-gradient(0deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), #26293b;
+
       &::placeholder {
         color: #999999;
       }
@@ -133,6 +260,7 @@ const { changePage } = routeController();
     position: fixed;
     width: 280px;
     bottom: 29px;
+
     .manage {
       width: calc(100% - 40px);
       margin: 0 20px;
@@ -154,12 +282,14 @@ const { changePage } = routeController();
       border: 1px solid #ffffff !important;
     }
   }
+
   .bots {
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     padding-top: 12px;
+
     .bots-tab {
       width: 232px;
       height: 46px;

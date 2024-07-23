@@ -58,7 +58,6 @@ export const useChatSetting = defineStore(
       } else if (chatSetting.modelType === 'ollama') {
         chatSettingConfigured.value[1] = chatSetting;
       } else {
-        debugger;
         // 自定义
         chatSetting.modelType = chatSetting.modelName;
         const index = chatSettingConfigured.value.findIndex(

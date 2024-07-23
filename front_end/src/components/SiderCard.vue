@@ -1,9 +1,9 @@
 <!--
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-01 10:59:31
- * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2024-01-02 11:22:55
- * @FilePath: /qanything-open-source/src/components/SiderCard.vue
+ * @LastEditors: Ianarua 306781523@qq.com
+ * @LastEditTime: 2024-07-23 18:11:39
+ * @FilePath: front_end/src/components/SiderCard.vue
  * @Description: 
 -->
 <template>
@@ -198,6 +198,7 @@ const close = (item: IKnowledgeItem) => {
 
       .icon-box {
         color: #fff;
+        display: flex;
 
         .edit,
         .delete {
@@ -260,6 +261,7 @@ const close = (item: IKnowledgeItem) => {
       cursor: pointer;
       display: flex;
       width: 80px;
+      padding: 0 2px;
       margin-bottom: 3px;
       box-sizing: content-box;
       height: 28px;
@@ -274,7 +276,7 @@ const close = (item: IKnowledgeItem) => {
       }
 
       svg {
-        margin: 0 6px 0 8px;
+        margin: 0 6px 0 4px;
         width: 16px;
         height: 16px;
       }
@@ -282,6 +284,7 @@ const close = (item: IKnowledgeItem) => {
       &:hover {
         background: #1e212f;
         color: #fff;
+        border-radius: 12px;
 
         .tool-name {
           color: #fff;
@@ -299,7 +302,7 @@ const close = (item: IKnowledgeItem) => {
       transform: translateY(10px);
       background: #333647;
       box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.2);
-      padding: 4px;
+      padding: 10px;
     }
   }
 }

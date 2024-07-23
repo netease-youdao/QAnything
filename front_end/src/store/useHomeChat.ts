@@ -2,7 +2,7 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-11 09:39:35
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-22 18:22:34
+ * @LastEditTime: 2024-07-23 17:12:10
  * @FilePath: front_end/src/store/useHomeChat.ts
  * @Description: 修改配置记得清除localStorage缓存
  */
@@ -39,7 +39,7 @@ export const useHomeChat = defineStore(
     );
 
     // 历史记录列表
-    const historyList = ref<IHistoryList[]>(JSON.parse(localStorage.getItem('historyList')) || []);
+    const historyList = ref<IHistoryList[]>([]);
     const setHistoryList = (curHistoryList: IHistoryList[]) => {
       historyList.value = curHistoryList;
       // localStorage.setItem('historyList', JSON.stringify(historyList.value));
@@ -72,7 +72,7 @@ export const useHomeChat = defineStore(
     };
 
     // 总的对话列表，二维数组，有每个数据里面有自己的historyId
-    const chatList = ref<IChatList[]>(JSON.parse(localStorage.getItem('chatList')) || []);
+    const chatList = ref<IChatList[]>([]);
     // const setChatList = () => {
     //   // chatList.value = value;
     //   // localStorage.setItem('chatList', JSON.stringify(chatList.value));

@@ -2,14 +2,1092 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-22 16:10:06
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-22 18:12:55
+ * @LastEditTime: 2024-07-23 19:09:37
  * @FilePath: front_end/src/views/QuickStart/index.vue
  * @Description: 快速开始，每个对话对应一个知识库（自动创建），传文件自动放入该对话对应的知识库
  -->
 <template>
-  <div></div>
+  <div class="container">
+    <OptionList v-if="showDefault === pageStatus.optionlist" />
+    <div v-else class="my-page">
+      <div id="chat" ref="chatContainer" class="chat">
+        <ul id="chat-ul" ref="scrollDom">
+          <li v-for="(item, index) in QA_List" :key="index">
+            <div v-if="item.type === 'user'" class="user">
+              <img class="avatar" src="@/assets/home/avatar.png" alt="头像" />
+              <p class="question-text">{{ item.question }}</p>
+            </div>
+            <div v-else class="ai">
+              <img class="avatar" src="@/assets/home/ai-avatar.png" alt="头像" />
+              <div class="content">
+                <div class="ai-right">
+                  <p
+                    v-if="!item.onlySearch"
+                    class="question-text"
+                    :class="[
+                      !item.source.length && !item?.picList?.length ? 'change-radius' : '',
+                      item.showTools ? '' : 'flashing',
+                    ]"
+                  >
+                    <HighLightMarkDown v-if="item.answer" :content="item.answer" />
+                    <span v-else>{{ item.answer }}</span>
+                  </p>
+                  <p
+                    v-if="item.onlySearch && !item.source.length"
+                    class="question-text"
+                    :class="[
+                      !item.source.length && !item?.picList?.length ? 'change-radius' : '',
+                      item.showTools ? '' : 'flashing',
+                    ]"
+                  >
+                    <span v-if="language === 'zh'">未找到信息来源</span>
+                    <span v-else>Information source not found</span>
+                  </p>
+                  <template v-if="item.source.length">
+                    <div
+                      :class="[
+                        'source-total',
+                        !showSourceIdxs.includes(index) ? 'source-total-last' : '',
+                      ]"
+                    >
+                      <span v-if="language === 'zh'">
+                        <span v-if="item.onlySearch">检索完成，</span>
+                        找到了{{ item.source.length }}个信息来源：
+                      </span>
+                      <span v-else>
+                        <span v-if="item.onlySearch">Search completed，</span>
+                        Found {{ item.source.length }} source of information
+                      </span>
+                      <SvgIcon
+                        v-show="!showSourceIdxs.includes(index)"
+                        name="down"
+                        @click="showSourceList(index)"
+                      />
+                      <SvgIcon
+                        v-show="showSourceIdxs.includes(index)"
+                        name="up"
+                        @click="hideSourceList(index)"
+                      />
+                    </div>
+                    <div v-show="showSourceIdxs.includes(index)" class="source-list">
+                      <div
+                        v-for="(sourceItem, sourceIndex) in item.source"
+                        :key="sourceIndex"
+                        class="data-source"
+                      >
+                        <p v-show="sourceItem.file_name" class="control">
+                          <span class="tips">{{ common.dataSource }}{{ sourceIndex + 1 }}:</span>
+                          <a
+                            v-if="sourceItem.file_id.startsWith('http')"
+                            :href="sourceItem.file_id"
+                            target="_blank"
+                          >
+                            {{ sourceItem.file_name }}
+                          </a>
+                          <span
+                            v-else
+                            :class="[
+                              'file',
+                              checkFileType(sourceItem.file_name) ? 'filename-active' : '',
+                            ]"
+                            @click="handleChatSource(sourceItem)"
+                          >
+                            {{ sourceItem.file_name }}
+                          </span>
+                          <SvgIcon
+                            v-show="sourceItem.showDetailDataSource"
+                            name="iconup"
+                            @click="hideDetail(item, sourceIndex)"
+                          />
+                          <SvgIcon
+                            v-show="!sourceItem.showDetailDataSource"
+                            name="icondown"
+                            @click="showDetail(item, sourceIndex)"
+                          />
+                        </p>
+                        <Transition name="sourceItem">
+                          <div v-show="sourceItem.showDetailDataSource" class="source-content">
+                            <p v-html="sourceItem.content?.replaceAll('\n', '<br/>')"></p>
+                            <p class="score">
+                              <span class="tips">{{ common.correlation }}</span
+                              >{{ sourceItem.score }}
+                            </p>
+                          </div>
+                        </Transition>
+                      </div>
+                    </div>
+                  </template>
+                  <div v-if="item.showTools" class="feed-back">
+                    <div class="reload-box" @click="reAnswer(item)">
+                      <SvgIcon name="reload"></SvgIcon>
+                      <span class="reload-text">{{ common.regenerate }}</span>
+                    </div>
+                    <div class="tools">
+                      <SvgIcon
+                        :style="{
+                          color: item.copied ? '#4D71FF' : '',
+                        }"
+                        name="copy"
+                        @click="myCopy(item)"
+                      ></SvgIcon>
+                      <SvgIcon
+                        :style="{
+                          color: item.like ? '#4D71FF' : '',
+                        }"
+                        name="like"
+                        @click="like(item, $event)"
+                      ></SvgIcon>
+                      <SvgIcon
+                        :style="{
+                          color: item.unlike ? '#4D71FF' : '',
+                        }"
+                        name="unlike"
+                        @click="unlike(item)"
+                      ></SvgIcon>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div v-if="showLoading" class="stop-btn">
+        <a-button @click="stopChat">
+          <template #icon>
+            <SvgIcon name="stop" :class="showLoading ? 'loading' : ''"></SvgIcon>
+          </template>
+          {{ common.stop }}
+        </a-button>
+      </div>
+      <div class="question-box">
+        <div class="question">
+          <div class="send-box">
+            <a-textarea
+              v-model:value="question"
+              class="send-textarea"
+              max-length="200"
+              :placeholder="common.problemPlaceholder"
+              :auto-size="{ minRows: 3, maxRows: 8 }"
+              @keyup.enter="send"
+            />
+            <div class="send-action">
+              <a-popover>
+                <template #content>{{ common.chatUpload }}</template>
+                <span
+                  :class="['question-icon', showLoading ? 'isPreventClick' : '']"
+                  @click="uploadFile"
+                >
+                  <SvgIcon name="chat-upload" />
+                </span>
+              </a-popover>
+              <a-popover>
+                <template #content>{{ common.chatToPic }}</template>
+                <span
+                  :class="['question-icon', showLoading ? 'isPreventClick' : '']"
+                  @click="downloadChat"
+                >
+                  <SvgIcon name="chat-download" />
+                </span>
+              </a-popover>
+              <a-popover>
+                <template #content>{{ common.clearChat }}</template>
+                <span
+                  :class="['question-icon', showLoading ? 'isPreventClick' : '']"
+                  @click="deleteChat"
+                >
+                  <SvgIcon name="chat-delete" />
+                </span>
+              </a-popover>
+              <a-popover>
+                <template #content>{{ common.modelSettingTitle }}</template>
+                <span class="question-icon" @click="handleModalChange(true)">
+                  <SvgIcon name="chat-setting" />
+                </span>
+              </a-popover>
+              <a-button type="primary" :disabled="showLoading" shape="circle" @click="send">
+                <SvgIcon name="sendplane" />
+              </a-button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <ChatSettingDialog />
+  <DefaultModal :content="content" :confirm-loading="confirmLoading" @ok="confirm" />
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import HighLightMarkDown from '@/components/HighLightMarkDown.vue';
+import SvgIcon from '@/components/SvgIcon.vue';
+import { getLanguage } from '@/language';
+import { Typewriter } from '@/utils/typewriter';
+import { useClipboard, useThrottleFn } from '@vueuse/core';
+import { IChatItem } from '@/utils/types';
+import { message } from 'ant-design-vue';
+import { fetchEventSource } from '@microsoft/fetch-event-source';
+import { apiBase } from '@/services';
+import urlResquest, { userId } from '@/services/urlConfig';
+import { useChat } from '@/store/useChat';
+import html2canvas from 'html2canvas';
+import { resultControl } from '@/utils/utils';
+import { useChatSource } from '@/store/useChatSource';
+import { useLanguage } from '@/store/useLanguage';
+import { useQuickStart } from '@/store/useQuickStart';
+import DefaultModal from '@/components/DefaultModal.vue';
+import ChatSettingDialog from '@/components/ChatSettingDialog.vue';
+import { pageStatus } from '@/utils/enum';
+import OptionList from '@/components/OptionList.vue';
+import { useKnowledgeBase } from '@/store/useKnowledgeBase';
 
-<style lang="scss" scoped></style>
+const common = getLanguage().common;
+
+const { copy } = useClipboard();
+const { QA_List, chatId, kbId, showLoading } = storeToRefs(useQuickStart());
+const { addHistoryList, updateHistoryList, addChatList, clearChatList } = useQuickStart();
+const { setChatSourceVisible, setSourceType, setSourceUrl, setTextContent } = useChatSource();
+const { showDefault } = storeToRefs(useKnowledgeBase());
+
+const { language } = storeToRefs(useLanguage());
+declare module _czc {
+  const push: (array: any) => void;
+}
+
+const typewriter = new Typewriter((str: string) => {
+  if (str) {
+    QA_List.value[QA_List.value.length - 1].answer += str || '';
+    console.log(QA_List.value);
+  }
+});
+
+//当前问的问题
+const question = ref('');
+
+//问答的上下文
+const history = ref([]);
+
+// //当前是否回答中
+// const showLoading = ref(false);
+
+const showSourceIdxs = ref([]);
+
+//取消请求用
+let ctrl: AbortController;
+
+const chatContainer = ref(null);
+
+const scrollDom = ref(null);
+
+const scrollBottom = () => {
+  nextTick(() => {
+    scrollDom.value?.scrollIntoView(false);
+  });
+};
+
+onMounted(() => {
+  console.log('------chatId', chatId.value);
+  scrollBottom();
+});
+
+const like = useThrottleFn((item, e) => {
+  item.like = !item.like;
+  item.unlike = false;
+  _czc.push(['_trackEvent', 'qanything', '问答页面', '点赞', '', '']);
+  if (item.like) {
+    e.target.parentNode.style.animation = 'shake ease-in .5s';
+    const timer = setTimeout(() => {
+      clearTimeout(timer);
+      e.target.parentNode.style.animation = '';
+    }, 600);
+  }
+}, 800);
+const unlike = (item: IChatItem) => {
+  item.unlike = !item.unlike;
+  item.like = false;
+  _czc.push(['_trackEvent', 'qanything', '问答页面', '点踩', '', '']);
+};
+
+//拷贝
+const myCopy = (item: IChatItem) => {
+  copy(item.answer)
+    .then(() => {
+      item.copied = !item.copied;
+      message.success(common.copySuccess, 1);
+      const timer = setTimeout(() => {
+        clearTimeout(timer);
+        item.copied = !item.copied;
+      }, 1000);
+    })
+    .catch(() => {
+      message.error(common.copyFailed, 1);
+    });
+};
+
+const addQuestion = q => {
+  QA_List.value.push({
+    question: q,
+    type: 'user',
+  });
+  scrollBottom();
+};
+
+// TODO 只检索
+const addAnswer = (question: string) => {
+  QA_List.value.push({
+    answer: '',
+    question,
+    onlySearch: false,
+    type: 'ai',
+    copied: false,
+    like: false,
+    unlike: false,
+    source: [],
+    showTools: false,
+  });
+};
+
+const updateChat = (title: string, chatId: number, kbId: string) => {
+  try {
+    console.log('update', kbId);
+    updateHistoryList(title, chatId, kbId);
+  } catch (e) {
+    message.error(e.msg || '更新对话失败');
+  }
+};
+
+const stopChat = () => {
+  if (ctrl) {
+    ctrl.abort();
+  }
+  typewriter.done();
+  showLoading.value = false;
+  QA_List.value[QA_List.value.length - 1].showTools = true;
+};
+
+// 问答前处理 判断创建对话
+const beforeSend = async title => {
+  try {
+    console.log('chat-title=', title);
+    // 判断需不需要新建对话, 为null直接跳出
+    if (chatId.value !== null) return;
+    if (title.length > 100) {
+      title = title.substring(0, 100);
+    }
+    const res: any = await resultControl(await urlResquest.createKb({ kb_name: title }));
+    kbId.value = res.kb_id;
+    // 当前对话id为新建的historyId
+    chatId.value = addHistoryList(title);
+    updateChat(title, chatId.value, kbId.value);
+    console.log(kbId.value);
+  } catch (e) {
+    message.error(e.msg || '创建对话失败');
+  }
+};
+
+//发送问答消息
+const send = async () => {
+  if (!question.value.trim().length) {
+    return;
+  }
+  if (showLoading.value) {
+    message.warn('正在聊天中...请等待结束');
+    return;
+  }
+  // if (!kbId.value) {
+  //   return message.warning(common.chooseError);
+  // }
+  const q = question.value;
+  await beforeSend(q);
+  question.value = '';
+  addQuestion(q);
+  // 更新最大的chatList
+  addChatList(chatId.value, QA_List.value);
+  // TODO 将检索结果存为副本
+  // onlySearchCopy.value = onlySearch.value;
+  if (history.value.length >= 3) {
+    history.value = [];
+  }
+  showLoading.value = true;
+  ctrl = new AbortController();
+  console.log('send', kbId.value);
+  fetchEventSource(apiBase + '/local_doc_qa/local_doc_chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: ['text/event-stream', 'application/json'],
+    },
+    openWhenHidden: true,
+    // TODO 联网、只检索
+    body: JSON.stringify({
+      user_id: userId,
+      kb_ids: [kbId.value],
+      history: history.value,
+      question: q,
+      streaming: true,
+      networking: true,
+      product_source: 'saas',
+      only_need_search_results: false,
+    }),
+    signal: ctrl.signal,
+    onopen(e: any) {
+      console.log('open');
+      if (e.ok && e.headers.get('content-type') === 'text/event-stream') {
+        // addAnswer(question.value);
+        // question.value = '';
+        addAnswer(q);
+        typewriter.start();
+      } else if (e.headers.get('content-type') === 'application/json') {
+        showLoading.value = false;
+        return e
+          .json()
+          .then(data => {
+            message.error(data?.msg || '出错了,请稍后刷新重试。');
+          })
+          .catch(e => {
+            console.log(e);
+            message.error('出错了,请稍后刷新重试。');
+          }); // 将响应解析为 JSON
+      }
+    },
+    onmessage(msg: { data: string }) {
+      console.log('message');
+      const res: any = JSON.parse(msg.data);
+      console.log(res);
+      if (res?.code == 200 && res?.response) {
+        // QA_List.value[QA_List.value.length - 1].answer += res.result.response;
+        // typewriter.add(res?.response.replaceAll('\n', '<br/>'));
+        typewriter.add(res?.response);
+        scrollBottom();
+      }
+
+      if (res?.source_documents?.length) {
+        QA_List.value[QA_List.value.length - 1].source = res?.source_documents;
+      }
+
+      if (res?.history.length) {
+        history.value = res?.history;
+      }
+    },
+    onclose(e: any) {
+      console.log('close');
+      console.log(e);
+      typewriter.done();
+      ctrl.abort();
+      showLoading.value = false;
+      QA_List.value[QA_List.value.length - 1].showTools = true;
+      // 更新最大的chatList
+      addChatList(chatId.value, QA_List.value);
+      nextTick(() => {
+        scrollBottom();
+      });
+    },
+    onerror(err: any) {
+      console.log('error');
+      typewriter?.done();
+      ctrl?.abort();
+      showLoading.value = false;
+      QA_List.value[QA_List.value.length - 1].showTools = true;
+      message.error(err.msg || '出错了');
+      // 更新最大的chatList
+      addChatList(chatId.value, QA_List.value);
+      nextTick(() => {
+        scrollBottom();
+      });
+      throw err;
+    },
+  });
+};
+
+const reAnswer = (item: IChatItem) => {
+  console.log('reAnswer');
+  question.value = item.question;
+  send();
+};
+
+//点击查看是否显示详细来源
+const showDetail = (item: IChatItem, index) => {
+  item.source[index].showDetailDataSource = !item.source[index].showDetailDataSource;
+};
+
+const hideDetail = (item: IChatItem, index) => {
+  item.source[index].showDetailDataSource = false;
+};
+
+const showSourceList = index => {
+  showSourceIdxs.value.push(index);
+};
+
+const hideSourceList = index => {
+  showSourceIdxs.value = showSourceIdxs.value.filter(item => item !== index);
+};
+
+//上传文件 下载 清除 聊天记录相关
+const { showModal } = storeToRefs(useChat());
+const confirmLoading = ref(false);
+const content = ref('');
+const type = ref('');
+
+const uploadFile = () => {
+  console.log('uploadFile');
+};
+
+const downloadChat = () => {
+  if (showLoading.value) return;
+  type.value = 'download';
+  showModal.value = true;
+  content.value = common.saveTip;
+};
+
+const deleteChat = () => {
+  if (showLoading.value) return;
+  type.value = 'delete';
+  showModal.value = true;
+  content.value = common.clearTip;
+};
+
+const confirm = async () => {
+  confirmLoading.value = true;
+  if (type.value === 'download') {
+    console.log('download');
+    try {
+      const ele = document.getElementById('chat-ul');
+      const canvas = await html2canvas(ele as HTMLDivElement, {
+        useCORS: true,
+      });
+      const imgUrl = canvas.toDataURL('image/png');
+      const tempLink = document.createElement('a');
+      tempLink.style.display = 'none';
+      tempLink.href = imgUrl;
+      tempLink.setAttribute('download', 'chat-shot.png');
+      if (typeof tempLink.download === 'undefined') tempLink.setAttribute('target', '_blank');
+
+      document.body.appendChild(tempLink);
+      tempLink.click();
+      document.body.removeChild(tempLink);
+      window.URL.revokeObjectURL(imgUrl);
+      message.success('下载成功');
+      await Promise.resolve();
+    } catch (e) {
+      console.log(e);
+      message.error(e.message || e.msg || '出错了');
+    }
+  } else if (type.value === 'delete') {
+    console.log('delete');
+    history.value = [];
+    clearChatList(chatId.value);
+    chatId.value = null;
+    QA_List.value = [];
+  }
+  type.value = '';
+  content.value = '';
+  confirmLoading.value = false;
+  showModal.value = false;
+};
+
+// 模型设置弹窗相关
+const { showSettingModal } = storeToRefs(useChat());
+
+const handleModalChange = newVal => {
+  showSettingModal.value = newVal;
+};
+
+// 检查信息来源的文件是否支持窗口化渲染
+let supportSourceTypes = ['pdf', 'docx', 'xlsx', 'txt', 'jpg', 'png', 'jpeg'];
+const checkFileType = filename => {
+  if (!filename) {
+    return false;
+  }
+  const arr = filename.split('.');
+  if (arr.length) {
+    const suffix = arr.pop();
+    return supportSourceTypes.includes(suffix);
+  } else {
+    return false;
+  }
+};
+
+const handleChatSource = file => {
+  console.log('handleChatSource', file);
+  const isSupport = checkFileType(file.file_name);
+  if (isSupport) {
+    queryFile(file);
+  }
+};
+
+async function queryFile(file) {
+  try {
+    setSourceUrl(null);
+    const res: any = await resultControl(await urlResquest.getFile({ file_id: file.file_id }));
+    console.log('queryFile', res);
+    const suffix = file.file_name.split('.').pop();
+    const b64Type = getB64Type(suffix);
+    console.log('b64Type', b64Type);
+    setSourceType(suffix);
+    setSourceUrl(`data:${b64Type};base64,${res.base64_content}`);
+    if (suffix === 'txt') {
+      const decodedTxt = atob(res.base64_content);
+      const correctStr = decodeURIComponent(escape(decodedTxt));
+      console.log('decodedTxt', correctStr);
+      setTextContent(correctStr);
+      setChatSourceVisible(true);
+    } else {
+      setChatSourceVisible(true);
+    }
+  } catch (e) {
+    message.error(e.msg || '获取文件失败');
+  }
+}
+
+let b64Types = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/plain',
+  'image/jpeg',
+  'image/png',
+  'image/jpeg',
+];
+
+function getB64Type(suffix) {
+  const index = supportSourceTypes.indexOf(suffix);
+  return b64Types[index];
+}
+</script>
+
+<style lang="scss" scoped>
+.container {
+  width: 100%;
+  height: calc(100vh - 64px);
+  background-color: #26293b;
+}
+
+.my-page {
+  position: relative;
+  height: 100%;
+  margin: 0 auto;
+  border-radius: 12px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  background: #f3f6fd;
+  overflow: hidden;
+}
+
+.chat {
+  margin: 0 auto;
+  width: 50%;
+  min-width: 900px;
+  max-width: 1239px;
+  padding: 28px 0 0 0;
+  flex: 1;
+  overflow-y: auto;
+
+  #chat-ul {
+    background: #f3f6fd;
+    overflow: hidden;
+  }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+    margin-right: 16px;
+  }
+
+  .user {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-start;
+    margin-bottom: 16px;
+
+    .avatar {
+      margin: 0 0 0 16px;
+    }
+
+    .question-text {
+      padding: 13px 20px;
+      margin-left: 48px;
+      font-size: 14px;
+      font-weight: normal;
+      line-height: 22px;
+      color: #222222;
+      background: #e9e1ff;
+      border-radius: 12px 12px 12px 12px;
+      word-wrap: break-word;
+    }
+  }
+
+  .ai {
+    margin: 16px 0 28px 0;
+    display: flex;
+
+    .content {
+      display: flex;
+      flex-direction: column;
+      padding-right: 48px;
+
+      .question-text {
+        flex: 1;
+        padding: 13px 20px;
+        font-size: 14px;
+        font-weight: normal;
+        line-height: 22px;
+        color: $title1;
+        background: #fff;
+        border-radius: 12px 12px 0 0;
+        word-wrap: break-word;
+      }
+
+      .flashing {
+        &:after {
+          -webkit-animation: blink 1s steps(5, start) infinite;
+          animation: blink 1s steps(5, start) infinite;
+          content: '▋';
+          margin-left: 0.25rem;
+          vertical-align: baseline;
+        }
+      }
+
+      .change-radius {
+        border-radius: 0 12px 12px 12px;
+      }
+    }
+
+    .source-total {
+      padding: 13px 20px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+
+      span {
+        margin-right: 5px;
+      }
+
+      svg {
+        width: 16px !important;
+        height: 16px !important;
+        cursor: pointer !important;
+      }
+    }
+
+    .source-total-last {
+      border-radius: 0 0 12px 12px;
+    }
+
+    .source-list {
+      background: #fff;
+      border-radius: 0 12px 12px 12px;
+    }
+
+    .data-source {
+      padding: 13px 20px;
+      font-size: 14px;
+      line-height: 22px;
+      color: $title1;
+
+      .control {
+        display: flex;
+        align-items: center;
+      }
+
+      .score {
+        margin-top: 26px;
+      }
+
+      .source-content {
+        margin-top: 26px;
+      }
+
+      .tips {
+        height: 22px;
+        line-height: 22px;
+        color: $title2;
+        margin-right: 8px;
+      }
+
+      .file {
+        color: $baseColor;
+        margin-right: 8px;
+      }
+
+      .filename-active {
+        color: #5a47e5;
+        text-decoration: underline;
+        cursor: pointer;
+      }
+
+      svg {
+        width: 14px;
+        height: 14px;
+        color: $baseColor;
+        cursor: pointer;
+      }
+
+      a {
+        color: #5a47e5;
+        text-decoration: underline;
+        cursor: pointer;
+      }
+    }
+
+    .feed-back {
+      display: flex;
+      height: 20px;
+      margin-top: 8px;
+
+      .reload-box {
+        display: flex;
+        cursor: pointer;
+        align-items: center;
+        margin-right: auto;
+        color: #5a47e5;
+
+        .reload-text {
+          height: 22px;
+          line-height: 22px;
+        }
+      }
+
+      .tools {
+        display: flex;
+        align-items: center;
+
+        svg {
+          margin-left: 16px;
+        }
+      }
+
+      svg {
+        width: 16px !important;
+        height: 16px !important;
+        cursor: pointer !important;
+      }
+    }
+  }
+}
+
+.stop-btn {
+  display: flex;
+  justify-content: center;
+  margin: 18px 0;
+
+  :deep(.ant-btn) {
+    width: 92px;
+    height: 32px;
+    border: 1px solid #e2e2e2;
+    color: $title2;
+  }
+
+  svg {
+    width: 12px;
+    height: 12px;
+    margin-right: 4px;
+  }
+
+  .loading {
+    animation: loading 3s infinite;
+  }
+}
+
+.question-box {
+  width: 100%;
+  margin-bottom: 30px;
+
+  .question {
+    width: 60%;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+
+    :deep(.ant-input-affix-wrapper) {
+      width: 100%;
+      max-width: 1108px;
+      border-color: #e5e5e5;
+      box-shadow: none !important;
+
+      &:hover,
+      &:focus,
+      &:active {
+        border-color: #5a47e5 !important;
+        box-shadow: none !important;
+      }
+    }
+
+    :deep(.ant-input:hover) {
+      border-color: $baseColor;
+    }
+
+    :deep(.ant-input:focus) {
+      border-color: $baseColor;
+    }
+
+    .send-box {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+
+      .send-textarea {
+        //position: absolute;
+        //bottom: 0;
+        min-height: 42px;
+        line-height: 33px;
+        padding: 11px 15px;
+        display: flex;
+        align-items: center;
+        font-size: 1rem;
+        border-radius: 18px;
+      }
+    }
+
+    .send-action {
+      position: absolute;
+      bottom: 10px;
+      height: 32px;
+      padding-right: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      z-index: 101;
+
+      .isPreventClick {
+        cursor: not-allowed !important;
+      }
+
+      .question-icon {
+        cursor: pointer;
+        padding: 8px;
+        display: flex;
+        margin-right: 16px;
+        border-radius: 50%;
+        background: #ffffff;
+        //border: 1px solid #e5e5e5;
+        color: #666666;
+
+        &:hover {
+          //border: 1px solid #5a47e5;
+          background-color: #e5e5e5;
+          color: #5a47e5;
+        }
+
+        svg {
+          width: 18px;
+          height: 18px;
+        }
+      }
+
+      :deep(.ant-btn-primary) {
+        width: 36px;
+        height: 36px;
+        padding: 8px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: linear-gradient(300deg, #7b5ef2 1%, #c383fe 97%);
+      }
+
+      :deep(.ant-btn-primary:disabled) {
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: linear-gradient(300deg, #7b5ef2 1%, #c383fe 97%);
+        color: #fff !important;
+        border-color: transparent !important;
+      }
+
+      svg {
+        width: 24px;
+        height: 24px;
+      }
+    }
+  }
+}
+
+.sourceItem-leave, // 离开前,进入后透明度是1
+.sourceItem-enter-to {
+  opacity: 1;
+}
+
+.sourceItem-leave-active,
+.sourceItem-enter-active {
+  transition: opacity 0.5s; //过度是.5s秒
+}
+
+.sourceItem-leave-to,
+.sourceItem-enter {
+  opacity: 0;
+}
+
+@keyframes shake {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  10% {
+    transform: rotate(10deg);
+  }
+
+  20% {
+    transform: rotate(20deg);
+  }
+  30% {
+    transform: rotate(20deg);
+  }
+  40% {
+    transform: rotate(20deg);
+  }
+
+  50% {
+    transform: rotate(15deg);
+  }
+
+  60% {
+    transform: rotate(0deg);
+  }
+  70% {
+    transform: rotate(-15deg);
+  }
+  80% {
+    transform: rotate(-30deg);
+  }
+  90% {
+    transform: rotate(-15deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes blink {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes loading {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+</style>

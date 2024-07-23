@@ -255,8 +255,7 @@ const typewriter = new Typewriter((str: string) => {
 const { selectList, knowledgeBaseList } = storeToRefs(useKnowledgeBase());
 const { copy } = useClipboard();
 const { QA_List, chatId, pageId, qaPageId, historyList } = storeToRefs(useHomeChat());
-const { addHistoryList, getChatById, updateHistoryList, addChatList, clearChatList } =
-  useHomeChat();
+const { addHistoryList, updateHistoryList, addChatList, clearChatList } = useHomeChat();
 const { setChatSourceVisible, setSourceType, setSourceUrl, setTextContent } = useChatSource();
 const { language } = storeToRefs(useLanguage());
 declare module _czc {
@@ -321,7 +320,7 @@ const qaObserver = new IntersectionObserver(entries => {
       console.log('qa entry.isIntersecting');
       qaPageId.value++;
       // getChatDetail(qaPageId.value);
-      getChatDetail();
+      // getChatDetail();
     }
   });
 });
@@ -399,28 +398,6 @@ const addAnswer = (question: string) => {
   });
 };
 
-const addHistoryQuestion = q => {
-  QA_List.value.unshift({
-    question: q,
-    type: 'user',
-  });
-};
-
-function addHistoryAnswer(question: string, answer: string, picList, qaId, source) {
-  QA_List.value.unshift({
-    answer,
-    question,
-    type: 'ai',
-    qaId,
-    copied: false,
-    like: false,
-    unlike: false,
-    source: source ? source : [],
-    showTools: true,
-    picList,
-  });
-}
-
 const setObserveDom = value => {
   observeDom.value = value;
 };
@@ -428,78 +405,6 @@ const setObserveDom = value => {
 const setQaObserverDom = value => {
   qaObserveDom.value = value;
 };
-
-// 获取历史记录列表 (本地存, pinia直接暴露出来了)
-// const getHistoryList = async pageId => {
-//   try {
-//     // const res: any = await resultControl(
-//     //   await urlResquest.chatList({ page: pageId, pageSize: 50 })
-//     // );
-//     // const historyList2 = historyList.value;
-//     const res = getChatById(his);
-//     // pageId等于1说明是新建对话  直接赋值
-//     if (pageId === 1) {
-//       chatList.value = [...historyList];
-//       addHistoryList();
-//     } else {
-//       chatList.value.push(...historyList);
-//     }
-//     // 清除上次监听的dom元素
-//     if (observeDom.value !== null) {
-//       observer.unobserve(observeDom.value);
-//       observeDom.value = null;
-//     }
-//     // 当前页内容长度大于50时 代表下一页还有元素 则继续监听
-//     if (historyList.value.length >= 50) {
-//       await nextTick(() => {
-//         // 监听新的dom元素
-//         const eles: any = document.getElementsByClassName('chat-item');
-//         if (eles.length) {
-//           observer.observe(eles[eles.length - 1]);
-//           observeDom.value = eles[eles.length - 1];
-//         }
-//       });
-//     }
-//   } catch (e) {
-//     message.error(e.msg || '获取对话列表失败');
-//   }
-// };
-
-// 获取当前对话之前记录的列表
-async function getChatDetail() {
-  try {
-    // const res: any = await resultControl(
-    //   await urlResquest.chatDetail({ historyId: chatId.value, page, pageSize: 50 })
-    // );
-    const chat = getChatById(chatId.value);
-    // 清除上次监听的dom元素
-    if (qaObserveDom.value !== null) {
-      qaObserver.unobserve(qaObserveDom.value);
-      qaObserveDom.value = null;
-    }
-    const oldScrollHeight = chatContainer.value.scrollHeight; // 获取旧的滚动高度
-    chat.list.forEach(item => {
-      addHistoryAnswer(item.question, item.answer, item.picList, item.qaId, item.source);
-      addHistoryQuestion(item.question);
-    });
-    await nextTick(); // 等待DOM更新
-    // 调整滚动位置以保持视图位置
-    const newScrollHeight = chatContainer.value.scrollHeight;
-    chatContainer.value.scrollTop = newScrollHeight - oldScrollHeight;
-    // if (detail.length >= 50) {
-    //   nextTick(() => {
-    //     // 监听新的dom元素
-    //     const eles: any = document.getElementsByClassName('chat-li');
-    //     if (eles.length) {
-    //       qaObserver.observe(eles[0]);
-    //       qaObserveDom.value = eles[0];
-    //     }
-    //   });
-    // }
-  } catch (e) {
-    message.error(e.msg || '获取问答历史失败');
-  }
-}
 
 const updateChat = (title: string, chatId: number, knowledgeListSelect) => {
   try {
@@ -551,11 +456,9 @@ const beforeSend = title => {
     if (title.length > 100) {
       title = title.substring(0, 100);
     }
-    // const res: any = await resultControl(await urlResquest.createChat({ title }));
     // 当前对话id为新建的historyId
     chatId.value = addHistoryList(title);
     updateChat(title, chatId.value, selectList.value);
-    // await getChatList(1); 直接从缓存拿，不用调用
   } catch (e) {
     message.error(e.msg || '创建对话失败');
   }
@@ -861,7 +764,7 @@ scrollBottom();
   // margin-top: 65px;
 
   &.showSider {
-    height: calc(100vh - 64px);
+    height: calc(100vh - 64px - 64px);
   }
 }
 
@@ -883,7 +786,7 @@ scrollBottom();
   width: 50%;
   min-width: 900px;
   max-width: 1239px;
-  padding: 28px 0 14px 0;
+  padding: 28px 0 0 0;
   //height: calc(100vh - 54px - 48px - 28px - 28px - 32px - 50px);
   flex: 1;
   //overflow: hidden;
@@ -895,6 +798,7 @@ scrollBottom();
 
   #chat-ul {
     background: #f3f6fd;
+    overflow: hidden;
   }
 
   .avatar {
@@ -1103,13 +1007,11 @@ scrollBottom();
   //bottom: 28px;
   //left: 280px;
   width: 100%;
-  margin-bottom: 100px;
+  margin-bottom: 30px;
 
   .question {
     //width: 75.36%;
-    width: 70%;
-    min-width: 900px;
-    max-width: 1239px;
+    width: 60%;
     //height: 48px;
     margin: 0 auto;
     display: flex;
@@ -1141,7 +1043,6 @@ scrollBottom();
       position: relative;
       width: 100%;
       height: 100%;
-      padding-left: 48px;
       display: flex;
       justify-content: flex-end;
       align-items: center;

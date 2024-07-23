@@ -72,6 +72,7 @@ export default {
     mixedSearchDescription: '使用向量检索与全文检索的综合结果返回',
     onlySearch: '仅检索模式',
     onlySearchDescription: '此模式不会返回说明文字',
+    chatUpload: '上传文件',
     chatToPic: '将会话保存为图片',
     clearChat: '清空会话',
     modelProviderLabel: '模型提供方',
@@ -138,6 +139,7 @@ export default {
     inputCannotNull: '输入不能为空',
   },
   bots: {
+    myBots: '我的Bots',
     edit: '编辑',
     publish: '发布',
     web: '网页',
