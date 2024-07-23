@@ -35,19 +35,11 @@ fi
 
 # 创建软连接
 if [ ! -L "/workspace/QAnything/qanything_kernel/dependent_server/embedding_server/embedding_model_configs_v0.0.1" ]; then  # 如果不存在软连接
-  if [ "$(uname)" == "Darwin" ]; then
-    cd /workspace/QAnything/qanything_kernel/dependent_server/embedding_server && ln -s /workspace/models/mac_torch/embedding_model_configs_v0.0.1 .
-  else
-    cd /workspace/QAnything/qanything_kernel/dependent_server/embedding_server && ln -s /workspace/models/linux_onnx/embedding_model_configs_v0.0.1 .
-  fi
+  cd /workspace/QAnything/qanything_kernel/dependent_server/embedding_server && ln -s /workspace/models/linux_onnx/embedding_model_configs_v0.0.1 .
 fi
 
 if [ ! -L "/workspace/QAnything/qanything_kernel/dependent_server/rerank_server/rerank_model_configs_v0.0.1" ]; then  # 如果不存在软连接
-  if [ "$(uname)" == "Darwin" ]; then
-    cd /workspace/QAnything/qanything_kernel/dependent_server/rerank_server && ln -s /workspace/models/mac_torch/rerank_model_configs_v0.0.1 .
-  else
-    cd /workspace/QAnything/qanything_kernel/dependent_server/rerank_server && ln -s /workspace/models/linux_onnx/rerank_model_configs_v0.0.1 .
-  fi
+  cd /workspace/QAnything/qanything_kernel/dependent_server/rerank_server && ln -s /workspace/models/linux_onnx/rerank_model_configs_v0.0.1 .
 fi
 
 if [ ! -L "/workspace/QAnything/qanything_kernel/dependent_server/ocr_server/ocr_models" ]; then  # 如果不存在软连接
@@ -60,8 +52,8 @@ fi
 
 cd /workspace/QAnything || exit
 
-# 如果GPUID不是-1，则设置CUDA_VISIBLE_DEVICES
-if [ "$GPUID" != "-1" ]; then
+# 如果GPUID存在且不是-1，则设置CUDA_VISIBLE_DEVICES
+if [[ -n "${GPUID}" && "${GPUID}" != "-1" ]]; then
   echo "embedding和rerank服务将在 $GPUID 号GPU上运行"
   CUDA_VISIBLE_DEVICES=$GPUID nohup python3 -u qanything_kernel/dependent_server/rerank_server/rerank_server.py > /workspace/QAnything/logs/debug_logs/rerank_server.log 2>&1 &
   PID1=$!
@@ -78,7 +70,7 @@ nohup python3 -u qanything_kernel/dependent_server/ocr_server/ocr_server.py > /w
 PID3=$!
 nohup python3 -u qanything_kernel/dependent_server/insert_files_serve/insert_files_server.py --port 8110 --workers 1 > /workspace/QAnything/logs/debug_logs/insert_files_server.log 2>&1 &
 PID4=$!
-nohup python3 -u qanything_kernel/qanything_server/sanic_api.py --port 8777 --workers 1 > /workspace/QAnything/logs/debug_logs/main_server.log 2>&1 &
+nohup python3 -u qanything_kernel/qanything_server/sanic_api.py --host $USER_IP --port 8777 --workers 1 > /workspace/QAnything/logs/debug_logs/main_server.log 2>&1 &
 PID5=$!
 # 生成close.sh脚本，写入kill命令
 echo "#!/bin/bash" > close.sh
@@ -119,6 +111,6 @@ user_ip=$USER_IP
 echo "请在[http://$user_ip:8777/qanything/]下访问前端服务来进行问答，如果前端报错，请在浏览器按F12以获取更多报错信息"
 
 # Keep the container running
-# while true; do
-#     sleep 5
-# done
+while true; do
+    sleep 5
+done

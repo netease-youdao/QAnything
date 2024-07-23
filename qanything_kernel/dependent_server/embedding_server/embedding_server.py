@@ -13,6 +13,7 @@ print(root_dir)
 
 from sanic import Sanic
 from sanic.response import json
+from qanything_kernel.dependent_server.embedding_server.embedding_onnx_backend import EmbeddingOnnxBackend
 
 app = Sanic("embedding_server")
 
@@ -30,12 +31,7 @@ async def embedding(request):
 
 @app.before_server_start
 async def init_local_doc_qa(app, loop):
-    if platform.system() == 'Darwin':
-        from qanything_kernel.dependent_server.embedding_server.embedding_torch_backend import EmbeddingTorchBackend
-        embedding_backend = EmbeddingTorchBackend(use_cpu=False)
-    else:
-        from qanything_kernel.dependent_server.embedding_server.embedding_onnx_backend import EmbeddingOnnxBackend
-        embedding_backend = EmbeddingOnnxBackend(use_cpu=False)
+    embedding_backend = EmbeddingOnnxBackend(use_cpu=False)
     app.ctx.embedding_backend = embedding_backend
 
 

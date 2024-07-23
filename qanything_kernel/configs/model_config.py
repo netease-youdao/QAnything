@@ -219,7 +219,7 @@ os_system = platform.system()
 #     LOCAL_RERANK_REPO = "netease-youdao/bce-reranker-base_v1"
 #     LOCAL_RERANK_MODEL_PATH = os.path.join(LOCAL_RERANK_PATH, "rerank.onnx")
 LOCAL_RERANK_REPO = "maidalun/bce-reranker-base_v1"
-LOCAL_RERANK_MODEL_PATH = os.path.join(LOCAL_RERANK_PATH, "pytorch_model.bin")
+LOCAL_RERANK_MODEL_PATH = os.path.join(LOCAL_RERANK_PATH, "rerank.onnx")
 print('LOCAL_RERANK_REPO:', LOCAL_RERANK_REPO)
 LOCAL_RERANK_MODEL_NAME = 'rerank'
 LOCAL_RERANK_MAX_LENGTH = 512
@@ -233,7 +233,7 @@ LOCAL_RERANK_MAX_LENGTH = 512
 #     LOCAL_EMBED_REPO = "netease-youdao/bce-embedding-base_v1"
 #     LOCAL_EMBED_MODEL_PATH = os.path.join(LOCAL_EMBED_PATH, "embed.onnx")
 LOCAL_EMBED_REPO = "maidalun/bce-embedding-base_v1"
-LOCAL_EMBED_MODEL_PATH = os.path.join(LOCAL_EMBED_PATH, "pytorch_model.bin")
+LOCAL_EMBED_MODEL_PATH = os.path.join(LOCAL_EMBED_PATH, "embed.onnx")
 
 print('LOCAL_EMBED_REPO:', LOCAL_EMBED_REPO)
 LOCAL_EMBED_MODEL_NAME = 'embed'

@@ -13,6 +13,7 @@ print(root_dir)
 
 from sanic import Sanic
 from sanic.response import json
+from qanything_kernel.dependent_server.rerank_server.rerank_onnx_backend import RerankOnnxBackend
 
 app = Sanic("rerank_server")
 
@@ -32,12 +33,7 @@ async def rerank(request):
 
 @app.before_server_start
 async def init_local_doc_qa(app, loop):
-    if platform.system() == 'Darwin':
-        from qanything_kernel.dependent_server.rerank_server.rerank_torch_backend import RerankTorchBackend
-        rerank_backend = RerankTorchBackend(use_cpu=False)
-    else:
-        from qanything_kernel.dependent_server.rerank_server.rerank_onnx_backend import RerankOnnxBackend
-        rerank_backend = RerankOnnxBackend(use_cpu=False)
+    rerank_backend = RerankOnnxBackend(use_cpu=False)
     app.ctx.rerank_backend = rerank_backend
 
 
