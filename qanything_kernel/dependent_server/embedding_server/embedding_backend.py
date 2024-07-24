@@ -33,7 +33,7 @@ class EmbeddingBackend(ABC):
                 batch = texts[i:i + batch_size]
                 future = executor.submit(self.get_embedding, batch, LOCAL_EMBED_MAX_LENGTH)
                 futures.append(future)
-            debug_logger.info(f'embedding number: {len(futures)}')
+            # debug_logger.info(f'embedding number: {len(futures)}')
             for future in tqdm(futures):
                 embeddings = future.result()
                 all_embeddings += embeddings

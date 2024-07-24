@@ -52,7 +52,7 @@ class LocalDocQA:
         self.milvus_cache = None
         self.embeddings: YouDaoEmbeddings = None
         self.rerank: YouDaoRerank = None
-        self.llm: OpenAILLM = None
+        # self.llm: OpenAILLM = None
         self.top_k: int = VECTOR_SEARCH_TOP_K
         self.chunk_conent: bool = True
         self.score_threshold: int = VECTOR_SEARCH_SCORE_THRESHOLD
@@ -94,7 +94,7 @@ class LocalDocQA:
         self.rerank = YouDaoRerank()
         self.milvus_summary = KnowledgeBaseManager()
         self.milvus_kb = VectorStoreMilvusClient()
-        self.llm: OpenAILLM = OpenAILLM(args)
+        # self.llm: OpenAILLM = OpenAILLM(args)
 
     def init_retriever(self, user_id):
         self.es_client = StoreElasticSearchClient(index_name=user_id)
