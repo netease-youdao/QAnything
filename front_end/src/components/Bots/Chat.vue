@@ -259,7 +259,12 @@ const question = ref('');
 //问答的上下文
 const history = computed(() => {
   const context = chatSettingFormActive.value.context;
-  return QA_List.value.slice(-context);
+  const historyChat = QA_List.value.slice(-context);
+  const res = historyChat
+    .filter(item => item.type === 'ai')
+    .map(item => [item.question, item.answer]);
+  console.log(res);
+  return res;
 });
 
 //当前是否回答中

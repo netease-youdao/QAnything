@@ -73,6 +73,7 @@
           :step="1"
           style="margin-left: 16px"
           :precision="0"
+          :controls="false"
         />
       </a-form-item>
     </div>
@@ -93,6 +94,7 @@
           :step="1"
           style="margin-left: 16px"
           :precision="0"
+          :controls="false"
         />
       </a-form-item>
     </div>
@@ -102,15 +104,18 @@
         :label="`${common.contextLabel}（${contextLength}）`"
         name="context"
       >
-        <a-slider v-model:value="chatSettingForm.context" :min="0" :max="contextLength" :step="1" />
+        <a-slider v-model:value="chatSettingForm.context" :min="0" :max="contextLength" :step="2" />
       </a-form-item>
       <a-form-item name="context">
         <a-input-number
           v-model:value="chatSettingForm.context"
           :min="0"
           :max="contextLength"
-          :step="1"
+          :step="2"
           style="margin-left: 16px"
+          :precision="0"
+          :controls="false"
+          @change="contextChange"
         />
       </a-form-item>
     </div>
@@ -125,6 +130,8 @@
           :max="1"
           :step="0.01"
           style="margin-left: 16px"
+          :precision="0"
+          :controls="false"
         />
       </a-form-item>
     </div>
@@ -139,6 +146,8 @@
           :max="1"
           :step="0.01"
           style="margin-left: 16px"
+          :precision="0"
+          :controls="false"
         />
       </a-form-item>
     </div>
@@ -208,6 +217,14 @@ const chatSettingForm = ref<IChatSetting>();
 
 // maxToken是上下文token的 1/TOKENRATIO 倍
 const TOKENRATIO = 2;
+
+// 上下文数量，处理奇数情况
+const contextChange = (value: number) => {
+  if (value % 2 !== 0 && Number.isInteger(value)) {
+    value += 1;
+    chatSettingForm.value.context = value;
+  }
+};
 
 const rules: Record<string, Rule[]> = {
   modelType: [
