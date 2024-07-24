@@ -607,6 +607,31 @@ async def local_doc_chat(req: request):
     provider = safe_get(req, 'provider', 'hangyan')
     only_need_search_results = safe_get(req, 'only_need_search_results', False)
     need_web_search = safe_get(req, 'networking', False)
+
+    api_base = safe_get(req, 'api_base', '')
+    api_key = safe_get(req, 'api_key', '')
+    api_context_length = safe_get(req, 'api_context_length', 4096)
+    top_p = safe_get(req, 'top_p', 1.0)
+    temperature = safe_get(req, 'temperature', 0.5)
+
+    missing_params = []
+    if not api_base:
+        missing_params.append('api_base')
+    if not api_key:
+        missing_params.append('api_key')
+    if not api_context_length:
+        missing_params.append('api_context_length')
+    if not top_p:
+        missing_params.append('top_p')
+    if not temperature:
+        missing_params.append('temperature')
+
+    if missing_params:
+        missing_params_str = " and ".join(missing_params) if len(missing_params) > 1 else missing_params[0]
+        return sanic_json({"code": 2003, "msg": f"fail, {missing_params_str} is required"})
+
+
+
     if only_need_search_results and streaming:
         return sanic_json(
             {"code": 2006, "msg": "fail, only_need_search_results and streaming can't be True at the same time"})
@@ -616,6 +641,7 @@ async def local_doc_chat(req: request):
     max_token = safe_get(req, 'max_token')
     request_source = safe_get(req, 'source', 'unknown')
     hybrid_search = safe_get(req, 'hybrid_search', False)
+
     debug_logger.info("history: %s ", history)
     debug_logger.info("question: %s", question)
     debug_logger.info("kb_ids: %s", kb_ids)
@@ -627,6 +653,12 @@ async def local_doc_chat(req: request):
     debug_logger.info("only_need_search_results: %s", only_need_search_results)
     debug_logger.info("bot_id: %s", bot_id)
     debug_logger.info("need_web_search: %s", need_web_search)
+    debug_logger.info("api_base: %s", api_base)
+    debug_logger.info("api_key: %s", api_key)
+    debug_logger.info("api_context_length: %s", api_context_length)
+    debug_logger.info("top_p: %s", top_p)
+    debug_logger.info("temperature: %s", temperature)
+    debug_logger.info("api_base: %s", api_base)
 
     if model not in ['gpt-3.5-turbo-0613', 'gpt-3.5-turbo-16k', 'youdao-local-llm-qanything-turbo',
                      'youdao-local-llm-qanything-std']:
@@ -685,7 +717,12 @@ async def local_doc_chat(req: request):
                                                                                         custom_prompt=custom_prompt,
                                                                                         time_record=time_record,
                                                                                         need_web_search=need_web_search,
-                                                                                        hybrid_search=hybrid_search
+                                                                                        hybrid_search=hybrid_search,
+                                                                                        temperature=temperature,
+                                                                                        api_base=api_base,
+                                                                                        api_key=api_key,
+                                                                                        api_context_length=api_context_length,
+                                                                                        top_p=top_p
                                                                                         ):
                     chunk_data = resp["result"]
                     if not chunk_data:
@@ -758,7 +795,12 @@ async def local_doc_chat(req: request):
                                                                                time_record=time_record,
                                                                                only_need_search_results=only_need_search_results,
                                                                                need_web_search=need_web_search,
-                                                                               hybrid_search=hybrid_search
+                                                                               hybrid_search=hybrid_search,
+                                                                               temperature=temperature,
+                                                                               api_base=api_base,
+                                                                               api_key=api_key,
+                                                                               api_context_length=api_context_length,
+                                                                               top_p=top_p
                                                                                ):
                 pass
             if only_need_search_results:
