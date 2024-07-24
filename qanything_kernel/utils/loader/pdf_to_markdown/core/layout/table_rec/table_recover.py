@@ -30,6 +30,9 @@ class TableRecover:
     @staticmethod
     def get_rows(polygons: np.array) -> Dict[int, List[int]]:
         """对每个框进行行分类，框定哪个是一行的"""
+        if polygons.size == 0:
+            return {0: [0]}
+            
         y_axis = polygons[:, 0, 1]
         if y_axis.size == 1:
             return {0: [0]}
@@ -42,6 +45,9 @@ class TableRecover:
         split_idxs = np.argwhere(minus_res > thresh).squeeze()
         if split_idxs.ndim == 0:
             split_idxs = split_idxs[None, ...]
+
+        if split_idxs.size == 0:
+            return {0: [0]}
 
         if max(split_idxs) != len(minus_res):
             split_idxs = np.append(split_idxs, len(minus_res))
@@ -58,6 +64,9 @@ class TableRecover:
     def get_benchmark_cols(
         self, rows: Dict[int, List], polygons: np.ndarray
     ) -> Tuple[np.ndarray, List[float], int]:
+        if polygons.size == 0:
+            return None, [], 0
+
         longest_col = max(rows.values(), key=lambda x: len(x))
         longest_col_points = polygons[longest_col]
         longest_x = longest_col_points[:, 0, 0]
@@ -109,6 +118,9 @@ class TableRecover:
     def get_benchmark_rows(
         self, rows: Dict[int, List], polygons: np.ndarray
     ) -> Tuple[np.ndarray, List[float], int]:
+        if polygons.size == 0:
+            return None, []
+
         leftmost_cell_idxs = [v[0] for v in rows.values()]
         benchmark_x = polygons[leftmost_cell_idxs][:, 0, 1]
 
@@ -168,6 +180,9 @@ class TableRecover:
         each_col_widths: List[float],
         each_row_heights: List[float],
     ) -> Dict[int, Dict[int, int]]:
+        if polygons.size == 0:
+            return {}
+
         col_res_merge, row_res_merge = {}, {}
         merge_thresh = 20
         for cur_row, col_list in rows.items():
