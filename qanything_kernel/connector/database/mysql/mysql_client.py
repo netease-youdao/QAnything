@@ -32,6 +32,20 @@ class KnowledgeBaseManager:
 
         return result
 
+    def execute_query_list_(self, query_list, params_list):
+        conn = sqlite3.connect(self.database)
+        conn.execute('START TRANSACTION')
+        # 启用外键约束
+        conn.execute('PRAGMA foreign_keys = ON')
+        cursor = conn.cursor()
+        for i in range(len(query_list)):
+            cursor.execute(query_list[i], params_list[i])
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return None
+
     def create_tables_(self):
         query = """
             CREATE TABLE IF NOT EXISTS User (
@@ -39,8 +53,8 @@ class KnowledgeBaseManager:
                 user_name VARCHAR(255)
             );
         """
-
         self.execute_query_(query, (), commit=True)
+
         query = """
             CREATE TABLE IF NOT EXISTS KnowledgeBase (
                 kb_id VARCHAR(255) PRIMARY KEY,
@@ -52,6 +66,18 @@ class KnowledgeBaseManager:
 
         """
         self.execute_query_(query, (), commit=True)
+
+        query = """
+        CREATE TABLE IF NOT EXISTS SESSION (
+                session_id VARCHAR(255) PRIMARY KEY,
+                session_name VARCHAR(255),
+                user_id VARCHAR(255),
+                deleted INTEGER DEFAULT 0,
+                FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE
+            );
+        """
+        self.execute_query_(query, (), commit=True)
+
         query = """
             CREATE TABLE IF NOT EXISTS File (
                 file_id VARCHAR(255) PRIMARY KEY,
@@ -159,6 +185,12 @@ class KnowledgeBaseManager:
         debug_logger.info("check_user_exist {}".format(result))
         return result is not None and len(result) > 0
 
+    def check_session_exist(self, user_id, session_id):
+        query = "SELECT session_id FROM Session WHERE user_id = ? and session_id = ? and deleted = 0"
+        result = self.execute_query_(query, (user_id, session_id), fetch=True)
+        debug_logger.info("check_session_exist {}".format(result))
+        return result is not None and len(result) > 0
+
     def check_kb_exist(self, user_id, kb_ids):
         # 使用参数化查询
         placeholders = ','.join(['?'] * len(kb_ids))
@@ -230,6 +262,27 @@ class KnowledgeBaseManager:
         query = "INSERT INTO User (user_id, user_name) VALUES (?, ?)"
         self.execute_query_(query, (user_id, user_name), commit=True)
         return user_id
+
+    def new_session(self, user_id, session_id, session_name=None):
+        query = "INSERT INTO Session (session_id, session_name, user_id) VALUES (?,?,?)"
+        self.execute_query_(query,(session_id, session_name, user_id))
+        return session_id, "success"
+
+    def rename_session(self, user_id, session_id, new_session_name):
+        query = "UPDATE Session set session_name = ? where session_id = ? AND user_id = ?"
+        self.execute_query_(query, (new_session_name, session_id, user_id), commit=True)
+        return session_id, "success"
+
+    def delete_session(self, user_id, session_id):
+        # 使用参数化查询
+        #placeholders = ','.join(['?'] * len(session_ids))
+        query = "UPDATE Session set deleted = 1 where user_id = ? AND session_id = ?"
+        self.execute_query_(query, [user_id, session_id], commit=True)
+
+    #获取指定用户的所有会话
+    def get_sessions(self, user_id):
+        query = "SELECT session_id, session_name FROM Session WHERE user_id = ? AND deleted = 0"
+        return self.execute_query_(query, (user_id,), fetch=True)
 
     def add_document(self, docstore_id, chunk_id, file_id, file_name, kb_id):
         query = "INSERT INTO Document (docstore_id, chunk_id, file_id, file_name, kb_id) VALUES (?, ?, ?, ?, ?)"

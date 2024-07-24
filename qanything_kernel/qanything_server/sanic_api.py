@@ -35,6 +35,7 @@ parser = ArgumentParser()
 from sanic import Sanic
 from sanic import response as sanic_response
 from sanic.worker.manager import WorkerManager
+from sanic_jwt import Initialize
 import signal
 import requests
 from modelscope import snapshot_download
@@ -221,25 +222,30 @@ async def start_server_and_open_browser(app, loop):
         print(f"Failed to open browser: {e}")
 
 
-app.add_route(document, "/api/docs", methods=['GET'])
-app.add_route(new_knowledge_base, "/api/local_doc_qa/new_knowledge_base", methods=['POST'])  # tags=["新建知识库"]
-app.add_route(upload_weblink, "/api/local_doc_qa/upload_weblink", methods=['POST'])  # tags=["上传网页链接"]
-app.add_route(upload_files, "/api/local_doc_qa/upload_files", methods=['POST'])  # tags=["上传文件"] 
-app.add_route(local_doc_chat, "/api/local_doc_qa/local_doc_chat", methods=['POST'])  # tags=["问答接口"] 
-app.add_route(list_kbs, "/api/local_doc_qa/list_knowledge_base", methods=['POST'])  # tags=["知识库列表"] 
-app.add_route(list_docs, "/api/local_doc_qa/list_files", methods=['POST'])  # tags=["文件列表"]
-app.add_route(get_total_status, "/api/local_doc_qa/get_total_status", methods=['POST'])  # tags=["获取所有知识库状态"]
-app.add_route(clean_files_by_status, "/api/local_doc_qa/clean_files_by_status", methods=['POST'])  # tags=["清理数据库"]
-app.add_route(delete_docs, "/api/local_doc_qa/delete_files", methods=['POST'])  # tags=["删除文件"] 
-app.add_route(delete_knowledge_base, "/api/local_doc_qa/delete_knowledge_base", methods=['POST'])  # tags=["删除知识库"] 
-app.add_route(rename_knowledge_base, "/api/local_doc_qa/rename_knowledge_base", methods=['POST'])  # tags=["重命名知识库"]
-app.add_route(new_bot, "/api/local_doc_qa/new_bot", methods=['POST'])  # tags=["新建Bot"]
-app.add_route(delete_bot, "/api/local_doc_qa/delete_bot", methods=['POST'])  # tags=["删除Bot"]
-app.add_route(update_bot, "/api/local_doc_qa/update_bot", methods=['POST'])  # tags=["更新Bot"]
-app.add_route(get_bot_info, "/api/local_doc_qa/get_bot_info", methods=['POST'])  # tags=["获取Bot信息"]
-app.add_route(upload_faqs, "/api/local_doc_qa/upload_faqs", methods=['POST'])  # tags=["上传FAQ"]
-app.add_route(get_file_base64, "/api/local_doc_qa/get_file_base64", methods=['POST'])  # tags=["获取文件base64"]
-app.add_route(get_qa_info, "/api/local_doc_qa/get_qa_info", methods=['POST'])  # tags=["获取QA信息"]
+#app.add_route(document, "/api/docs", methods=['GET'])
+app.add_route(new_knowledge_base, "/api/local_qa/new_knowledge_base", methods=['POST'])  # tags=["新建知识库"]
+app.add_route(upload_weblink, "/api/local_qa/upload_weblink", methods=['POST'])  # tags=["上传网页链接"]
+app.add_route(upload_files, "/api/local_qa/upload_files", methods=['POST'])  # tags=["上传文件"] 
+app.add_route(local_doc_chat, "/api/local_qa/local_doc_chat", methods=['POST'])  # tags=["问答接口"] 
+app.add_route(list_kbs, "/api/local_qa/list_knowledge_base", methods=['POST'])  # tags=["知识库列表"] 
+app.add_route(list_docs, "/api/local_qa/list_files", methods=['POST'])  # tags=["文件列表"]
+app.add_route(get_total_status, "/api/local_qa/get_total_status", methods=['POST'])  # tags=["获取所有知识库状态"]
+app.add_route(clean_files_by_status, "/api/local_qa/clean_files_by_status", methods=['POST'])  # tags=["清理数据库"]
+app.add_route(delete_docs, "/api/local_qa/delete_files", methods=['POST'])  # tags=["删除文件"] 
+app.add_route(delete_knowledge_base, "/api/local_qa/delete_knowledge_base", methods=['POST'])  # tags=["删除知识库"] 
+app.add_route(rename_knowledge_base, "/api/local_qa/rename_knowledge_base", methods=['POST'])  # tags=["重命名知识库"]
+# app.add_route(new_bot, "/api/local_qa/new_bot", methods=['POST'])  # tags=["新建Bot"]
+# app.add_route(delete_bot, "/api/local_qa/delete_bot", methods=['POST'])  # tags=["删除Bot"]
+# app.add_route(update_bot, "/api/local_qa/update_bot", methods=['POST'])  # tags=["更新Bot"]
+# app.add_route(get_bot_info, "/api/local_qa/get_bot_info", methods=['POST'])  # tags=["获取Bot信息"]
+# app.add_route(upload_faqs, "/api/local_qa/upload_faqs", methods=['POST'])  # tags=["上传FAQ"]
+app.add_route(get_file_base64, "/api/local_qa/get_file_base64", methods=['POST'])  # tags=["获取文件base64"]
+app.add_route(get_qa_info, "/api/local_qa/get_qa_info", methods=['POST'])  # tags=["获取QA信息"]
+
+app.add_route(new_session, "/api/local_qa/new_session", methods=['POST'])  # tags=["新建会话"]
+app.add_route(rename_session, "/api/local_qa/rename_session", methods=['POST'])  # tags=["重命名会话"]
+app.add_route(delete_session, "/api/local_qa/delete_session", methods=['POST']) # tags=["删除会话"]
+app.add_route(list_sessions, "/api/local_qa/list_session", methods=['POST']) #tags=["会话列表"]
 
 
 if __name__ == "__main__":

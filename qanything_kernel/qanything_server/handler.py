@@ -6,6 +6,7 @@ from qanything_kernel.configs.model_config import BOT_DESC, BOT_IMAGE, BOT_PROMP
 from sanic.response import ResponseStream
 from sanic.response import json as sanic_json
 from sanic.response import text as sanic_text
+from sanic_jwt.decorators import protected
 from sanic import request, response
 import math
 import uuid
@@ -21,11 +22,11 @@ import base64
 __all__ = ["new_knowledge_base", "upload_files", "list_kbs", "list_docs", "delete_knowledge_base", "delete_docs",
            "rename_knowledge_base", "get_total_status", "clean_files_by_status", "upload_weblink", "local_doc_chat",
            "document", "new_bot", "delete_bot", "update_bot", "get_bot_info", "upload_faqs", "get_file_base64",
-           "get_qa_info"]
+           "get_qa_info", "new_session", "rename_session", "list_sessions", "delete_session"]
 
 INVALID_USER_ID = f"fail, Invalid user_id: . user_id 必须只含有字母，数字和下划线且字母开头"
 
-
+@protected()
 async def new_knowledge_base(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -50,7 +51,7 @@ async def new_knowledge_base(req: request):
     return sanic_json({"code": 200, "msg": "success create knowledge base {}".format(kb_id),
                        "data": {"kb_id": kb_id, "kb_name": kb_name, "timestamp": timestamp}})
 
-
+@protected()
 async def upload_weblink(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -85,7 +86,7 @@ async def upload_weblink(req: request):
         msg = "success，后台正在飞速上传文件，请耐心等待"
     return sanic_json({"code": 200, "msg": msg, "data": data})
 
-
+@protected()
 async def upload_files(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -154,7 +155,7 @@ async def upload_files(req: request):
         msg = "success，后台正在飞速上传文件，请耐心等待"
     return sanic_json({"code": 200, "msg": msg, "data": data})
 
-
+@protected()
 async def list_kbs(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -171,7 +172,7 @@ async def list_kbs(req: request):
     debug_logger.info("all kb infos: {}".format(data))
     return sanic_json({"code": 200, "data": data})
 
-
+@protected()
 async def list_docs(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -207,7 +208,7 @@ async def list_docs(req: request):
 
     return sanic_json({"code": 200, "msg": "success", "data": {'total': status_count, 'details': data}})
 
-
+@protected()
 async def delete_knowledge_base(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -227,7 +228,7 @@ async def delete_knowledge_base(req: request):
     local_doc_qa.mysql_client.delete_knowledge_base(user_id, kb_ids)
     return sanic_json({"code": 200, "msg": "Knowledge Base {} delete success".format(kb_ids)})
 
-
+@protected()
 async def rename_knowledge_base(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -245,7 +246,7 @@ async def rename_knowledge_base(req: request):
     local_doc_qa.mysql_client.rename_knowledge_base(user_id, kb_id, new_kb_name)
     return sanic_json({"code": 200, "msg": "Knowledge Base {} rename success".format(kb_id)})
 
-
+@protected()
 async def delete_docs(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -269,7 +270,7 @@ async def delete_docs(req: request):
     local_doc_qa.mysql_client.delete_files(kb_id, file_ids)
     return sanic_json({"code": 200, "msg": "documents {} delete success".format(file_ids)})
 
-
+@protected()
 async def get_total_status(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -299,7 +300,7 @@ async def get_total_status(req: request):
 
     return sanic_json({"code": 200, "status": res})
 
-
+@protected()
 async def clean_files_by_status(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -330,7 +331,7 @@ async def clean_files_by_status(req: request):
             local_doc_qa.mysql_client.delete_files(kb_id, gray_file_ids)
     return sanic_json({"code": 200, "msg": f"delete {status} files success", "data": gray_file_names})
 
-
+@protected()
 async def local_doc_chat(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -341,6 +342,13 @@ async def local_doc_chat(req: request):
     if not is_valid:
         return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
     debug_logger.info('local_doc_chat %s', user_id)
+    #会话检查
+    session_id = safe_get(req, 'session_id')
+    if session_id is None:
+        return sanic_json({"code": 2002, "msg":f'输入非法！request.json：{req.json}，请检查！'})
+    if not local_doc_qa.mysql_client.check_session_exist(session_id):
+        return sanic_json({"code": 2003, "msg": "fail, Session {} not found".format(session_id)})
+    debug_logger.info('session %s', session_id)
     bot_id = safe_get(req, 'bot_id')
     if bot_id:
         if not local_doc_qa.mysql_client.check_bot_is_exist(bot_id):
@@ -479,16 +487,9 @@ async def local_doc_chat(req: request):
             return sanic_json({"code": 200, "msg": "success chat", "question": question, "response": resp["result"],
                                "history": history, "source_documents": source_documents})
 
-
+@protected()
 async def document(req: request):
     description = """
-# QAnything 介绍
-[戳我看视频>>>>>【有道QAnything介绍视频.mp4】](https://docs.popo.netease.com/docs/7e512e48fcb645adadddcf3107c97e7c)
-
-**QAnything** (**Q**uestion and **A**nswer based on **Anything**) 是支持任意格式的本地知识库问答系统。
-
-您的任何格式的本地文件都可以往里扔，即可获得准确、快速、靠谱的问答体验。
-
 **目前已支持格式:**
 * PDF
 * Word(doc/docx)
@@ -498,45 +499,29 @@ async def document(req: request):
 * 网页链接
 * ...更多格式，敬请期待
 
-# API 调用指南
-
-## API Base URL
-
-https://qanything.youdao.com
-
-## 鉴权
-目前使用微信鉴权,步骤如下:
-1. 客户端通过扫码微信二维码(首次登录需要关注公众号)
-2. 获取token
-3. 调用下面所有API都需要通过authorization参数传入这个token
-
-注意：authorization参数使用Bearer auth认证方式
-
-生成微信二维码以及获取token的示例代码下载地址：[微信鉴权示例代码](https://docs.popo.netease.com/docs/66652d1a967e4f779594aef3306f6097)
-
 ## API 接口说明
     {
-        "api": "/api/local_doc_qa/upload_files"
+        "api": "/api/local_qa/upload_files"
         "name": "上传文件",
         "description": "上传文件接口，支持多个文件同时上传，需要指定知识库名称",
     },
     {
-        "api": "/api/local_doc_qa/upload_weblink"
+        "api": "/api/local_qa/upload_weblink"
         "name": "上传网页链接",
         "description": "上传网页链接，自动爬取网页内容，需要指定知识库名称",
     },
     {
-        "api": "/api/local_doc_qa/local_doc_chat" 
+        "api": "/api/local_qa/local_doc_chat" 
         "name": "问答接口",
         "description": "知识库问答接口，指定知识库名称，上传用户问题，通过传入history支持多轮对话",
     },
     {
-        "api": "/api/local_doc_qa/list_files" 
+        "api": "/api/local_qa/list_files" 
         "name": "文件列表",
         "description": "列出指定知识库下的所有文件名，需要指定知识库名称",
     },
     {
-        "api": "/api/local_doc_qa/delete_files" 
+        "api": "/api/local_qa/delete_files" 
         "name": "删除文件",
         "description": "删除指定知识库下的指定文件，需要指定知识库名称",
     },
@@ -544,7 +529,7 @@ https://qanything.youdao.com
 """
     return sanic_text(description)
 
-
+@protected()
 async def new_bot(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -574,7 +559,7 @@ async def new_bot(req: request):
     return sanic_json({"code": 200, "msg": "success create qanything bot {}".format(bot_id),
                        "data": {"bot_id": bot_id, "bot_name": bot_name, "create_time": create_time}})
 
-
+@protected()
 async def delete_bot(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -590,7 +575,7 @@ async def delete_bot(req: request):
     local_doc_qa.mysql_client.delete_bot(user_id, bot_id)
     return sanic_json({"code": 200, "msg": "Bot {} delete success".format(bot_id)})
 
-
+@protected()
 async def update_bot(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -641,7 +626,7 @@ async def update_bot(req: request):
                                          welcome_message, model, kb_ids_str, update_time)
     return sanic_json({"code": 200, "msg": "Bot {} update success".format(bot_id)})
 
-
+@protected()
 async def get_bot_info(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -673,7 +658,7 @@ async def get_bot_info(req: request):
         data.append(info)
     return sanic_json({"code": 200, "msg": "success", "data": data})
 
-
+@protected()
 async def upload_faqs(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -749,7 +734,7 @@ async def upload_faqs(req: request):
     msg = "success，后台正在飞速上传文件，请耐心等待"
     return sanic_json({"code": 200, "msg": msg, "file_status": file_status, "data": data})
 
-
+@protected()
 async def get_file_base64(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -769,7 +754,7 @@ async def get_file_base64(req: request):
     base64_content = base64.b64encode(content).decode()
     return sanic_json({"code": 200, "msg": "success", "base64_content": base64_content})
 
-
+@protected()
 async def get_qa_info(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -828,3 +813,81 @@ async def get_qa_info(req: request):
         msg = f"检索到的Log数为{len(qa_infos)}，一次返回所有数据"
         page_id = 0
     return sanic_json({"code": 200, "msg": msg, "page_id": page_id, "qa_infos": qa_infos})
+
+@protected()
+async def new_session(req: request):
+    local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
+    user_id = safe_get(req, 'user_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
+    is_valid = validate_user_id(user_id)
+    if not is_valid:
+        return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
+    debug_logger.info("new_session %s", user_id)
+    session_name = safe_get(req, 'session_name')
+    default_session_id = 'SESSION' + uuid.uuid4().hex
+    session_id = safe_get(req, 'session_id', default_session_id)
+    if session_id[:7] != 'SESSION':
+        return sanic_json({"code": 2001, "msg": "fail, session_id must start with 'SESSION'"})
+    session_exist = local_doc_qa.mysql_client.check_session_exist(user_id, session_id)
+    if session_exist:
+        return sanic_json({"code": 2001, "msg": "fail, session {} already exist".format(session_id)})
+
+    local_doc_qa.mysql_client.new_session(user_id, session_id, session_name)
+    now = datetime.now()
+    timestamp = now.strftime("%Y%m%d%H%M")
+    return sanic_json({"code": 200, "msg": "success create session {}".format(session_id),
+                       "data": {"session_id": session_id, "session_name": session_name, "timestamp": timestamp}})
+
+@protected()
+async def rename_session(req: request):
+    local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
+    user_id = safe_get(req, 'user_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
+    is_valid = validate_user_id(user_id)
+    if not is_valid:
+        return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
+    debug_logger.info("rename_session %s", user_id)
+    session_id = safe_get(req, 'session_id')
+    new_session_name = safe_get(req, 'new_session_name')
+    session_exist = local_doc_qa.mysql_client.check_kb_exist(user_id, session_id)
+    if not session_exist:
+        return sanic_json({"code": 2003, "msg": "fail, session {} not found".format(session_id)})
+    local_doc_qa.mysql_client.rename_session(user_id, session_id, new_session_name)
+    return sanic_json({"code": 200, "msg": "session {} rename success".format(session_id)})
+
+@protected()
+async def list_sessions(req: request):
+    local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
+    user_id = safe_get(req, 'user_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
+    is_valid = validate_user_id(user_id)
+    if not is_valid:
+        return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
+    debug_logger.info("list_sessions %s", user_id)
+    session_infos = local_doc_qa.mysql_client.get_sessions(user_id)
+    data = []
+    for session in session_infos:
+        data.append({"session_id": session[0], "session_name": session[1]})
+    debug_logger.info("all session infos: {}".format(data))
+    return sanic_json({"code": 200, "data": data})
+
+@protected()
+async def delete_session(req: request):
+    local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
+    user_id = safe_get(req, 'user_id')
+    if user_id is None:
+        return sanic_json({"code": 2002, "msg": f'输入非法！request.json：{req.json}，请检查！'})
+    is_valid = validate_user_id(user_id)
+    if not is_valid:
+        return sanic_json({"code": 2005, "msg": get_invalid_user_id_msg(user_id=user_id)})
+    debug_logger.info("delete_session %s", user_id)
+    session_id = safe_get(req, 'session_id')
+    session_exist = local_doc_qa.mysql_client.check_session_exist(user_id, session_id)
+    if not session_exist:
+        return sanic_json({"code": 2003, "msg": "fail, Session {} not found".format(session_id)})
+
+    local_doc_qa.mysql_client.delete_session(user_id, session_id)
+    return sanic_json({"code": 200, "msg": "Session {} delete success".format(session_id)})
