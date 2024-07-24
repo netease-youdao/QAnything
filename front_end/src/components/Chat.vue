@@ -270,7 +270,13 @@ const question = ref('');
 //问答的上下文
 const history = computed(() => {
   const context = chatSettingFormActive.value.context;
-  const historyChat = QA_List.value.slice(-context);
+  let historyChat = [];
+  // 滑动条最后一项为22，如果是22需要做无限制处理
+  if (context === 22) {
+    historyChat = [...QA_List.value];
+  } else {
+    historyChat = QA_List.value.slice(-context);
+  }
   const res = historyChat
     .filter(item => item.type === 'ai')
     .map(item => [item.question, item.answer]);

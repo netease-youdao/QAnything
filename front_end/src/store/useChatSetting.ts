@@ -13,7 +13,7 @@ export const useChatSetting = defineStore(
       apiBase: '',
       apiModelName: '',
       apiContextLength: 4096,
-      maxToken: 2048,
+      maxToken: 512,
       context: 0,
       temperature: 0.5,
       top_P: 1,

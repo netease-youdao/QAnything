@@ -99,27 +99,6 @@
       </a-form-item>
     </div>
     <div class="form-item-inline">
-      <a-form-item
-        ref="context"
-        :label="`${common.contextLabel}（${contextLength}）`"
-        name="context"
-      >
-        <a-slider v-model:value="chatSettingForm.context" :min="0" :max="contextLength" :step="2" />
-      </a-form-item>
-      <a-form-item name="context">
-        <a-input-number
-          v-model:value="chatSettingForm.context"
-          :min="0"
-          :max="contextLength"
-          :step="2"
-          style="margin-left: 16px"
-          :precision="0"
-          :controls="false"
-          @change="contextChange"
-        />
-      </a-form-item>
-    </div>
-    <div class="form-item-inline">
       <a-form-item ref="temperature" label="Temperature" name="temperature">
         <a-slider v-model:value="chatSettingForm.temperature" :min="0" :max="1" :step="0.01" />
       </a-form-item>
@@ -151,6 +130,20 @@
         />
       </a-form-item>
     </div>
+    <a-form-item ref="context" :label="`${common.contextLabel}（${contextLength}）`" name="context">
+      <a-slider
+        v-model:value="chatSettingForm.context"
+        :min="0"
+        :max="22"
+        :step="2"
+        :tip-formatter="sliderFormatter"
+      />
+      <!--      :marks="contextMarks"-->
+      <!--        <template #mark="{ label }">-->
+      <!--          <span>{{ label }}</span>-->
+      <!--        </template>-->
+      <!--      </a-slider>-->
+    </a-form-item>
     <a-form-item :label="common.capabilitiesLabel" name="capabilities">
       <a-checkbox-group v-model:value="capabilitiesOptionsState" style="width: 100%">
         <a-row>
@@ -218,12 +211,13 @@ const chatSettingForm = ref<IChatSetting>();
 // maxToken是上下文token的 1/TOKENRATIO 倍
 const TOKENRATIO = 2;
 
-// 上下文数量，处理奇数情况
-const contextChange = (value: number) => {
-  if (value % 2 !== 0 && Number.isInteger(value)) {
-    value += 1;
-    chatSettingForm.value.context = value;
+// 上下文条数，无限制tooltip
+const sliderFormatter = (value: number) => {
+  if (value >= 22) {
+    // 22代表无限制，所以最后发送的时候如果是22，需要做无限制处理
+    return '无限制';
   }
+  return value;
 };
 
 const rules: Record<string, Rule[]> = {
@@ -319,12 +313,12 @@ watch(
 );
 
 // 监听上下文token数，上下文token一变，回复最大token自动变为最大（上下文token / TOKENRATIO）
-watch(
-  () => chatSettingForm.value?.apiContextLength,
-  () => {
-    chatSettingForm.value.maxToken = chatSettingForm.value.apiContextLength / TOKENRATIO;
-  }
-);
+// watch(
+//   () => chatSettingForm.value?.apiContextLength,
+//   () => {
+//     chatSettingForm.value.maxToken = chatSettingForm.value.apiContextLength / TOKENRATIO;
+//   }
+// );
 
 // 在dom加载前初始化，onMounted会报错
 onBeforeMount(() => {
@@ -393,9 +387,9 @@ onBeforeMount(() => {
 }
 
 :deep(
-    .ant-checkbox-wrapper:not(.ant-checkbox-wrapper-disabled):hover
-      .ant-checkbox-checked:not(.ant-checkbox-disabled)
-      .ant-checkbox-inner
+    .ant-checkbox-wrapper:not(.ant-checkbox-wrapper-disabled):hover,
+    .ant-checkbox-checked:not(.ant-checkbox-disabled),
+    .ant-checkbox-inner
   ) {
   background-color: #5a47e5;
   border-color: #5a47e5 !important;
@@ -403,15 +397,15 @@ onBeforeMount(() => {
 
 :deep(
     .ant-checkbox-wrapper:not(.ant-checkbox-wrapper-disabled):hover .ant-checkbox-inner,
-    :where(.css-dev-only-do-not-override-3m4nqy).ant-checkbox:not(.ant-checkbox-disabled):hover
-      .ant-checkbox-inner
+    :where(.css-dev-only-do-not-override-3m4nqy).ant-checkbox:not(.ant-checkbox-disabled):hover,
+    .ant-checkbox-inner
   ) {
   border-color: #5a47e5;
 }
 
 :deep(
-    .ant-checkbox-wrapper:not(.ant-checkbox-wrapper-disabled):hover
-      .ant-checkbox-checked:not(.ant-checkbox-disabled):after
+    .ant-checkbox-wrapper:not(.ant-checkbox-wrapper-disabled):hover,
+    .ant-checkbox-checked:not(.ant-checkbox-disabled):after
   ) {
   border-color: #5a47e5;
 }
