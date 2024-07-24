@@ -2,8 +2,9 @@ from qanything_kernel.configs.model_config import VECTOR_SEARCH_TOP_K, VECTOR_SE
     PROMPT_TEMPLATE, STREAMING, PROMPT_TEMPLATE_FOR_VLLM, SYSTEM, INSTRUCTIONS, LOCAL_EMBED_SERVICE_URL, LOCAL_RERANK_SERVICE_URL, \
     LOCAL_EMBED_PATH, LOCAL_RERANK_PATH, CHILD_CHUNK_SIZE, PARENT_CHUNK_SIZE
 from typing import List, Tuple, Union
-from qanything_kernel.connector.embedding.embedding_for_online import YouDaoEmbeddings
 import time
+from qanything_kernel.connector.embedding.embedding_for_online_client import YouDaoEmbeddings
+from qanything_kernel.connector.rerank.rerank_for_online_client import YouDaoRerank
 from qanything_kernel.connector.llm import OpenAILLM
 from langchain.schema import Document
 from langchain.schema.messages import AIMessage, HumanMessage
@@ -48,12 +49,11 @@ def deduplicate_documents(source_docs):
 class LocalDocQA:
     def __init__(self, port):
         self.port = port
-        # llm只可能是ZiyueLLM()或CustomLLM（）
         self.milvus_cache = None
-        # custom_llm: object = None
         self.embeddings: YouDaoEmbeddings = None
+        self.rerank: YouDaoRerank = None
+        self.llm: OpenAILLM = None
         self.top_k: int = VECTOR_SEARCH_TOP_K
-        # self.chunk_size: int = CHUNK_SIZE
         self.chunk_conent: bool = True
         self.score_threshold: int = VECTOR_SEARCH_SCORE_THRESHOLD
         # self.milvus_kbs: List[VectorStoreMilvusClient] = []
@@ -62,7 +62,7 @@ class LocalDocQA:
         self.milvus_summary: KnowledgeBaseManager = None
         self.es_client: StoreElasticSearchClient = None
         # self.local_embed_service_url = f"http://{LOCAL_EMBED_SERVICE_URL}/embedding"
-        self.local_rerank_service_url = f"http://{LOCAL_RERANK_SERVICE_URL}/rerank"
+        # self.local_rerank_service_url = f"http://{LOCAL_RERANK_SERVICE_URL}/rerank"
         # self.embedding_tokenizer = AutoTokenizer.from_pretrained(LOCAL_EMBED_PATH, local_files_only=True)
         self.rerank_tokenizer = AutoTokenizer.from_pretrained(LOCAL_RERANK_PATH, local_files_only=True)
         # self.ocr_url = 'https://api2.ocr.youdao.com/ocr_line3'
@@ -91,30 +91,10 @@ class LocalDocQA:
 
     def init_cfg(self, args=None):
         self.embeddings = YouDaoEmbeddings()
+        self.rerank = YouDaoRerank()
         self.milvus_summary = KnowledgeBaseManager()
-        # self.es_client = StoreElasticSearchClient()
         self.milvus_kb = VectorStoreMilvusClient()
         self.llm: OpenAILLM = OpenAILLM(args)
-
-        # self.local_rerank_backend: app.ctx.rerank_backend
-
-
-        # if platform.system() == 'Linux':
-        #
-        #     self.llm: OpenAILLM = OpenAILLM(args)
-        #
-        #     from qanything_kernel.dependent_server.rerank_server.rerank_onnx_backend import RerankOnnxBackend
-        #     from qanything_kernel.dependent_server.embedding_server.embedding_onnx_backend import EmbeddingOnnxBackend
-        #     self.local_rerank_backend: RerankOnnxBackend = RerankOnnxBackend(self.use_cpu)
-        #     self.embeddings: EmbeddingOnnxBackend = EmbeddingOnnxBackend(self.use_cpu)
-        # else:
-        #
-        #     self.llm: OpenAILLM = OpenAILLM(args)
-        #
-        #     from qanything_kernel.dependent_server.rerank_server.rerank_torch_backend import RerankTorchBackend
-        #     from qanything_kernel.dependent_server.embedding_server.embedding_torch_backend import EmbeddingTorchBackend
-        #     self.local_rerank_backend: RerankTorchBackend = RerankTorchBackend(self.use_cpu)
-        #     self.embeddings: EmbeddingTorchBackend = EmbeddingTorchBackend(self.use_cpu)
 
     def init_retriever(self, user_id):
         self.es_client = StoreElasticSearchClient(index_name=user_id)
@@ -249,20 +229,20 @@ class LocalDocQA:
             prompt = prompt.replace("{question}", query)
             return prompt
 
-    @get_time
-    def rerank_documents(self, query, source_documents):
-        try:
-            passages = [doc.page_content for doc in source_documents]
-            response = requests.post(self.local_rerank_service_url, json={"query": query, "passages": passages}, timeout=120)
-            response.raise_for_status()  # 如果请求返回了错误状态码，将会抛出异常
-            scores = response.json()
-            for idx, score in enumerate(scores):
-                source_documents[idx].metadata['score'] = score
-            source_documents = sorted(source_documents, key=lambda x: x.metadata['score'], reverse=True)
-            return source_documents
-        except Exception as e:
-            debug_logger.warning(f"rerank error: {traceback.format_exc()}")
-            return source_documents
+    # @get_time
+    # def rerank_documents(self, query, source_documents):
+    #     try:
+    #         passages = [doc.page_content for doc in source_documents]
+    #         response = requests.post(self.local_rerank_service_url, json={"query": query, "passages": passages}, timeout=120)
+    #         response.raise_for_status()  # 如果请求返回了错误状态码，将会抛出异常
+    #         scores = response.json()
+    #         for idx, score in enumerate(scores):
+    #             source_documents[idx].metadata['score'] = score
+    #         source_documents = sorted(source_documents, key=lambda x: x.metadata['score'], reverse=True)
+    #         return source_documents
+    #     except Exception as e:
+    #         debug_logger.warning(f"rerank error: {traceback.format_exc()}")
+    #         return source_documents
 
     def get_rerank_results(self, query, doc_ids=None, doc_strs=None):
         docs = []
@@ -290,8 +270,10 @@ class LocalDocQA:
         if len(docs) > 1 and num_tokens_local(query, self.rerank_tokenizer) <= 300:
             try:
                 debug_logger.info(f"use rerank, rerank docs num: {len(docs)}")
-                rerank_results = self.rerank_documents(query, docs)
-                return rerank_results
+                docs = self.rerank.rerank_documents(query, docs)
+                if len(docs) > 1:
+                    docs = [doc for doc in docs if float(doc.metadata['score']) >= 0.28]
+                return docs
             except Exception as e:
                 debug_logger.error(f"query tokens: {num_tokens(query)}, rerank error: {e}")
                 embed1 = self.embeddings.embed_query(query)
@@ -376,12 +358,15 @@ class LocalDocQA:
             try:
                 t1 = time.perf_counter()
                 debug_logger.info(f"use rerank, rerank docs num: {len(source_documents)}")
-                source_documents = self.rerank_documents(condense_question, source_documents)
+                source_documents = self.rerank.rerank_documents(condense_question, source_documents)
                 t2 = time.perf_counter()
                 time_record['rerank'] = round(t2 - t1, 2)
+                # 过滤掉低分的文档
+                if len(source_documents) > 1:
+                    source_documents = [doc for doc in source_documents if float(doc.metadata['score']) >= 0.28]
             except Exception as e:
                 time_record['rerank'] = 0.0
-                debug_logger.error(f"query {query}: kb_ids: {kb_ids}, rerank error: {e}")
+                debug_logger.error(f"query {query}: kb_ids: {kb_ids}, rerank error: {traceback.format_exc()}")
 
         high_score_faq_documents = [doc for doc in source_documents if
                                     doc.metadata['file_name'].endswith('.faq') and float(doc.metadata['score'] >= 0.9)]

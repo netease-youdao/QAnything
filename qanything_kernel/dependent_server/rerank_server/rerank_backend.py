@@ -88,7 +88,7 @@ class RerankBackend(ABC):
                 )
                 future = executor.submit(self.inference, batch)
                 futures.append(future)
-            debug_logger.info(f'rerank number: {len(futures)}')
+            # debug_logger.info(f'rerank number: {len(futures)}')
             for future in futures:
                 scores = future.result()
                 tot_scores.extend(scores)
