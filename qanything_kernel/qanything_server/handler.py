@@ -403,7 +403,6 @@ async def list_docs(req: request):
     })
 
 
-
 @get_time_async
 async def delete_knowledge_base(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
@@ -632,8 +631,6 @@ async def local_doc_chat(req: request):
         missing_params_str = " and ".join(missing_params) if len(missing_params) > 1 else missing_params[0]
         return sanic_json({"code": 2003, "msg": f"fail, {missing_params_str} is required"})
 
-
-
     if only_need_search_results and streaming:
         return sanic_json(
             {"code": 2006, "msg": "fail, only_need_search_results and streaming can't be True at the same time"})
@@ -660,20 +657,6 @@ async def local_doc_chat(req: request):
     debug_logger.info("api_context_length: %s", api_context_length)
     debug_logger.info("top_p: %s", top_p)
     debug_logger.info("temperature: %s", temperature)
-    debug_logger.info("api_base: %s", api_base)
-
-    if model not in ['gpt-3.5-turbo-0613', 'gpt-3.5-turbo-16k', 'youdao-local-llm-qanything-turbo',
-                     'youdao-local-llm-qanything-std']:
-        return sanic_json({"code": 2006, "msg": "fail, model {} not found".format(model)})
-
-    if max_token is not None:
-        if model in ['gpt-3.5-turbo-0613', 'youdao-local-llm-qanything-turbo', 'youdao-local-llm-qanything-std']:
-            max_token = min(max_token, 1024)
-        else:
-            max_token = min(max_token, 4096)
-
-    if model in ['youdao-local-llm-qanything-turbo', 'youdao-local-llm-qanything-std']:  # TODO 这么写是因为凯强的所有模型prompt等参数一致
-        provider = 'vllm'
 
     time_record = {}
     preprocess_start = time.perf_counter()
@@ -1131,7 +1114,8 @@ async def get_bot_info(req: request):
             kb_names = []
         info = {"bot_id": bot_info[0], "user_id": user_id, "bot_name": bot_info[1], "description": bot_info[2],
                 "head_image": bot_info[3], "prompt_setting": bot_info[4], "welcome_message": bot_info[5],
-                "model": bot_info[6], "kb_ids": kb_ids, "kb_names": kb_names, "update_time": bot_info[8].strftime("%Y-%m-%d %H:%M:%S")}
+                "model": bot_info[6], "kb_ids": kb_ids, "kb_names": kb_names,
+                "update_time": bot_info[8].strftime("%Y-%m-%d %H:%M:%S")}
         data.append(info)
     return sanic_json({"code": 200, "msg": "success", "data": data})
 
