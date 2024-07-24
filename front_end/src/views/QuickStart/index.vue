@@ -2,7 +2,7 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-22 16:10:06
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-23 19:09:37
+ * @LastEditTime: 2024-07-24 17:10:57
  * @FilePath: front_end/src/views/QuickStart/index.vue
  * @Description: 快速开始，每个对话对应一个知识库（自动创建），传文件自动放入该对话对应的知识库
  -->
@@ -16,6 +16,13 @@
             <div v-if="item.type === 'user'" class="user">
               <img class="avatar" src="@/assets/home/avatar.png" alt="头像" />
               <p class="question-text">{{ item.question }}</p>
+              <!--              <div class="file-list-box">-->
+              <!--                <FileBlock-->
+              <!--                  v-for="file of uploadFileList"-->
+              <!--                  :key="file.file.lastModified"-->
+              <!--                  :file-data="file"-->
+              <!--                />-->
+              <!--              </div>-->
             </div>
             <div v-else class="ai">
               <img class="avatar" src="@/assets/home/ai-avatar.png" alt="头像" />
@@ -162,6 +169,13 @@
       </div>
       <div class="question-box">
         <div class="question">
+          <div class="file-list-box">
+            <FileBlock
+              v-for="file of uploadFileList"
+              :key="file.file.lastModified"
+              :file-data="file"
+            />
+          </div>
           <div class="send-box">
             <a-textarea
               v-model:value="question"
@@ -240,15 +254,19 @@ import ChatSettingDialog from '@/components/ChatSettingDialog.vue';
 import { pageStatus } from '@/utils/enum';
 import OptionList from '@/components/OptionList.vue';
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
+import { useKnowledgeModal } from '@/store/useKnowledgeModal';
+import FileBlock from '@/views/QuickStart/children/FileBlock.vue';
+import { useUploadFiles } from '@/store/useUploadFiles';
 
-const common = getLanguage().common;
+const { common, home } = getLanguage();
 
 const { copy } = useClipboard();
 const { QA_List, chatId, kbId, showLoading } = storeToRefs(useQuickStart());
 const { addHistoryList, updateHistoryList, addChatList, clearChatList } = useQuickStart();
 const { setChatSourceVisible, setSourceType, setSourceUrl, setTextContent } = useChatSource();
 const { showDefault } = storeToRefs(useKnowledgeBase());
-
+const { setModalVisible, setModalTitle } = useKnowledgeModal();
+const { uploadFileList } = storeToRefs(useUploadFiles());
 const { language } = storeToRefs(useLanguage());
 declare module _czc {
   const push: (array: any) => void;
@@ -257,10 +275,8 @@ declare module _czc {
 const typewriter = new Typewriter((str: string) => {
   if (str) {
     QA_List.value[QA_List.value.length - 1].answer += str || '';
-    console.log(QA_List.value);
   }
 });
-
 //当前问的问题
 const question = ref('');
 
@@ -286,7 +302,6 @@ const scrollBottom = () => {
 };
 
 onMounted(() => {
-  console.log('------chatId', chatId.value);
   scrollBottom();
 });
 
@@ -349,7 +364,6 @@ const addAnswer = (question: string) => {
 
 const updateChat = (title: string, chatId: number, kbId: string) => {
   try {
-    console.log('update', kbId);
     updateHistoryList(title, chatId, kbId);
   } catch (e) {
     message.error(e.msg || '更新对话失败');
@@ -368,7 +382,6 @@ const stopChat = () => {
 // 问答前处理 判断创建对话
 const beforeSend = async title => {
   try {
-    console.log('chat-title=', title);
     // 判断需不需要新建对话, 为null直接跳出
     if (chatId.value !== null) return;
     if (title.length > 100) {
@@ -379,7 +392,6 @@ const beforeSend = async title => {
     // 当前对话id为新建的historyId
     chatId.value = addHistoryList(title);
     updateChat(title, chatId.value, kbId.value);
-    console.log(kbId.value);
   } catch (e) {
     message.error(e.msg || '创建对话失败');
   }
@@ -410,7 +422,6 @@ const send = async () => {
   }
   showLoading.value = true;
   ctrl = new AbortController();
-  console.log('send', kbId.value);
   fetchEventSource(apiBase + '/local_doc_qa/local_doc_chat', {
     method: 'POST',
     headers: {
@@ -431,7 +442,6 @@ const send = async () => {
     }),
     signal: ctrl.signal,
     onopen(e: any) {
-      console.log('open');
       if (e.ok && e.headers.get('content-type') === 'text/event-stream') {
         // addAnswer(question.value);
         // question.value = '';
@@ -444,16 +454,13 @@ const send = async () => {
           .then(data => {
             message.error(data?.msg || '出错了,请稍后刷新重试。');
           })
-          .catch(e => {
-            console.log(e);
+          .catch(() => {
             message.error('出错了,请稍后刷新重试。');
           }); // 将响应解析为 JSON
       }
     },
     onmessage(msg: { data: string }) {
-      console.log('message');
       const res: any = JSON.parse(msg.data);
-      console.log(res);
       if (res?.code == 200 && res?.response) {
         // QA_List.value[QA_List.value.length - 1].answer += res.result.response;
         // typewriter.add(res?.response.replaceAll('\n', '<br/>'));
@@ -469,9 +476,7 @@ const send = async () => {
         history.value = res?.history;
       }
     },
-    onclose(e: any) {
-      console.log('close');
-      console.log(e);
+    onclose() {
       typewriter.done();
       ctrl.abort();
       showLoading.value = false;
@@ -483,7 +488,6 @@ const send = async () => {
       });
     },
     onerror(err: any) {
-      console.log('error');
       typewriter?.done();
       ctrl?.abort();
       showLoading.value = false;
@@ -500,7 +504,6 @@ const send = async () => {
 };
 
 const reAnswer = (item: IChatItem) => {
-  console.log('reAnswer');
   question.value = item.question;
   send();
 };
@@ -529,7 +532,8 @@ const content = ref('');
 const type = ref('');
 
 const uploadFile = () => {
-  console.log('uploadFile');
+  setModalVisible(true);
+  setModalTitle(home.upload);
 };
 
 const downloadChat = () => {
@@ -549,7 +553,6 @@ const deleteChat = () => {
 const confirm = async () => {
   confirmLoading.value = true;
   if (type.value === 'download') {
-    console.log('download');
     try {
       const ele = document.getElementById('chat-ul');
       const canvas = await html2canvas(ele as HTMLDivElement, {
@@ -569,11 +572,9 @@ const confirm = async () => {
       message.success('下载成功');
       await Promise.resolve();
     } catch (e) {
-      console.log(e);
       message.error(e.message || e.msg || '出错了');
     }
   } else if (type.value === 'delete') {
-    console.log('delete');
     history.value = [];
     clearChatList(chatId.value);
     chatId.value = null;
@@ -608,7 +609,6 @@ const checkFileType = filename => {
 };
 
 const handleChatSource = file => {
-  console.log('handleChatSource', file);
   const isSupport = checkFileType(file.file_name);
   if (isSupport) {
     queryFile(file);
@@ -619,16 +619,13 @@ async function queryFile(file) {
   try {
     setSourceUrl(null);
     const res: any = await resultControl(await urlResquest.getFile({ file_id: file.file_id }));
-    console.log('queryFile', res);
     const suffix = file.file_name.split('.').pop();
     const b64Type = getB64Type(suffix);
-    console.log('b64Type', b64Type);
     setSourceType(suffix);
     setSourceUrl(`data:${b64Type};base64,${res.base64_content}`);
     if (suffix === 'txt') {
       const decodedTxt = atob(res.base64_content);
       const correctStr = decodeURIComponent(escape(decodedTxt));
-      console.log('decodedTxt', correctStr);
       setTextContent(correctStr);
       setChatSourceVisible(true);
     } else {
@@ -704,6 +701,7 @@ function getB64Type(suffix) {
     }
 
     .question-text {
+      //display: flex;
       padding: 13px 20px;
       margin-left: 48px;
       font-size: 14px;
@@ -888,6 +886,16 @@ function getB64Type(suffix) {
   }
 }
 
+.file-list-box {
+  width: 100%;
+  max-height: 160px;
+  padding: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  overflow-y: auto;
+}
+
 .question-box {
   width: 100%;
   margin-bottom: 30px;
@@ -896,6 +904,7 @@ function getB64Type(suffix) {
     width: 60%;
     margin: 0 auto;
     display: flex;
+    flex-direction: column;
     align-items: center;
 
     :deep(.ant-input-affix-wrapper) {

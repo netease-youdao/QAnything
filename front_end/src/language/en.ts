@@ -18,10 +18,10 @@ export default {
     delete: 'Delete',
     view: 'View',
     regenerate: 'regenerate',
-    dragUrl: 'or drag and drop to upload',
+    dragUrl: 'Drag files here, or',
     click: 'Click',
     updesc1:
-      'Support: md, txt, pdf, jpg, png, jpeg, docx, xlsx,pptx, eml, csv, single document less than 30M, single picture less than 5M',
+      'Support: md, txt, pdf, jpg, png, jpeg, docx, xlsx, pptx, eml, csv. single document less than 30M, single picture less than 5M',
     updesc2:
       'Can upload files in batches, supported file type: doc、docx、ppt、pptx、xls、xlsx、pdf、md、JPG、JPEG、PNG、BMP、txt、eml, single document less than 30MB, single image less than 5MB',
     confirm: 'Confirm',

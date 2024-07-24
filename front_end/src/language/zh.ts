@@ -21,9 +21,9 @@ export default {
     dragUrl: '将文件拖到此处，或',
     click: '点击上传',
     updesc1:
-      '支持文件格式md、txt、pdf、jpg、png、jpeg、docx、xlsx、pptx、eml、csv、单个文档小于30M,单张图片小于5M',
+      '支持文件格式md、txt、pdf、jpg、png、jpeg、docx、xlsx、pptx、eml、csv, 单个文档小于30M,单张图片小于5M',
     updesc2:
-      '可批量上传，支持文件格式doc、docx、ppt、pptx、xls、xlsx、pdf、md、JPG、JPEG、PNG、BMP、txt、eml,单个文档小于30M,单张图片小于5M',
+      '可批量上传，支持文件格式doc、docx、ppt、pptx、xls、xlsx、pdf、md、JPG、JPEG、PNG、BMP、txt、eml, 单个文档小于30M,单张图片小于5M',
     confirm: '确定',
     confirm2: '确认',
     confirmApplication: '确认应用',

@@ -220,6 +220,7 @@ import { useLanguage } from '@/store/useLanguage';
 import { userId } from '@/services/urlConfig';
 import urlResquest from '@/services/urlConfig';
 import { resultControl } from '@/utils/utils';
+import { useChatSetting } from '@/store/useChatSetting';
 
 const props = defineProps({
   chatType: {
@@ -242,6 +243,7 @@ const typewriter = new Typewriter((str: string) => {
 });
 
 const { QA_List } = storeToRefs(useBotsChat());
+const { chatSettingFormActive } = storeToRefs(useChatSetting());
 const { copy } = useClipboard();
 const { setChatSourceVisible, setSourceType, setSourceUrl, setTextContent } = useChatSource();
 const { language } = storeToRefs(useLanguage());
@@ -255,7 +257,10 @@ const network = ref(false);
 const question = ref('');
 
 //问答的上下文
-const history = ref([]);
+const history = computed(() => {
+  const context = chatSettingFormActive.value.context;
+  return QA_List.value.slice(-context);
+});
 
 //当前是否回答中
 const showLoading = ref(false);
@@ -318,6 +323,7 @@ const addAnswer = (question: string) => {
   QA_List.value.push({
     answer: '',
     question,
+    onlySearch: chatSettingFormActive.value.capabilities.onlySearch,
     type: 'ai',
     copied: false,
     like: false,
@@ -346,9 +352,9 @@ const send = () => {
   const q = question.value;
   question.value = '';
   addQuestion(q);
-  if (history.value.length >= 3) {
-    history.value = [];
-  }
+  // if (history.value.length >= 3) {
+  //   history.value = [];
+  // }
   showLoading.value = true;
   scrollDom.value?.scrollIntoView(true);
   ctrl = new AbortController();
@@ -372,6 +378,23 @@ const send = () => {
       streaming: true,
       networking: network.value,
       product_source: 'saas',
+
+      // user_id: userId,
+      // kb_ids: selectList.value,
+      // history: history.value,
+      // question: q,
+      // streaming: true,
+      // networking: chatSettingFormActive.value.capabilities.onlineSearch,
+      // product_source: 'saas',
+      // only_need_search_results: chatSettingFormActive.value.capabilities.onlySearch,
+      // hybrid_search: chatSettingFormActive.value.capabilities.mixedSearch,
+      // max_token: chatSettingFormActive.value.maxToken,
+      // api_base: chatSettingFormActive.value.apiBase,
+      // api_key: chatSettingFormActive.value.apiKey,
+      // model: chatSettingFormActive.value.apiModelName,
+      // api_context_length: chatSettingFormActive.value.apiContextLength,
+      // top_p: chatSettingFormActive.value.top_P,
+      // temperature: chatSettingFormActive.value.temperature,
     }),
     signal: ctrl.signal,
     onopen(e: any) {
@@ -410,9 +433,9 @@ const send = () => {
         QA_List.value[QA_List.value.length - 1].source = res?.source_documents;
       }
 
-      if (res?.history.length) {
-        history.value = res?.history;
-      }
+      // if (res?.history.length) {
+      //   history.value = res?.history;
+      // }
     },
     onclose(e: any) {
       console.log('close');
@@ -507,7 +530,7 @@ const confirm = async () => {
     }
   } else if (type.value === 'delete') {
     console.log('delete');
-    history.value = [];
+    // history.value = [];
     clearQAList();
   }
   type.value = '';

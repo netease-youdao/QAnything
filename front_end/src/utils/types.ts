@@ -1,9 +1,9 @@
 /*
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2024-01-09 15:28:56
- * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2024-01-11 10:46:35
- * @FilePath: /QAnything/front_end/src/utils/types.ts
+ * @LastEditors: Ianarua 306781523@qq.com
+ * @LastEditTime: 2024-07-24 17:52:38
+ * @FilePath: front_end/src/utils/types.ts
  * @Description:
  */
 
@@ -57,6 +57,8 @@ export interface IFileListItem {
   file_id: string;
   percent?: number;
   errorText?: string;
+  text?: string;
+  order?: number;
 }
 
 // 模型设置
@@ -85,7 +87,7 @@ export interface IChatSetting {
   apiContextLength: number;
   /* 上下文的消息数量上限条数，不用传 */
   context: number;
-  /*  */
+  /* 返回的最大token */
   maxToken: number;
   /* 联想与发散 0~1 */
   temperature: number;

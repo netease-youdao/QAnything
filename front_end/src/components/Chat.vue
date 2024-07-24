@@ -242,6 +242,7 @@ import ChatSettingDialog from '@/components/ChatSettingDialog.vue';
 import HistoryChat from '@/components/Home/HistoryChat.vue';
 import { useHomeChat } from '@/store/useHomeChat';
 import HighLightMarkDown from '@/components/HighLightMarkDown.vue';
+import { useChatSetting } from '@/store/useChatSetting';
 
 const common = getLanguage().common;
 
@@ -253,8 +254,9 @@ const typewriter = new Typewriter((str: string) => {
 });
 
 const { selectList, knowledgeBaseList } = storeToRefs(useKnowledgeBase());
-const { copy } = useClipboard();
 const { QA_List, chatId, pageId, qaPageId, historyList } = storeToRefs(useHomeChat());
+const { chatSettingFormActive } = storeToRefs(useChatSetting());
+const { copy } = useClipboard();
 const { addHistoryList, updateHistoryList, addChatList, clearChatList } = useHomeChat();
 const { setChatSourceVisible, setSourceType, setSourceUrl, setTextContent } = useChatSource();
 const { language } = storeToRefs(useLanguage());
@@ -262,19 +264,14 @@ declare module _czc {
   const push: (array: any) => void;
 }
 
-//当前是否开启链网检索
-const network = ref(false);
-
-// 当前是否开启仅返回检索结果 false正常，true只检索
-const onlySearch = ref(false);
-// 检索副本，因为要把检索加到answer里，用户中途改动这个会将用户改后的加进去, 所以需要一个copy副本
-const onlySearchCopy = ref(false);
-
 //当前问的问题
 const question = ref('');
 
 //问答的上下文
-const history = ref([]);
+const history = computed(() => {
+  const context = chatSettingFormActive.value.context;
+  return QA_List.value.slice(-context);
+});
 
 //当前是否回答中
 const showLoading = ref(false);
@@ -388,7 +385,7 @@ const addAnswer = (question: string) => {
   QA_List.value.push({
     answer: '',
     question,
-    onlySearch: onlySearchCopy.value,
+    onlySearch: chatSettingFormActive.value.capabilities.onlySearch,
     type: 'ai',
     copied: false,
     like: false,
@@ -492,11 +489,6 @@ const send = () => {
   addQuestion(q);
   // 更新最大的chatList
   addChatList(chatId.value, QA_List.value);
-  // 将检索结果存为副本
-  onlySearchCopy.value = onlySearch.value;
-  if (history.value.length >= 3) {
-    history.value = [];
-  }
   showLoading.value = true;
   ctrl = new AbortController();
 
@@ -513,9 +505,17 @@ const send = () => {
       history: history.value,
       question: q,
       streaming: true,
-      networking: network.value,
+      networking: chatSettingFormActive.value.capabilities.onlineSearch,
       product_source: 'saas',
-      only_need_search_results: onlySearch.value,
+      only_need_search_results: chatSettingFormActive.value.capabilities.onlySearch,
+      hybrid_search: chatSettingFormActive.value.capabilities.mixedSearch,
+      max_token: chatSettingFormActive.value.maxToken,
+      api_base: chatSettingFormActive.value.apiBase,
+      api_key: chatSettingFormActive.value.apiKey,
+      model: chatSettingFormActive.value.apiModelName,
+      api_context_length: chatSettingFormActive.value.apiContextLength,
+      top_p: chatSettingFormActive.value.top_P,
+      temperature: chatSettingFormActive.value.temperature,
     }),
     signal: ctrl.signal,
     onopen(e: any) {
@@ -553,9 +553,9 @@ const send = () => {
         QA_List.value[QA_List.value.length - 1].source = res?.source_documents;
       }
 
-      if (res?.history.length) {
-        history.value = res?.history;
-      }
+      // if (res?.history.length) {
+      //   history.value = res?.history;
+      // }
     },
     onclose(e: any) {
       console.log('close');
@@ -657,7 +657,7 @@ const confirm = async () => {
     }
   } else if (type.value === 'delete') {
     console.log('delete');
-    history.value = [];
+    // history.value = [];
     clearChatList(chatId.value);
     chatId.value = null;
     QA_List.value = [];
@@ -741,17 +741,11 @@ function getB64Type(suffix) {
   return b64Types[index];
 }
 
-// const networkChat = () => {
-//   network.value = !network.value;
-// };
-//
-// const changeOnlySearch = () => {
-//   onlySearch.value = !onlySearch.value;
-// };
-
 // 清空多轮问答历史
 function clearHistory() {
-  history.value = [];
+  // 先注了，不知道这方法干啥用的，也不敢动
+  console.log('清空');
+  // history.value = [];
 }
 
 scrollBottom();

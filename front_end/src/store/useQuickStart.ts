@@ -1,11 +1,14 @@
 // import { resultControl } from '@/utils/utils';
 // import urlResquest from '@/services/urlConfig';
+import { useKnowledgeBase } from '@/store/useKnowledgeBase';
+
+const { currentId } = storeToRefs(useKnowledgeBase());
 
 /**
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-22 18:18:48
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-23 18:56:26
+ * @LastEditTime: 2024-07-24 17:28:43
  * @FilePath: front_end/src/store/useQuickStart.ts
  * @Description:
  */
@@ -18,7 +21,7 @@ export interface IHistoryList {
 interface IChatList {
   historyId: number;
   // list: IChatItem[];
-  list: any[];
+  list: any[]; // 里面有一个IFileListItem
 }
 
 export const useQuickStart = defineStore(
@@ -114,6 +117,12 @@ export const useQuickStart = defineStore(
     const setKbId = value => {
       kbId.value = value;
     };
+    watch(
+      () => kbId.value,
+      () => {
+        currentId.value = kbId.value;
+      }
+    );
 
     return {
       QA_List,

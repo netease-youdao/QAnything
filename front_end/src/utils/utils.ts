@@ -1,9 +1,9 @@
 /*
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2024-01-09 15:28:56
- * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2024-01-11 10:46:49
- * @FilePath: /QAnything/front_end/src/utils/utils.ts
+ * @LastEditors: Ianarua 306781523@qq.com
+ * @LastEditTime: 2024-07-24 16:50:29
+ * @FilePath: front_end/src/utils/utils.ts
  * @Description:
  */
 
@@ -137,4 +137,19 @@ export const formatDate = (timestamp: string, symbol = '-') => {
   } else {
     return '';
   }
+};
+
+/**
+ * @description 将文件后缀和文件名分开
+ * @param filePath 文件全部名称
+ */
+export const parseFileName = (filePath: string) => {
+  const parts = filePath.split('.');
+  const fileName = parts.slice(0, -1).join('.'); // 获取文件名部分
+  const fileExtension = parts.at(-1); // 获取文件扩展名部分
+
+  return {
+    fileName: fileName,
+    fileExtension: fileExtension,
+  };
 };

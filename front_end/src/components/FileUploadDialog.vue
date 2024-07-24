@@ -1,9 +1,9 @@
 <!--
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-07 19:32:26
- * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2024-01-08 15:09:48
- * @FilePath: /qanything-open-source/src/components/FileUploadDialog.vue
+ * @LastEditors: Ianarua 306781523@qq.com
+ * @LastEditTime: 2024-07-24 17:02:28
+ * @FilePath: front_end/src/components/FileUploadDialog.vue
  * @Description:
 -->
 <template>
@@ -14,7 +14,6 @@
       centered
       width="480px"
       wrap-class-name="upload-file-modal"
-      @ok="handleOk"
     >
       <div class="file">
         <div class="box">
@@ -30,15 +29,11 @@
             <div class="before-upload">
               <div class="upload-text-box">
                 <SvgIcon name="upload" />
-                <p v-if="language === 'zh'">
-                  <span class="upload-text"
-                    >{{ common.dragUrl }}<span class="blue">{{ common.click }}</span></span
-                  >
-                </p>
-                <p v-else>
-                  <span class="upload-text"
-                    ><span class="blue">{{ common.click }}&nbsp;</span>{{ common.dragUrl }}</span
-                  >
+                <p>
+                  <span class="upload-text">
+                    {{ common.dragUrl }}
+                    <span class="blue">{{ common.click }}</span>
+                  </span>
                 </p>
               </div>
               <p v-if="!showUploadList" class="desc">
@@ -78,6 +73,7 @@
       </div>
       <template #footer>
         <a-button
+          v-if="props.dialogType === 0"
           key="submit"
           type="primary"
           class="upload-btn"
@@ -85,6 +81,15 @@
           @click="handleOk"
         >
           {{ common.confirm }}
+        </a-button>
+        <a-button
+          v-if="props.dialogType === 1"
+          key="submit"
+          type="primary"
+          class="upload-btn"
+          @click="handleCancel"
+        >
+          {{ common.cancel }}
         </a-button>
       </template>
     </a-modal>
@@ -102,19 +107,31 @@ import { IFileListItem } from '@/utils/types';
 import { message } from 'ant-design-vue';
 import { userId } from '@/services/urlConfig';
 import { getLanguage } from '@/language/index';
-import { useLanguage } from '@/store/useLanguage';
+import { useUploadFiles } from '@/store/useUploadFiles';
+// import { useLanguage } from '@/store/useLanguage';
 
-const { language } = storeToRefs(useLanguage());
+// const { language } = storeToRefs(useLanguage());
 const common = getLanguage().common;
 const { setKnowledgeName, setModalVisible } = useKnowledgeModal();
 const { setDefault } = useKnowledgeBase();
 const { getDetails } = useOptiionList();
 const { modalVisible, modalTitle } = storeToRefs(useKnowledgeModal());
 const { currentId, currentKbName } = storeToRefs(useKnowledgeBase());
+const { uploadFileList } = storeToRefs(useUploadFiles()); // 上传的文件列表
+const { initUploadFileList } = useUploadFiles();
+
+const props = defineProps({
+  // 0为知识库上传，1为快速开始上传
+  dialogType: {
+    type: Number,
+    require: false,
+    default: 0,
+  },
+});
 
 const timer = ref();
 
-const uploadFileList = ref([]); // 本次上传文件列表
+// const uploadFileList = ref([]); // 本次上传文件列表
 
 //控制确认按钮 是否能提交
 const canSubmit = computed(() => {
@@ -129,13 +146,9 @@ watch(
   () => modalVisible.value,
   () => {
     setKnowledgeName(currentKbName.value);
-    if (uploadFileList.value.length) {
-      showUploadList.value = true;
-    } else {
-      showUploadList.value = false;
-    }
-    if (!modalVisible.value) {
-      uploadFileList.value = [];
+    showUploadList.value = !!uploadFileList.value.length;
+    if (!modalVisible.value && props.dialogType === 0) {
+      initUploadFileList();
     }
   }
 );
@@ -156,8 +169,8 @@ const acceptList = [
   '.pptx',
   '.eml',
   '.csv',
-  '.mp3',
-  '.wav',
+  // '.mp3',
+  // '.wav',
 ];
 
 //上传前校验
@@ -182,6 +195,7 @@ const beforeFileUpload = async (file, index) => {
 //input上传
 const fileChange = e => {
   const files = e.target.files;
+  console.log('fileChange', files);
   Array.from(files).forEach(async (file: any, index) => {
     try {
       await beforeFileUpload(file, index);
@@ -231,8 +245,12 @@ const fileChange = e => {
 // };
 
 const uplolad = async () => {
+  if (props.dialogType === 0) {
+    showUploadList.value = true;
+  } else if (props.dialogType === 1) {
+    handleCancel();
+  }
   const list = [];
-  showUploadList.value = true;
   uploadFileList.value.forEach((file: IFileListItem) => {
     if (file.status == 'loading') {
       list.push(file);
@@ -278,20 +296,24 @@ const uplolad = async () => {
           uploadFileList.value[item.order].errorText = data?.msg || common.upFailed;
         });
       }
-    })
-    .catch(error => {
-      list.forEach(item => {
-        uploadFileList.value[item.order].status = 'error';
-        uploadFileList.value[item.order].errorText = error?.msg || common.upFailed;
-      });
-      message.error(JSON.stringify(error?.msg) || '出错了');
     });
+  // .catch(error => {
+  //   list.forEach(item => {
+  //     uploadFileList.value[item.order].status = 'error';
+  //     uploadFileList.value[item.order].errorText = error?.msg || common.upFailed;
+  //   });
+  //   message.error(JSON.stringify(error?.msg) || '出错了');
+  // });
 };
 
 const handleOk = async () => {
-  setDefault(pageStatus.optionlist);
   setModalVisible(false);
-  getDetails();
+  setDefault(pageStatus.optionlist);
+  await getDetails();
+};
+
+const handleCancel = () => {
+  setModalVisible(false);
 };
 
 onBeforeUnmount(() => {

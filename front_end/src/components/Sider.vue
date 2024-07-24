@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-01 14:57:33
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-23 19:12:01
+ * @LastEditTime: 2024-07-24 11:33:04
  * @FilePath: front_end/src/components/Sider.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -50,7 +50,7 @@
     </div>
     <ChatSourceDialog />
     <DeleteModal />
-    <FileUploadDialog />
+    <FileUploadDialog :dialog-type="navIndex === 2 ? 1 : 0" />
     <UrlUploadDialog />
     <EditQaSetDialog />
   </div>

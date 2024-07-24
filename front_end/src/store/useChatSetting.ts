@@ -74,9 +74,15 @@ export const useChatSetting = defineStore(
       }
     };
 
+    // 当前应用的设置
+    const chatSettingFormActive = computed<IChatSetting>(() => {
+      return chatSettingConfigured.value.find(item => item.active === true);
+    });
+
     return {
       setChatSettingConfigured,
       chatSettingConfigured,
+      chatSettingFormActive,
     };
   },
   {
