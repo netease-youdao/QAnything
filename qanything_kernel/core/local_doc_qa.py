@@ -289,9 +289,10 @@ class LocalDocQA:
             return docs
 
     async def get_knowledge_based_answer(self, model, max_token, provider, kb_ids, query, retriever, custom_prompt, time_record,
+                                         temperature, api_base, api_key, api_context_length, top_p,
                                          chat_history=None, streaming: bool = STREAMING, rerank: bool = False,
                                          only_need_search_results: bool = False, need_web_search=False, hybrid_search=False):
-        custom_llm = OpenAILLM(max_token)
+        custom_llm = OpenAILLM(model, max_token, api_base, api_key, api_context_length, top_p, temperature)
         if chat_history is None:
             chat_history = []
         retrieval_query = query

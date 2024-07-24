@@ -36,18 +36,31 @@ class OpenAILLM:
     history: List[List[str]] = []
     history_len: int = llm_config['history_len']
 
-    def __init__(self, max_token):
+    def __init__(self, model, max_token, api_base, api_key, api_context_length, top_p, temperature):
         super().__init__()
-        base_url = OPENAI_API_BASE
-        api_key = OPENAI_API_KEY
+        base_url = api_base
+        api_key = api_key
+
         if max_token is not None:
             self.max_token = max_token
+        if model is not None:
+            self.model = model
+        if api_context_length is not None:
+            self.token_window = api_context_length
+        if top_p is not None:
+            self.top_p = top_p
+        if temperature is not None:
+            self.temperature = temperature
+
         self.client = OpenAI(base_url=base_url, api_key=api_key)
         debug_logger.info(f"OPENAI_API_KEY = {api_key}")
         debug_logger.info(f"OPENAI_API_BASE = {base_url}")
         debug_logger.info(f"OPENAI_API_MODEL_NAME = {self.model}")
         debug_logger.info(f"OPENAI_API_CONTEXT_LENGTH = {self.token_window}")
         debug_logger.info(f"OPENAI_API_MAX_TOKEN = {self.max_token}")
+        debug_logger.info(f"TOP_P = {self.top_p}")
+        debug_logger.info(f"TEMPERATURE = {self.temperature}")
+
 
 
     @property
