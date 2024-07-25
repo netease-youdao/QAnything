@@ -2,7 +2,7 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-22 16:10:06
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-24 17:10:57
+ * @LastEditTime: 2024-07-25 15:37:30
  * @FilePath: front_end/src/views/QuickStart/index.vue
  * @Description: 快速开始，每个对话对应一个知识库（自动创建），传文件自动放入该对话对应的知识库
  -->
@@ -257,6 +257,7 @@ import { useKnowledgeBase } from '@/store/useKnowledgeBase';
 import { useKnowledgeModal } from '@/store/useKnowledgeModal';
 import FileBlock from '@/views/QuickStart/children/FileBlock.vue';
 import { useUploadFiles } from '@/store/useUploadFiles';
+import { useChatSetting } from '@/store/useChatSetting';
 
 const { common, home } = getLanguage();
 
@@ -264,6 +265,7 @@ const { copy } = useClipboard();
 const { QA_List, chatId, kbId, showLoading } = storeToRefs(useQuickStart());
 const { addHistoryList, updateHistoryList, addChatList, clearChatList } = useQuickStart();
 const { setChatSourceVisible, setSourceType, setSourceUrl, setTextContent } = useChatSource();
+const { chatSettingFormActive } = storeToRefs(useChatSetting());
 const { showDefault } = storeToRefs(useKnowledgeBase());
 const { setModalVisible, setModalTitle } = useKnowledgeModal();
 const { uploadFileList } = storeToRefs(useUploadFiles());
@@ -281,7 +283,12 @@ const typewriter = new Typewriter((str: string) => {
 const question = ref('');
 
 //问答的上下文
-const history = ref([]);
+const history = computed(() => {
+  const context = chatSettingFormActive.value.context;
+  const usefulChat = QA_List.value.filter(item => item.type === 'ai');
+  const historyChat = context === 22 ? usefulChat : usefulChat.slice(-context);
+  return historyChat.map(item => [item.question, item.answer]);
+});
 
 // //当前是否回答中
 // const showLoading = ref(false);
@@ -347,12 +354,11 @@ const addQuestion = q => {
   scrollBottom();
 };
 
-// TODO 只检索
 const addAnswer = (question: string) => {
   QA_List.value.push({
     answer: '',
     question,
-    onlySearch: false,
+    onlySearch: chatSettingFormActive.value.capabilities.onlySearch,
     type: 'ai',
     copied: false,
     like: false,
@@ -415,11 +421,6 @@ const send = async () => {
   addQuestion(q);
   // 更新最大的chatList
   addChatList(chatId.value, QA_List.value);
-  // TODO 将检索结果存为副本
-  // onlySearchCopy.value = onlySearch.value;
-  if (history.value.length >= 3) {
-    history.value = [];
-  }
   showLoading.value = true;
   ctrl = new AbortController();
   fetchEventSource(apiBase + '/local_doc_qa/local_doc_chat', {
@@ -429,16 +430,23 @@ const send = async () => {
       Accept: ['text/event-stream', 'application/json'],
     },
     openWhenHidden: true,
-    // TODO 联网、只检索
     body: JSON.stringify({
       user_id: userId,
       kb_ids: [kbId.value],
       history: history.value,
       question: q,
       streaming: true,
-      networking: true,
+      networking: chatSettingFormActive.value.capabilities.onlineSearch,
       product_source: 'saas',
-      only_need_search_results: false,
+      only_need_search_results: chatSettingFormActive.value.capabilities.onlySearch,
+      hybrid_search: chatSettingFormActive.value.capabilities.mixedSearch,
+      max_token: chatSettingFormActive.value.maxToken,
+      api_base: chatSettingFormActive.value.apiBase,
+      api_key: chatSettingFormActive.value.apiKey,
+      model: chatSettingFormActive.value.apiModelName,
+      api_context_length: chatSettingFormActive.value.apiContextLength,
+      top_p: chatSettingFormActive.value.top_P,
+      temperature: chatSettingFormActive.value.temperature,
     }),
     signal: ctrl.signal,
     onopen(e: any) {
@@ -470,10 +478,6 @@ const send = async () => {
 
       if (res?.source_documents?.length) {
         QA_List.value[QA_List.value.length - 1].source = res?.source_documents;
-      }
-
-      if (res?.history.length) {
-        history.value = res?.history;
       }
     },
     onclose() {
@@ -575,7 +579,7 @@ const confirm = async () => {
       message.error(e.message || e.msg || '出错了');
     }
   } else if (type.value === 'delete') {
-    history.value = [];
+    // history.value = [];
     clearChatList(chatId.value);
     chatId.value = null;
     QA_List.value = [];
