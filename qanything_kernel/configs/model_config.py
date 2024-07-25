@@ -117,7 +117,7 @@ LOCAL_RERANK_MAX_LENGTH = 512
 LOCAL_RERANK_BATCH = 16
 LOCAL_RERANK_WORKERS = 1
 LOCAL_RERANK_PATH = os.path.join(root_path, 'qanything_kernel/dependent_server/rerank_server', 'rerank_model_configs_v0.0.1')
-LOCAL_RERANK_MODEL_PATH = os.path.join(LOCAL_RERANK_PATH, "rerank.dll")
+LOCAL_RERANK_MODEL_PATH = os.path.join(LOCAL_RERANK_PATH, "rerank.onnx")
 
 LOCAL_EMBED_SERVICE_URL = "localhost:9001"
 LOCAL_EMBED_MODEL_NAME = 'embed'
@@ -125,7 +125,7 @@ LOCAL_EMBED_MAX_LENGTH = 512
 LOCAL_EMBED_BATCH = 16
 LOCAL_EMBED_WORKERS = 1
 LOCAL_EMBED_PATH = os.path.join(root_path, 'qanything_kernel/dependent_server/embedding_server', 'embedding_model_configs_v0.0.1')
-LOCAL_EMBED_MODEL_PATH = os.path.join(LOCAL_EMBED_PATH, "embed.dll")
+LOCAL_EMBED_MODEL_PATH = os.path.join(LOCAL_EMBED_PATH, "embed.onnx")
 
 INSERT_WORKERS = 10
 
