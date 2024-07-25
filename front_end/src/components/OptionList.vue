@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2023-12-26 14:49:41
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-25 14:48:33
+ * @LastEditTime: 2024-07-25 15:22:38
  * @FilePath: front_end/src/components/OptionList.vue
  * @Description: 
 -->
@@ -80,7 +80,10 @@
             <template v-if="column.key === 'status'">
               <div class="status-box">
                 <span class="icon-file-status">
-                  <LoadingImg v-if="record.status === 'gray'" class="file-status" />
+                  <LoadingImg
+                    v-if="record.status === 'gray' || record.status === 'yellow'"
+                    class="file-status"
+                  />
                   <SvgIcon
                     v-else
                     class="file-status"

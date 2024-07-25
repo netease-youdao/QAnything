@@ -2,7 +2,7 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-23 11:10:08
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-23 18:53:31
+ * @LastEditTime: 2024-07-25 15:29:20
  * @FilePath: front_end/src/components/SiderCardItem.vue
  * @Description: QuickStart -> SiderCard的每一项，传入HistoryList和点击函数
  -->
