@@ -2,7 +2,7 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-22 16:10:06
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-25 15:37:30
+ * @LastEditTime: 2024-07-25 16:22:09
  * @FilePath: front_end/src/views/QuickStart/index.vue
  * @Description: 快速开始，每个对话对应一个知识库（自动创建），传文件自动放入该对话对应的知识库
  -->
@@ -26,7 +26,7 @@
             </div>
             <div v-else class="ai">
               <img class="avatar" src="@/assets/home/ai-avatar.png" alt="头像" />
-              <div class="content">
+              <div class="ai-content">
                 <div class="ai-right">
                   <p
                     v-if="!item.onlySearch"
@@ -40,7 +40,7 @@
                     <span v-else>{{ item.answer }}</span>
                   </p>
                   <p
-                    v-if="item.onlySearch && !item.source.length"
+                    v-else-if="item.onlySearch && !item.source.length"
                     class="question-text"
                     :class="[
                       !item.source.length && !item?.picList?.length ? 'change-radius' : '',
@@ -269,7 +269,9 @@ const { chatSettingFormActive } = storeToRefs(useChatSetting());
 const { showDefault } = storeToRefs(useKnowledgeBase());
 const { setModalVisible, setModalTitle } = useKnowledgeModal();
 const { uploadFileList } = storeToRefs(useUploadFiles());
+const { initUploadFileList } = useUploadFiles();
 const { language } = storeToRefs(useLanguage());
+
 declare module _czc {
   const push: (array: any) => void;
 }
@@ -435,7 +437,7 @@ const send = async () => {
       kb_ids: [kbId.value],
       history: history.value,
       question: q,
-      streaming: true,
+      streaming: chatSettingFormActive.value.capabilities.onlySearch === false,
       networking: chatSettingFormActive.value.capabilities.onlineSearch,
       product_source: 'saas',
       only_need_search_results: chatSettingFormActive.value.capabilities.onlySearch,
@@ -450,21 +452,24 @@ const send = async () => {
     }),
     signal: ctrl.signal,
     onopen(e: any) {
+      // 清除fileList
+      initUploadFileList();
       if (e.ok && e.headers.get('content-type') === 'text/event-stream') {
         // addAnswer(question.value);
         // question.value = '';
         addAnswer(q);
         typewriter.start();
       } else if (e.headers.get('content-type') === 'application/json') {
-        showLoading.value = false;
-        return e
-          .json()
-          .then(data => {
-            message.error(data?.msg || '出错了,请稍后刷新重试。');
-          })
-          .catch(() => {
-            message.error('出错了,请稍后刷新重试。');
-          }); // 将响应解析为 JSON
+        // showLoading.value = false;
+        // return e
+        //   .json()
+        //   .then(data => {
+        //     message.error(data?.msg || '出错了,请稍后刷新重试。');
+        //   })
+        //   .catch(() => {
+        //     message.error('出错了,请稍后刷新重试。');
+        //   }); // 将响应解析为 JSON
+        addAnswer(q);
       }
     },
     onmessage(msg: { data: string }) {
@@ -713,7 +718,7 @@ function getB64Type(suffix) {
       line-height: 22px;
       color: #222222;
       background: #e9e1ff;
-      border-radius: 12px 12px 12px 12px;
+      border-radius: 12px;
       word-wrap: break-word;
     }
   }
@@ -722,10 +727,11 @@ function getB64Type(suffix) {
     margin: 16px 0 28px 0;
     display: flex;
 
-    .content {
+    .ai-content {
       display: flex;
       flex-direction: column;
       padding-right: 48px;
+      min-width: 20%;
 
       .question-text {
         flex: 1;
@@ -750,7 +756,7 @@ function getB64Type(suffix) {
       }
 
       .change-radius {
-        border-radius: 0 12px 12px 12px;
+        border-radius: 12px;
       }
     }
 

@@ -372,7 +372,7 @@ const send = () => {
       bot_id: props.botInfo.bot_id,
       history: history.value,
       question: q,
-      streaming: true,
+      streaming: chatSettingFormActive.value.capabilities.onlySearch === false,
       networking: chatSettingFormActive.value.capabilities.onlineSearch,
       product_source: 'saas',
       only_need_search_results: chatSettingFormActive.value.capabilities.onlySearch,
@@ -395,17 +395,16 @@ const send = () => {
         addAnswer(q);
         typewriter.start();
       } else if (e.headers.get('content-type') === 'application/json') {
-        showLoading.value = false;
-        return e
-          .json()
-          .then(data => {
-            console.log(data);
-            message.error(data?.msg || '出错了,请稍后刷新重试。');
-          })
-          .catch(e => {
-            console.log(e);
-            message.error('出错了,请稍后刷新重试。');
-          }); // 将响应解析为 JSON
+        // showLoading.value = false;
+        // return e
+        //   .json()
+        //   .then(data => {
+        //     message.error(data?.msg || '出错了,请稍后刷新重试。');
+        //   })
+        //   .catch(() => {
+        //     message.error('出错了,请稍后刷新重试。');
+        //   }); // 将响应解析为 JSON
+        addAnswer(q);
       }
     },
     onmessage(msg: { data: string }) {
@@ -667,7 +666,7 @@ scrollBottom();
       line-height: 22px;
       color: #222222;
       background: #e9e1ff;
-      border-radius: 0px 12px 12px 12px;
+      border-radius: 12px;
       word-wrap: break-word;
     }
   }
@@ -685,7 +684,7 @@ scrollBottom();
         line-height: 22px;
         color: $title1;
         background: #f9f9fc;
-        border-radius: 0px 12px 0px 0px;
+        border-radius: 12px 12px 0 0;
         word-wrap: break-word;
       }
 
@@ -700,7 +699,7 @@ scrollBottom();
       }
 
       .change-radius {
-        border-radius: 0px 12px 12px 12px;
+        border-radius: 12px;
       }
     }
 

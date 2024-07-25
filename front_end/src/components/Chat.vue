@@ -21,7 +21,7 @@
             </div>
             <div v-else class="ai">
               <img class="avatar" src="../assets/home/ai-avatar.png" alt="头像" />
-              <div class="content">
+              <div class="ai-content">
                 <div class="ai-right">
                   <!--                  <p-->
                   <!--                    v-if="!item.onlySearch"-->
@@ -44,7 +44,7 @@
                     <span v-else>{{ item.answer }}</span>
                   </p>
                   <p
-                    v-if="item.onlySearch && !item.source.length"
+                    v-else-if="item.onlySearch && !item.source.length"
                     class="question-text"
                     :class="[
                       !item.source.length && !item?.picList?.length ? 'change-radius' : '',
@@ -506,7 +506,7 @@ const send = () => {
       kb_ids: selectList.value,
       history: history.value,
       question: q,
-      streaming: true,
+      streaming: chatSettingFormActive.value.capabilities.onlySearch === false,
       networking: chatSettingFormActive.value.capabilities.onlineSearch,
       product_source: 'saas',
       only_need_search_results: chatSettingFormActive.value.capabilities.onlySearch,
@@ -528,16 +528,16 @@ const send = () => {
         addAnswer(q);
         typewriter.start();
       } else if (e.headers.get('content-type') === 'application/json') {
-        showLoading.value = false;
-        return e
-          .json()
-          .then(data => {
-            message.error(data?.msg || '出错了,请稍后刷新重试。');
-          })
-          .catch(e => {
-            console.log(e);
-            message.error('出错了,请稍后刷新重试。');
-          }); // 将响应解析为 JSON
+        // showLoading.value = false;
+        // return e
+        //   .json()
+        //   .then(data => {
+        //     message.error(data?.msg || '出错了,请稍后刷新重试。');
+        //   })
+        //   .catch(() => {
+        //     message.error('出错了,请稍后刷新重试。');
+        //   }); // 将响应解析为 JSON
+        addAnswer(q);
       }
     },
     onmessage(msg: { data: string }) {
@@ -821,7 +821,7 @@ scrollBottom();
       line-height: 22px;
       color: #222222;
       background: #e9e1ff;
-      border-radius: 12px 12px 12px 12px;
+      border-radius: 12px;
       word-wrap: break-word;
     }
   }
@@ -830,10 +830,11 @@ scrollBottom();
     margin: 16px 0 28px 0;
     display: flex;
 
-    .content {
+    .ai-content {
       display: flex;
       flex-direction: column;
       padding-right: 48px;
+      min-width: 20%;
 
       .question-text {
         flex: 1;
@@ -843,7 +844,7 @@ scrollBottom();
         line-height: 22px;
         color: $title1;
         background: #fff;
-        border-radius: 12px 12px 0px 0px;
+        border-radius: 12px 12px 0 0;
         word-wrap: break-word;
       }
 
@@ -858,7 +859,7 @@ scrollBottom();
       }
 
       .change-radius {
-        border-radius: 0px 12px 12px 12px;
+        border-radius: 12px;
       }
     }
 
