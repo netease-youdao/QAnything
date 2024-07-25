@@ -5,6 +5,7 @@ from qanything_kernel.utils.custom_log import debug_logger, insert_logger
 from qanything_kernel.configs.model_config import MILVUS_PORT, MILVUS_COLLECTION_NAME, CLOUD_PASSWORD, MILVUS_HOST_LOCAL
 from qanything_kernel.connector.embedding.embedding_for_online_client import YouDaoEmbeddings
 from langchain_community.vectorstores.milvus import Milvus
+import asyncio
 
 
 class SelfMilvus(Milvus):
@@ -134,61 +135,31 @@ class SelfMilvus(Milvus):
             raise exc
         return query_result
 
-    def add_texts(
-        self,
-        texts: Iterable[str],
-        metadatas: Optional[List[dict]] = None,
-        timeout: Optional[int] = None,
-        batch_size: int = 1000,
-        *,
-        ids: Optional[List[str]] = None,
-        **kwargs: Any,
+    async def aadd_texts(
+            self,
+            texts: Iterable[str],
+            metadatas: Optional[List[dict]] = None,
+            timeout: Optional[int] = None,
+            batch_size: int = 1000,
+            *,
+            ids: Optional[List[str]] = None,
+            **kwargs: Any,
     ) -> List[str]:
-        """Insert text data into Milvus.
+        """Asynchronously run texts through embeddings and add to the vectorstore."""
 
-        Inserting data when the collection has not be made yet will result
-        in creating a new Collection. The data of the first entity decides
-        the schema of the new collection, the dim is extracted from the first
-        embedding and the columns are decided by the first metadata dict.
-        Metadata keys will need to be present for all inserted values. At
-        the moment there is no None equivalent in Milvus.
-
-        Args:
-            texts (Iterable[str]): The texts to embed, it is assumed
-                that they all fit in memory.
-            metadatas (Optional[List[dict]]): Metadata dicts attached to each of
-                the texts. Defaults to None.
-            should be less than 65535 bytes. Required and work when auto_id is False.
-            timeout (Optional[int]): Timeout for each batch insert. Defaults
-                to None.
-            batch_size (int, optional): Batch size to use for insertion.
-                Defaults to 1000.
-            ids (Optional[List[str]]): List of text ids. The length of each item
-
-        Raises:
-            MilvusException: Failure to add texts
-
-        Returns:
-            List[str]: The resulting keys for each inserted element.
-        """
         from pymilvus import Collection, MilvusException
 
         texts = list(texts)
         if not self.auto_id:
-            assert isinstance(
-                ids, list
-            ), "A list of valid ids are required when auto_id is False."
-            assert len(set(ids)) == len(
-                texts
-            ), "Different lengths of texts and unique ids are provided."
-            assert all(
-                len(x.encode()) <= 65_535 for x in ids
-            ), "Each id should be a string less than 65535 bytes."
+            assert isinstance(ids, list), "A list of valid ids are required when auto_id is False."
+            assert len(set(ids)) == len(texts), "Different lengths of texts and unique ids are provided."
+            assert all(len(x.encode()) <= 65_535 for x in ids), "Each id should be a string less than 65535 bytes."
 
+        # Assuming self.embedding_func has an async method embed_documents_async
         try:
-            embeddings = self.embedding_func.embed_documents(texts)
+            embeddings = await self.embedding_func.aembed_documents(texts)
         except NotImplementedError:
-            embeddings = [self.embedding_func.embed_query(x) for x in texts]
+            embeddings = [await self.embedding_func.aembed_query(x) for x in texts]
 
         if len(embeddings) == 0:
             insert_logger.info("Nothing to insert, skipping.")
@@ -212,10 +183,10 @@ class SelfMilvus(Milvus):
         }
 
         if not self.auto_id:
-            insert_dict[self._primary_field] = ids  # type: ignore[assignment]
+            insert_dict[self._primary_field] = ids
 
         if self._metadata_field is not None:
-            for d in metadatas:  # type: ignore[union-attr]
+            for d in metadatas or []:
                 insert_dict.setdefault(self._metadata_field, []).append(d)
         else:
             # Collect the metadata into the insert dict.
@@ -246,8 +217,9 @@ class SelfMilvus(Milvus):
             ]
             # Insert into the collection.
             try:
-                res: Collection
-                res = self.col.insert(insert_list, timeout=timeout, **kwargs)
+                res: Collection = await asyncio.to_thread(
+                    self.col.insert, insert_list, timeout=timeout, **kwargs
+                )
                 # insert_logger.info(f"insert: {res}, insert keys: {res.primary_keys}")
                 insert_logger.info(f"insert: {res}")
                 pks.extend(res.primary_keys)
@@ -256,7 +228,8 @@ class SelfMilvus(Milvus):
                     "Failed to insert batch starting at entity: %s/%s", i, total_count
                 )
                 raise e
-        self.col.flush()
+
+        await asyncio.to_thread(self.col.flush)
         return pks
 
 
