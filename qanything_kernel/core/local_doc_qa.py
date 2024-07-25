@@ -134,7 +134,7 @@ class LocalDocQA:
                                    history: List[str],
                                    prompt_template: str) -> Tuple[List[Document], int]:
         # 组装prompt,根据max_token
-        query_token_num = custom_llm.num_tokens_from_messages([query])
+        query_token_num = custom_llm.num_tokens_from_messages([query]) * 4
         history_token_num = custom_llm.num_tokens_from_messages([x for sublist in history for x in sublist])
         template_token_num = custom_llm.num_tokens_from_messages([prompt_template])
         limited_token_nums = custom_llm.token_window - custom_llm.max_token - custom_llm.offcut_token - query_token_num - history_token_num - template_token_num
