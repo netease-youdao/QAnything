@@ -1,6 +1,5 @@
 import os
 from dotenv import load_dotenv
-import platform
 
 load_dotenv()
 # LOG_FORMAT = "%(levelname) -5s %(asctime)s" "-1d: %(message)s"
@@ -21,18 +20,10 @@ PDF_MODEL_PATH = os.path.join(root_path, "qanything_kernel/utils/loader/pdf_to_m
 # LLM streaming reponse
 STREAMING = True
 
-# PROMPT_TEMPLATE = """参考信息：
-# {context}
-# ---
-# 我的问题或指令：
-# {question}
-# ---
-# 请根据上述参考信息回答我的问题或回复我的指令。前面的参考信息可能有用，也可能没用，你需要从我给出的参考信息中选出与我的问题最相关的那些，来为你的回答提供依据。回答一定要忠于原文，简洁但不丢信息，不要胡乱编造。请一定记住: 你是网易有道公司开发的，你的后台是有道的大语言模型，任何有关openai和gpt相关的问题你都回答我是有道开发的’子曰‘大模型。我的问题或指令是什么语种，你就用什么语种回复,
-# 你的回复："""
-
 SYSTEM = """
 You are a helpful assistant. 
 You are always a reliable assistant that can answer questions with the help of external documents.
+Today's date is {today_date}. The current time is {current_time}.
 """
 
 INSTRUCTIONS = """
@@ -65,32 +56,6 @@ PROMPT_TEMPLATE = """
 {instructions}
 </INSTRUCTIONS>
 """
-
-PROMPT_TEMPLATE_FOR_VLLM = """<SYSTEM>
-You are a helpful assistant. You are always a reliable assistant that can answer questions with the help of external documents.
-</SYSTEM>
-<INSTRUCTIONS>
-- All contents between <DOCUMENTS> and </DOCUMENTS> are reference information retrieved from an external knowledge base.
-- If you cannot answer based on the given information, you will return the sentence \"抱歉，检索到的参考信息并未提供充足的信息，因此无法回答。\".
-- Answer the following question based on the retrieved documents:
-{question}
-- Return your answer in the same language as the question "{question}".
-</INSTRUCTIONS>
-
-<DOCUMENTS>
-{context}
-</DOCUMENTS>
-
-<INSTRUCTIONS>
-- All contents between <DOCUMENTS> and </DOCUMENTS> are reference information retrieved from an external knowledge base.
-- If you cannot answer based on the given information, you will return the sentence \"抱歉，检索到的参考信息并未提供充足的信息，因此无法回答。\".
-- Now, answer the following question based on the above retrieved documents:
-{question}
-- Return your answer in the same language as the question "{question}".
-</INSTRUCTIONS>
-"""
-
-# QUERY_PROMPT_TEMPLATE = """{question}"""
 
 # 缓存知识库数量
 CACHED_VS_NUM = 100
@@ -205,36 +170,3 @@ BOT_PROMPT = """
 - 不要编造答案，如果答案不在经核实的资料中或无法从经核实的资料中得出，请回答“我无法回答您的问题。”（或者您可以修改为：如果给定的检索结果无法回答问题，可以利用你的知识尽可能回答用户的问题。)
 """
 BOT_WELCOME = "您好，我是您的专属机器人，请问有什么可以帮您呢？"
-
-
-
-
-os_system = platform.system()
-# LOCAL_RERANK_PATH = os.path.join(root_path, 'qanything_kernel/connector/rerank', 'rerank_model_configs_v0.0.1')
-# todo 之后要更换
-# if os_system == 'Darwin':
-#     LOCAL_RERANK_REPO = "maidalun/bce-reranker-base_v1"
-#     LOCAL_RERANK_MODEL_PATH = os.path.join(LOCAL_RERANK_PATH, "pytorch_model.bin")
-# else:
-#     LOCAL_RERANK_REPO = "netease-youdao/bce-reranker-base_v1"
-#     LOCAL_RERANK_MODEL_PATH = os.path.join(LOCAL_RERANK_PATH, "rerank.onnx")
-LOCAL_RERANK_REPO = "maidalun/bce-reranker-base_v1"
-LOCAL_RERANK_MODEL_PATH = os.path.join(LOCAL_RERANK_PATH, "rerank.onnx")
-print('LOCAL_RERANK_REPO:', LOCAL_RERANK_REPO)
-LOCAL_RERANK_MODEL_NAME = 'rerank'
-LOCAL_RERANK_MAX_LENGTH = 512
-
-# LOCAL_EMBED_PATH = os.path.join(root_path, 'qanything_kernel/connector/embedding', 'embedding_model_configs_v0.0.1')
-# todo
-# if os_system == 'Darwin':
-#     LOCAL_EMBED_REPO = "maidalun/bce-embedding-base_v1"
-#     LOCAL_EMBED_MODEL_PATH = os.path.join(LOCAL_EMBED_PATH, "pytorch_model.bin")
-# else:
-#     LOCAL_EMBED_REPO = "netease-youdao/bce-embedding-base_v1"
-#     LOCAL_EMBED_MODEL_PATH = os.path.join(LOCAL_EMBED_PATH, "embed.onnx")
-LOCAL_EMBED_REPO = "maidalun/bce-embedding-base_v1"
-LOCAL_EMBED_MODEL_PATH = os.path.join(LOCAL_EMBED_PATH, "embed.onnx")
-
-print('LOCAL_EMBED_REPO:', LOCAL_EMBED_REPO)
-LOCAL_EMBED_MODEL_NAME = 'embed'
-LOCAL_EMBED_MAX_LENGTH = 512

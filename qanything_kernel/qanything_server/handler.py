@@ -569,6 +569,7 @@ async def clean_files_by_status(req: request):
 
 @get_time_async
 async def local_doc_chat(req: request):
+    preprocess_start = time.perf_counter()
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
     user_info = safe_get(req, 'user_info', "1234")
@@ -603,7 +604,6 @@ async def local_doc_chat(req: request):
     debug_logger.info('rerank %s', rerank)
     streaming = safe_get(req, 'streaming', False)
     history = safe_get(req, 'history', [])
-    provider = safe_get(req, 'provider', 'hangyan')
     only_need_search_results = safe_get(req, 'only_need_search_results', False)
     need_web_search = safe_get(req, 'networking', False)
 
@@ -634,8 +634,6 @@ async def local_doc_chat(req: request):
     if only_need_search_results and streaming:
         return sanic_json(
             {"code": 2006, "msg": "fail, only_need_search_results and streaming can't be True at the same time"})
-    if provider not in ['hangyan', 'ziyue', 'vllm']:
-        return sanic_json({"code": 2006, "msg": "fail, provider {} not found".format(provider)})
     model = safe_get(req, 'model', 'gpt-3.5-turbo-0613')
     max_token = safe_get(req, 'max_token')
     request_source = safe_get(req, 'source', 'unknown')
@@ -659,154 +657,150 @@ async def local_doc_chat(req: request):
     debug_logger.info("temperature: %s", temperature)
 
     time_record = {}
-    preprocess_start = time.perf_counter()
-    not_exist_kb_ids = local_doc_qa.milvus_summary.check_kb_exist(user_id, kb_ids)
-    if not_exist_kb_ids:
-        return sanic_json({"code": 2003, "msg": "fail, knowledge Base {} not found".format(not_exist_kb_ids)})
-    faq_kb_ids = [kb + '_FAQ' for kb in kb_ids]
-    not_exist_faq_kb_ids = local_doc_qa.milvus_summary.check_kb_exist(user_id, faq_kb_ids)
-    exist_faq_kb_ids = [kb for kb in faq_kb_ids if kb not in not_exist_faq_kb_ids]
-    debug_logger.info("exist_faq_kb_ids: %s", exist_faq_kb_ids)
-    kb_ids += exist_faq_kb_ids
+    if kb_ids:
+        not_exist_kb_ids = local_doc_qa.milvus_summary.check_kb_exist(user_id, kb_ids)
+        if not_exist_kb_ids:
+            return sanic_json({"code": 2003, "msg": "fail, knowledge Base {} not found".format(not_exist_kb_ids)})
+        faq_kb_ids = [kb + '_FAQ' for kb in kb_ids]
+        not_exist_faq_kb_ids = local_doc_qa.milvus_summary.check_kb_exist(user_id, faq_kb_ids)
+        exist_faq_kb_ids = [kb for kb in faq_kb_ids if kb not in not_exist_faq_kb_ids]
+        debug_logger.info("exist_faq_kb_ids: %s", exist_faq_kb_ids)
+        kb_ids += exist_faq_kb_ids
 
     file_infos = []
     for kb_id in kb_ids:
         file_infos.extend(local_doc_qa.milvus_summary.get_files(user_id, kb_id))
     valid_files = [fi for fi in file_infos if fi[2] == 'green']
+    if len(valid_files) == 0:
+        debug_logger.info("valid_files is empty, use only chat mode.")
+        kb_ids = []
     preprocess_end = time.perf_counter()
     time_record['preprocess'] = round(preprocess_end - preprocess_start, 2)
-    if len(valid_files) == 0:
-        return sanic_json({"code": 200, "msg": "success chat", "question": question,
-                           "response": "All knowledge bases {} are empty or haven't green file, please upload files".format(
-                               kb_ids), "history": history, "source_documents": [{}]})
+    # 获取格式为'2021-08-01 00:00:00'的时间戳
+    qa_timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+    for kb_id in kb_ids:
+        local_doc_qa.milvus_summary.update_knowledge_base_latest_qa_time(kb_id, qa_timestamp)
+    debug_logger.info("streaming: %s", streaming)
+    if streaming:
+        debug_logger.info("start generate answer")
+
+        async def generate_answer(response):
+            debug_logger.info("start generate...")
+            async for resp, next_history in local_doc_qa.get_knowledge_based_answer(model=model,
+                                                                                    max_token=max_token,
+                                                                                    kb_ids=kb_ids,
+                                                                                    query=question,
+                                                                                    retriever=local_doc_qa.retriever,
+                                                                                    chat_history=history,
+                                                                                    streaming=True,
+                                                                                    rerank=rerank,
+                                                                                    custom_prompt=custom_prompt,
+                                                                                    time_record=time_record,
+                                                                                    need_web_search=need_web_search,
+                                                                                    hybrid_search=hybrid_search,
+                                                                                    temperature=temperature,
+                                                                                    api_base=api_base,
+                                                                                    api_key=api_key,
+                                                                                    api_context_length=api_context_length,
+                                                                                    top_p=top_p
+                                                                                    ):
+                chunk_data = resp["result"]
+                if not chunk_data:
+                    continue
+                chunk_str = chunk_data[6:]
+                if chunk_str.startswith("[DONE]"):
+                    retrieval_documents = format_source_documents(resp["retrieval_documents"])
+                    source_documents = format_source_documents(resp["source_documents"])
+                    result = next_history[-1][1]
+                    # result = resp['result']
+                    time_record['chat_completed'] = round(time.perf_counter() - preprocess_start, 2)
+                    time_record['tokens_per_second'] = round(
+                        len(result) / time_record['chat_completed'], 2)
+                    formatted_time_record = format_time_record(time_record)
+                    chat_data = {'user_id': user_id, 'kb_ids': kb_ids, 'query': question, "model": model,
+                                 "product_source": request_source, 'time_record': formatted_time_record,
+                                 'history': history,
+                                 'condense_question': resp['condense_question'], 'prompt': resp['prompt'],
+                                 'result': result, 'retrieval_documents': retrieval_documents,
+                                 'source_documents': source_documents, 'bot_id': bot_id}
+                    local_doc_qa.milvus_summary.add_qalog(**chat_data)
+                    qa_logger.info("chat_data: %s", chat_data)
+                    debug_logger.info("response: %s", chat_data['result'])
+                    stream_res = {
+                        "code": 200,
+                        "msg": "success stream chat",
+                        "question": question,
+                        "response": result,
+                        "model": model,
+                        "history": next_history,
+                        "condense_question": resp['condense_question'],
+                        "source_documents": source_documents,
+                        "retrieval_documents": retrieval_documents,
+                        "time_record": formatted_time_record,
+                    }
+                else:
+                    time_record['rollback_length'] = resp.get('rollback_length', 0)
+                    if 'first_return' not in time_record:
+                        time_record['first_return'] = round(time.perf_counter() - preprocess_start, 2)
+                    chunk_js = json.loads(chunk_str)
+                    delta_answer = chunk_js["answer"]
+                    stream_res = {
+                        "code": 200,
+                        "msg": "success",
+                        "question": "",
+                        "response": delta_answer,
+                        "history": [],
+                        "source_documents": [],
+                        "retrieval_documents": [],
+                        "time_record": format_time_record(time_record),
+                    }
+                await response.write(f"data: {json.dumps(stream_res, ensure_ascii=False)}\n\n")
+                if chunk_str.startswith("[DONE]"):
+                    await response.eof()
+                await asyncio.sleep(0.001)
+
+        response_stream = ResponseStream(generate_answer, content_type='text/event-stream')
+        return response_stream
+
     else:
-        # 获取格式为'2021-08-01 00:00:00'的时间戳
-        qa_timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-        for kb_id in kb_ids:
-            local_doc_qa.milvus_summary.update_knowledge_base_latest_qa_time(kb_id, qa_timestamp)
-        debug_logger.info("streaming: %s", streaming)
-        if streaming:
-            debug_logger.info("start generate answer")
-
-            async def generate_answer(response):
-                debug_logger.info("start generate...")
-                async for resp, next_history in local_doc_qa.get_knowledge_based_answer(model=model,
-                                                                                        max_token=max_token,
-                                                                                        provider=provider,
-                                                                                        kb_ids=kb_ids,
-                                                                                        query=question,
-                                                                                        retriever=local_doc_qa.retriever,
-                                                                                        chat_history=history,
-                                                                                        streaming=True,
-                                                                                        rerank=rerank,
-                                                                                        custom_prompt=custom_prompt,
-                                                                                        time_record=time_record,
-                                                                                        need_web_search=need_web_search,
-                                                                                        hybrid_search=hybrid_search,
-                                                                                        temperature=temperature,
-                                                                                        api_base=api_base,
-                                                                                        api_key=api_key,
-                                                                                        api_context_length=api_context_length,
-                                                                                        top_p=top_p
-                                                                                        ):
-                    chunk_data = resp["result"]
-                    if not chunk_data:
-                        continue
-                    chunk_str = chunk_data[6:]
-                    if chunk_str.startswith("[DONE]"):
-                        retrieval_documents = format_source_documents(resp["retrieval_documents"])
-                        source_documents = format_source_documents(resp["source_documents"])
-                        result = next_history[-1][1]
-                        # result = resp['result']
-                        time_record['chat_completed'] = round(time.perf_counter() - preprocess_start, 2)
-                        time_record['tokens_per_second'] = round(
-                            len(result) / time_record['chat_completed'], 2)
-                        formatted_time_record = format_time_record(time_record)
-                        chat_data = {'user_id': user_id, 'kb_ids': kb_ids, 'query': question, "model": model,
-                                     "product_source": request_source, 'time_record': formatted_time_record,
-                                     'history': history,
-                                     'condense_question': resp['condense_question'], 'prompt': resp['prompt'],
-                                     'result': result, 'retrieval_documents': retrieval_documents,
-                                     'source_documents': source_documents, 'bot_id': bot_id}
-                        local_doc_qa.milvus_summary.add_qalog(**chat_data)
-                        qa_logger.info("chat_data: %s", chat_data)
-                        debug_logger.info("response: %s", chat_data['result'])
-                        stream_res = {
-                            "code": 200,
-                            "msg": "success stream chat",
-                            "question": question,
-                            "response": result,
-                            "model": model,
-                            "history": next_history,
-                            "condense_question": resp['condense_question'],
-                            "source_documents": source_documents,
-                            "retrieval_documents": retrieval_documents,
-                            "time_record": formatted_time_record,
-                        }
-                    else:
-                        time_record['rollback_length'] = resp.get('rollback_length', 0)
-                        if 'first_return' not in time_record:
-                            time_record['first_return'] = round(time.perf_counter() - preprocess_start, 2)
-                        chunk_js = json.loads(chunk_str)
-                        delta_answer = chunk_js["answer"]
-                        stream_res = {
-                            "code": 200,
-                            "msg": "success",
-                            "question": "",
-                            "response": delta_answer,
-                            "history": [],
-                            "source_documents": [],
-                            "retrieval_documents": [],
-                            "time_record": format_time_record(time_record),
-                        }
-                    await response.write(f"data: {json.dumps(stream_res, ensure_ascii=False)}\n\n")
-                    if chunk_str.startswith("[DONE]"):
-                        await response.eof()
-                    await asyncio.sleep(0.001)
-
-            response_stream = ResponseStream(generate_answer, content_type='text/event-stream')
-            return response_stream
-
-        else:
-            async for resp, history in local_doc_qa.get_knowledge_based_answer(model=model,
-                                                                               max_token=max_token,
-                                                                               provider=provider,
-                                                                               kb_ids=kb_ids,
-                                                                               query=question,
-                                                                               retriever=local_doc_qa.retriever,
-                                                                               chat_history=history, streaming=False,
-                                                                               rerank=rerank,
-                                                                               custom_prompt=custom_prompt,
-                                                                               time_record=time_record,
-                                                                               only_need_search_results=only_need_search_results,
-                                                                               need_web_search=need_web_search,
-                                                                               hybrid_search=hybrid_search,
-                                                                               temperature=temperature,
-                                                                               api_base=api_base,
-                                                                               api_key=api_key,
-                                                                               api_context_length=api_context_length,
-                                                                               top_p=top_p
-                                                                               ):
-                pass
-            if only_need_search_results:
-                return sanic_json(
-                    {"code": 200, "question": question, "source_documents": format_source_documents(resp)})
-            retrieval_documents = format_source_documents(resp["retrieval_documents"])
-            source_documents = format_source_documents(resp["source_documents"])
-            formatted_time_record = format_time_record(time_record)
-            chat_data = {'user_id': user_id, 'kb_ids': kb_ids, 'query': question, 'time_record': formatted_time_record,
-                         'history': history, "condense_question": resp['condense_question'], "model": model,
-                         "product_source": request_source,
-                         'retrieval_documents': retrieval_documents, 'prompt': resp['prompt'], 'result': resp['result'],
-                         'source_documents': source_documents, 'bot_id': bot_id}
-            local_doc_qa.milvus_summary.add_qalog(**chat_data)
-            qa_logger.info("chat_data: %s", chat_data)
-            debug_logger.info("response: %s", chat_data['result'])
-            return sanic_json({"code": 200, "msg": "success no stream chat", "question": question,
-                               "response": resp["result"], "model": model,
-                               "history": history, "condense_question": resp['condense_question'],
-                               "source_documents": source_documents, "retrieval_documents": retrieval_documents,
-                               "time_record": formatted_time_record})
+        async for resp, history in local_doc_qa.get_knowledge_based_answer(model=model,
+                                                                           max_token=max_token,
+                                                                           kb_ids=kb_ids,
+                                                                           query=question,
+                                                                           retriever=local_doc_qa.retriever,
+                                                                           chat_history=history, streaming=False,
+                                                                           rerank=rerank,
+                                                                           custom_prompt=custom_prompt,
+                                                                           time_record=time_record,
+                                                                           only_need_search_results=only_need_search_results,
+                                                                           need_web_search=need_web_search,
+                                                                           hybrid_search=hybrid_search,
+                                                                           temperature=temperature,
+                                                                           api_base=api_base,
+                                                                           api_key=api_key,
+                                                                           api_context_length=api_context_length,
+                                                                           top_p=top_p
+                                                                           ):
+            pass
+        if only_need_search_results:
+            return sanic_json(
+                {"code": 200, "question": question, "source_documents": format_source_documents(resp)})
+        retrieval_documents = format_source_documents(resp["retrieval_documents"])
+        source_documents = format_source_documents(resp["source_documents"])
+        formatted_time_record = format_time_record(time_record)
+        chat_data = {'user_id': user_id, 'kb_ids': kb_ids, 'query': question, 'time_record': formatted_time_record,
+                     'history': history, "condense_question": resp['condense_question'], "model": model,
+                     "product_source": request_source,
+                     'retrieval_documents': retrieval_documents, 'prompt': resp['prompt'], 'result': resp['result'],
+                     'source_documents': source_documents, 'bot_id': bot_id}
+        local_doc_qa.milvus_summary.add_qalog(**chat_data)
+        qa_logger.info("chat_data: %s", chat_data)
+        debug_logger.info("response: %s", chat_data['result'])
+        return sanic_json({"code": 200, "msg": "success no stream chat", "question": question,
+                           "response": resp["result"], "model": model,
+                           "history": history, "condense_question": resp['condense_question'],
+                           "source_documents": source_documents, "retrieval_documents": retrieval_documents,
+                           "time_record": formatted_time_record})
 
 
 @get_time_async

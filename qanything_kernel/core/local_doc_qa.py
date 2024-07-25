@@ -1,6 +1,5 @@
 from qanything_kernel.configs.model_config import VECTOR_SEARCH_TOP_K, VECTOR_SEARCH_SCORE_THRESHOLD, \
-    PROMPT_TEMPLATE, STREAMING, PROMPT_TEMPLATE_FOR_VLLM, SYSTEM, INSTRUCTIONS, LOCAL_EMBED_SERVICE_URL, LOCAL_RERANK_SERVICE_URL, \
-    LOCAL_EMBED_PATH, LOCAL_RERANK_PATH, CHILD_CHUNK_SIZE, PARENT_CHUNK_SIZE
+    PROMPT_TEMPLATE, STREAMING, SYSTEM, INSTRUCTIONS, LOCAL_RERANK_PATH, PARENT_CHUNK_SIZE
 from typing import List, Tuple, Union
 import time
 from qanything_kernel.connector.embedding.embedding_for_online_client import YouDaoEmbeddings
@@ -14,7 +13,8 @@ from qanything_kernel.core.retriever.vectorstore import VectorStoreMilvusClient
 from qanything_kernel.core.retriever.elasticsearchstore import StoreElasticSearchClient
 from qanything_kernel.core.retriever.parent_retriever import ParentRetriever
 from qanything_kernel.utils.general_utils import clear_string_is_equal
-from qanything_kernel.utils.general_utils import get_time, clear_string, get_time_async, num_tokens, cosine_similarity, num_tokens_local
+from qanything_kernel.utils.general_utils import get_time, clear_string, get_time_async, num_tokens, cosine_similarity, \
+    num_tokens_local, deduplicate_documents
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger, rerank_logger
 from qanything_kernel.core.chains.condense_q_chain import RewriteQuestionChain
 from qanything_kernel.core.tools.web_search_tool import duckduckgo_search
@@ -25,25 +25,6 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 import traceback
 import re
-import platform
-
-def _embeddings_hash(self):
-    return hash(self.model_name)
-
-
-YouDaoEmbeddings.__hash__ = _embeddings_hash
-
-from sanic import Sanic
-app = Sanic("rerank_server")
-
-def deduplicate_documents(source_docs):
-    unique_docs = set()
-    deduplicated_docs = []
-    for doc in source_docs:
-        if doc.page_content not in unique_docs:
-            unique_docs.add(doc.page_content)
-            deduplicated_docs.append(doc)
-    return deduplicated_docs
 
 
 class LocalDocQA:
@@ -52,20 +33,14 @@ class LocalDocQA:
         self.milvus_cache = None
         self.embeddings: YouDaoEmbeddings = None
         self.rerank: YouDaoRerank = None
-        # self.llm: OpenAILLM = None
         self.top_k: int = VECTOR_SEARCH_TOP_K
         self.chunk_conent: bool = True
         self.score_threshold: int = VECTOR_SEARCH_SCORE_THRESHOLD
-        # self.milvus_kbs: List[VectorStoreMilvusClient] = []
         self.milvus_kb: VectorStoreMilvusClient = None
         self.retriever: ParentRetriever = None
         self.milvus_summary: KnowledgeBaseManager = None
         self.es_client: StoreElasticSearchClient = None
-        # self.local_embed_service_url = f"http://{LOCAL_EMBED_SERVICE_URL}/embedding"
-        # self.local_rerank_service_url = f"http://{LOCAL_RERANK_SERVICE_URL}/rerank"
-        # self.embedding_tokenizer = AutoTokenizer.from_pretrained(LOCAL_EMBED_PATH, local_files_only=True)
         self.rerank_tokenizer = AutoTokenizer.from_pretrained(LOCAL_RERANK_PATH, local_files_only=True)
-        # self.ocr_url = 'https://api2.ocr.youdao.com/ocr_line3'
         self.session = self.create_retry_session(retries=3, backoff_factor=1)
         self.web_splitter = RecursiveCharacterTextSplitter(
             separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
@@ -94,7 +69,6 @@ class LocalDocQA:
         self.rerank = YouDaoRerank()
         self.milvus_summary = KnowledgeBaseManager()
         self.milvus_kb = VectorStoreMilvusClient()
-        # self.llm: OpenAILLM = OpenAILLM(args)
 
     def init_retriever(self, user_id):
         self.es_client = StoreElasticSearchClient(index_name=user_id)
@@ -135,7 +109,8 @@ class LocalDocQA:
     async def get_source_documents(self, query, retriever: ParentRetriever, kb_ids, time_record, hybrid_search):
         source_documents = []
         start_time = time.perf_counter()
-        query_docs = await retriever.get_retrieved_documents(query, partition_keys=kb_ids, time_record=time_record, hybrid_search=hybrid_search)
+        query_docs = await retriever.get_retrieved_documents(query, partition_keys=kb_ids, time_record=time_record,
+                                                             hybrid_search=hybrid_search)
         end_time = time.perf_counter()
         time_record['retriever_search'] = round(end_time - start_time, 2)
         debug_logger.info(f"retriever_search time: {time_record['retriever_search']}s")
@@ -147,7 +122,7 @@ class LocalDocQA:
             doc.metadata['retrieval_query'] = query  # 添加查询到文档的元数据中
             doc.metadata['embed_version'] = self.embeddings.embed_version
             if 'score' not in doc.metadata:
-                doc.metadata['score'] = 1 - (idx / len(query_docs))   # TODO 这个score怎么获取呢
+                doc.metadata['score'] = 1 - (idx / len(query_docs))  # TODO 这个score怎么获取呢
             source_documents.append(doc)
         # if cosine_thresh:
         #     source_documents = [item for item in source_documents if float(item.metadata['score']) > cosine_thresh]
@@ -204,7 +179,8 @@ class LocalDocQA:
                     else:  # 如果最后不够truncate_len长度的2倍，说明不够切了，直接赋值为空
                         doc_content = ""
                         break
-                    doc_content_token_num = custom_llm.num_tokens_from_messages([doc_content]) + metadata_infos_token_num
+                    doc_content_token_num = custom_llm.num_tokens_from_messages(
+                        [doc_content]) + metadata_infos_token_num
                     # doc_content_token_num = custom_llm.num_tokens_from_messages([doc_content])
                 doc.page_content = doc_content
                 new_source_docs.append(doc)
@@ -213,36 +189,33 @@ class LocalDocQA:
         debug_logger.info(f"new_source_docs token nums: {custom_llm.num_tokens_from_docs(new_source_docs)}")
         return new_source_docs, limited_token_nums
 
-    def generate_prompt(self, query, source_docs, custom_prompt, provider):
-        context = "\n".join([doc.page_content for doc in source_docs])
-        context = context.replace("{", "{{").replace("}", "}}")  # 防止content中包含{}
-        if provider == "vllm":
-            if custom_prompt:
-                prompt_template = custom_prompt + '\n' + PROMPT_TEMPLATE_FOR_VLLM
-            else:
-                prompt_template = PROMPT_TEMPLATE_FOR_VLLM
-            prompt = prompt_template.replace("{question}", query).replace("{context}", context)
-            return prompt
-        else:
-            prompt_template = PROMPT_TEMPLATE.replace("{context}", context)
-            prompt = prompt_template.format(system=SYSTEM, user_instructions=custom_prompt, instructions=INSTRUCTIONS)
-            prompt = prompt.replace("{question}", query)
-            return prompt
+    def generate_prompt(self, query, source_docs, custom_prompt):
+        # 获取今日日期
+        today = time.strftime("%Y-%m-%d", time.localtime())
+        # 获取当前时间
+        now = time.strftime("%H:%M:%S", time.localtime())
+        if source_docs:
+            context = "\n".join([doc.page_content for doc in source_docs])
+            context = context.replace("{", "{{").replace("}", "}}")  # 防止content中包含{}
 
-    # @get_time
-    # def rerank_documents(self, query, source_documents):
-    #     try:
-    #         passages = [doc.page_content for doc in source_documents]
-    #         response = requests.post(self.local_rerank_service_url, json={"query": query, "passages": passages}, timeout=120)
-    #         response.raise_for_status()  # 如果请求返回了错误状态码，将会抛出异常
-    #         scores = response.json()
-    #         for idx, score in enumerate(scores):
-    #             source_documents[idx].metadata['score'] = score
-    #         source_documents = sorted(source_documents, key=lambda x: x.metadata['score'], reverse=True)
-    #         return source_documents
-    #     except Exception as e:
-    #         debug_logger.warning(f"rerank error: {traceback.format_exc()}")
-    #         return source_documents
+            prompt_template = PROMPT_TEMPLATE.replace("{context}", context)
+            prompt = prompt_template.format(system=SYSTEM.format(today_date=today, current_time=now),
+                                            user_instructions=custom_prompt, instructions=INSTRUCTIONS)
+            prompt = prompt.replace("{question}", query)
+        else:
+            if custom_prompt:
+                prompt = custom_prompt
+            else:
+                prompt = f"""
+                - You are a helpful assistant. You can help me by answering my questions. You can also ask me questions.
+                - Today's date is {today}. The current time is {now}.
+                """
+            prompt += f"""
+            - Now, answer the following question:
+            {query}
+            - Return your answer in Markdown formatting, and in the same language as the question "{query}". 
+            """
+        return prompt
 
     def get_rerank_results(self, query, doc_ids=None, doc_strs=None):
         docs = []
@@ -254,7 +227,9 @@ class LocalDocQA:
                 if doc_json is None:
                     docs.append(None)
                     continue
-                user_id, file_id, file_name, kb_id = doc_json['kwargs']['metadata']['user_id'], doc_json['kwargs']['metadata']['file_id'], doc_json['kwargs']['metadata']['file_name'], doc_json['kwargs']['metadata']['kb_id']
+                user_id, file_id, file_name, kb_id = doc_json['kwargs']['metadata']['user_id'], \
+                    doc_json['kwargs']['metadata']['file_id'], doc_json['kwargs']['metadata']['file_name'], \
+                    doc_json['kwargs']['metadata']['kb_id']
                 doc = Document(page_content=doc_json['kwargs']['page_content'], metadata=doc_json['kwargs']['metadata'])
                 doc.metadata['doc_id'] = doc_id
                 doc.metadata['retrieval_query'] = query
@@ -288,10 +263,11 @@ class LocalDocQA:
                 doc.metadata['score'] = cosine_similarity(embed1, embed2)
             return docs
 
-    async def get_knowledge_based_answer(self, model, max_token, provider, kb_ids, query, retriever, custom_prompt, time_record,
+    async def get_knowledge_based_answer(self, model, max_token, kb_ids, query, retriever, custom_prompt, time_record,
                                          temperature, api_base, api_key, api_context_length, top_p,
                                          chat_history=None, streaming: bool = STREAMING, rerank: bool = False,
-                                         only_need_search_results: bool = False, need_web_search=False, hybrid_search=False):
+                                         only_need_search_results: bool = False, need_web_search=False,
+                                         hybrid_search=False):
         custom_llm = OpenAILLM(model, max_token, api_base, api_key, api_context_length, top_p, temperature)
         if chat_history is None:
             chat_history = []
@@ -317,7 +293,8 @@ class LocalDocQA:
                     chat_history=formatted_chat_history,
                     question=query
                 )
-            debug_logger.info(f"Subtract formatted_chat_history: {len(chat_history) * 2} -> {len(formatted_chat_history)}")
+            debug_logger.info(
+                f"Subtract formatted_chat_history: {len(chat_history) * 2} -> {len(formatted_chat_history)}")
             try:
                 t1 = time.perf_counter()
                 condense_question = await rewrite_q_chain.condense_q_chain.ainvoke(
@@ -346,7 +323,12 @@ class LocalDocQA:
             if clear_string(condense_question) != clear_string(query):
                 retrieval_query = condense_question
 
-        source_documents = await self.get_source_documents(retrieval_query, retriever, kb_ids, time_record, hybrid_search)
+        if kb_ids:
+            source_documents = await self.get_source_documents(retrieval_query, retriever, kb_ids, time_record,
+                                                               hybrid_search)
+        else:
+            source_documents = []
+
         if need_web_search:
             t1 = time.perf_counter()
             web_search_results = self.web_page_search(query, top_k=3)
@@ -375,7 +357,8 @@ class LocalDocQA:
             source_documents = high_score_faq_documents
         # FAQ完全匹配处理逻辑
         for doc in source_documents:
-            if doc.metadata['file_name'].endswith('.faq') and clear_string_is_equal(doc.metadata['faq_dict']['question'], query):
+            if doc.metadata['file_name'].endswith('.faq') and clear_string_is_equal(
+                    doc.metadata['faq_dict']['question'], query):
                 debug_logger.info(f"match faq question: {query}")
                 if only_need_search_results:
                     yield source_documents, None
@@ -401,13 +384,32 @@ class LocalDocQA:
                 # 退出函数
                 return
 
+        # 获取今日日期
+        today = time.strftime("%Y-%m-%d", time.localtime())
+        # 获取当前时间
+        now = time.strftime("%H:%M:%S", time.localtime())
+
+        system_prompt = SYSTEM.format(today_date=today, current_time=now)
         t1 = time.perf_counter()
-        if custom_prompt:
-            prompt_template = PROMPT_TEMPLATE.replace("{system}", SYSTEM).replace("{instructions}",
-                                                                                  INSTRUCTIONS).replace(
-                "{user_instructions}", custom_prompt)
+        if source_documents:
+            if custom_prompt:
+                prompt_template = PROMPT_TEMPLATE.replace("{system}", system_prompt).replace("{instructions}",
+                                                                                             INSTRUCTIONS).replace(
+                    "{user_instructions}", custom_prompt)
+            else:
+                prompt_template = PROMPT_TEMPLATE.replace("{system}", system_prompt).replace("{instructions}",
+                                                                                             INSTRUCTIONS)
         else:
-            prompt_template = PROMPT_TEMPLATE.replace("{system}", SYSTEM).replace("{instructions}", INSTRUCTIONS)
+            if custom_prompt:
+                prompt_template = custom_prompt
+            else:
+                prompt_template = f"""
+                - You are a helpful assistant. You can help me by answering my questions. You can also ask me questions.
+                - Today's date is {today}. The current time is {now}.
+                - Now, answer the following question:
+                {{question}}
+                Return your answer in Markdown formatting, and in the same language as the question "{{question}}". 
+                """
 
         retrieval_documents, limited_token_nums = self.reprocess_source_documents(custom_llm=custom_llm, query=query,
                                                                                   source_docs=source_documents,
@@ -453,8 +455,8 @@ class LocalDocQA:
             return
         prompt = self.generate_prompt(query=query,
                                       source_docs=source_documents,
-                                      custom_prompt=custom_prompt,
-                                      provider=provider)
+                                      custom_prompt=custom_prompt)
+
         t1 = time.perf_counter()
         has_first_return = False
 
@@ -477,7 +479,8 @@ class LocalDocQA:
                         "source_documents": source_documents}
             time_record['prompt_tokens'] = prompt_tokens if prompt_tokens != 0 else est_prompt_tokens
             time_record['completion_tokens'] = completion_tokens if completion_tokens != 0 else num_tokens(acc_resp)
-            time_record['total_tokens'] = total_tokens if total_tokens != 0 else time_record['prompt_tokens'] + time_record['completion_tokens']
+            time_record['total_tokens'] = total_tokens if total_tokens != 0 else time_record['prompt_tokens'] + \
+                                                                                 time_record['completion_tokens']
             if has_first_return is False:
                 first_return_time = time.perf_counter()
                 has_first_return = True
@@ -546,10 +549,12 @@ class LocalDocQA:
             first_completed_doc_limit.metadata['score'] = first_file_dict['score']
             first_doc_tokens = custom_llm.num_tokens_from_docs([first_completed_doc_limit])
             if first_doc_tokens > limited_token_nums:
-                debug_logger.info(f"first_limit_doc_tokens {doc_limit}: {first_doc_tokens} > limited_token_nums: {limited_token_nums}")
+                debug_logger.info(
+                    f"first_limit_doc_tokens {doc_limit}: {first_doc_tokens} > limited_token_nums: {limited_token_nums}")
                 return new_docs
             else:
-                debug_logger.info(f"first_limit_doc_tokens {doc_limit}: {first_doc_tokens} <= limited_token_nums: {limited_token_nums}")
+                debug_logger.info(
+                    f"first_limit_doc_tokens {doc_limit}: {first_doc_tokens} <= limited_token_nums: {limited_token_nums}")
                 new_docs.append(first_completed_doc_limit)
         else:
             debug_logger.info(f"first_doc_tokens: {first_doc_tokens} <= limited_token_nums: {limited_token_nums}")

@@ -22,7 +22,7 @@ from datetime import datetime, timedelta
 __all__ = ['isURL', 'get_time', 'get_time_async', 'format_source_documents', 'safe_get', 'truncate_filename',
            'shorten_data', 'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens',
            'clear_string', 'simplify_filename', 'string_bytes_length', 'correct_kb_id', 'clear_kb_id',
-           'clear_string_is_equal', 'export_qalogs_to_excel', 'num_tokens_local',
+           'clear_string_is_equal', 'export_qalogs_to_excel', 'num_tokens_local', 'deduplicate_documents',
            'check_user_id_and_user_info', 'get_table_infos', 'format_time_record', 'get_time_range']
 
 
@@ -401,3 +401,13 @@ def get_time_range(time_start=None, time_end=None, default_days=7):
         time_end = now.strftime("%Y-%m-%d 23:59:59")
 
     return (time_start, time_end)
+
+
+def deduplicate_documents(source_docs):
+    unique_docs = set()
+    deduplicated_docs = []
+    for doc in source_docs:
+        if doc.page_content not in unique_docs:
+            unique_docs.add(doc.page_content)
+            deduplicated_docs.append(doc)
+    return deduplicated_docs
