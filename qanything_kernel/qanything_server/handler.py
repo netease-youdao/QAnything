@@ -356,7 +356,7 @@ async def list_docs(req: request):
     kb_id = correct_kb_id(kb_id)
     debug_logger.info("kb_id: {}".format(kb_id))
     file_id = safe_get(req, 'file_id')
-    page = safe_get(req, 'page_size', 1)  # 默认为第一页
+    page = safe_get(req, 'page_offset', 1)  # 默认为第一页
     limit = safe_get(req, 'page_limit', 10)  # 默认每页显示10条记录
     data = []
     if file_id is None:
@@ -398,7 +398,8 @@ async def list_docs(req: request):
             'total_page': total_pages,  # 总页数
             "total": total_count,  # 总文件数
             "status_count": status_count,  # 各状态的文件数
-            "details": current_page_data  # 当前页码下的文件目录
+            "details": current_page_data,  # 当前页码下的文件目录
+            "page_id": page  # 当前页码
         }
     })
 
@@ -886,6 +887,8 @@ async def get_doc_completed(req: request):
     if not file_id:
         return sanic_json({"code": 2005, "msg": "fail, file_id is None"})
     debug_logger.info("file_id: {}".format(file_id))
+    page = safe_get(req, 'page_offset', 1)  # 默认为第一页
+    limit = safe_get(req, 'page_limit', 10)  # 默认每页显示10条记录
 
     sorted_json_datas = local_doc_qa.milvus_summary.get_document_by_file_id(file_id)
     completed_doc = local_doc_qa.get_completed_document(file_id)
@@ -895,7 +898,18 @@ async def get_doc_completed(req: request):
     #         return sanic_json({"code": 200, "msg": "failed, completed_text too long, the max length is 10000"})
     chunks = [json_data['kwargs'] for json_data in sorted_json_datas]
 
-    return sanic_json({"code": 200, "msg": "success", "completed_text": completed_doc.page_content, "chunks": chunks})
+    # 计算总记录数
+    total_count = len(chunks)
+    # 计算总页数
+    total_pages = (total_count + limit - 1) // limit
+    # 计算当前页的起始和结束索引
+    start_index = (page - 1) * limit
+    end_index = start_index + limit
+    # 截取当前页的数据
+    current_page_chunks = chunks[start_index:end_index]
+
+    return sanic_json({"code": 200, "msg": "success", "completed_text": completed_doc.page_content,
+                       "chunks": current_page_chunks, "page_id": page})
 
 
 async def get_qa_info(req: request):

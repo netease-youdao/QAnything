@@ -95,9 +95,9 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
         try:
             await asyncio.wait_for(task, timeout=split_timeout_seconds)
             content_length = sum([len(doc.page_content) for doc in local_file.docs])
-            if content_length > 5000000:
+            if content_length > 1000000:
                 status = 'red'
-                msg = f"{file_name} content_length too large, {content_length} >= MaxLength(5000000)"
+                msg = f"{file_name} content_length too large, {content_length} >= MaxLength(1000000)"
                 # await post_data(user_id=user_id, charsize=-1, docid=local_file.file_id,
                 #                 status=status, msg=msg)
                 return status, content_length, chunk_size, msg
