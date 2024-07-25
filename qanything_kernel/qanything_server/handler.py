@@ -26,6 +26,7 @@ __all__ = ["new_knowledge_base", "upload_files", "list_kbs", "list_docs", "delet
 
 INVALID_USER_ID = f"fail, Invalid user_id: . user_id 必须只含有字母，数字和下划线且字母开头"
 
+
 @protected()
 async def new_knowledge_base(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
@@ -891,3 +892,4 @@ async def delete_session(req: request):
 
     local_doc_qa.mysql_client.delete_session(user_id, session_id)
     return sanic_json({"code": 200, "msg": "Session {} delete success".format(session_id)})
+

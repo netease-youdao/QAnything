@@ -50,7 +50,8 @@ class KnowledgeBaseManager:
         query = """
             CREATE TABLE IF NOT EXISTS User (
                 user_id VARCHAR(255) PRIMARY KEY,
-                user_name VARCHAR(255)
+                user_name VARCHAR(255),
+                password VARCHAR(255)
             );
         """
         self.execute_query_(query, (), commit=True)
@@ -542,3 +543,13 @@ class KnowledgeBaseManager:
             total_deleted += res
         debug_logger.info(f"delete_faqs count: {total_deleted}")
 
+    def get_passwd(self, user_id):
+        query = "SELECT password from User where user_id = ?"
+        return self.execute_query_(query, (user_id,), fetch=True)
+
+    def check_user_exist(self, user_id):
+        return self.check_user_exist_(user_id)
+
+    def change_passwd(self, user_id, new_password):
+        query = "UPDATE User set password = ? where user_id = ?"
+        self.execute_query_(query, (user_id, new_password), commit=True)

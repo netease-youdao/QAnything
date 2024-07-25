@@ -35,7 +35,7 @@ parser = ArgumentParser()
 from sanic import Sanic
 from sanic import response as sanic_response
 from sanic.worker.manager import WorkerManager
-from sanic_jwt import Initialize
+from sanic_jwt import initialize, Initialize
 import signal
 import requests
 from modelscope import snapshot_download
@@ -163,6 +163,7 @@ else:
     debug_logger.info(f"CUDA_DEVICE: {model_config.CUDA_DEVICE}")
 
 from .handler import *
+from .auth import *
 from qanything_kernel.core.local_doc_qa import LocalDocQA
 
 WorkerManager.THRESHOLD = 6000
@@ -170,6 +171,11 @@ WorkerManager.THRESHOLD = 6000
 app = Sanic("QAnything")
 # 设置请求体最大为 400MB
 app.config.REQUEST_MAX_SIZE = 400 * 1024 * 1024
+Initialize(app,
+            responses_class= QAResponses,
+            authenticate=login,
+            path_to_authenticate='/auth/login',
+            path_to_refresh='/auth/refresh_token')
 
 # 将 /qanything 路径映射到 ./dist/qanything 文件夹，并指定路由名称
 app.static('/qanything/', 'qanything_kernel/qanything_server/dist/qanything/', name='qanything', index="index.html")
