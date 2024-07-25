@@ -1,185 +1,212 @@
 <template>
-  <a-form
-    ref="formRef"
-    :model="chatSettingForm"
-    :rules="rules"
-    :label-col="{ span: 6 }"
-    :wrapper-col="{ span: 24 }"
-    style="width: 100%"
-    label-align="left"
-    @finish="onSubmit"
-  >
-    <a-form-item :label="common.modelProviderLabel" name="modelType">
-      <a-select
-        v-model:value="chatSettingForm.modelType"
-        :placeholder="common.selectModel"
-        @select="selectChange"
-      >
-        <a-select-option value="openAI">openAI</a-select-option>
-        <a-select-option value="ollama">ollama</a-select-option>
-        <a-select-option
-          v-for="item of chatSettingConfigured.filter(
-            i => i.modelType !== 'openAI' && i.modelType !== 'ollama'
-          )"
-          :key="item.customId"
-          :value="item.customId"
+  <a-config-provider :theme="{ token: { colorPrimary: '#5a47e5' } }">
+    <a-form
+      ref="formRef"
+      :model="chatSettingForm"
+      :rules="rules"
+      :label-col="{ span: 6 }"
+      :wrapper-col="{ span: 24 }"
+      style="width: 100%"
+      label-align="left"
+      @finish="onSubmit"
+    >
+      <a-form-item :label="common.modelProviderLabel" name="modelType">
+        <a-select
+          v-model:value="chatSettingForm.modelType"
+          :placeholder="common.selectModel"
+          @select="selectChange"
         >
-          {{ item.modelName.length === 0 ? common.customModelType : item.modelName }}
-        </a-select-option>
-      </a-select>
-    </a-form-item>
-    <a-form-item
-      v-if="chatSettingForm.modelType === '自定义模型配置'"
-      ref="modelName"
-      :label="common.modelNameLabel"
-      name="modelName"
-    >
-      <a-input v-model:value="chatSettingForm.modelName" aria-autocomplete="none" />
-    </a-form-item>
-    <a-form-item
-      v-if="chatSettingForm.modelType !== 'ollama'"
-      ref="apiKey"
-      :label="common.apiKeyLabel"
-      name="apiKey"
-    >
-      <a-input-password
-        v-model:value="chatSettingForm.apiKey"
-        placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx"
-      />
-    </a-form-item>
-    <a-form-item ref="apiBase" :label="common.apiPathLabel" name="apiBase">
-      <a-input v-model:value="chatSettingForm.apiBase" aria-autocomplete="none" />
-    </a-form-item>
-    <a-form-item ref="apiModelName" :label="common.apiModelNameLabel" name="apiModelName">
-      <a-input v-model:value="chatSettingForm.apiModelName" aria-autocomplete="none" />
-    </a-form-item>
-    <div class="form-item-inline">
+          <a-select-option value="openAI">openAI</a-select-option>
+          <a-select-option value="ollama">ollama</a-select-option>
+          <a-select-option
+            v-for="item of chatSettingConfigured.filter(
+              i => i.modelType !== 'openAI' && i.modelType !== 'ollama'
+            )"
+            :key="item.customId"
+            :value="item.customId"
+          >
+            {{ item.modelName.length === 0 ? common.customModelType : item.modelName }}
+          </a-select-option>
+        </a-select>
+      </a-form-item>
       <a-form-item
-        ref="apiContextLength"
-        :label="common.apiContextLengthLabel"
-        name="apiContextLength"
+        v-if="chatSettingForm.modelType === '自定义模型配置'"
+        ref="modelName"
+        :label="common.modelNameLabel"
+        name="modelName"
       >
+        <a-input v-model:value="chatSettingForm.modelName" aria-autocomplete="none" />
+      </a-form-item>
+      <a-form-item
+        v-if="chatSettingForm.modelType !== 'ollama'"
+        ref="apiKey"
+        :label="common.apiKeyLabel"
+        name="apiKey"
+      >
+        <a-input-password
+          v-model:value="chatSettingForm.apiKey"
+          placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx"
+        />
+      </a-form-item>
+      <a-form-item ref="apiBase" :label="common.apiPathLabel" name="apiBase">
+        <a-input v-model:value="chatSettingForm.apiBase" aria-autocomplete="none" />
+      </a-form-item>
+      <a-form-item ref="apiModelName" :label="common.apiModelNameLabel" name="apiModelName">
+        <a-input
+          v-if="chatSettingForm.modelType !== 'openAI'"
+          v-model:value="chatSettingForm.apiModelName"
+          aria-autocomplete="none"
+        />
+        <a-select
+          v-else
+          v-model:value="chatSettingForm.apiModelName"
+          :options="openAIModelDefault.map(item => ({ value: item }))"
+          @change="openAIModelSelect"
+        >
+          <template #dropdownRender="{ menuNode: menu }">
+            <v-nodes :vnodes="menu" />
+            <a-divider style="margin: 4px 0" />
+            <a-space style="padding: 4px 8px">
+              <a-input ref="inputRef" v-model:value="name" placeholder="输入模型名称" />
+              <a-button type="text" @click="addItem">添加模型</a-button>
+            </a-space>
+          </template>
+        </a-select>
+      </a-form-item>
+      <div class="form-item-inline">
+        <a-form-item
+          ref="apiContextLength"
+          :label="common.apiContextLengthLabel"
+          name="apiContextLength"
+        >
+          <a-slider
+            v-model:value="apiContextTokenK"
+            :min="4"
+            :max="200"
+            :step="1"
+            :tip-formatter="(value: number) => `${value}K`"
+          />
+        </a-form-item>
+        <a-form-item name="apiContextLength">
+          <a-input-number
+            v-model:value="apiContextTokenK"
+            :min="4"
+            :max="200"
+            :step="1"
+            style="margin-left: 16px"
+            :precision="0"
+            :controls="false"
+            addon-after="K"
+          />
+        </a-form-item>
+      </div>
+      <div class="form-item-inline">
+        <a-form-item ref="maxToken" :label="common.maxTokenLabel" name="maxToken">
+          <a-slider
+            v-model:value="chatSettingForm.maxToken"
+            :min="1"
+            :max="chatSettingForm.apiContextLength / TOKENRATIO"
+            :step="1"
+          />
+        </a-form-item>
+        <a-form-item name="maxToken">
+          <a-input-number
+            v-model:value="chatSettingForm.maxToken"
+            :min="1"
+            :max="chatSettingForm.apiContextLength / TOKENRATIO"
+            :step="1"
+            style="margin-left: 16px"
+            :precision="0"
+            :controls="false"
+          />
+        </a-form-item>
+      </div>
+      <div class="form-item-inline">
+        <a-form-item ref="temperature" label="Temperature" name="temperature">
+          <a-slider v-model:value="chatSettingForm.temperature" :min="0" :max="1" :step="0.01" />
+        </a-form-item>
+        <a-form-item name="temperature">
+          <a-input-number
+            v-model:value="chatSettingForm.temperature"
+            :min="0"
+            :max="1"
+            :step="0.01"
+            style="margin-left: 16px"
+            :precision="2"
+            :controls="false"
+          />
+        </a-form-item>
+      </div>
+      <div class="form-item-inline">
+        <a-form-item ref="top_P" label="top_P" name="top_P">
+          <a-slider v-model:value="chatSettingForm.top_P" :min="0" :max="1" :step="0.01" />
+        </a-form-item>
+        <a-form-item name="top_P">
+          <a-input-number
+            v-model:value="chatSettingForm.top_P"
+            :min="0"
+            :max="1"
+            :step="0.01"
+            style="margin-left: 16px"
+            :precision="2"
+            :controls="false"
+          />
+        </a-form-item>
+      </div>
+      <a-form-item ref="context" :label="common.contextLabel" name="context">
         <a-slider
-          v-model:value="chatSettingForm.apiContextLength"
-          :min="4096"
-          :max="8192"
-          :step="1"
-        />
-      </a-form-item>
-      <a-form-item name="apiContextLength">
-        <a-input-number
-          v-model:value="chatSettingForm.apiContextLength"
-          :min="4096"
-          :step="1"
-          style="margin-left: 16px"
-          :precision="0"
-          :controls="false"
-        />
-      </a-form-item>
-    </div>
-    <div class="form-item-inline">
-      <a-form-item ref="maxToken" :label="common.maxTokenLabel" name="maxToken">
-        <a-slider
-          v-model:value="chatSettingForm.maxToken"
-          :min="1"
-          :max="chatSettingForm.apiContextLength / TOKENRATIO"
-          :step="1"
-        />
-      </a-form-item>
-      <a-form-item name="maxToken">
-        <a-input-number
-          v-model:value="chatSettingForm.maxToken"
-          :min="1"
-          :max="chatSettingForm.apiContextLength / TOKENRATIO"
-          :step="1"
-          style="margin-left: 16px"
-          :precision="0"
-          :controls="false"
-        />
-      </a-form-item>
-    </div>
-    <div class="form-item-inline">
-      <a-form-item ref="temperature" label="Temperature" name="temperature">
-        <a-slider v-model:value="chatSettingForm.temperature" :min="0" :max="1" :step="0.01" />
-      </a-form-item>
-      <a-form-item name="temperature">
-        <a-input-number
-          v-model:value="chatSettingForm.temperature"
+          v-model:value="chatSettingForm.context"
           :min="0"
-          :max="1"
-          :step="0.01"
-          style="margin-left: 16px"
-          :precision="0"
-          :controls="false"
+          :max="22"
+          :step="2"
+          :tip-formatter="sliderFormatter"
         />
+        <!--      :marks="contextMarks"-->
+        <!--        <template #mark="{ label }">-->
+        <!--          <span>{{ label }}</span>-->
+        <!--        </template>-->
+        <!--      </a-slider>-->
       </a-form-item>
-    </div>
-    <div class="form-item-inline">
-      <a-form-item ref="top_P" label="top_P" name="top_P">
-        <a-slider v-model:value="chatSettingForm.top_P" :min="0" :max="1" :step="0.01" />
+      <a-form-item :label="common.capabilitiesLabel" name="capabilities">
+        <a-checkbox-group v-model:value="capabilitiesOptionsState" style="width: 100%">
+          <a-row>
+            <a-col :span="8">
+              <a-popover placement="topLeft">
+                <template #content>
+                  <p>{{ common.networkSearchDescription }}</p>
+                </template>
+                <a-checkbox value="onlineSearch">{{ common.networkSearch }}</a-checkbox>
+              </a-popover>
+            </a-col>
+            <a-col :span="8">
+              <a-popover placement="topLeft">
+                <template #content>
+                  <p>{{ common.mixedSearchDescription }}</p>
+                </template>
+                <a-checkbox value="mixedSearch">{{ common.mixedSearch }}</a-checkbox>
+              </a-popover>
+            </a-col>
+            <a-col :span="8">
+              <a-popover placement="topLeft">
+                <template #content>
+                  <p>{{ common.onlySearchDescription }}</p>
+                </template>
+                <a-checkbox value="onlySearch">{{ common.onlySearch }}</a-checkbox>
+              </a-popover>
+            </a-col>
+          </a-row>
+        </a-checkbox-group>
       </a-form-item>
-      <a-form-item name="top_P">
-        <a-input-number
-          v-model:value="chatSettingForm.top_P"
-          :min="0"
-          :max="1"
-          :step="0.01"
-          style="margin-left: 16px"
-          :precision="0"
-          :controls="false"
-        />
+      <a-form-item
+        v-if="chatSettingForm.modelType === '自定义模型配置'"
+        :wrapper-col="{ span: 24 }"
+      >
+        <a-button type="primary" html-type="submit" style="margin-left: 0 !important; width: auto">
+          {{ common.saveModel }}
+        </a-button>
       </a-form-item>
-    </div>
-    <a-form-item ref="context" :label="`${common.contextLabel}（${contextLength}）`" name="context">
-      <a-slider
-        v-model:value="chatSettingForm.context"
-        :min="0"
-        :max="22"
-        :step="2"
-        :tip-formatter="sliderFormatter"
-      />
-      <!--      :marks="contextMarks"-->
-      <!--        <template #mark="{ label }">-->
-      <!--          <span>{{ label }}</span>-->
-      <!--        </template>-->
-      <!--      </a-slider>-->
-    </a-form-item>
-    <a-form-item :label="common.capabilitiesLabel" name="capabilities">
-      <a-checkbox-group v-model:value="capabilitiesOptionsState" style="width: 100%">
-        <a-row>
-          <a-col :span="8">
-            <a-popover placement="topLeft">
-              <template #content>
-                <p>{{ common.networkSearchDescription }}</p>
-              </template>
-              <a-checkbox value="onlineSearch">{{ common.networkSearch }}</a-checkbox>
-            </a-popover>
-          </a-col>
-          <a-col :span="8">
-            <a-popover placement="topLeft">
-              <template #content>
-                <p>{{ common.mixedSearchDescription }}</p>
-              </template>
-              <a-checkbox value="mixedSearch">{{ common.mixedSearch }}</a-checkbox>
-            </a-popover>
-          </a-col>
-          <a-col :span="8">
-            <a-popover placement="topLeft">
-              <template #content>
-                <p>{{ common.onlySearchDescription }}</p>
-              </template>
-              <a-checkbox value="onlySearch">{{ common.onlySearch }}</a-checkbox>
-            </a-popover>
-          </a-col>
-        </a-row>
-      </a-checkbox-group>
-    </a-form-item>
-    <a-form-item v-if="chatSettingForm.modelType === '自定义模型配置'" :wrapper-col="{ span: 24 }">
-      <a-button type="primary" html-type="submit" style="margin-left: 0 !important; width: auto">
-        {{ common.saveModel }}
-      </a-button>
-    </a-form-item>
-  </a-form>
+    </a-form>
+  </a-config-provider>
 </template>
 
 <script setup lang="ts">
@@ -193,20 +220,52 @@ defineExpose({ onCheck });
 
 const common = getLanguage().common;
 
-interface IProps {
-  contextLength: number;
-}
-
-const props = defineProps<IProps>();
-const contextLength = toRef(props, 'contextLength');
-
 const { chatSettingConfigured } = storeToRefs(useChatSetting());
-const { setChatSettingConfigured } = useChatSetting();
+const { setChatSettingConfigured, openAISettingMap } = useChatSetting();
 
 const formRef = ref(null);
 const capabilitiesOptionsState = ref([]);
 
 const chatSettingForm = ref<IChatSetting>();
+
+// 如果是openAI，做选择操作，默认填入model和apiContextLength，但是也需要自定义添加
+const VNodes = defineComponent({
+  props: {
+    vnodes: {
+      type: Object,
+      required: true,
+    },
+  },
+  render() {
+    return this.vnodes;
+  },
+});
+let index = 0;
+const openAIModelDefault = ref([]);
+const inputRef = ref();
+const name = ref();
+
+const addItem = e => {
+  e.preventDefault();
+  openAIModelDefault.value.push(name.value || `New item ${(index += 1)}`);
+  name.value = '';
+  setTimeout(() => {
+    inputRef.value?.focus();
+  }, 0);
+};
+
+onMounted(() => {
+  openAIModelDefault.value = [...openAISettingMap.keys()];
+});
+
+const openAIModelSelect = (value: any) => {
+  const curContextLength = openAISettingMap.get(value)?.apiContextLength;
+  if (curContextLength) {
+    apiContextTokenK.value = curContextLength / 1024;
+  } else {
+    apiContextTokenK.value = 4;
+  }
+};
 
 // maxToken是上下文token的 1/TOKENRATIO 倍
 const TOKENRATIO = 2;
@@ -220,24 +279,55 @@ const sliderFormatter = (value: number) => {
   return value;
 };
 
+// 上下文长度，单位k，绑定到模板上
+const apiContextTokenK = ref(4);
+onMounted(() => {
+  apiContextTokenK.value = chatSettingForm.value.apiContextLength / 1024;
+});
+// 存储需要字节，* 1024
+watch(
+  () => apiContextTokenK.value,
+  () => {
+    chatSettingForm.value.apiContextLength = apiContextTokenK.value * 1024;
+  }
+);
+
 const rules: Record<string, Rule[]> = {
   modelType: [
-    { required: true, message: `Please Select ${common.modelProviderLabel}`, trigger: 'change' },
+    {
+      required: true,
+      message: `${common.plsInput}${common.modelProviderLabel}`,
+      trigger: 'change',
+    },
   ],
   modelName: [
-    { required: true, message: `Please Input ${common.modelNameLabel}`, trigger: 'change' },
+    { required: true, message: `${common.plsInput}${common.modelNameLabel}`, trigger: 'change' },
   ],
-  apiKey: [{ required: true, message: `Please Input ${common.apiKeyLabel}`, trigger: 'change' }],
-  apiBase: [{ required: true, message: `Please Input ${common.apiPathLabel}`, trigger: 'change' }],
+  apiKey: [
+    { required: true, message: `${common.plsInput}${common.apiKeyLabel}`, trigger: 'change' },
+  ],
+  apiBase: [
+    { required: true, message: `${common.plsInput}${common.apiPathLabel}`, trigger: 'change' },
+  ],
   apiModelName: [
-    { required: true, message: `Please Input ${common.apiModelNameLabel}`, trigger: 'change' },
+    {
+      required: true,
+      message: `${common.plsInput}${common.apiModelNameLabel}`,
+      trigger: 'change',
+    },
   ],
   apiContextLength: [
-    { required: true, message: `Please Input ${common.apiContextLengthLabel}`, trigger: 'change' },
+    {
+      required: true,
+      message: `${common.plsInput}${common.apiContextLengthLabel}`,
+      trigger: 'change',
+    },
   ],
   maxToken: [
-    { required: true, message: `Please Input ${common.maxTokenLabel}`, trigger: 'change' },
+    { required: true, message: `${common.plsInput}${common.maxTokenLabel}`, trigger: 'change' },
   ],
+  temperature: [{ required: true, message: `${common.plsInput}temperature`, trigger: 'change' }],
+  top_P: [{ required: true, message: `${common.plsInput}top_P`, trigger: 'change' }],
 };
 
 // 主动检测是否通过
@@ -334,10 +424,10 @@ onBeforeMount(() => {
 </script>
 
 <style lang="scss" scoped>
-:deep(.ant-btn) {
-  width: 68px;
-  height: 32px;
-}
+//:deep(.ant-btn) {
+//  width: 68px;
+//  height: 32px;
+//}
 
 :deep(.ant-select-item-option-selected) {
   background: #eeecfc !important;
@@ -377,42 +467,65 @@ onBeforeMount(() => {
   font-size: 14px;
 }
 
-:deep(.ant-checkbox-checked .ant-checkbox-inner) {
-  background-color: #5a47e5;
-  border-color: #5a47e5;
-}
-
-:deep(.ant-checkbox + span) {
-  padding-inline-end: 0;
-}
-
-:deep(
-    .ant-checkbox-wrapper:not(.ant-checkbox-wrapper-disabled):hover,
-    .ant-checkbox-checked:not(.ant-checkbox-disabled),
-    .ant-checkbox-inner
-  ) {
-  background-color: #5a47e5;
-  border-color: #5a47e5 !important;
-}
-
-:deep(
-    .ant-checkbox-wrapper:not(.ant-checkbox-wrapper-disabled):hover .ant-checkbox-inner,
-    :where(.css-dev-only-do-not-override-3m4nqy).ant-checkbox:not(.ant-checkbox-disabled):hover,
-    .ant-checkbox-inner
-  ) {
-  border-color: #5a47e5;
-}
-
-:deep(
-    .ant-checkbox-wrapper:not(.ant-checkbox-wrapper-disabled):hover,
-    .ant-checkbox-checked:not(.ant-checkbox-disabled):after
-  ) {
-  border-color: #5a47e5;
-}
-
+////hover
+//:deep(
+//    :where(.css-dev-only-do-not-override-19iuou).ant-checkbox-wrapper:not(
+//        .ant-checkbox-wrapper-disabled
+//      ):hover
+//      .ant-checkbox-inner,
+//    :where(.css-dev-only-do-not-override-19iuou).ant-checkbox:not(.ant-checkbox-disabled):hover
+//      .ant-checkbox-inner
+//  ) {
+//  border-color: #5a47e5 !important;
+//}
+//
+//// 选中hover
+//:deep(
+//    :where(.css-dev-only-do-not-override-19iuou).ant-checkbox-wrapper:not(
+//        .ant-checkbox-wrapper-disabled
+//      ):hover
+//      .ant-checkbox-checked:not(.ant-checkbox-disabled)
+//      .ant-checkbox-inner
+//  ) {
+//  background-color: #5a47e5;
+//  border-color: #5a47e5 !important;
+//}
+//
+//// 选中外圈hover
+//:deep(
+//    :where(.css-dev-only-do-not-override-19iuou).ant-checkbox-wrapper:not(
+//        .ant-checkbox-wrapper-disabled
+//      ):hover
+//      .ant-checkbox-checked:not(.ant-checkbox-disabled):after
+//  ) {
+//  border-color: #5a47e5 !important;
+//}
+//
+//// 选中正常
+//:deep(:where(.css-dev-only-do-not-override-19iuou).ant-checkbox-checked .ant-checkbox-inner) {
+//  background-color: #5a47e5;
+//  border-color: #5a47e5 !important;
+//}
+//
+//:deep(
+//    :where(.css-dev-only-do-not-override-19iuou).ant-checkbox-checked:not(
+//        .ant-checkbox-disabled
+//      ):hover
+//      .ant-checkbox-inner
+//  ) {
+//  background-color: #5a47e5 !important;
+//}
+//
+////background-color: #5a47e5;
+////border-color: #5a47e5 !important;
+//
 :deep(.ant-slider-handle:hover::after) {
   box-shadow: 0 0 0 4px #5a47e5;
 }
+
+//:deep(.ant-slider-handle::after) {
+//  box-shadow: 0 0 0 4px #5a47e5;
+//}
 
 :deep(.ant-slider:hover .ant-slider-track) {
   background-color: #5a47e5;
@@ -434,6 +547,11 @@ onBeforeMount(() => {
   & .ant-form-item:nth-child(2) {
     display: flex;
     justify-content: flex-end;
+    width: 106px;
+  }
+
+  :deep(.ant-form-item-explain-error) {
+    padding-left: 25px;
   }
 }
 </style>

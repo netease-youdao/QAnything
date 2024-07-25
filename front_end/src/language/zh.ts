@@ -31,6 +31,7 @@ export default {
     addUrl: '添加网址',
     urlPlaceholder: '请输入网址',
     uploading: '上传中',
+    inLine: '排队中',
     parsing: '解析中',
     failed: '解析失败',
     succeeded: '解析成功',
@@ -87,6 +88,7 @@ export default {
     contextLabel: '上下文数量',
     capabilitiesLabel: '模型能力',
     saveModel: '保存当前自定义模型',
+    plsInput: '请输入',
   },
   home: {
     newConversation: '新建对话',
@@ -189,7 +191,7 @@ export default {
   progress: {
     uploadTotalProgress: '上传总进度',
     putStorage: '成功入库',
-    uploaded: '已上传',
+    inLine: '排队中',
     parsing: '解析中',
     failure: '失败',
   },

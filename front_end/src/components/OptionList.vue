@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2023-12-26 14:49:41
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-23 19:54:15
+ * @LastEditTime: 2024-07-25 14:48:33
  * @FilePath: front_end/src/components/OptionList.vue
  * @Description: 
 -->
@@ -362,15 +362,19 @@ const showEditQaSet = () => {
 
 const parseStatus = status => {
   console.log('status', status);
-  let str = common.failed;
+  let str = '';
   switch (status) {
     case 'gray':
+      str = common.inLine;
+      break;
+    case 'yellow':
       str = common.parsing;
       break;
     case 'green':
       str = common.succeeded;
       break;
     default:
+      str = common.failed;
       break;
   }
   return str;
@@ -381,6 +385,9 @@ const parseFaqStatus = status => {
   switch (status) {
     case 'gray':
       str = common.uploadCompleted;
+      break;
+    case 'yellow':
+      str = common.inLine;
       break;
     case 'green':
       str = common.learningCompleted;

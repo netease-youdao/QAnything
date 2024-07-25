@@ -3,7 +3,7 @@
     <span class="title">{{ progress.uploadTotalProgress }}：</span>
     <a-tooltip
       :title="`${progress.putStorage}: ${progressPercentCount.green},
-      ${progress.uploaded}: ${progressPercentCount.gray},
+      ${progress.inLine}: ${progressPercentCount.gray},
       ${progress.parsing}: ${progressPercentCount.yellow},
       ${progress.failure}: ${progressPercentCount.red}`"
     >

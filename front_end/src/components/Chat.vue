@@ -270,18 +270,9 @@ const question = ref('');
 //问答的上下文
 const history = computed(() => {
   const context = chatSettingFormActive.value.context;
-  let historyChat = [];
-  // 滑动条最后一项为22，如果是22需要做无限制处理
-  if (context === 22) {
-    historyChat = [...QA_List.value];
-  } else {
-    historyChat = QA_List.value.slice(-context);
-  }
-  const res = historyChat
-    .filter(item => item.type === 'ai')
-    .map(item => [item.question, item.answer]);
-  console.log(res);
-  return res;
+  const usefulChat = QA_List.value.filter(item => item.type === 'ai');
+  const historyChat = context === 22 ? usefulChat : usefulChat.slice(-context);
+  return historyChat.map(item => [item.question, item.answer]);
 });
 
 //当前是否回答中
@@ -553,7 +544,7 @@ const send = () => {
       console.log('message');
       const res: any = JSON.parse(msg.data);
       console.log(res);
-      if (res?.code == 200 && res?.response) {
+      if (res?.code == 200 && res?.response && res.msg === 'success') {
         // QA_List.value[QA_List.value.length - 1].answer += res.result.response;
         // typewriter.add(res?.response.replaceAll('\n', '<br/>'));
         typewriter.add(res?.response);

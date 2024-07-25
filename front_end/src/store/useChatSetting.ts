@@ -79,10 +79,66 @@ export const useChatSetting = defineStore(
       return chatSettingConfigured.value.find(item => item.active === true);
     });
 
+    // openAI默认模型配置
+    const openAIs = [
+      'gpt-3.5-turbo',
+      'gpt-3.5-turbo-1106',
+      'gpt-3.5-turbo-0125',
+      'gpt-3.5-turbo-0613',
+      'gpt-3.5-turbo-instruct',
+      'gpt-3.5-turbo-16k',
+      'gpt-3.5-turbo-16k-0613',
+      'gpt-3.5-turbo-0301',
+      'gpt-4-0125-preview',
+      'gpt-4-1106-preview',
+      'gpt-4-1106-version-preview',
+      'gpt-4',
+      'gpt-4-0314',
+      'gpt-4-0613',
+      'gpt-4-32k-0314',
+      'gpt-4-32k',
+      'gpt-4-turbo-2024-04-09',
+      'gpt-4-turbo',
+      'gpt-4-turbo-preview',
+      'gpt-4o',
+      'gpt-4o-mini',
+    ] as const;
+
+    type OpenAIModel = (typeof openAIs)[number];
+
+    type OpenAISettings = {
+      apiContextLength: number;
+    };
+
+    const openAISettingMap = new Map<OpenAIModel, OpenAISettings>([
+      ['gpt-3.5-turbo', { apiContextLength: 16384 }],
+      ['gpt-3.5-turbo-1106', { apiContextLength: 16384 }],
+      ['gpt-3.5-turbo-0125', { apiContextLength: 16384 }],
+      ['gpt-3.5-turbo-0613', { apiContextLength: 4096 }],
+      ['gpt-3.5-turbo-instruct', { apiContextLength: 4096 }],
+      ['gpt-3.5-turbo-16k', { apiContextLength: 16384 }],
+      ['gpt-3.5-turbo-16k-0613', { apiContextLength: 16384 }],
+      ['gpt-3.5-turbo-0301', { apiContextLength: 16384 }],
+      ['gpt-4-0125-preview', { apiContextLength: 131072 }],
+      ['gpt-4-1106-preview', { apiContextLength: 131072 }],
+      ['gpt-4-1106-version-preview', { apiContextLength: 131072 }],
+      ['gpt-4', { apiContextLength: 8192 }],
+      ['gpt-4-0314', { apiContextLength: 8192 }],
+      ['gpt-4-0613', { apiContextLength: 8192 }],
+      ['gpt-4-32k-0314', { apiContextLength: 32768 }],
+      ['gpt-4-32k', { apiContextLength: 32768 }],
+      ['gpt-4-turbo-2024-04-09', { apiContextLength: 131072 }],
+      ['gpt-4-turbo', { apiContextLength: 131072 }],
+      ['gpt-4-turbo-preview', { apiContextLength: 131072 }],
+      ['gpt-4o', { apiContextLength: 131072 }],
+      ['gpt-4o-mini', { apiContextLength: 131072 }],
+    ]);
+
     return {
       setChatSettingConfigured,
       chatSettingConfigured,
       chatSettingFormActive,
+      openAISettingMap,
     };
   },
   {

@@ -32,6 +32,7 @@ export default {
     urlPlaceholder: 'Please enter the URL',
     uploading: 'Uploading',
     parsing: 'Parsing',
+    inLine: 'In Line',
     failed: 'Failed',
     succeeded: 'Succeeded',
     upSucceeded: 'Succeeded',
@@ -90,6 +91,7 @@ export default {
     contextLabel: 'Context Number',
     capabilitiesLabel: 'Model capabilities',
     saveModel: 'Save current custom model',
+    plsInput: 'Please Input',
   },
   home: {
     newConversation: 'New Conversation',
@@ -196,8 +198,8 @@ export default {
   },
   progress: {
     uploadTotalProgress: 'Upload Total Progress',
-    putStorage: 'Successfully put into storage',
-    uploaded: 'Uploaded',
+    putStorage: 'Success',
+    inLine: 'In Line',
     parsing: 'Parsing',
     failure: 'Failure',
   },

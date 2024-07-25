@@ -164,15 +164,15 @@
           <!--              <SvgIcon name="network" @click="networkChat" />-->
           <!--            </span>-->
           <!--          </a-popover>-->
-          <a-popover v-if="chatType === 'share'" placement="topLeft">
-            <template #content>
-              <p v-if="control">{{ bots.multiTurnConversation2 }}</p>
-              <p v-else>{{ bots.multiTurnConversation1 }}</p>
-            </template>
-            <span :class="['control', `control-${control}`]">
-              <SvgIcon name="chat-control" @click="controlChat" />
-            </span>
-          </a-popover>
+          <!--          <a-popover v-if="chatType === 'share'" placement="topLeft">-->
+          <!--            <template #content>-->
+          <!--              <p v-if="control">{{ bots.multiTurnConversation2 }}</p>-->
+          <!--              <p v-else>{{ bots.multiTurnConversation1 }}</p>-->
+          <!--            </template>-->
+          <!--            <span :class="['control', `control-${control}`]">-->
+          <!--              <SvgIcon name="chat-control" @click="controlChat" />-->
+          <!--            </span>-->
+          <!--          </a-popover>-->
 
           <span v-if="chatType === 'share'" class="download" @click="downloadChat">
             <SvgIcon name="chat-download" />
@@ -247,11 +247,6 @@ const { chatSettingFormActive } = storeToRefs(useChatSetting());
 const { copy } = useClipboard();
 const { setChatSourceVisible, setSourceType, setSourceUrl, setTextContent } = useChatSource();
 const { language } = storeToRefs(useLanguage());
-//当前是否多轮对话
-const control = ref(true);
-
-//当前是否开启链网检索
-const network = ref(false);
 
 //当前问的问题
 const question = ref('');
@@ -259,12 +254,9 @@ const question = ref('');
 //问答的上下文
 const history = computed(() => {
   const context = chatSettingFormActive.value.context;
-  const historyChat = QA_List.value.slice(-context);
-  const res = historyChat
-    .filter(item => item.type === 'ai')
-    .map(item => [item.question, item.answer]);
-  console.log(res);
-  return res;
+  const usefulChat = QA_List.value.filter(item => item.type === 'ai');
+  const historyChat = context === 22 ? usefulChat : usefulChat.slice(-context);
+  return historyChat.map(item => [item.question, item.answer]);
 });
 
 //当前是否回答中
@@ -378,28 +370,20 @@ const send = () => {
     body: JSON.stringify({
       user_id: userId,
       bot_id: props.botInfo.bot_id,
-      history: control.value ? history.value : [],
+      history: history.value,
       question: q,
       streaming: true,
-      networking: network.value,
+      networking: chatSettingFormActive.value.capabilities.onlineSearch,
       product_source: 'saas',
-
-      // user_id: userId,
-      // kb_ids: selectList.value,
-      // history: history.value,
-      // question: q,
-      // streaming: true,
-      // networking: chatSettingFormActive.value.capabilities.onlineSearch,
-      // product_source: 'saas',
-      // only_need_search_results: chatSettingFormActive.value.capabilities.onlySearch,
-      // hybrid_search: chatSettingFormActive.value.capabilities.mixedSearch,
-      // max_token: chatSettingFormActive.value.maxToken,
-      // api_base: chatSettingFormActive.value.apiBase,
-      // api_key: chatSettingFormActive.value.apiKey,
-      // model: chatSettingFormActive.value.apiModelName,
-      // api_context_length: chatSettingFormActive.value.apiContextLength,
-      // top_p: chatSettingFormActive.value.top_P,
-      // temperature: chatSettingFormActive.value.temperature,
+      only_need_search_results: chatSettingFormActive.value.capabilities.onlySearch,
+      hybrid_search: chatSettingFormActive.value.capabilities.mixedSearch,
+      max_token: chatSettingFormActive.value.maxToken,
+      api_base: chatSettingFormActive.value.apiBase,
+      api_key: chatSettingFormActive.value.apiKey,
+      model: chatSettingFormActive.value.apiModelName,
+      api_context_length: chatSettingFormActive.value.apiContextLength,
+      top_p: chatSettingFormActive.value.top_P,
+      temperature: chatSettingFormActive.value.temperature,
     }),
     signal: ctrl.signal,
     onopen(e: any) {
@@ -428,7 +412,7 @@ const send = () => {
       console.log('message');
       const res: any = JSON.parse(msg.data);
       console.log(res);
-      if (res?.code == 200 && res?.response) {
+      if (res?.code == 200 && res?.response && res.msg === 'success') {
         // QA_List.value[QA_List.value.length - 1].answer += res.result.response;
         typewriter.add(res?.response.replaceAll('\n', '<br/>'));
         scrollBottom();
@@ -497,9 +481,9 @@ const { clearQAList } = useBotsChat();
 const confirmLoading = ref(false);
 const content = ref('');
 const type = ref('');
-const controlChat = () => {
-  control.value = !control.value;
-};
+// const controlChat = () => {
+//   // control.value = !control.value;
+// };
 
 const downloadChat = () => {
   type.value = 'download';

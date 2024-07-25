@@ -1,9 +1,9 @@
 /*
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-01 14:57:33
- * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2024-01-05 19:12:04
- * @FilePath: /ai-demo/src/store/useOptiionList.ts
+ * @LastEditors: Ianarua 306781523@qq.com
+ * @LastEditTime: 2024-07-25 14:41:23
+ * @FilePath: front_end/src/store/useOptiionList.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 
@@ -95,7 +95,7 @@ export const useOptiionList = defineStore(
         });
 
         const flag = res?.details.some(item => {
-          return item.status === 'gray';
+          return item.status === 'gray' || item.status === 'yellow';
         });
         console.log(flag);
         if (flag) {
@@ -168,7 +168,7 @@ export const useOptiionList = defineStore(
         });
 
         const flag = res?.details.some(item => {
-          return item.status === 'gray';
+          return item.status === 'gray' || item.status === 'yellow';
         });
         console.log('flag', flag);
         if (flag) {
