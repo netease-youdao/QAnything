@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2023-12-26 14:49:41
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-26 11:34:17
+ * @LastEditTime: 2024-07-26 18:04:59
  * @FilePath: front_end/src/components/OptionList.vue
  * @Description: 
 -->
@@ -153,19 +153,26 @@
       </div>
     </div>
   </div>
+  <ChunkViewDialog />
 </template>
 <script lang="ts" setup>
 import urlResquest from '@/services/urlConfig';
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
 import { useKnowledgeModal } from '@/store/useKnowledgeModal';
+import { useChunkView } from '@/store/useChunkView';
+import { useOptiionList } from '@/store/useOptiionList';
 import { pageStatus } from '@/utils/enum';
 import { resultControl } from '@/utils/utils';
 import { message } from 'ant-design-vue';
+import { getLanguage } from '@/language';
+import LoadingImg from '@/components/LoadingImg.vue';
+import UploadProgress from '@/components/UploadProgress.vue';
+import ChunkViewDialog from '@/components/ChunkViewDialog.vue';
 
 const { setDefault } = useKnowledgeBase();
 const { currentKbName, currentId } = storeToRefs(useKnowledgeBase());
 const { setModalVisible, setUrlModalVisible, setModalTitle } = useKnowledgeModal();
-import { useOptiionList } from '@/store/useOptiionList';
+const { showChunkModel, chunkKbId, chunkFileId } = storeToRefs(useChunkView());
 
 const {
   getDetails,
@@ -188,10 +195,6 @@ const {
   kbPageNum,
   kbPageSize,
 } = storeToRefs(useOptiionList());
-
-import { getLanguage } from '@/language';
-import LoadingImg from '@/components/LoadingImg.vue';
-import UploadProgress from '@/components/UploadProgress.vue';
 
 const home = getLanguage().home;
 const common = getLanguage().common;
@@ -322,15 +325,10 @@ const deleteItem = item => {
 
 // 预览chunks
 const viewItem = async item => {
-  console.log('item', item);
-  try {
-    const res = await resultControl(
-      await urlResquest.getDocCompleted({ kb_id: currentId.value, file_id: item.fileId })
-    );
-    console.log(res);
-  } catch (e) {
-    message.error(e.msg || '获取文档解析结果失败');
-  }
+  chunkKbId.value = currentId.value;
+  chunkFileId.value = item.fileId;
+  // 打开弹窗
+  showChunkModel.value = true;
 };
 
 const confirm = async () => {

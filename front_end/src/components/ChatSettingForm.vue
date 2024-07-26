@@ -157,8 +157,8 @@
         <a-slider
           v-model:value="chatSettingForm.context"
           :min="0"
-          :max="22"
-          :step="2"
+          :max="11"
+          :step="1"
           :tip-formatter="sliderFormatter"
         />
         <!--      :marks="contextMarks"-->

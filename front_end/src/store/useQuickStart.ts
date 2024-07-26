@@ -8,7 +8,7 @@ const { currentId } = storeToRefs(useKnowledgeBase());
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-22 18:18:48
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-24 17:28:43
+ * @LastEditTime: 2024-07-26 19:39:57
  * @FilePath: front_end/src/store/useQuickStart.ts
  * @Description:
  */
@@ -124,6 +124,9 @@ export const useQuickStart = defineStore(
       }
     );
 
+    // 将要删除的chatId
+    const deleteChatId = ref(null);
+
     return {
       QA_List,
       setQaList,
@@ -141,6 +144,7 @@ export const useQuickStart = defineStore(
       setChatId,
       kbId,
       setKbId,
+      deleteChatId,
     };
   },
   {

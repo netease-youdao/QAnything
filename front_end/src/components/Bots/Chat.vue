@@ -254,8 +254,9 @@ const question = ref('');
 //问答的上下文
 const history = computed(() => {
   const context = chatSettingFormActive.value.context;
+  if (context === 0) return [];
   const usefulChat = QA_List.value.filter(item => item.type === 'ai');
-  const historyChat = context === 22 ? usefulChat : usefulChat.slice(-context);
+  const historyChat = context === 11 ? usefulChat : usefulChat.slice(-context);
   return historyChat.map(item => [item.question, item.answer]);
 });
 

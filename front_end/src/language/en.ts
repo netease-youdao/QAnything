@@ -20,6 +20,7 @@ export default {
     regenerate: 'regenerate',
     dragUrl: 'Drag files here, or',
     click: 'Click',
+    close: 'Close',
     updesc1:
       'Support: md, txt, pdf, jpg, png, jpeg, docx, xlsx, pptx, eml, csv. single document less than 30M, single picture less than 5M',
     updesc2:

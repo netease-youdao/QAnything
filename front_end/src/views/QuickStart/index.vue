@@ -2,7 +2,7 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-22 16:10:06
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-26 13:26:40
+ * @LastEditTime: 2024-07-26 18:47:10
  * @FilePath: front_end/src/views/QuickStart/index.vue
  * @Description: 快速开始，每个对话对应一个知识库（自动创建），传文件自动放入该对话对应的知识库
  -->
@@ -289,8 +289,9 @@ const question = ref('');
 //问答的上下文
 const history = computed(() => {
   const context = chatSettingFormActive.value.context;
+  if (context === 0) return [];
   const usefulChat = QA_List.value.filter(item => item.type === 'ai');
-  const historyChat = context === 22 ? usefulChat : usefulChat.slice(-context);
+  const historyChat = context === 1 ? usefulChat : usefulChat.slice(-context);
   return historyChat.map(item => [item.question, item.answer]);
 });
 

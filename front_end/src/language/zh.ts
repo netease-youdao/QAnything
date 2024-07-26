@@ -20,6 +20,7 @@ export default {
     regenerate: '重新生成',
     dragUrl: '将文件拖到此处，或',
     click: '点击上传',
+    close: '关闭',
     updesc1:
       '支持文件格式md、txt、pdf、jpg、png、jpeg、docx、xlsx、pptx、eml、csv, 单个文档小于30M,单张图片小于5M',
     updesc2:
