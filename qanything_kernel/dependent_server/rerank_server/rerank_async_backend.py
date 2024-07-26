@@ -109,16 +109,9 @@ class RerankAsyncBackend:
         futures = []
         mini_batch = 1  # 设置mini_batch为1
         for i in range(0, len(tot_batches), mini_batch):
-            batch = self._tokenizer.pad(
-                tot_batches[i:i + mini_batch],
-                padding=True,
-                max_length=None,
-                pad_to_multiple_of=None,
-                return_tensors=self.return_tensors
-            )
             future = asyncio.Future()
             futures.append(future)
-            await self.queue.put((batch, future))
+            await self.queue.put((tot_batches[i:i + mini_batch], future))
 
         results = await asyncio.gather(*futures)
         tot_scores = [score for batch_scores in results for score in batch_scores]
@@ -137,25 +130,25 @@ class RerankAsyncBackend:
             try:
                 while len(batch_items) < self.batch_size:
                     batch, future = await asyncio.wait_for(self.queue.get(), timeout=0.01)
-                    batch_items.append(batch)
-                    futures.append(future)
+                    batch_items.extend(batch)
+                    futures.append((future, len(batch)))
             except asyncio.TimeoutError:
                 pass
 
             if batch_items:
                 loop = asyncio.get_running_loop()
-                combined_batch = {
-                    'input_ids': np.concatenate([item['input_ids'] for item in batch_items]),
-                    'attention_mask': np.concatenate([item['attention_mask'] for item in batch_items])
-                }
-                if 'token_type_ids' in batch_items[0]:
-                    combined_batch['token_type_ids'] = np.concatenate([item['token_type_ids'] for item in batch_items])
-
-                result = await loop.run_in_executor(self.executor, self.inference, combined_batch)
+                input_batch = self._tokenizer.pad(
+                    batch_items,
+                    padding=True,
+                    max_length=None,
+                    pad_to_multiple_of=None,
+                    return_tensors=self.return_tensors
+                )
+                result = await loop.run_in_executor(self.executor, self.inference, input_batch)
 
                 start = 0
-                for future, batch in zip(futures, batch_items):
-                    end = start + len(batch['input_ids'])
+                for future, item_count in futures:
+                    end = start + item_count
                     future.set_result(result[start:end])
                     start = end
             else:
