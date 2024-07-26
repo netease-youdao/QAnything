@@ -1,3 +1,19 @@
+# -*- coding: utf-8 -*-
+from __future__ import print_function  # 确保 print 函数在 Python 2 中的行为与 Python 3 一致
+
+def get_run_config_params():
+    openai_api_base = "https://api.openai.com/v1"
+    openai_api_key = "sk-xxxxxxx"
+    openai_api_model_name = "gpt-3.5-turbo-1106"
+    openai_api_context_length = "4096"
+    workers = 4
+    milvus_port = 19530
+    qanything_port = 8777
+    use_cpu = True
+    # 使用 .format() 方法格式化字符串，以兼容 Python 2
+    return "{},{},{},{},{},{},{}".format(openai_api_base, openai_api_key, openai_api_model_name,
+                                         openai_api_context_length, workers, milvus_port, qanything_port, use_cpu)
+
 # 模型参数
 llm_config = {
     # 回答的最大token数，一般来说对于国内模型一个中文不到1个token，国外模型一个中文1.5-2个token
@@ -53,3 +69,8 @@ pdf_splitter_config = {
     "chunk_overlap": 0
 }
 #### 一般情况下，除非特殊需要，不要修改一下字段参数 ####
+
+
+if __name__ == "__main__":
+    import sys
+    sys.stdout.write(''.join(get_run_config_params()))

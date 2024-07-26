@@ -1,3 +1,5 @@
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
 from qanything_kernel.configs.model_config import VECTOR_SEARCH_TOP_K, CHUNK_SIZE, VECTOR_SEARCH_SCORE_THRESHOLD, \
     PROMPT_TEMPLATE, STREAMING, OCR_MODEL_PATH
 from typing import List
@@ -11,13 +13,14 @@ from qanything_kernel.connector.embedding.embedding_backend import EmbeddingBack
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from qanything_kernel.core.tools.web_search_tool import duckduckgo_search
 from qanything_kernel.dependent_server.ocr_server.ocr import OCRQAnything
-from qanything_kernel.utils.general_utils import num_tokens
+from qanything_kernel.utils.general_utils import num_tokens, get_time
 from .local_file import LocalFile
 import traceback
 import base64
 import numpy as np
 import platform
 import cv2
+import re
 
 
 class LocalDocQA:
@@ -34,6 +37,12 @@ class LocalDocQA:
         self.mode: str = None
         self.use_cpu: bool = True
         self.model: str = None
+        self.web_splitter = RecursiveCharacterTextSplitter(
+            separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
+            chunk_size=800,
+            chunk_overlap=200,
+            length_function=num_tokens,
+        )
 
     def get_ocr_result(self, input: dict):
         img_file = input['img64']
@@ -94,8 +103,12 @@ class LocalDocQA:
             except Exception as e:
                 error_info = f'split error: {traceback.format_exc()}'
                 debug_logger.error(error_info)
-                self.mysql_client.update_file_status(local_file.file_id, status='red')
+                self.mysql_client.update_file_status(local_file.file_id, status='red', reason='split或embedding失败，请检查文件类型，仅支持[md,txt,pdf,jpg,png,jpeg,docx,xlsx,pptx,eml,csv]')
                 failed_list.append(local_file)
+                continue
+            if len(local_file.docs) == 0:
+                self.mysql_client.update_file_status(local_file.file_id, status='red', reason='上传文件内容为空，请检查文件内容')
+                debug_logger.info(f'上传文件内容为空，请检查文件内容')
                 continue
             end = time.time()
             self.mysql_client.update_content_length(local_file.file_id, content_length)
@@ -104,7 +117,7 @@ class LocalDocQA:
             add_ids = await self.faiss_client.add_document(local_file.docs)
             insert_time = time.time()
             debug_logger.info(f'insert time: {insert_time - end}')
-            self.mysql_client.update_file_status(local_file.file_id, status='green')
+            self.mysql_client.update_file_status(local_file.file_id, status='green', reason=" ")
             success_list.append(local_file)
         debug_logger.info(
             f"insert_to_faiss: success num: {len(success_list)}, failed num: {len(failed_list)}")
@@ -125,6 +138,7 @@ class LocalDocQA:
         debug_logger.info(f"local doc search retrieval_documents: {retrieval_documents}")
         return retrieval_documents
 
+    @get_time
     def get_web_search(self, queries, top_k=None):
         if not top_k:
             top_k = self.top_k
@@ -133,10 +147,16 @@ class LocalDocQA:
         source_documents = []
         for doc in web_documents:
             doc.metadata['retrieval_query'] = query  # 添加查询到文档的元数据中
+            file_name = re.sub(r'[\uFF01-\uFF5E\u3000-\u303F]', '', doc.metadata['title'])
+            doc.metadata['file_name'] = file_name + '.web'
+            doc.metadata['file_url'] = doc.metadata['source']
+            doc.metadata['embed_version'] = self.embeddings.embed_version
             source_documents.append(doc)
+            if 'description' in doc.metadata:
+                desc_doc = Document(page_content=doc.metadata['description'], metadata=doc.metadata)
+                source_documents.append(desc_doc)
+        source_documents = self.web_splitter.split_documents(source_documents)
         return web_content, source_documents
-
-
 
     def web_page_search(self, query, top_k=None):
         # 防止get_web_search调用失败，需要try catch

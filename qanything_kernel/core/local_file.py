@@ -122,9 +122,9 @@ class LocalFile:
         return new_docs
 
     @staticmethod
-    def pdf_process(dos: List[Document]):
+    def pdf_process(docs: List[Document]):
         new_docs = []
-        for doc in dos:
+        for doc in docs:
             # metadata={'title_lst': ['#樊昊天个人简历', '##教育经历'], 'has_table': False}
             title_lst = doc.metadata['title_lst']
             # 删除所有仅有多个#的title
@@ -170,7 +170,7 @@ class LocalFile:
             else:
                 try:
                     from qanything_kernel.utils.loader.self_pdf_loader import PdfLoader
-                    loader = PdfLoader(filename=self.file_path, root_dir=os.path.dirname(self.file_path))
+                    loader = PdfLoader(filename=self.file_path, save_dir=os.path.dirname(self.file_path))
                     markdown_dir = loader.load_to_markdown()
                     docs = convert_markdown_to_langchaindoc(markdown_dir)
                     docs = self.pdf_process(docs)
@@ -224,7 +224,7 @@ class LocalFile:
                     new_docs.append(doc)
                 else:
                     last_doc = new_docs[-1]
-                    if len(last_doc.page_content) + len(doc.page_content) < min_length:
+                    if num_tokens(last_doc.page_content) + num_tokens(doc.page_content) < min_length:
                         last_doc.page_content += '\n' + doc.page_content
                     else:
                         new_docs.append(doc)
