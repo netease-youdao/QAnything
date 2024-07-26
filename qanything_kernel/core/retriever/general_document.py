@@ -1,7 +1,6 @@
 from qanything_kernel.utils.general_utils import get_time_async, num_tokens, get_time, get_table_infos
-from typing import List, Union, Callable
-from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, SENTENCE_SIZE, ZH_TITLE_ENHANCE, \
-    LOCAL_OCR_SERVICE_URL, CHILD_CHUNK_SIZE, PARENT_CHUNK_SIZE
+from typing import List
+from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, LOCAL_OCR_SERVICE_URL, PARENT_CHUNK_SIZE
 from langchain.docstore.document import Document
 from qanything_kernel.utils.loader.my_recursive_url_loader import MyRecursiveUrlLoader
 from qanything_kernel.utils.custom_log import insert_logger
@@ -9,11 +8,10 @@ from langchain_community.document_loaders import UnstructuredFileLoader, TextLoa
 from langchain_community.document_loaders import UnstructuredWordDocumentLoader
 from langchain_community.document_loaders import UnstructuredEmailLoader
 from langchain_community.document_loaders import UnstructuredPowerPointLoader
-from qanything_kernel.utils.loader import UnstructuredPaddleImageLoader, UnstructuredPaddlePDFLoader
+from qanything_kernel.utils.loader import UnstructuredPaddlePDFLoader
 from qanything_kernel.utils.loader.self_pdf_loader import PdfLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from qanything_kernel.utils.loader.csv_loader import CSVLoader
-from qanything_kernel.utils.splitter import zh_title_enhance
 from qanything_kernel.utils.loader.markdown_parser import convert_markdown_to_langchaindoc
 from qanything_kernel.utils.loader.pdf_data_parser import \
     convert_markdown_to_langchaindoc as convert_pdf_data_to_langchaindoc
@@ -223,15 +221,7 @@ class LocalFileForInsert:
     @staticmethod
     def markdown_process(docs: List[Document]):
         new_docs = []
-        # current_page_id = 0
         for doc in docs:
-            # current_page_id = LocalFileForInsert.get_page_id(doc, current_page_id)
-            # lines = doc.page_content.split('\n')
-            # # 去掉形如：###### 当前页数:1的行，用正则匹配
-            # lines = [line for line in lines if not re.match(r'^#+ 当前页数:\d+$', line)]
-            # doc.page_content = '\n'.join(lines)
-            # doc.metadata['page_id'] = current_page_id
-            # insert_logger.info(f"doc.metadata: {doc.metadata}")
             if 'coord_lst' in doc.metadata:
                 content_list = [para for para in doc.metadata['coord_lst'] if para[2] == 'content']
                 if content_list:
@@ -293,10 +283,6 @@ class LocalFileForInsert:
         if not pages:
             return None
         pages = sorted(pages, key=lambda x: x['page_id'])
-        # markdown_str = ''
-        # for page in pages:
-        #     page_id_marker = f'###### 当前页数:{page["page_id"]}\n'
-        #     markdown_str += page_id_marker + page['page_content'] + '\n'
 
         if pages:
             json_file_path = os.path.join(full_dir_path, "%s_mark.json" % (file_name))
@@ -367,7 +353,7 @@ class LocalFileForInsert:
         return None
 
     @get_time
-    def split_file_to_docs(self, sentence_size=SENTENCE_SIZE, using_zh_title_enhance=ZH_TITLE_ENHANCE):
+    def split_file_to_docs(self):
         insert_logger.info(f"start split file to docs, file_path: {self.file_name}")
         if self.faq_dict:
             docs = [Document(page_content=self.faq_dict['question'], metadata={"faq_dict": self.faq_dict})]
@@ -383,8 +369,6 @@ class LocalFileForInsert:
                     loader = MyRecursiveUrlLoader(url=self.file_url)
                     docs = loader.load()
         elif self.file_path.lower().endswith(".md"):
-            # loader = UnstructuredFileLoader(self.file_path, strategy="fast")
-            # docs = loader.load()
             try:
                 docs = convert_markdown_to_langchaindoc(self.file_path)
                 docs = self.markdown_process(docs)
@@ -436,9 +420,7 @@ class LocalFileForInsert:
             docs = loader.load()
         else:
             raise TypeError("文件类型不支持，目前仅支持：[md,txt,pdf,jpg,png,jpeg,docx,xlsx,pptx,eml,csv]")
-        if using_zh_title_enhance:
-            insert_logger.info("using_zh_title_enhance %s", using_zh_title_enhance)
-            docs = zh_title_enhance(docs)
+
         self.inject_metadata(docs)
 
     def inject_metadata(self, docs: List[Document]):

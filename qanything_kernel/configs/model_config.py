@@ -63,43 +63,19 @@ CACHED_VS_NUM = 100
 # 文本分句长度
 SENTENCE_SIZE = 100
 
-# 匹配后单段上下文长度
-# CHUNK_SIZE = 800
-
-# 传入LLM的历史记录长度
-LLM_HISTORY_LEN = 3
-
 # 知识库检索时返回的匹配内容条数
 VECTOR_SEARCH_TOP_K = 60 
 
 VECTOR_SEARCH_SCORE_THRESHOLD = 0.3
 
-# 是否开启中文标题加强，以及标题增强的相关配置
-# 通过增加标题判断，判断哪些文本为标题，并在metadata中进行标记；
-# 然后将文本与往上一级的标题进行拼合，实现文本信息的增强。
-ZH_TITLE_ENHANCE = False
-
 KB_SUFFIX = '_240625'
-# MILVUS向量数据库地址
 MILVUS_HOST_LOCAL = 'milvus-standalone-local'
-# MILVUS_HOST_ONLINE = '10.111.115.145'  # 生产集群
-# MILVUS_HOST_ONLINE = 'ai-vectordb.milvus.yodao.cn'  # 生产集群
-MILVUS_HOST_CLOUD = "https://in01-cc57a5d05629fe2.ali-cn-hangzhou.vectordb.zilliz.com.cn"
-# MILVUS_HOST_CLOUD = "https://in01-5c429fb531b0ae2.ali-cn-hangzhou.vectordb.zilliz.com.cn"
-CLOUD_PASSWORD = "Zb8)TL1c]/U(0zp>"
-# CLOUD_PASSWORD = "Fr6,TQ/)N^{,=}Gc"
 MILVUS_PORT = 19530
 MILVUS_COLLECTION_NAME = 'qanything_collection' + KB_SUFFIX
 
 ES_URL = 'http://es-container-local:9200/'
 ES_USER = None
 ES_PASSWORD = None
-# ES_API_KEY = None
-# ES_CONNECT_PARAMS = None
-
-# ES_USER = 'elastic'
-# ES_PASSWORD = 'sUwX35Mgis56SC662Dh883xz'
-# ES_URL = 'http://es-ai-qanything-prod.es.yodao.cn:9200'
 ES_TOP_K = 30
 ES_INDEX_NAME = 'qanything_es_index' + KB_SUFFIX
 
@@ -115,7 +91,7 @@ LOCAL_RERANK_SERVICE_URL = "localhost:8001"
 LOCAL_RERANK_MODEL_NAME = 'rerank'
 LOCAL_RERANK_MAX_LENGTH = 512
 LOCAL_RERANK_BATCH = 4
-LOCAL_RERANK_WORKERS = 1
+LOCAL_RERANK_THREADS = 1
 LOCAL_RERANK_PATH = os.path.join(root_path, 'qanything_kernel/dependent_server/rerank_server', 'rerank_model_configs_v0.0.1')
 LOCAL_RERANK_MODEL_PATH = os.path.join(LOCAL_RERANK_PATH, "rerank.onnx")
 
@@ -123,24 +99,9 @@ LOCAL_EMBED_SERVICE_URL = "localhost:9001"
 LOCAL_EMBED_MODEL_NAME = 'embed'
 LOCAL_EMBED_MAX_LENGTH = 512
 LOCAL_EMBED_BATCH = 4
-LOCAL_EMBED_WORKERS = 1
+LOCAL_EMBED_THREADS = 1
 LOCAL_EMBED_PATH = os.path.join(root_path, 'qanything_kernel/dependent_server/embedding_server', 'embedding_model_configs_v0.0.1')
 LOCAL_EMBED_MODEL_PATH = os.path.join(LOCAL_EMBED_PATH, "embed.onnx")
-
-INSERT_WORKERS = 10
-
-###########################################################################
-# 速读相关常量
-SYMBOL_NO_NEED_TO_REWRITE_QUERY = "NO_NEED_TO_REWRITE"
-SYMBOL_NOT_SCHOLAR_PAPER = "NOT_SCHOLAR_PAPER"
-MAX_TOKENS_FOR_CHUNK_SUMMARY_GEN = 1200
-MAX_CHARS_FOR_CHUNK_TRANSLATION = 5000
-MAX_TOKENS_FOR_BRAINSTORM_QUESTION_GEN = 2400
-MAX_DOC_TEXT_TOKENS_FOR_SCHOLAR_PAPER_CHECK = 2400
-MAX_TOKENS_FOR_PAPER_SUMMARY_SECTION_GENERATION_PROMPT = 2400
-MAX_TOKENS_FOR_REFERENCE_INFORMATION = 2400 # 3000
-MAX_TOKENS_FOR_CITATION_REDUCTION = 12800 # 用 16k 接口，给结果留 1536 token 够了吧？
-MAX_TOKENS_FOR_HISTORY = 600
 
 OPENAI_API_BASE = "https://api.openai-proxy.org/v1"
 OPENAI_API_KEY = "sk-xxx"
