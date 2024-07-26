@@ -35,7 +35,8 @@ parser = ArgumentParser()
 from sanic import Sanic
 from sanic import response as sanic_response
 from sanic.worker.manager import WorkerManager
-from sanic_jwt import initialize, Initialize
+from sanic_jwt import Initialize
+from dotenv import dotenv_values
 import signal
 import requests
 from modelscope import snapshot_download
@@ -168,9 +169,15 @@ from qanything_kernel.core.local_doc_qa import LocalDocQA
 
 WorkerManager.THRESHOLD = 6000
 
-app = Sanic("QAnything")
+config = dotenv_values(".env")
+application = config["APPLICATION"]
+if application is None:
+    application = "QA"
+app = Sanic(application)
 # 设置请求体最大为 400MB
 app.config.REQUEST_MAX_SIZE = 400 * 1024 * 1024
+jwt_secret = config['JWT_SECRET']
+app.config.SANIC_JWT_SECRET = jwt_secret
 Initialize(app,
             responses_class= QAResponses,
             authenticate=login,
