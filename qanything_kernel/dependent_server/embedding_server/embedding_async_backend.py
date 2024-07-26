@@ -2,7 +2,7 @@ import asyncio
 import time
 import numpy as np
 from onnxruntime import SessionOptions, GraphOptimizationLevel, InferenceSession
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from transformers import AutoTokenizer
 from qanything_kernel.utils.custom_log import debug_logger
 from qanything_kernel.configs.model_config import LOCAL_EMBED_MAX_LENGTH, LOCAL_EMBED_PATH, LOCAL_EMBED_BATCH
@@ -22,8 +22,8 @@ class EmbeddingAsyncBackend:
             self.batch_size = LOCAL_EMBED_BATCH  # CPU批处理大小
         else:
             providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
-            self.executor = ProcessPoolExecutor(max_workers=1)
-            self.batch_size = LOCAL_EMBED_BATCH  # GPU批处理大小
+            self.executor = ThreadPoolExecutor(max_workers=num_threads)
+            self.batch_size = 16  # GPU批处理大小固定为16
 
         self.session = InferenceSession(model_path, sess_options=sess_options, providers=providers)
         self._tokenizer = AutoTokenizer.from_pretrained(LOCAL_EMBED_PATH)  # 请根据实际使用的模型调整
@@ -32,9 +32,16 @@ class EmbeddingAsyncBackend:
         asyncio.create_task(self.process_queue())
 
     async def embed_documents_async(self, texts):
-        future = asyncio.Future()
-        await self.queue.put((texts, future))
-        return await future
+        futures = []
+        # 设置mini_batch=1，每次处理1个文本
+        mini_batch = 1
+        for i in range(0, len(texts), mini_batch):
+            future = asyncio.Future()
+            futures.append(future)
+            await self.queue.put((texts[i:i + mini_batch], future))
+
+        results = await asyncio.gather(*futures)
+        return [item for sublist in results for item in sublist]
 
     @get_time
     def embed_documents(self, texts):
@@ -61,12 +68,13 @@ class EmbeddingAsyncBackend:
 
             try:
                 while len(batch_texts) < self.batch_size:
-                    texts, future = await asyncio.wait_for(self.queue.get(), timeout=1)
+                    texts, future = await asyncio.wait_for(self.queue.get(), timeout=0.01)
                     batch_texts.extend(texts)
                     futures.append((future, len(texts)))
             except asyncio.TimeoutError:
                 pass
 
+            # debug_logger.info(f"process_queue embedding texts number: {len(batch_texts)}")
             if batch_texts:
                 loop = asyncio.get_running_loop()
                 result = await loop.run_in_executor(self.executor, self.embed_documents, batch_texts)
@@ -76,3 +84,5 @@ class EmbeddingAsyncBackend:
                     end = start + text_count
                     future.set_result(result[start:end])
                     start = end
+            else:
+                await asyncio.sleep(0.1)  # 如果没有文本要处理，短暂休眠
