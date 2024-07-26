@@ -1,6 +1,5 @@
 import sys
 import os
-import platform
 
 # 获取当前脚本的绝对路径
 current_script_path = os.path.abspath(__file__)
@@ -13,28 +12,31 @@ print(root_dir)
 
 from sanic import Sanic
 from sanic.response import json
-from qanything_kernel.dependent_server.rerank_server.rerank_onnx_backend import RerankOnnxBackend
+from qanything_kernel.dependent_server.rerank_server.rerank_async_backend import RerankAsyncBackend
+from qanything_kernel.configs.model_config import LOCAL_RERANK_MODEL_PATH, LOCAL_RERANK_THREADS
+from qanything_kernel.utils.general_utils import get_time_async
 
 app = Sanic("rerank_server")
 
 
+@get_time_async
 @app.route("/rerank", methods=["POST"])
 async def rerank(request):
     data = request.json
     query = data.get('query')
     passages = data.get('passages')
-    rerank_backend: app.ctx.rerank_backend = request.app.ctx.rerank_backend
+    onnx_backend: RerankAsyncBackend = request.app.ctx.onnx_backend
+    result_data = await onnx_backend.get_rerank_async(query, passages)
     print("local rerank query:", query, flush=True)
     print("local rerank passages number:", len(passages), flush=True)
-    result_data = rerank_backend.get_rerank(query, passages)
 
     return json(result_data)
 
 
-@app.before_server_start
-async def init_local_doc_qa(app, loop):
-    rerank_backend = RerankOnnxBackend(use_cpu=False)
-    app.ctx.rerank_backend = rerank_backend
+@app.listener('before_server_start')
+async def setup_onnx_backend(app, loop):
+    app.ctx.onnx_backend = RerankAsyncBackend(model_path=LOCAL_RERANK_MODEL_PATH, use_cpu=True,
+                                              num_threads=LOCAL_RERANK_THREADS)
 
 
 if __name__ == "__main__":

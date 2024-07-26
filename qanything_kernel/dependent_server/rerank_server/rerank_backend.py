@@ -2,7 +2,7 @@ from transformers import AutoTokenizer
 from copy import deepcopy
 from typing import List
 from qanything_kernel.configs.model_config import LOCAL_RERANK_MAX_LENGTH, \
-    LOCAL_RERANK_BATCH, LOCAL_RERANK_PATH, LOCAL_RERANK_WORKERS
+    LOCAL_RERANK_BATCH, LOCAL_RERANK_PATH, LOCAL_RERANK_THREADS
 from qanything_kernel.utils.custom_log import debug_logger
 from qanything_kernel.utils.general_utils import get_time
 import concurrent.futures
@@ -18,7 +18,7 @@ class RerankBackend(ABC):
         self.batch_size = LOCAL_RERANK_BATCH
         self.max_length = LOCAL_RERANK_MAX_LENGTH
         self.return_tensors = None
-        self.workers = LOCAL_RERANK_WORKERS
+        self.workers = LOCAL_RERANK_THREADS
 
     @abstractmethod
     def inference(self, batch) -> List:
