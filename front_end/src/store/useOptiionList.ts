@@ -2,18 +2,20 @@
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-01 14:57:33
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-25 14:41:23
+ * @LastEditTime: 2024-07-26 10:41:05
  * @FilePath: front_end/src/store/useOptiionList.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 
 import urlResquest from '@/services/urlConfig';
-import { formatFileSize, resultControl, formatDate } from '@/utils/utils';
+import { formatDate, formatFileSize, resultControl } from '@/utils/utils';
 import { message } from 'ant-design-vue';
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
+
 const { currentId } = storeToRefs(useKnowledgeBase());
 
 type Status = 'green' | 'yellow' | 'red' | 'gray';
+
 interface IDataSource {
   id: number;
   bytes: number | string;
@@ -31,6 +33,28 @@ export const useOptiionList = defineStore(
     const setDataSource = (array: []) => {
       dataSource.value = array;
     };
+
+    const totalStatus = ref({
+      green: 0,
+      gray: 0,
+      yellow: 0,
+      red: 0,
+    });
+
+    // 知识库总数
+    const kbTotal = ref(0);
+    const setKbTotal = value => {
+      kbTotal.value = value;
+    };
+
+    // 知识库页号
+    const kbPageNum = ref(1);
+    const setKbPageNum = value => {
+      kbPageNum.value = value;
+    };
+
+    // 知识库一页几个
+    const kbPageSize = ref(10);
 
     const faqList = ref([]);
     const setFaqList = (array: []) => {
@@ -77,11 +101,30 @@ export const useOptiionList = defineStore(
         if (timer.value) {
           clearTimeout(timer.value);
         }
+        console.log(kbPageNum.value);
         const res: any = await resultControl(
-          await urlResquest.fileList({ kb_id: currentId.value })
+          // 接口的page_offset为页码，page_limit为一页几个
+          await urlResquest.fileList({
+            kb_id: currentId.value,
+            page_offset: kbPageNum.value,
+            page_limit: kbPageSize.value,
+          })
         );
 
+        // 初始化状态计数
+        Object.keys(totalStatus.value).forEach(key => {
+          totalStatus.value[key] = 0;
+        });
+
+        // 更新状态计数
+        Object.assign(totalStatus.value, res.status_count);
+        console.log('----', totalStatus.value);
+
         setDataSource([]);
+
+        // 设置分页参数
+        setKbTotal(res.total);
+
         res?.details.forEach((item: any, index) => {
           dataSource.value.push({
             id: 10000 + index,
@@ -132,7 +175,8 @@ export const useOptiionList = defineStore(
           setLoading(false);
           return;
         }
-        res?.details.forEach(async (item, i) => {
+        for (const item of res?.details) {
+          const i = res?.details.indexOf(item);
           faqList.value.push({
             id: 10000 + i,
             faqId: item?.file_id,
@@ -150,7 +194,7 @@ export const useOptiionList = defineStore(
                 // 在这里可以使用获取到的File对象数组
                 console.log('成功获取图片文件:', files);
                 // 进行赋值操作或其他处理
-                const imgs = item?.picUrlList.map((img, index) => {
+                faqList.value[i].picUrlList = item?.picUrlList.map((img, index) => {
                   return {
                     uid: -index,
                     name: 'image',
@@ -159,13 +203,12 @@ export const useOptiionList = defineStore(
                     originFileObj: files[index],
                   };
                 });
-                faqList.value[i].picUrlList = imgs;
               })
               .catch(errors => {
                 console.error('获取图片文件出错:', errors);
               });
           }
-        });
+        }
 
         const flag = res?.details.some(item => {
           return item.status === 'gray' || item.status === 'yellow';
@@ -229,6 +272,11 @@ export const useOptiionList = defineStore(
       setPageNum,
       loading,
       setLoading,
+      totalStatus,
+      kbTotal,
+      kbPageSize,
+      kbPageNum,
+      setKbPageNum,
     };
   },
   {

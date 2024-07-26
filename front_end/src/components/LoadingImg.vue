@@ -1,5 +1,5 @@
 <template>
-  <img ref="loadingRef" class="img" src="../assets/home/icon-loading.png" alt="loading" />
+  <img ref="loadingRef" class="img" src="@/assets/home/icon-loading.png" alt="loading" />
 </template>
 
 <script setup lang="ts">

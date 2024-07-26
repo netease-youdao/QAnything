@@ -60,11 +60,11 @@ type Percent = {
 };
 
 const greenColor = '#52c41a'; // 成功入库
-const yellowColor = '#ffff00'; // 解析中
+const yellowColor = '#FFEB3B'; // 解析中
 const redColor = '#f5222d'; // 入库失败、解析失败
 const grayColor = '#bfbfbf'; // 已上传，正在入库（排队中）
 
-const { dataSource } = storeToRefs(useOptiionList());
+const { dataSource, totalStatus, kbTotal } = storeToRefs(useOptiionList());
 
 const progress = getLanguage().progress;
 
@@ -95,20 +95,11 @@ const progressLength = ref<Percent>({
 // 计算百分比函数
 const computedPercent = () => {
   // 先计算每个状态的总数
-  progressPercentCount.value = dataSource.value.reduce(
-    (acc, item) => {
-      acc[item.status] = (acc[item.status] || 0) + 1;
-      return acc;
-    },
-    { green: 0, yellow: 0, red: 0, gray: 0 }
-  );
-
-  // 计算总项数
-  let totalNum = dataSource.value.length;
-
+  progressPercentCount.value = totalStatus.value;
+  console.log(progressPercentCount.value);
   // 计算每个状态的百分比，并保留两位小数
   for (const status in progressPercentCount.value) {
-    const percent = (progressPercentCount.value[status] / totalNum) * 100;
+    const percent = (progressPercentCount.value[status] / kbTotal.value) * 100;
     progressPercent.value[status as Status] = parseFloat(percent.toFixed(2));
   }
 
@@ -131,17 +122,17 @@ const computedPercent = () => {
   progressLength.value.red = progressPercent.value.red + progressLength.value.green;
   progressLength.value.yellow = progressPercent.value.yellow + progressLength.value.red;
   progressLength.value.gray = progressPercent.value.gray + progressLength.value.yellow;
-
-  console.log(progressPercent.value);
 };
 
-// onMounted(() => {
-//   computedPercent();
-// });
-
 watch(
-  () => dataSource.value,
-  () => computedPercent()
+  () => totalStatus,
+  () => {
+    computedPercent();
+  },
+  {
+    immediate: true,
+    deep: true,
+  }
 );
 </script>
 

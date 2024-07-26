@@ -74,6 +74,7 @@ export default {
     onlySearch: '仅检索模式',
     onlySearchDescription: '此模式不会返回说明文字',
     chatUpload: '上传文件',
+    chatUploadNoKbId: '请先创建对话',
     chatToPic: '将会话保存为图片',
     clearChat: '清空会话',
     modelProviderLabel: '模型提供方',

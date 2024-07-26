@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2023-12-26 14:49:41
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-25 15:22:38
+ * @LastEditTime: 2024-07-26 11:34:17
  * @FilePath: front_end/src/components/OptionList.vue
  * @Description: 
 -->
@@ -44,8 +44,11 @@
           v-if="navIndex === 0"
           :data-source="dataSource"
           :columns="columns"
-          :pagination="false"
+          :pagination="kbPaginationConfig"
           :locale="{ emptyText: home.emptyText }"
+          :hide-on-single-page="true"
+          :show-size-changer="false"
+          @change="kbOnChange"
         >
           <template #headerCell="{ column }">
             <template v-if="column.key === 'status'">
@@ -164,11 +167,27 @@ const { currentKbName, currentId } = storeToRefs(useKnowledgeBase());
 const { setModalVisible, setUrlModalVisible, setModalTitle } = useKnowledgeModal();
 import { useOptiionList } from '@/store/useOptiionList';
 
-const { getDetails, setEditQaSet, setEditModalVisible, getFaqList, setFaqType, setPageNum } =
-  useOptiionList();
-const { dataSource, faqList, timer, faqTimer, total, pageNum, loading } = storeToRefs(
-  useOptiionList()
-);
+const {
+  getDetails,
+  setEditQaSet,
+  setEditModalVisible,
+  getFaqList,
+  setFaqType,
+  setPageNum,
+  setKbPageNum,
+} = useOptiionList();
+const {
+  dataSource,
+  faqList,
+  timer,
+  faqTimer,
+  total,
+  pageNum,
+  loading,
+  kbTotal,
+  kbPageNum,
+  kbPageSize,
+} = storeToRefs(useOptiionList());
 
 import { getLanguage } from '@/language';
 import LoadingImg from '@/components/LoadingImg.vue';
@@ -277,6 +296,16 @@ const qaColumns = [
   },
 ];
 
+// 知识库的分页参数
+const kbPaginationConfig = computed(() => ({
+  current: kbPageNum.value, // 当前页码
+  pageSize: kbPageSize.value, // 每页条数
+  total: kbTotal.value, // 数据总数
+  showSizeChanger: false,
+  showTotal: total => `共 ${total} 条`,
+}));
+
+// faq的分页参数
 const paginationConfig = computed(() => ({
   current: pageNum.value, // 当前页码
   pageSize: 10, // 每页条数
@@ -364,8 +393,7 @@ const showEditQaSet = () => {
 };
 
 const parseStatus = status => {
-  console.log('status', status);
-  let str = '';
+  let str: string;
   switch (status) {
     case 'gray':
       str = common.inLine;
@@ -454,6 +482,12 @@ const onChange = pagination => {
   setPageNum(current);
 };
 
+const kbOnChange = pagination => {
+  console.log('dangqianpage', pagination);
+  setKbPageNum(pagination.current);
+  getDetails();
+};
+
 watch(
   currentId,
   () => {
@@ -483,7 +517,6 @@ onBeforeUnmount(() => {
   overflow: hidden;
   width: 100%;
   height: 100%;
-  background-color: $baseColor;
   font-family: PingFang SC;
 
   .content {

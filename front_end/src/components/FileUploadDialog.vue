@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-07 19:32:26
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-24 17:02:28
+ * @LastEditTime: 2024-07-25 18:01:59
  * @FilePath: front_end/src/components/FileUploadDialog.vue
  * @Description:
 -->
@@ -14,6 +14,7 @@
       centered
       width="480px"
       wrap-class-name="upload-file-modal"
+      :destroy-on-close="true"
     >
       <div class="file">
         <div class="box">
@@ -147,7 +148,7 @@ watch(
   () => {
     setKnowledgeName(currentKbName.value);
     showUploadList.value = !!uploadFileList.value.length;
-    if (!modalVisible.value && props.dialogType === 0) {
+    if (!modalVisible.value) {
       initUploadFileList();
     }
   }

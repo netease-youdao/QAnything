@@ -2,7 +2,7 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-22 16:10:06
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-25 16:22:09
+ * @LastEditTime: 2024-07-26 13:26:40
  * @FilePath: front_end/src/views/QuickStart/index.vue
  * @Description: 快速开始，每个对话对应一个知识库（自动创建），传文件自动放入该对话对应的知识库
  -->
@@ -169,7 +169,7 @@
       </div>
       <div class="question-box">
         <div class="question">
-          <div class="file-list-box">
+          <div v-if="uploadFileList.length" class="file-list-box">
             <FileBlock
               v-for="file of uploadFileList"
               :key="file.file.lastModified"
@@ -187,9 +187,11 @@
             />
             <div class="send-action">
               <a-popover>
-                <template #content>{{ common.chatUpload }}</template>
+                <template #content>
+                  {{ kbId ? common.chatUpload : common.chatUploadNoKbId }}
+                </template>
                 <span
-                  :class="['question-icon', showLoading ? 'isPreventClick' : '']"
+                  :class="['question-icon', showLoading || !kbId ? 'isPreventClick' : '']"
                   @click="uploadFile"
                 >
                   <SvgIcon name="chat-upload" />
@@ -392,9 +394,11 @@ const beforeSend = async title => {
   try {
     // 判断需不需要新建对话, 为null直接跳出
     if (chatId.value !== null) return;
+    // 需要新建对话
     if (title.length > 100) {
       title = title.substring(0, 100);
     }
+    // 创建知识库
     const res: any = await resultControl(await urlResquest.createKb({ kb_name: title }));
     kbId.value = res.kb_id;
     // 当前对话id为新建的historyId
@@ -412,6 +416,10 @@ const send = async () => {
   }
   if (showLoading.value) {
     message.warn('正在聊天中...请等待结束');
+    return;
+  }
+  if (!checkChatSetting()) {
+    message.error('模型设置错误，请先检查模型配置');
     return;
   }
   // if (!kbId.value) {
@@ -469,12 +477,16 @@ const send = async () => {
         //   .catch(() => {
         //     message.error('出错了,请稍后刷新重试。');
         //   }); // 将响应解析为 JSON
+        // if (res.code !== 200) {
+        //   message.error(data?.msg || '出错了,请稍后刷新重试。');
+        // }
         addAnswer(q);
       }
     },
     onmessage(msg: { data: string }) {
+      console.log('onmessage');
       const res: any = JSON.parse(msg.data);
-      if (res?.code == 200 && res?.response) {
+      if (res?.code == 200 && res?.response && res.msg === 'success') {
         // QA_List.value[QA_List.value.length - 1].answer += res.result.response;
         // typewriter.add(res?.response.replaceAll('\n', '<br/>'));
         typewriter.add(res?.response);
@@ -541,6 +553,7 @@ const content = ref('');
 const type = ref('');
 
 const uploadFile = () => {
+  if (!kbId.value) return;
   setModalVisible(true);
   setModalTitle(home.upload);
 };
@@ -600,6 +613,15 @@ const { showSettingModal } = storeToRefs(useChat());
 
 const handleModalChange = newVal => {
   showSettingModal.value = newVal;
+};
+
+// 模型配置是否正确
+const checkChatSetting = () => {
+  return !!(
+    chatSettingFormActive.value.apiKey &&
+    chatSettingFormActive.value.apiBase &&
+    chatSettingFormActive.value.apiModelName
+  );
 };
 
 // 检查信息来源的文件是否支持窗口化渲染

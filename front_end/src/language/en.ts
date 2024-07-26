@@ -77,6 +77,7 @@ export default {
     onlySearch: 'Search mode only',
     onlySearchDescription: 'This mode does not return description text',
     chatUpload: 'Upload Files',
+    chatUploadNoKbId: 'Please create a conversation first',
     chatToPic: 'Save chat as picture',
     clearChat: 'Clear chat',
     modelProviderLabel: 'Model provider',
