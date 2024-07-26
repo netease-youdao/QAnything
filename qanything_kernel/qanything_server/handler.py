@@ -376,6 +376,11 @@ async def list_docs(req: request):
         data.append({"file_id": file_info[0], "file_name": file_info[1], "status": file_info[2], "bytes": file_info[3],
                      "content_length": file_info[4], "timestamp": file_info[5], "file_location": file_info[6],
                      "file_url": file_info[7], "chunk_size": file_info[8], "msg": msg_map[file_info[2]]})
+        if file_info[1].endswith('.faq'):
+            faq_info = local_doc_qa.milvus_summary.get_faq(file_info[0])
+            user_id, kb_id, question, answer, nos_keys = faq_info
+            data[-1]['question'] = question
+            data[-1]['answer'] = answer
 
     # data根据timestamp排序，时间越新的越靠前
     data = sorted(data, key=lambda x: int(x['timestamp']), reverse=True)
