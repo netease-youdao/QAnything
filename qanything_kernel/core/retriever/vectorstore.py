@@ -2,7 +2,7 @@ from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from typing import Optional, List, Any, Iterable, Callable
 from qanything_kernel.utils.custom_log import debug_logger, insert_logger
-from qanything_kernel.configs.model_config import MILVUS_PORT, MILVUS_COLLECTION_NAME, CLOUD_PASSWORD, MILVUS_HOST_LOCAL
+from qanything_kernel.configs.model_config import MILVUS_PORT, MILVUS_COLLECTION_NAME, MILVUS_HOST_LOCAL
 from qanything_kernel.connector.embedding.embedding_for_online_client import YouDaoEmbeddings
 from langchain_community.vectorstores.milvus import Milvus
 import asyncio

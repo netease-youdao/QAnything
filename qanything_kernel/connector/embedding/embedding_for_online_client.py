@@ -28,8 +28,9 @@ class YouDaoEmbeddings(Embeddings):
         async with session.post(self.url, json=data) as response:
             return await response.json()
 
+    @get_time_async
     async def aembed_documents(self, texts: List[str]) -> List[List[float]]:
-        batch_size = 64  # 增大批处理大小
+        batch_size = 64  # 增大客户端批处理大小
         all_embeddings = []
         async with aiohttp.ClientSession() as session:
             tasks = [self._get_embedding_async(session, texts[i:i + batch_size])
@@ -67,3 +68,14 @@ class YouDaoEmbeddings(Embeddings):
     @property
     def embed_version(self):
         return self.model_version
+
+# 使用示例
+# async def main():
+#     embedder = YouDaoEmbeddings()
+#     query = "Your query here"
+#     texts = ["text1", "text2"]  # 示例文本
+#     embeddings = await embedder.aembed_documents(texts)
+#     return embeddings
+
+# if __name__ == '__main__':
+#     embeddings = asyncio.run(main())

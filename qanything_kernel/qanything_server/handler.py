@@ -1059,9 +1059,9 @@ async def get_rerank_results(req: request):
     if not doc_ids and not doc_strs:
         return sanic_json({"code": 2005, "msg": "fail, doc_ids is None and doc_strs is None"})
     if doc_ids:
-        rerank_results = local_doc_qa.get_rerank_results(query, doc_ids=doc_ids)
+        rerank_results = await local_doc_qa.get_rerank_results(query, doc_ids=doc_ids)
     else:
-        rerank_results = local_doc_qa.get_rerank_results(query, doc_strs=doc_strs)
+        rerank_results = await local_doc_qa.get_rerank_results(query, doc_strs=doc_strs)
 
     return sanic_json({"code": 200, "msg": "success", "rerank_results": format_source_documents(rerank_results)})
 

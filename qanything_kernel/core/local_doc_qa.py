@@ -217,7 +217,7 @@ class LocalDocQA:
             """
         return prompt
 
-    def get_rerank_results(self, query, doc_ids=None, doc_strs=None):
+    async def get_rerank_results(self, query, doc_ids=None, doc_strs=None):
         docs = []
         if doc_strs:
             docs = [Document(page_content=doc_str) for doc_str in doc_strs]
@@ -245,21 +245,21 @@ class LocalDocQA:
         if len(docs) > 1 and num_tokens_local(query, self.rerank_tokenizer) <= 300:
             try:
                 debug_logger.info(f"use rerank, rerank docs num: {len(docs)}")
-                docs = self.rerank.rerank_documents(query, docs)
+                docs = await self.rerank.arerank_documents(query, docs)
                 if len(docs) > 1:
                     docs = [doc for doc in docs if float(doc.metadata['score']) >= 0.28]
                 return docs
             except Exception as e:
                 debug_logger.error(f"query tokens: {num_tokens(query)}, rerank error: {e}")
-                embed1 = self.embeddings.embed_query(query)
+                embed1 = await self.embeddings.aembed_query(query)
                 for doc in docs:
-                    embed2 = self.embeddings.embed_query(doc.page_content)
+                    embed2 = self.embeddings.aembed_query(doc.page_content)
                     doc.metadata['score'] = cosine_similarity(embed1, embed2)
                 return docs
         else:
-            embed1 = self.embeddings.embed_query(query)
+            embed1 = await self.embeddings.aembed_query(query)
             for doc in docs:
-                embed2 = self.embeddings.embed_query(doc.page_content)
+                embed2 = await self.embeddings.aembed_query(doc.page_content)
                 doc.metadata['score'] = cosine_similarity(embed1, embed2)
             return docs
 
@@ -341,7 +341,7 @@ class LocalDocQA:
             try:
                 t1 = time.perf_counter()
                 debug_logger.info(f"use rerank, rerank docs num: {len(source_documents)}")
-                source_documents = self.rerank.rerank_documents(condense_question, source_documents)
+                source_documents = await self.rerank.arerank_documents(condense_question, source_documents)
                 t2 = time.perf_counter()
                 time_record['rerank'] = round(t2 - t1, 2)
                 # 过滤掉低分的文档
