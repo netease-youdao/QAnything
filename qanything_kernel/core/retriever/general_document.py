@@ -15,6 +15,7 @@ from qanything_kernel.utils.loader.csv_loader import CSVLoader
 from qanything_kernel.utils.loader.markdown_parser import convert_markdown_to_langchaindoc
 from qanything_kernel.utils.loader.pdf_data_parser import \
     convert_markdown_to_langchaindoc as convert_pdf_data_to_langchaindoc
+import docx2txt
 import base64
 import pandas as pd
 import os
@@ -395,8 +396,13 @@ class LocalFileForInsert:
             loader = TextLoader(txt_file_path, autodetect_encoding=True)
             docs = loader.load()
         elif self.file_path.lower().endswith(".docx"):
-            loader = UnstructuredWordDocumentLoader(self.file_path, strategy="fast")
-            docs = loader.load()
+            try:
+                loader = UnstructuredWordDocumentLoader(self.file_path, strategy="fast")
+                docs = loader.load()
+            except Exception as e:
+                insert_logger.warning('Error in Powerful Word parsing, use docx2txt instead.')
+                text = docx2txt.process(self.file_path)
+                docs = [Document(page_content=text)]
         elif self.file_path.lower().endswith(".xlsx"):
             docs = []
             excel_file = pd.ExcelFile(self.file_path)
