@@ -49,11 +49,26 @@ class KnowledgeBaseManager:
     def create_tables_(self):
         query = """
             CREATE TABLE IF NOT EXISTS User (
+                id BIGINT NOT NULL AUTO_INCREMENT,
+                pid BIGINT NOT　NULL,
                 user_id VARCHAR(255) PRIMARY KEY,
                 user_name VARCHAR(255),
-                password VARCHAR(255)
+                user_type VARCHAR(255),
+                password VARCHAR(255),
+                telephone VARCHAR(255),
+                user_state VARCHAR(255),
+                wechat_id VARCHAR(255),
+                role_ids VARCHAR(255)
             );
         """
+        self.execute_query_(query, (), commit=True)
+        #角色role
+        query = """
+                    CREATE TABLE IF NOT EXISTS Role (
+                        role_id VARCHAR(255) PRIMARY KEY,
+                        role_name VARCHAR(255),
+                    );
+                """
         self.execute_query_(query, (), commit=True)
 
         query = """
@@ -543,6 +558,26 @@ class KnowledgeBaseManager:
             total_deleted += res
         debug_logger.info(f"delete_faqs count: {total_deleted}")
 
+    def add_user(self, user_id, pid, user_type, user_name=None):
+        query = "INSERT INTO User (user_id, pid, user_type, user_name) VALUES (?, ?, ?, ?)"
+        r = self.execute_query_(query, (user_id,pid, user_type, user_name), commit=True, fetch=True)
+        return user_id, r['id']
+
+    def change_user(self, user_id, password, profile_pic, user_state, telephone, region, wechat_id, role_ids):
+        role_ids_str = ','.join(role_ids)
+        query = "update User set password=?, profile_pic=?, user_state=?, telephone=?, region=?, wechat_id=?, role_ids=? " \
+                " where user_id=?"
+        self.execute_query_(query, (password, profile_pic, user_state, telephone, region, wechat_id, role_ids_str, user_id), commit=True)
+
+    def get_user_list(self):
+        query = "SELECT id, pid, user_id, user_type from User "
+        return self.execute_query_(query, (), commit=True, fetch=True)
+
+    def get_user(self, user_id):
+        query = "SELECT telephone, password, user_state, wechat_id, role_ids, profile_pic from User " \
+                " where user_id=?"
+        return self.execute_query_(query, (user_id,), commit=True, fetch=True)
+
     def get_passwd(self, user_id):
         query = "SELECT password from User where user_id = ?"
         return self.execute_query_(query, (user_id,), fetch=True)
@@ -553,3 +588,30 @@ class KnowledgeBaseManager:
     def change_passwd(self, user_id, new_password):
         query = "UPDATE User set password = ? where user_id = ?"
         self.execute_query_(query, (user_id, new_password), commit=True)
+
+    def delete_user(self, user_id):
+        query = "DELETE from User where user_id = ?"
+        self.execute_query_(query, (user_id,), commit=True)
+
+    def get_role_list(self):
+        query = "SELECT role_id, role_name from Role "
+        return self.execute_query_(query, (), commit=True, fetch=True)
+
+    def add_role(self, role_id, role_name):
+        query = "INSERT INTO Role (role_id, role_name) VALUES (?, ?)"
+        self.execute_query_(query, (role_id, role_name), commit=True)
+
+    def check_role_exist(self, role_id):
+        query = "SELECT role_id FROM Role WHERE role_id = ?"
+        result = self.execute_query_(query, (role_id,), commit=True,fetch=True)
+        debug_logger.info("check_role_exist {}".format(result))
+        return result is not None and len(result) > 0
+
+    def change_role(self, role_id, role_name):
+        query = "UPDATE Role set role_name = ? where role_id = ?"
+        self.execute_query_(query, (role_name, role_id), commit=True)
+        debug_logger.info("change role {}".format(role_id))
+
+    def delete_role(self, role_id):
+        query = "DELETE from Role where role_id = ?"
+        self.execute_query_(query, (role_id,), commit=True)

@@ -260,6 +260,17 @@ app.add_route(rename_session, "/api/local_qa/rename_session", methods=['POST']) 
 app.add_route(delete_session, "/api/local_qa/delete_session", methods=['POST']) # tags=["删除会话"]
 app.add_route(list_sessions, "/api/local_qa/list_session", methods=['POST']) #tags=["会话列表"]
 
+#auth
+app.add_route(list_users, "/api/auth/list_users", methods=['POST']) # tags=["获取用户信息"]
+app.add_route(add_user, "/api/auth/add_user", methods=['POST']) # tags=["新增用户"]
+app.add_route(change_user, "/api/auth/change_user", methods=['POST']) # tags=["修改用户信息"]
+app.add_route(change_password, "/api/auth/change_password", methods=['POST']) # tags=["修改密码"]
+app.add_route(delete_user, "/api/auth/delete_user", methods=['POST']) # tags=["删除用户"]
+app.add_route(get_user, "/api/auth/user_profile", methods=['POST']) # tags=["获取用户信息"]
+app.add_route(list_roles, "/api/auth/list_users", methods=['POST']) # tags=["角色列表"]
+app.add_route(add_role, "/api/auth/add_role", methods=['POST']) # tags=["增加角色"]
+app.add_route(change_role, "/api/auth/change_role", methods=['POST']) # tags=["修改角色"]
+app.add_route(delete_role, "/api/auth/delete_role", methods=['POST']) # tags=["删除角色"]
 
 if __name__ == "__main__":
     # if args.use_openai_api:
