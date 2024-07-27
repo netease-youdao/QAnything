@@ -1,6 +1,8 @@
 from sanic_jwt import Responses, exceptions, protected
 from sanic import request
 from sanic.response import json as sanic_json
+import jwt
+import time
 from qanything_kernel.core.local_doc_qa import LocalDocQA
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from qanything_kernel.utils.general_utils import *
@@ -54,11 +56,16 @@ class QAResponses(Responses):
                             user=None,
                             access_token=None,
                             refresh_token=None):
+        r = jwt.decode(access_token, options={"verify_signature": False})
+        exp  = r['exp']
+        exp_time = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(exp))
         return {
             "code":200,
             "msg":"success",
             "data":{
-                "access_token":access_token
+                "access_token":access_token,
+                "refresh_token": refresh_token,
+                "exp": exp_time
             }
         }
 
@@ -77,11 +84,15 @@ class QAResponses(Responses):
                        refresh_token=None,
                        purported_token=None,
                        payload=None):
+        r = jwt.decode(refresh_token, options={"verify_signature": False})
+        exp = r['exp']
+        exp_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(exp))
         return {
             "code": 200,
             "msg":"success",
             "data":{
-                "refresh_token":access_token
+                "access_token": access_token,
+                "exp": exp_time
             }
         }
 
