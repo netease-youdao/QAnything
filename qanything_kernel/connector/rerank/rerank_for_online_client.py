@@ -3,7 +3,7 @@ import aiohttp
 from typing import List
 from qanything_kernel.utils.custom_log import debug_logger
 from qanything_kernel.utils.general_utils import get_time_async
-from qanything_kernel.configs.model_config import LOCAL_RERANK_SERVICE_URL
+from qanything_kernel.configs.model_config import LOCAL_RERANK_SERVICE_URL, LOCAL_RERANK_BATCH
 from langchain.schema import Document
 import traceback
 
@@ -35,7 +35,7 @@ class YouDaoRerank:
     @get_time_async
     async def arerank_documents(self, query: str, source_documents: List[Document]) -> List[Document]:
         """Embed search docs using async calls, maintaining the original order."""
-        batch_size = 64  # 增大客户端批处理大小
+        batch_size = LOCAL_RERANK_BATCH  # 增大客户端批处理大小
         all_scores = [None for _ in range(len(source_documents))]
         passages = [doc.page_content for doc in source_documents]
 
