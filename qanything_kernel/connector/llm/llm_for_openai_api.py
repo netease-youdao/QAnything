@@ -151,10 +151,10 @@ class OpenAILLM:
 
         if history is None or len(history) == 0:
             history = [[]]
-        debug_logger.info(f"history_len: {self.history_len}")
-        debug_logger.info(f"prompt: {prompt}")
+        # debug_logger.info(f"history_len: {self.history_len}")
+        # debug_logger.info(f"prompt: {prompt}")
         debug_logger.info(f"prompt tokens: {self.num_tokens_from_messages([{'content': prompt}])}")
-        debug_logger.info(f"streaming: {streaming}")
+        # debug_logger.info(f"streaming: {streaming}")
 
         messages = []
         for pair in history[:-1]:
@@ -162,7 +162,7 @@ class OpenAILLM:
             messages.append({"role": "user", "content": question})
             messages.append({"role": "assistant", "content": answer})
         messages.append({"role": "user", "content": prompt})
-        debug_logger.info(messages)
+        # debug_logger.info(messages)
         prompt_tokens = self.num_tokens_from_messages(messages)
                 
         response = self._call(messages, streaming)

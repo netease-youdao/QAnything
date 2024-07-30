@@ -31,7 +31,7 @@ class RerankAsyncBackend:
             self.batch_size = 16  # GPU批处理大小固定为16
 
         self.session = InferenceSession(model_path, sess_options, providers=providers)
-        self._tokenizer = AutoTokenizer.from_pretrained(LOCAL_RERANK_PATH)
+        self._tokenizer = AutoTokenizer.from_pretrained(LOCAL_RERANK_PATH, use_fast=True)
         self.spe_id = self._tokenizer.sep_token_id
 
         self.queue = asyncio.Queue()
@@ -41,11 +41,9 @@ class RerankAsyncBackend:
     def inference(self, batch):
         debug_logger.info(f"rerank shape: {batch['attention_mask'].shape}")
         # 准备输入数据
-        inputs = {self.session.get_inputs()[0].name: batch['input_ids'],
-                  self.session.get_inputs()[1].name: batch['attention_mask']}
-
-        if 'token_type_ids' in batch:
-            inputs[self.session.get_inputs()[2].name] = batch['token_type_ids']
+        inputs = {self.session.get_inputs()[i].name: batch[name]
+                  for i, name in enumerate(['input_ids', 'attention_mask', 'token_type_ids'])
+                  if name in batch}
 
         # 执行推理 输出为logits
         result = self.session.run(None, inputs)  # None表示获取所有输出
@@ -67,25 +65,19 @@ class RerankAsyncBackend:
             chunk1['token_type_ids'].extend(token_type_ids)
         return chunk1
 
-    def tokenize_preproc(self,
-                         query: str,
-                         passages: List[str],
-                         ):
-        query_inputs = self._tokenizer.encode_plus(query, truncation=False, padding=False)
+    def tokenize_preproc(self, query: str, passages: List[str]):
+        query_inputs = self._tokenizer(query, add_special_tokens=False, truncation=False, padding=False)
         max_passage_inputs_length = self.max_length - len(query_inputs['input_ids']) - 1
         assert max_passage_inputs_length > 10
         overlap_tokens = min(self.overlap_tokens, max_passage_inputs_length * 2 // 7)
 
-        # 组[query, passage]对
-        merge_inputs = []
-        merge_inputs_idxs = []
+        merge_inputs, merge_inputs_idxs = [], []
         for pid, passage in enumerate(passages):
-            passage_inputs = self._tokenizer.encode_plus(passage, truncation=False, padding=False,
-                                                         add_special_tokens=False)
+            passage_inputs = self._tokenizer(passage, add_special_tokens=False, truncation=False, padding=False)
             passage_inputs_length = len(passage_inputs['input_ids'])
 
             if passage_inputs_length <= max_passage_inputs_length:
-                if passage_inputs['attention_mask'] is None or len(passage_inputs['attention_mask']) == 0:
+                if not passage_inputs['attention_mask']:
                     continue
                 qp_merge_inputs = self.merge_inputs(query_inputs, passage_inputs)
                 merge_inputs.append(qp_merge_inputs)

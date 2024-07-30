@@ -26,7 +26,7 @@ class EmbeddingAsyncBackend:
             self.batch_size = 16  # GPU批处理大小固定为16
 
         self.session = InferenceSession(model_path, sess_options=sess_options, providers=providers)
-        self._tokenizer = AutoTokenizer.from_pretrained(LOCAL_EMBED_PATH)  # 请根据实际使用的模型调整
+        self._tokenizer = AutoTokenizer.from_pretrained(LOCAL_EMBED_PATH, use_fast=True)  # 请根据实际使用的模型调整
 
         self.queue = asyncio.Queue()
         asyncio.create_task(self.process_queue())
