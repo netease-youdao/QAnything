@@ -1,7 +1,7 @@
 services:
   elasticsearch:
     container_name: es-container-local
-    image: "docker.elastic.co/elasticsearch/elasticsearch:8.13.2"
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.2
     privileged: true
     # ports:
     #   - 9200:9200
@@ -99,7 +99,7 @@ services:
 
   qanything_local:
     container_name: qanything-container-local
-    image: qanything-privatization:v1.3
+    image: xixihahaliu01/qanything-linux:v1.5.1
     command: /bin/bash -c "cd /workspace/QAnything && bash scripts/entrypoint.sh"
     privileged: true
     shm_size: '8gb'
