@@ -151,26 +151,6 @@ class LocalFileForInsert:
         return txt_file_path
 
     @staticmethod
-    def pdf_process(docs: List[Document]):
-        # pdf解析后结果太碎片了，需要合并处理，优先合并doc.metadata['page_id']一致的doc，再判断page_content长度是否大于阈值，如果小于就合并两页
-        merged_docs = []
-        # 先合页
-        for i, doc in enumerate(docs):
-            if i == 0:
-                merged_docs.append(doc)
-            else:
-                if doc.metadata['source_info']['page_id'] == merged_docs[-1].metadata['source_info']['page_id']:
-                    merged_docs[-1].page_content += '\n' + doc.page_content
-                elif doc.metadata['source_info']['page_id'] > merged_docs[-1].metadata['source_info']['page_id']:
-                    merged_docs.append(doc)
-                else:  # 后续的重叠文本不需要了
-                    break
-
-        # TODO 后续需要更复杂的逻辑去优化
-        insert_logger.info(f"pdf_process merged_docs: {len(docs)}->{len(merged_docs)}")
-        return merged_docs
-
-    @staticmethod
     def table_process(doc):
         table_infos = get_table_infos(doc.page_content)
         title_lst = doc.metadata['title_lst']
@@ -459,13 +439,6 @@ class LocalFileForInsert:
                 new_doc.metadata['faq_dict'] = {}
             else:
                 new_doc.metadata['faq_dict'] = doc.metadata['faq_dict']
-            if 'source_info' not in doc.metadata:
-                new_doc.metadata['source_info'] = {'page_id': doc.metadata.get('page_id', 0),
-                                                   'pdf_nos_key': self.file_location, 'chunk_id': -1,
-                                                   'doc_id': self.file_id, 'bbox': doc.metadata.get('bbox', None)}
-            else:
-                new_doc.metadata['source_info'] = doc.metadata['source_info']
-                # insert_logger.info(f"pdf_source_info: {new_doc.metadata['source_info']}")
             new_docs.append(new_doc)
         if new_docs:
             insert_logger.info('langchain analysis content head: %s', new_docs[0].page_content[:100])

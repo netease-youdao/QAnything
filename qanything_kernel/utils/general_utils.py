@@ -48,7 +48,6 @@ def format_source_documents(ori_source_documents):
                        'file_url': doc.metadata.get('file_url', ''),
                        'score': str(doc.metadata['score']),
                        'embed_version': doc.metadata.get('embed_version', ''),
-                       'pdf_source_info': doc.metadata.get('source_info', {}),
                        'nos_keys': doc.metadata.get('nos_keys', ''),
                        'doc_id': doc.metadata.get('doc_id', ''),
                        'retrieval_source': doc.metadata.get('retrieval_source', ''),
