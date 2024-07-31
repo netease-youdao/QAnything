@@ -359,9 +359,9 @@ async def list_docs(req: request):
     else:
         file_infos = local_doc_qa.milvus_summary.get_files(user_id, kb_id, file_id)
     status_count = {}
-    msg_map = {'gray': "已上传到服务器，进入上传等待队列",
-               'red': "上传出错，请删除后重试或联系工作人员",
-               'yellow': "已进入上传队列，请耐心等待", 'green': "上传成功"}
+    # msg_map = {'gray': "已上传到服务器，进入上传等待队列",
+    #            'red': "上传出错，请删除后重试或联系工作人员",
+    #            'yellow': "已进入上传队列，请耐心等待", 'green': "上传成功"}
     for file_info in file_infos:
         status = file_info[2]
         if status not in status_count:
@@ -370,7 +370,7 @@ async def list_docs(req: request):
             status_count[status] += 1
         data.append({"file_id": file_info[0], "file_name": file_info[1], "status": file_info[2], "bytes": file_info[3],
                      "content_length": file_info[4], "timestamp": file_info[5], "file_location": file_info[6],
-                     "file_url": file_info[7], "chunk_size": file_info[8], "msg": msg_map[file_info[2]]})
+                     "file_url": file_info[7], "chunk_size": file_info[8], "msg": file_infos[9]})
         if file_info[1].endswith('.faq'):
             faq_info = local_doc_qa.milvus_summary.get_faq(file_info[0])
             user_id, kb_id, question, answer, nos_keys = faq_info

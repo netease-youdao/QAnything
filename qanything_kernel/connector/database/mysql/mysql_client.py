@@ -485,7 +485,7 @@ class KnowledgeBaseManager:
 
         base_query = """
             SELECT file_id, file_name, status, file_size, content_length, timestamp,
-                   file_location, file_url, chunk_size
+                   file_location, file_url, chunk_size, msg
             FROM File
             WHERE kb_id = %s AND deleted = 0
         """
