@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-07 19:32:26
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-25 18:01:59
+ * @LastEditTime: 2024-07-31 19:38:45
  * @FilePath: front_end/src/components/FileUploadDialog.vue
  * @Description:
 -->
@@ -148,7 +148,7 @@ watch(
   () => {
     setKnowledgeName(currentKbName.value);
     showUploadList.value = !!uploadFileList.value.length;
-    if (!modalVisible.value) {
+    if (!modalVisible.value && props.dialogType === 0) {
       initUploadFileList();
     }
   }
@@ -248,9 +248,10 @@ const fileChange = e => {
 const uplolad = async () => {
   if (props.dialogType === 0) {
     showUploadList.value = true;
-  } else if (props.dialogType === 1) {
-    handleCancel();
   }
+  // else if (props.dialogType === 1) {
+  //   handleCancel();
+  // }
   const list = [];
   uploadFileList.value.forEach((file: IFileListItem) => {
     if (file.status == 'loading') {
@@ -264,7 +265,7 @@ const uplolad = async () => {
   formData.append('kb_id', currentId.value);
   formData.append('user_id', userId);
   // 上传模式，soft：文件名重复的文件不再上传，strong：文件名重复的文件强制上传
-  formData.append('mode', 'strong');
+  formData.append('mode', 'soft');
 
   fetch(apiBase + '/local_doc_qa/upload_files', {
     method: 'POST',
@@ -278,8 +279,14 @@ const uplolad = async () => {
       }
     })
     .then(data => {
+      console.log('uploadList', uploadFileList.value);
       // 在此处对接口返回的数据进行处理
       if (data.code === 200) {
+        if (data.data.length === 0) {
+          message.warn(data.msg || '出错了');
+          handleCancel();
+          return;
+        }
         list.forEach((item, index) => {
           let status = data.data[index].status;
           if (status == 'green' || status == 'gray') {
@@ -327,6 +334,7 @@ onBeforeUnmount(() => {
 .file {
   margin-top: 16px;
   display: flex;
+
   .box {
     flex: 1;
     height: 248px;
@@ -389,6 +397,7 @@ onBeforeUnmount(() => {
     height: 100%;
     z-index: 100;
   }
+
   .before-upload {
     width: 100%;
     position: absolute;
@@ -396,6 +405,7 @@ onBeforeUnmount(() => {
     top: 50%;
     transform: translate(-50%, -50%);
   }
+
   .upload-text-box {
     display: flex;
     align-items: center;
@@ -449,6 +459,7 @@ onBeforeUnmount(() => {
       &:first-child {
         margin-top: 20px;
       }
+
       svg {
         width: 16px;
         height: 16px;
@@ -463,6 +474,7 @@ onBeforeUnmount(() => {
         text-overflow: ellipsis;
         white-space: nowrap;
       }
+
       .status-box {
         display: flex;
         width: auto;
@@ -476,6 +488,7 @@ onBeforeUnmount(() => {
           margin-right: 4px;
           animation: 2s linear infinite loading;
         }
+
         .status {
           width: 60px;
           font-size: 14px;

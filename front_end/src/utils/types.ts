@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2024-01-09 15:28:56
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-24 17:52:38
+ * @LastEditTime: 2024-07-31 15:19:37
  * @FilePath: front_end/src/utils/types.ts
  * @Description:
  */
@@ -38,6 +38,42 @@ export interface IChatItem {
   source?: Array<IDataSourceItem>;
 }
 
+// 历史记录
+export interface IHistoryList {
+  historyId: number;
+  title: string;
+  kbIds?: string[];
+}
+
+// 对话的耗时信息
+interface ITimeInfo {
+  preprocess: number;
+  condense_q_chain: number;
+  retriever_search: number;
+  web_search: number;
+  rerank: number;
+  reprocess: number;
+  llm_first_return: number;
+  first_return: number; // 前7个加起来。外层显示
+  llm_completed: number;
+  chat_completed: number; // 都加起来。外层显示
+}
+
+// 对话的耗token信息
+interface ITokenInfo {
+  total_tokens: number; // 外层显示
+  prompt_tokens: number; // 外层显示
+  completion_tokens: number; // 外层显示
+  tokens_per_second: number;
+}
+
+// 对话的信息：耗token、耗时、当时的模型信息等
+export interface IChatItemInfo {
+  timeInfo: ITimeInfo; // 耗时相关
+  tokenInfo: ITokenInfo; // token相关
+  settingInfo: IChatSetting; // 模型配置相关
+}
+
 //url解析状态（前端展示）
 export type inputStatus = 'default' | 'inputing' | 'parsing' | 'success' | 'defeat' | 'hover';
 
@@ -70,6 +106,7 @@ type ICapabilities = {
   /* 是否仅检索 */
   onlySearch: boolean;
 };
+
 export interface IChatSetting {
   /* 模型类型，string为自定义名称，不用传 */
   modelType: 'openAI' | 'ollama' | '自定义模型配置' | string;

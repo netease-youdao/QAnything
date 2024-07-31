@@ -2,7 +2,7 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-24 14:43:45
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-25 18:06:17
+ * @LastEditTime: 2024-07-31 13:27:58
  * @FilePath: front_end/src/views/QuickStart/children/FileBlock.vue
  * @Description: 这是默认设置,可以在设置》工具》File Description中进行配置
  -->
@@ -38,7 +38,6 @@ interface IProps {
 const { fileData } = defineProps<IProps>();
 
 const isLoading = computed(() => {
-  console.log(fileStatus);
   return fileStatus.value !== 'green';
 });
 

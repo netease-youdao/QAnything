@@ -1,14 +1,15 @@
 // import { resultControl } from '@/utils/utils';
 // import urlResquest from '@/services/urlConfig';
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
+import { IChatItem, IChatItemInfo } from '@/utils/types';
 
-const { currentId } = storeToRefs(useKnowledgeBase());
+const { currentId, knowledgeBaseList } = storeToRefs(useKnowledgeBase());
 
 /**
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-22 18:18:48
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-26 19:39:57
+ * @LastEditTime: 2024-07-31 15:39:39
  * @FilePath: front_end/src/store/useQuickStart.ts
  * @Description:
  */
@@ -21,7 +22,8 @@ export interface IHistoryList {
 interface IChatList {
   historyId: number;
   // list: IChatItem[];
-  list: any[]; // 里面有一个IFileListItem
+  list: IChatItem[];
+  info: IChatItemInfo[];
 }
 
 export const useQuickStart = defineStore(
@@ -121,6 +123,16 @@ export const useQuickStart = defineStore(
       () => kbId.value,
       () => {
         currentId.value = kbId.value;
+      }
+    );
+
+    watch(
+      () => knowledgeBaseList.value,
+      () => {
+        historyList.value = historyList.value.filter(item => {
+          // 这里使用 some 方法检查 knowledgeBaseList 中是否存在当前 item 的 kbId
+          return knowledgeBaseList.value.some(i => i.kb_id === item.kbId);
+        });
       }
     );
 

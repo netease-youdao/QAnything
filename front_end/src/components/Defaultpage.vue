@@ -97,6 +97,7 @@ const update = async () => {
   width: 100%;
   height: 100%;
   border-radius: 12px 0 0 0;
+  background: #f3f6fd;
 }
 
 .box {

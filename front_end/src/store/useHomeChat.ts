@@ -1,18 +1,13 @@
+import { IHistoryList } from '@/utils/types';
+
 /**
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-11 09:39:35
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-23 17:12:10
+ * @LastEditTime: 2024-07-31 15:10:33
  * @FilePath: front_end/src/store/useHomeChat.ts
  * @Description: 修改配置记得清除localStorage缓存
  */
-// import { IChatItem } from '@/utils/types';
-
-interface IHistoryList {
-  historyId: number;
-  title: string;
-  kbIds?: string[];
-}
 
 interface IChatList {
   historyId: number;

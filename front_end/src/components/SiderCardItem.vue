@@ -2,7 +2,7 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-23 11:10:08
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-26 19:41:41
+ * @LastEditTime: 2024-07-31 14:03:20
  * @FilePath: front_end/src/components/SiderCardItem.vue
  * @Description: QuickStart -> SiderCard的每一项，传入HistoryList和点击函数
  -->
@@ -43,8 +43,7 @@ import { getLanguage } from '@/language';
 const { setShowDeleteModal, setCurrentId, setCurrentKbName, setDefault } = useKnowledgeBase();
 const { showDeleteModal } = storeToRefs(useKnowledgeBase());
 const common = getLanguage().common;
-const { kbId, showLoading } = storeToRefs(useQuickStart());
-const { clearChatList } = useQuickStart();
+const { kbId, showLoading, deleteChatId } = storeToRefs(useQuickStart());
 
 interface IHistoryListOptional extends Partial<IHistoryList> {
   title: string;
@@ -68,7 +67,7 @@ const manage = (item: IKnowledgeItem) => {
 
 // 删除知识库
 const deleteKnowledgeBase = (item: IKnowledgeItem) => {
-  clearChatList(cardData.value.historyId);
+  deleteChatId.value = cardData.value.historyId;
   setShowDeleteModal(!showDeleteModal.value);
   setCurrentId(item.kb_id);
   console.log(`删除${item.kb_id}`);

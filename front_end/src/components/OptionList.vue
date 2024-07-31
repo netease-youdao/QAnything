@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2023-12-26 14:49:41
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-26 18:04:59
+ * @LastEditTime: 2024-07-31 21:21:18
  * @FilePath: front_end/src/components/OptionList.vue
  * @Description: 
 -->
@@ -34,6 +34,9 @@
           <UploadProgress :data-source="dataSource" />
         </div>
         <div class="handle-btn">
+          <a-button v-if="navIndex === 0" danger class="clear-upload" @click="clearUpload">
+            {{ home.clearAllFile }}
+          </a-button>
           <div v-if="navIndex === 0" class="upload" @click="showFileUpload">{{ home.upload }}</div>
           <div v-if="navIndex === 0" class="add-link" @click="showUrlUpload">{{ home.addUrl }}</div>
           <div v-if="navIndex === 1" class="upload" @click="showEditQaSet">{{ home.inputQa }}</div>
@@ -99,15 +102,30 @@
             <template v-else-if="column.key === 'options'">
               <a-popconfirm
                 overlay-class-name="del-pop"
+                :disabled="record.status == 'gray' || record.status === 'yellow'"
                 placement="topRight"
                 :title="common.deleteTitle"
                 :ok-text="common.confirm"
                 :cancel-text="common.cancel"
                 @confirm="confirm"
               >
-                <span class="delete-item" @click="deleteItem(record)">{{ common.delete }}</span>
+                <a-button
+                  type="text"
+                  :disabled="record.status == 'gray' || record.status === 'yellow'"
+                  class="delete-item"
+                  @click="deleteItem(record)"
+                >
+                  {{ common.delete }}
+                </a-button>
               </a-popconfirm>
-              <span class="view-item" @click="viewItem(record)">{{ common.view }}</span>
+              <a-button
+                type="text"
+                class="view-item"
+                :disabled="record.status == 'gray' || record.status === 'yellow'"
+                @click="viewItem(record)"
+              >
+                {{ common.view }}
+              </a-button>
             </template>
           </template>
         </a-table>
@@ -153,7 +171,8 @@
       </div>
     </div>
   </div>
-  <ChunkViewDialog />
+  <ChunkViewDialog :kb-id="currentId" :doc-id="docId" />
+  <FileUploadDialog :dialog-type="0" />
 </template>
 <script lang="ts" setup>
 import urlResquest from '@/services/urlConfig';
@@ -163,16 +182,17 @@ import { useChunkView } from '@/store/useChunkView';
 import { useOptiionList } from '@/store/useOptiionList';
 import { pageStatus } from '@/utils/enum';
 import { resultControl } from '@/utils/utils';
-import { message } from 'ant-design-vue';
+import { message, Modal } from 'ant-design-vue';
 import { getLanguage } from '@/language';
 import LoadingImg from '@/components/LoadingImg.vue';
 import UploadProgress from '@/components/UploadProgress.vue';
 import ChunkViewDialog from '@/components/ChunkViewDialog.vue';
+import FileUploadDialog from '@/components/FileUploadDialog.vue';
 
 const { setDefault } = useKnowledgeBase();
 const { currentKbName, currentId } = storeToRefs(useKnowledgeBase());
 const { setModalVisible, setUrlModalVisible, setModalTitle } = useKnowledgeModal();
-const { showChunkModel, chunkKbId, chunkFileId } = storeToRefs(useChunkView());
+const { showChunkModel } = storeToRefs(useChunkView());
 
 const {
   getDetails,
@@ -324,9 +344,10 @@ const deleteItem = item => {
 };
 
 // 预览chunks
+const docId = ref('');
 const viewItem = async item => {
-  chunkKbId.value = currentId.value;
-  chunkFileId.value = item.fileId;
+  console.log('item', item);
+  docId.value = item.fileId;
   // 打开弹窗
   showChunkModel.value = true;
 };
@@ -388,6 +409,27 @@ const showEditQaSet = () => {
   setFaqType('upload');
   setEditModalVisible(true);
   console.log('showEditQaSet');
+};
+
+const clearUpload = () => {
+  Modal.confirm({
+    title: home.clearAllFile,
+    content: h('p', home.clearAllFileConfirm),
+    centered: true,
+    maskClosable: true,
+    okText: common.confirm,
+    okType: 'danger',
+    // cancelText: common.cancel,
+    async onOk() {
+      try {
+        await resultControl(await urlResquest.clearUpload({ status: 'gray', kb_ids: [] }));
+        message.success('操作成功');
+        getDetails();
+      } catch (e) {
+        message.error(e.msg || '操作失败');
+      }
+    },
+  });
 };
 
 const parseStatus = status => {
@@ -475,13 +517,11 @@ const navClick = value => {
 };
 
 const onChange = pagination => {
-  console.log('onChange', pagination, paginationConfig);
   const { current } = pagination;
   setPageNum(current);
 };
 
 const kbOnChange = pagination => {
-  console.log('dangqianpage', pagination);
   setKbPageNum(pagination.current);
   getDetails();
 };
@@ -489,7 +529,6 @@ const kbOnChange = pagination => {
 watch(
   currentId,
   () => {
-    console.log('current id changed');
     navIndex.value = 0;
     setPageNum(1);
     getDetails();
@@ -499,14 +538,9 @@ watch(
   }
 );
 
-onMounted(() => {
-  console.log(dataSource.value);
-});
-
 onBeforeUnmount(() => {
   clearTimeout(timer.value);
   clearTimeout(faqTimer.value);
-  console.log('销毁请求');
 });
 </script>
 
@@ -614,6 +648,12 @@ onBeforeUnmount(() => {
   .handle-btn {
     display: flex;
 
+    .clear-upload {
+      //width: 100px;
+      height: 40px;
+      margin-right: 10px;
+    }
+
     .upload {
       cursor: pointer;
       height: 40px;
@@ -656,19 +696,22 @@ onBeforeUnmount(() => {
   }
 
   .delete-item {
-    padding: 0;
+    padding: 2px;
     font-size: 14px;
     font-weight: normal;
     line-height: 22px;
     margin-right: 5px;
     /* 错误颜色 */
     color: #ff524c;
-    cursor: pointer;
   }
 
   .view-item {
+    padding: 2px;
+    font-size: 14px;
+    font-weight: normal;
+    line-height: 22px;
+    margin-right: 5px;
     color: #4d71ff;
-    cursor: pointer;
   }
 
   .edit-item {

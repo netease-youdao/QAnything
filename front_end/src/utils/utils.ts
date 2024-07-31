@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2024-01-09 15:28:56
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-24 16:50:29
+ * @LastEditTime: 2024-07-31 18:59:28
  * @FilePath: front_end/src/utils/utils.ts
  * @Description:
  */
@@ -101,7 +101,6 @@ export const getStatus = (item: IFileListItem) => {
 
 //对接口的返回值作统一处理
 export const resultControl = async res => {
-  console.log('zhijiefuzhi');
   return new Promise((resolve, reject) => {
     if (res.errorCode === '0' || res.code === 200) {
       resolve(res.result || res.data || res);

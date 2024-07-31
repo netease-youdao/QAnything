@@ -94,6 +94,8 @@ export default {
     capabilitiesLabel: 'Model capabilities',
     saveModel: 'Save current custom model',
     plsInput: 'Please Input',
+    save: 'Save',
+    edit: 'Edit',
   },
   home: {
     newConversation: 'New Conversation',
@@ -148,6 +150,9 @@ export default {
     budgetaryExpenses: 'budgetary expenses',
     selectBudget: 'Please select a budget fee',
     inputCannotNull: 'The input cannot be empty',
+    clearAllFile: 'Cancel all file uploads',
+    clearAllFileConfirm:
+      'Are you sure you want to cancel all file uploads (all knowledge base uploads are cancelled)',
   },
   bots: {
     myBots: 'My Bots',

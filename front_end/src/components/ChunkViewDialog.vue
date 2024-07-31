@@ -2,7 +2,7 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-26 14:08:46
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-26 18:50:33
+ * @LastEditTime: 2024-07-31 19:47:35
  * @FilePath: front_end/src/components/ChunkViewDialog.vue
  * @Description: 上传文件解析结果切片的弹窗
  -->
@@ -16,10 +16,16 @@
       width="40vw"
       wrap-class-name="chunk-modal"
       :footer="null"
-      :destroy-on-close="true"
     >
       <div class="chunk-table">
-        <a-table :columns="columns" :data-source="chunkData" bordered :scroll="{ y: '60vh' }">
+        <a-table
+          :columns="columns"
+          :data-source="chunkData"
+          bordered
+          :scroll="{ y: '60vh' }"
+          :pagination="paginationConfig"
+          @change="changePage"
+        >
           <template #bodyCell="{ column, text, record }">
             <template v-if="['content'].includes(column.dataIndex)">
               <div>
@@ -36,11 +42,17 @@
             </template>
             <template v-else-if="column.dataIndex === 'operation'">
               <div class="editable-row-operations">
-                <span v-if="editableData[record.key]">
-                  <a-typography-link @click="save(record.key)">Save</a-typography-link>
-                  <a @click="cancel(record.key)">Cancel</a>
-                </span>
-                <a-button v-else type="link" @click="edit(record.key)"> Edit</a-button>
+                <div v-if="editableData[record.key]">
+                  <a-typography-link v-if="editableData[record.key]" @click="save(record.key)">
+                    {{ common.save }}
+                  </a-typography-link>
+                  <a-typography-text @click="cancel(record.key)">
+                    {{ common.cancel }}
+                  </a-typography-text>
+                </div>
+                <a-typography-link v-else @click="edit(record.key)">
+                  {{ common.edit }}
+                </a-typography-link>
               </div>
             </template>
           </template>
@@ -62,8 +74,16 @@ import { resultControl } from '@/utils/utils';
 import urlResquest from '@/services/urlConfig';
 import { message } from 'ant-design-vue';
 
-const { showChunkModel, chunkKbId, chunkFileId } = storeToRefs(useChunkView());
+const { showChunkModel } = storeToRefs(useChunkView());
 const { common } = getLanguage();
+
+interface IProps {
+  kbId: string;
+  docId: string;
+}
+
+const props = defineProps<IProps>();
+const { kbId, docId } = toRefs(props);
 
 const columns = [
   {
@@ -83,7 +103,7 @@ const columns = [
 ];
 
 interface IChunkData {
-  // 切片唯一标识符
+  // 切片唯一标识符 -> chunk_id
   key: string;
   // 显示的id
   id: number;
@@ -93,24 +113,44 @@ interface IChunkData {
 
 // 分页参数
 const paginationConfig = ref({
-  current: 1, // 当前页码
+  pageNum: 1, // 当前页码
   pageSize: 3, // 每页条数
   total: 0, // 数据总数
   showSizeChanger: false,
   showTotal: total => `共 ${total} 条`,
 });
 
+// 分页点击
+const changePage = pagination => {
+  paginationConfig.value.pageNum = pagination.current;
+  getChunks(kbId.value, docId.value);
+};
+
 // 数据
 const chunkData = ref<IChunkData[]>([]);
 const editableData: UnwrapRef<Record<string, IChunkData>> = reactive({});
+const chunkId = ref(1);
 
 const edit = (key: string) => {
   editableData[key] = chunkData.value.filter(item => key === item.key)[0];
 };
-const save = (key: string) => {
-  Object.assign(chunkData.value.filter(item => key === item.key)[0], editableData[key]);
-  delete editableData[key];
+
+const save = async (key: string) => {
+  try {
+    await resultControl(
+      await urlResquest.updateDocCompleted({
+        doc_id: key,
+        update_content: editableData[key].content,
+      })
+    );
+    message.success('修改成功');
+    Object.assign(chunkData.value.filter(item => key === item.key)[0], editableData[key]);
+    delete editableData[key];
+  } catch (e) {
+    message.error(e.msg || '更新文档解析结果失败');
+  }
 };
+
 const cancel = (key: string) => {
   delete editableData[key];
 };
@@ -120,17 +160,20 @@ const handleCancel = () => {
 };
 
 // 获取切片
-const getChunks = async (kbId: string, fileId: string) => {
+const getChunks = async (kbId: string, docId: string) => {
   try {
-    const res = await resultControl(
-      await urlResquest.getDocCompleted({ kb_id: kbId, file_id: fileId })
-    );
-    console.log(paginationConfig.value);
-    console.log(res);
-    res.chunks!.forEach((item: any) => {
+    const res = (await resultControl(
+      await urlResquest.getDocCompleted({
+        kb_id: kbId,
+        file_id: docId,
+        page_offset: paginationConfig.value.pageNum,
+        page_limit: paginationConfig.value.pageSize,
+      })
+    )) as any;
+    res.chunks.forEach((item: any) => {
       chunkData.value.push({
-        id: 0,
-        key: '',
+        id: chunkId.value++,
+        key: item.chunk_id,
         content: item.page_content,
       });
     });
@@ -142,7 +185,12 @@ const getChunks = async (kbId: string, fileId: string) => {
 watch(
   () => showChunkModel.value,
   () => {
-    getChunks(chunkKbId.value, chunkFileId.value);
+    if (showChunkModel.value) {
+      getChunks(kbId.value, docId.value);
+    } else {
+      chunkData.value = [];
+      chunkId.value = 1;
+    }
   }
 );
 </script>
@@ -163,9 +211,8 @@ watch(
 }
 
 .editable-row-operations {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  width: 100%;
+  height: 100%;
 
   a {
     margin-right: 8px;

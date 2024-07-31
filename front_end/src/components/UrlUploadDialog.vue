@@ -1,9 +1,9 @@
 <!--
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-07 19:32:26
- * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2024-01-05 18:50:41
- * @FilePath: /qanything-open-source/src/components/UrlUploadDialog.vue
+ * @LastEditors: Ianarua 306781523@qq.com
+ * @LastEditTime: 2024-07-31 13:22:17
+ * @FilePath: front_end/src/components/UrlUploadDialog.vue
  * @Description: 
 -->
 <template>

@@ -2,7 +2,7 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-22 16:10:06
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-26 18:47:10
+ * @LastEditTime: 2024-07-31 15:31:53
  * @FilePath: front_end/src/views/QuickStart/index.vue
  * @Description: 快速开始，每个对话对应一个知识库（自动创建），传文件自动放入该对话对应的知识库
  -->
@@ -232,6 +232,7 @@
   </div>
   <ChatSettingDialog />
   <DefaultModal :content="content" :confirm-loading="confirmLoading" @ok="confirm" />
+  <FileUploadDialog :dialog-type="1" />
 </template>
 
 <script setup lang="ts">
@@ -260,6 +261,7 @@ import { useKnowledgeModal } from '@/store/useKnowledgeModal';
 import FileBlock from '@/views/QuickStart/children/FileBlock.vue';
 import { useUploadFiles } from '@/store/useUploadFiles';
 import { useChatSetting } from '@/store/useChatSetting';
+import FileUploadDialog from '@/components/FileUploadDialog.vue';
 
 const { common, home } = getLanguage();
 
@@ -423,6 +425,8 @@ const send = async () => {
     message.error('模型设置错误，请先检查模型配置');
     return;
   }
+  // 清除fileList
+  initUploadFileList();
   // if (!kbId.value) {
   //   return message.warning(common.chooseError);
   // }
@@ -460,9 +464,8 @@ const send = async () => {
       temperature: chatSettingFormActive.value.temperature,
     }),
     signal: ctrl.signal,
-    onopen(e: any) {
-      // 清除fileList
-      initUploadFileList();
+    async onopen(e: any) {
+      console.log('eee', e);
       if (e.ok && e.headers.get('content-type') === 'text/event-stream') {
         // addAnswer(question.value);
         // question.value = '';
@@ -485,7 +488,7 @@ const send = async () => {
       }
     },
     onmessage(msg: { data: string }) {
-      console.log('onmessage');
+      console.log('onmessage', msg);
       const res: any = JSON.parse(msg.data);
       if (res?.code == 200 && res?.response && res.msg === 'success') {
         // QA_List.value[QA_List.value.length - 1].answer += res.result.response;
@@ -499,6 +502,7 @@ const send = async () => {
       }
     },
     onclose() {
+      console.log('onclose');
       typewriter.done();
       ctrl.abort();
       showLoading.value = false;
@@ -510,6 +514,7 @@ const send = async () => {
       });
     },
     onerror(err: any) {
+      console.log('onerror', err);
       typewriter?.done();
       ctrl?.abort();
       showLoading.value = false;

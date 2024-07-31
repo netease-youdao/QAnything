@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-01 14:57:33
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-26 19:22:57
+ * @LastEditTime: 2024-07-31 15:40:55
  * @FilePath: front_end/src/components/Sider.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -50,7 +50,6 @@
     </div>
     <ChatSourceDialog />
     <DeleteModal />
-    <FileUploadDialog :dialog-type="navIndex === 2 ? 1 : 0" />
     <UrlUploadDialog />
     <EditQaSetDialog />
   </div>
@@ -60,7 +59,7 @@
 import AddInput from '@/components/AddInput.vue';
 import SiderCard from '@/components/SiderCard.vue';
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
-import FileUploadDialog from '@/components/FileUploadDialog.vue';
+// import FileUploadDialog from '@/components/FileUploadDialog.vue';
 import UrlUploadDialog from '@/components/UrlUploadDialog.vue';
 import DeleteModal from '@/components/DeleteModal.vue';
 import EditQaSetDialog from '@/components/EditQaSetDialog.vue';
@@ -119,7 +118,6 @@ function addAnswer(question: string, answer: string, picList, qaId, source) {
 
 // 0新建对话, 1选中对话
 const quickClickHandle = (type: 0 | 1, cardData?: IHistoryList) => {
-  console.log(showLoading.value);
   if (showLoading.value) return;
   if (type === 0) {
     if (chatId.value === null) {
@@ -130,6 +128,7 @@ const quickClickHandle = (type: 0 | 1, cardData?: IHistoryList) => {
     QA_List.value = [];
     kbId.value = '';
   } else if (type === 1) {
+    if (chatId.value === cardData.historyId) return;
     chatId.value = cardData.historyId;
     QA_List.value = [];
     kbId.value = cardData.kbId;

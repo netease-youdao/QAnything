@@ -91,6 +91,8 @@ export default {
     capabilitiesLabel: '模型能力',
     saveModel: '保存当前自定义模型',
     plsInput: '请输入',
+    save: '保存',
+    edit: '编辑',
   },
   home: {
     newConversation: '新建对话',
@@ -141,6 +143,8 @@ export default {
     budgetaryExpenses: '预算费用',
     selectBudget: '请选择预算费用',
     inputCannotNull: '输入不能为空',
+    clearAllFile: '取消所有文件上传',
+    clearAllFileConfirm: '确定取消所有文件的上传吗（所有知识库的上传都取消）',
   },
   bots: {
     myBots: '我的Bots',

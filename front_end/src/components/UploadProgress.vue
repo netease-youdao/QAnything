@@ -175,6 +175,10 @@ watch(
   :deep(.ant-progress-text) {
     display: none;
   }
+
+  :deep(.ant-progress .ant-progress-inner) {
+    background-color: transparent;
+  }
 }
 
 .percent {
