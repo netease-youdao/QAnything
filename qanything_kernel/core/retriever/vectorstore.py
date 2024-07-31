@@ -4,6 +4,7 @@ from typing import Optional, List, Any, Iterable, Callable
 from qanything_kernel.utils.custom_log import debug_logger, insert_logger
 from qanything_kernel.configs.model_config import MILVUS_PORT, MILVUS_COLLECTION_NAME, MILVUS_HOST_LOCAL
 from qanything_kernel.connector.embedding.embedding_for_online_client import YouDaoEmbeddings
+from qanything_kernel.utils.general_utils import get_time
 from langchain_community.vectorstores.milvus import Milvus
 import asyncio
 
@@ -259,6 +260,7 @@ class VectorStoreMilvusClient:
     #     res = self.vectorstore.delete(expr=f"chunk_id in {chunk_ids}")
     #     debug_logger.info(f'milvus delete chunk number: {len(chunk_ids)} res: {res}')
 
+    @get_time
     def delete_expr(self, expr):
         # 如果expr为空，则不执行删除操作
         if len(self.get_local_chunks(expr)) == 0:

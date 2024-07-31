@@ -6,7 +6,7 @@ from qanything_kernel.core.retriever.docstrore import MysqlStore
 from qanything_kernel.configs.model_config import VECTOR_SEARCH_TOP_K, ES_TOP_K, CHILD_CHUNK_SIZE, PARENT_CHUNK_SIZE
 from qanything_kernel.utils.custom_log import debug_logger, insert_logger
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from qanything_kernel.utils.general_utils import num_tokens
+from qanything_kernel.utils.general_utils import num_tokens, get_time_async
 import copy
 from typing import List, Optional
 from langchain_core.documents import Document
@@ -16,6 +16,7 @@ from langchain_core.callbacks import (
 from langchain_community.vectorstores.milvus import Milvus
 from langchain_elasticsearch import ElasticsearchStore
 import time
+import traceback
 
 
 class SelfParentRetriever(ParentDocumentRetriever):
@@ -117,7 +118,7 @@ class SelfParentRetriever(ParentDocumentRetriever):
                 es_res = await es_store.aadd_documents(docs, ids=docs_ids)
                 insert_logger.info(f'es_store insert number: {len(es_res)}, {es_res[0]}')
             except Exception as e:
-                insert_logger.error(f"Error in aadd_documents on es_store: {e}")
+                insert_logger.error(f"Error in aadd_documents on es_store: {traceback.format_exc()}")
 
         if add_to_docstore:
             await self.docstore.amset(full_docs)
@@ -149,6 +150,7 @@ class ParentRetriever:
         self.backup_vectorstore: Optional[Milvus] = None
         self.es_store = es_client.es_store
 
+    @get_time_async
     async def insert_documents(self, docs, single_parent=False):
         # insert_logger.info(f'insert documents: {len(docs)}')
         embed_docs = copy.deepcopy(docs)

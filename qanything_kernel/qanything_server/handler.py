@@ -860,6 +860,7 @@ https://qanything.youdao.com
     return sanic_text(description)
 
 
+@get_time_async
 async def get_doc_completed(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -901,6 +902,7 @@ async def get_doc_completed(req: request):
                        "chunks": current_page_chunks, "page_id": page})
 
 
+@get_time_async
 async def get_qa_info(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     any_kb_id = safe_get(req, 'any_kb_id')
@@ -960,6 +962,7 @@ async def get_qa_info(req: request):
     return sanic_json({"code": 200, "msg": msg, "page_id": page_id, "qa_infos": qa_infos})
 
 
+@get_time_async
 async def get_random_qa(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     limit = safe_get(req, 'limit', 10)
@@ -978,6 +981,7 @@ async def get_random_qa(req: request):
                        "total_queries": counts["total_queries"], "qa_infos": qa_infos})
 
 
+@get_time_async
 async def get_related_qa(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     qa_id = safe_get(req, 'qa_id')
@@ -1015,6 +1019,7 @@ async def get_related_qa(req: request):
                        "older_sections": older_sections})
 
 
+@get_time_async
 async def get_user_id(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     kb_id = safe_get(req, 'kb_id')
@@ -1027,6 +1032,7 @@ async def get_user_id(req: request):
         return sanic_json({"code": 200, "msg": "success", "user_id": user_id})
 
 
+@get_time_async
 async def get_doc(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     doc_id = safe_get(req, 'doc_id')
@@ -1037,6 +1043,7 @@ async def get_doc(req: request):
     return sanic_json({"code": 200, "msg": "success", "doc_text": doc_json_data['kwargs']})
 
 
+@get_time_async
 async def get_rerank_results(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     query = safe_get(req, 'query')
@@ -1054,6 +1061,7 @@ async def get_rerank_results(req: request):
     return sanic_json({"code": 200, "msg": "success", "rerank_results": format_source_documents(rerank_results)})
 
 
+@get_time_async
 async def get_user_status(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -1073,11 +1081,13 @@ async def get_user_status(req: request):
     return sanic_json({"code": 200, "msg": "success", "status": status})
 
 
+@get_time_async
 async def health_check(req: request):
     # 实现一个服务健康检查的逻辑，正常就返回200，不正常就返回500
     return sanic_json({"code": 200, "msg": "success"})
 
 
+@get_time_async
 async def get_bot_info(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -1114,6 +1124,7 @@ async def get_bot_info(req: request):
     return sanic_json({"code": 200, "msg": "success", "data": data})
 
 
+@get_time_async
 async def new_bot(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -1144,6 +1155,7 @@ async def new_bot(req: request):
                        "data": {"bot_id": bot_id, "bot_name": bot_name, "create_time": create_time}})
 
 
+@get_time_async
 async def delete_bot(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -1160,6 +1172,7 @@ async def delete_bot(req: request):
     return sanic_json({"code": 200, "msg": "Bot {} delete success".format(bot_id)})
 
 
+@get_time_async
 async def update_bot(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -1211,6 +1224,7 @@ async def update_bot(req: request):
     return sanic_json({"code": 200, "msg": "Bot {} update success".format(bot_id)})
 
 
+@get_time_async
 async def update_chunks(req: request):
     local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
     user_id = safe_get(req, 'user_id')
@@ -1233,4 +1247,3 @@ async def update_chunks(req: request):
     local_doc_qa.milvus_kb.delete_expr(expr)
     await local_doc_qa.retriever.insert_documents([doc], True)
     return sanic_json({"code": 200, "msg": "success update doc_id {}".format(doc_id)})
-
