@@ -61,7 +61,6 @@ async def new_knowledge_base(req: request):
     passed, msg = check_user_id_and_user_info(user_id, user_info)
     if not passed:
         return sanic_json({"code": 2001, "msg": msg})
-    # local_doc_qa.init_retriever(local_cluster)
     user_id = user_id + '__' + user_info
     debug_logger.info("new_knowledge_base %s", user_id)
     kb_name = safe_get(req, 'kb_name')
@@ -91,7 +90,6 @@ async def upload_weblink(req: request):
     passed, msg = check_user_id_and_user_info(user_id, user_info)
     if not passed:
         return sanic_json({"code": 2001, "msg": msg})
-    # local_doc_qa.init_retriever(get_milvus_cluster_by_user_info(user_info))
     user_id = user_id + '__' + user_info
     debug_logger.info("upload_weblink %s", user_id)
     debug_logger.info("user_info %s", user_info)
@@ -178,7 +176,6 @@ async def upload_files(req: request):
     passed, msg = check_user_id_and_user_info(user_id, user_info)
     if not passed:
         return sanic_json({"code": 2001, "msg": msg})
-    # local_doc_qa.init_retriever(get_milvus_cluster_by_user_info(user_info))
     user_id = user_id + '__' + user_info
     debug_logger.info("upload_files %s", user_id)
     debug_logger.info("user_info %s", user_info)
@@ -265,7 +262,6 @@ async def upload_faqs(req: request):
     passed, msg = check_user_id_and_user_info(user_id, user_info)
     if not passed:
         return sanic_json({"code": 2001, "msg": msg})
-    # local_doc_qa.init_retriever(get_milvus_cluster_by_user_info(user_info))
     user_id = user_id + '__' + user_info
     debug_logger.info("upload_faqs %s", user_id)
     debug_logger.info("user_info %s", user_info)
@@ -331,7 +327,6 @@ async def list_kbs(req: request):
     passed, msg = check_user_id_and_user_info(user_id, user_info)
     if not passed:
         return sanic_json({"code": 2001, "msg": msg})
-    # local_doc_qa.init_retriever(get_milvus_cluster_by_user_info(user_info))
     user_id = user_id + '__' + user_info
     debug_logger.info("list_kbs %s", user_id)
     kb_infos = local_doc_qa.milvus_summary.get_knowledge_bases(user_id)
@@ -350,7 +345,6 @@ async def list_docs(req: request):
     passed, msg = check_user_id_and_user_info(user_id, user_info)
     if not passed:
         return sanic_json({"code": 2001, "msg": msg})
-    # local_doc_qa.init_retriever(get_milvus_cluster_by_user_info(user_info))
     user_id = user_id + '__' + user_info
     debug_logger.info("list_docs %s", user_id)
     kb_id = safe_get(req, 'kb_id')
@@ -419,9 +413,7 @@ async def delete_knowledge_base(req: request):
     passed, msg = check_user_id_and_user_info(user_id, user_info)
     if not passed:
         return sanic_json({"code": 2001, "msg": msg})
-    # local_doc_qa.init_retriever(get_milvus_cluster_by_user_info(user_info))
     user_id = user_id + '__' + user_info
-    local_doc_qa.init_retriever(user_id)
     debug_logger.info("delete_knowledge_base %s", user_id)
     kb_ids = safe_get(req, 'kb_ids')
     kb_ids = [correct_kb_id(kb_id) for kb_id in kb_ids]
@@ -455,7 +447,6 @@ async def rename_knowledge_base(req: request):
     passed, msg = check_user_id_and_user_info(user_id, user_info)
     if not passed:
         return sanic_json({"code": 2001, "msg": msg})
-    # local_doc_qa.init_retriever(get_milvus_cluster_by_user_info(user_info))
     user_id = user_id + '__' + user_info
     debug_logger.info("rename_knowledge_base %s", user_id)
     kb_id = safe_get(req, 'kb_id')
@@ -476,9 +467,7 @@ async def delete_docs(req: request):
     passed, msg = check_user_id_and_user_info(user_id, user_info)
     if not passed:
         return sanic_json({"code": 2001, "msg": msg})
-    # local_doc_qa.init_retriever(get_milvus_cluster_by_user_info(user_info))
     user_id = user_id + '__' + user_info
-    local_doc_qa.init_retriever(user_id)
     debug_logger.info("delete_docs %s", user_id)
     kb_id = safe_get(req, 'kb_id')
     kb_id = correct_kb_id(kb_id)
@@ -512,7 +501,6 @@ async def get_total_status(req: request):
     passed, msg = check_user_id_and_user_info(user_id, user_info)
     if not passed:
         return sanic_json({"code": 2001, "msg": msg})
-    # local_doc_qa.init_retriever(get_milvus_cluster_by_user_info(user_info))
     user_id = user_id + '__' + user_info
     debug_logger.info('get_total_status %s', user_id)
     if not user_id:
@@ -544,9 +532,7 @@ async def clean_files_by_status(req: request):
     passed, msg = check_user_id_and_user_info(user_id, user_info)
     if not passed:
         return sanic_json({"code": 2001, "msg": msg})
-    # local_doc_qa.init_retriever(get_milvus_cluster_by_user_info(user_info))
     user_id = user_id + '__' + user_info
-    local_doc_qa.init_retriever(user_id)
     debug_logger.info('clean_files_by_status %s', user_id)
     status = safe_get(req, 'status', default='gray')
     if status not in ['gray', 'red', 'yellow']:
@@ -584,9 +570,7 @@ async def local_doc_chat(req: request):
     if not passed:
         return sanic_json({"code": 2001, "msg": msg})
     # local_cluster = get_milvus_cluster_by_user_info(user_info)
-    # local_doc_qa.init_retriever(local_cluster)
     user_id = user_id + '__' + user_info
-    local_doc_qa.init_retriever(user_id)
     # local_doc_qa.milvus_summary.update_user_cluster(user_id, [get_milvus_cluster_by_user_info(user_info)])
     debug_logger.info('local_doc_chat %s', user_id)
     debug_logger.info('user_info %s', user_info)
@@ -883,7 +867,6 @@ async def get_doc_completed(req: request):
     passed, msg = check_user_id_and_user_info(user_id, user_info)
     if not passed:
         return sanic_json({"code": 2001, "msg": msg})
-    # local_doc_qa.init_retriever(get_milvus_cluster_by_user_info(user_info))
     user_id = user_id + '__' + user_info
     debug_logger.info("get_doc_chunks %s", user_id)
     kb_id = safe_get(req, 'kb_id')
@@ -932,7 +915,6 @@ async def get_qa_info(req: request):
         passed, msg = check_user_id_and_user_info(user_id, user_info)
         if not passed:
             return sanic_json({"code": 2001, "msg": msg})
-        # local_doc_qa.init_retriever(get_milvus_cluster_by_user_info(user_info))
         user_id = user_id + '__' + user_info
         debug_logger.info("get_qa_info %s", user_id)
     query = safe_get(req, 'query')
@@ -1079,7 +1061,6 @@ async def get_user_status(req: request):
     passed, msg = check_user_id_and_user_info(user_id, user_info)
     if not passed:
         return sanic_json({"code": 2001, "msg": msg})
-    # local_doc_qa.init_retriever(get_milvus_cluster_by_user_info(user_info))
     user_id = user_id + '__' + user_info
     debug_logger.info("get_user_status %s", user_id)
     user_status = local_doc_qa.milvus_summary.get_user_status(user_id)
@@ -1104,7 +1085,6 @@ async def get_bot_info(req: request):
     passed, msg = check_user_id_and_user_info(user_id, user_info)
     if not passed:
         return sanic_json({"code": 2001, "msg": msg})
-    # local_doc_qa.init_retriever(local_cluster)
     user_id = user_id + '__' + user_info
     bot_id = safe_get(req, 'bot_id')
     if bot_id:
@@ -1141,7 +1121,6 @@ async def new_bot(req: request):
     passed, msg = check_user_id_and_user_info(user_id, user_info)
     if not passed:
         return sanic_json({"code": 2001, "msg": msg})
-    # local_doc_qa.init_retriever(local_cluster)
     user_id = user_id + '__' + user_info
     bot_name = safe_get(req, "bot_name")
     desc = safe_get(req, "description", BOT_DESC)
@@ -1172,7 +1151,6 @@ async def delete_bot(req: request):
     passed, msg = check_user_id_and_user_info(user_id, user_info)
     if not passed:
         return sanic_json({"code": 2001, "msg": msg})
-    # local_doc_qa.init_retriever(local_cluster)
     user_id = user_id + '__' + user_info
     debug_logger.info("delete_bot %s", user_id)
     bot_id = safe_get(req, 'bot_id')
@@ -1189,7 +1167,6 @@ async def update_bot(req: request):
     passed, msg = check_user_id_and_user_info(user_id, user_info)
     if not passed:
         return sanic_json({"code": 2001, "msg": msg})
-    # local_doc_qa.init_retriever(local_cluster)
     user_id = user_id + '__' + user_info
     debug_logger.info("update_bot %s", user_id)
     bot_id = safe_get(req, 'bot_id')
@@ -1241,7 +1218,6 @@ async def update_chunks(req: request):
     passed, msg = check_user_id_and_user_info(user_id, user_info)
     if not passed:
         return sanic_json({"code": 2001, "msg": msg})
-    local_doc_qa.init_retriever(user_id)
     user_id = user_id + '__' + user_info
     debug_logger.info("update_chunks %s", user_id)
     doc_id = safe_get(req, 'doc_id')

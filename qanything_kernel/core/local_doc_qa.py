@@ -69,9 +69,7 @@ class LocalDocQA:
         self.rerank = YouDaoRerank()
         self.milvus_summary = KnowledgeBaseManager()
         self.milvus_kb = VectorStoreMilvusClient()
-
-    def init_retriever(self, user_id):
-        self.es_client = StoreElasticSearchClient(index_name=user_id)
+        self.es_client = StoreElasticSearchClient()
         self.retriever = ParentRetriever(self.milvus_kb, self.milvus_summary, self.es_client)
 
     @get_time

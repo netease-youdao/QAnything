@@ -169,11 +169,10 @@ async def check_and_process(pool):
     process_type = 'MainProcess' if 'SANIC_WORKER_NAME' not in os.environ else os.environ['SANIC_WORKER_NAME']
     worker_id = int(process_type.split('-')[-2])
     insert_logger.info(f"{os.getpid()} worker_id is {worker_id}")
-    # milvus_kb = VectorStoreMilvusClient()
     mysql_client = KnowledgeBaseManager()
     milvus_kb = VectorStoreMilvusClient()
-    # es_client = StoreElasticSearchClient()
-    # retriever = ParentRetriever(milvus_kb, mysql_client)
+    es_client = StoreElasticSearchClient()
+    retriever = ParentRetriever(milvus_kb, mysql_client, es_client)
     while True:
         sleep_time = 10
         # worker_id 根据时间变化，每x分钟变一次，获取当前时间的分钟数
@@ -212,9 +211,6 @@ async def check_and_process(pool):
 
                         time_record = {}
                         # 现在处理数据
-                        user_id = file_info[2]
-                        es_client = StoreElasticSearchClient(index_name=user_id)
-                        retriever = ParentRetriever(milvus_kb, mysql_client, es_client)
                         status, content_length, chunk_size, msg = await process_data(retriever, milvus_kb, mysql_client, file_info, time_record)
 
                         insert_logger.info('time_record: ' + json.dumps(time_record, ensure_ascii=False))

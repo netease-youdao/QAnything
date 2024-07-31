@@ -4,15 +4,15 @@ from langchain_elasticsearch import ElasticsearchStore
 
 
 class StoreElasticSearchClient:
-    def __init__(self, index_name):
+    def __init__(self):
         self.es_store = ElasticsearchStore(
             es_url=ES_URL,
-            index_name=index_name.lower(),
+            index_name=ES_INDEX_NAME,
             es_user=ES_USER,
             es_password=ES_PASSWORD,
             strategy=ElasticsearchStore.BM25RetrievalStrategy()
         )
-        debug_logger.info(f"Init ElasticSearchStore with index_name: {index_name.lower()}")
+        debug_logger.info(f"Init ElasticSearchStore with index_name: {ES_INDEX_NAME}")
 
     def delete(self, docs_ids):
         try:
