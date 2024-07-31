@@ -1,43 +1,19 @@
-import tiktoken
-from dotenv import load_dotenv
 from openai import OpenAI
-from typing import Optional, List
+from typing import List, Optional
 import json
 from transformers import AutoTokenizer
-import os
+from qanything_kernel.connector.llm.base import AnswerResult
 from qanything_kernel.utils.custom_log import debug_logger
-from qanything_kernel.configs.model_config import llm_config, OPENAI_API_BASE, OPENAI_API_KEY, OPENAI_API_MODEL_NAME, TOKENIZER_PATH
-
-load_dotenv()
-
-
-class AnswerResult:
-    """
-    消息实体
-    """
-    history: List[List[str]] = []
-    llm_output: Optional[dict] = None
-    prompt: str = ""
-    total_tokens: int = 0
-    completion_tokens: int = 0
-    prompt_tokens: int = 0
+from qanything_kernel.configs.model_config import TOKENIZER_PATH
 
 tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_PATH, local_files_only=True)
 
+
 class OpenAILLM:
-    model: str = OPENAI_API_MODEL_NAME
-    token_window: int = llm_config['token_window']
-    max_token: int = llm_config['max_token']
     offcut_token: int = 50
-    truncate_len: int = 50
-    temperature: float = 0.5
-    top_p: float = llm_config['top_p']    # top_p must be (0,1]
-    stop_words: str = None
-    history: List[List[str]] = []
-    history_len: int = llm_config['history_len']
+    stop_words: Optional[List[str]] = None
 
     def __init__(self, model, max_token, api_base, api_key, api_context_length, top_p, temperature):
-        super().__init__()
         base_url = api_base
         api_key = api_key
 
@@ -61,32 +37,28 @@ class OpenAILLM:
         debug_logger.info(f"TOP_P = {self.top_p}")
         debug_logger.info(f"TEMPERATURE = {self.temperature}")
 
-
-
     @property
     def _llm_type(self) -> str:
         return "using OpenAI API serve as LLM backend"
-
-    @property
-    def _history_len(self) -> int:
-        return self.history_len
-
-    def set_history_len(self, history_len: int = 10) -> None:
-        self.history_len = history_len
 
     # 定义函数 num_tokens_from_messages，该函数返回由一组消息所使用的token数
     def num_tokens_from_messages(self, messages):
         total_tokens = 0
         for message in messages:
             if isinstance(message, dict):
-                total_tokens += 3
+                # 对于字典类型的消息，我们假设它包含 'role' 和 'content' 键
                 for key, value in message.items():
-                    tokens = tokenizer.encode(value, add_special_tokens=True)
+                    total_tokens += 3  # role的开销(key的开销)
+                    if isinstance(value, str):
+                        tokens = tokenizer.encode(value, add_special_tokens=False)
+                        total_tokens += len(tokens)
+            elif isinstance(message, str):
+                # 对于字符串类型的消息，直接编码
+                tokens = tokenizer.encode(message, add_special_tokens=False)
+                total_tokens += len(tokens)
             else:
-                # 对每个文本进行分词
-                tokens = tokenizer.encode(message, add_special_tokens=True)
-            # 累加tokens数量
-            total_tokens += len(tokens) 
+                raise ValueError(f"Unsupported message type: {type(message)}")
+
         return total_tokens
 
     def num_tokens_from_docs(self, docs):
@@ -95,10 +67,10 @@ class OpenAILLM:
             # 对每个文本进行分词
             tokens = tokenizer.encode(doc.page_content, add_special_tokens=True)
             # 累加tokens数量
-            total_tokens += len(tokens) 
+            total_tokens += len(tokens)
         return total_tokens
 
-    async def _call(self, messages: List[dict], streaming: bool=False) -> str:
+    async def _call(self, messages: List[dict], streaming: bool = False) -> str:
         try:
 
             if streaming:
@@ -109,7 +81,7 @@ class OpenAILLM:
                     max_tokens=self.max_token,
                     temperature=self.temperature,
                     top_p=self.top_p,
-                    stop=[self.stop_words] if self.stop_words is not None else None,
+                    stop=self.stop_words
                 )
                 for event in response:
                     if not isinstance(event, dict):
@@ -129,9 +101,9 @@ class OpenAILLM:
                     max_tokens=self.max_token,
                     temperature=self.temperature,
                     top_p=self.top_p,
-                    stop=[self.stop_words] if self.stop_words is not None else None,
+                    stop=self.stop_words
                 )
-                
+
                 event_text = response.choices[0].message.content if response.choices else ""
                 delta = {'answer': event_text}
                 yield "data: " + json.dumps(delta, ensure_ascii=False)
@@ -164,7 +136,9 @@ class OpenAILLM:
         messages.append({"role": "user", "content": prompt})
         # debug_logger.info(messages)
         prompt_tokens = self.num_tokens_from_messages(messages)
-                
+        total_tokens = 0
+        completion_tokens = 0
+
         response = self._call(messages, streaming)
         complete_answer = ""
         async for response_text in response:
@@ -175,7 +149,7 @@ class OpenAILLM:
                     complete_answer += chunk_js["answer"]
                 completion_tokens = self.num_tokens_from_messages([complete_answer])
                 total_tokens = prompt_tokens + completion_tokens
-                    
+
             history[-1] = [prompt, complete_answer]
             answer_result = AnswerResult()
             answer_result.history = history

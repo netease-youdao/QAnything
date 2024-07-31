@@ -1,9 +1,7 @@
 from qanything_kernel.connector.llm.base.base import (
-    AnswerResult,
-    BaseAnswer
+    AnswerResult
 )
 
 __all__ = [
-    "AnswerResult",
-    "BaseAnswer",
+    "AnswerResult"
 ]

@@ -103,24 +103,21 @@ LOCAL_EMBED_THREADS = 1
 LOCAL_EMBED_PATH = os.path.join(root_path, 'qanything_kernel/dependent_server/embedding_server', 'embedding_model_configs_v0.0.1')
 LOCAL_EMBED_MODEL_PATH = os.path.join(LOCAL_EMBED_PATH, "embed.onnx")
 
-OPENAI_API_BASE = "https://api.openai-proxy.org/v1"
-OPENAI_API_KEY = "sk-xxx"
-OPENAI_API_MODEL_NAME = "gpt-3.5-turbo"
 TOKENIZER_PATH = os.path.join(root_path, 'qanything_kernel/connector/llm/tokenizer_files')
 
 CHILD_CHUNK_SIZE = 400
 PARENT_CHUNK_SIZE = 800
 
-llm_config = {
-    # 回答的最大token数，一般来说对于国内模型一个中文不到1个token，国外模型一个中文1.5-2个token
-    "max_token": 512,
-    # 附带的上下文数目
-    "history_len": 2,
-    # 总共的token数，如果遇到电脑显存不够的情况可以将此数字改小，如果低于3000仍然无法使用，就更换模型
-    "token_window": 4096,
-    # 如果报错显示top_p值必须在0到1，可以在这里修改
-    "top_p": 1.0
-}
+# llm_config = {
+#     # 回答的最大token数，一般来说对于国内模型一个中文不到1个token，国外模型一个中文1.5-2个token
+#     "max_token": 512,
+#     # 附带的上下文数目
+#     "history_len": 2,
+#     # 总共的token数，如果遇到电脑显存不够的情况可以将此数字改小，如果低于3000仍然无法使用，就更换模型
+#     "token_window": 4096,
+#     # 如果报错显示top_p值必须在0到1，可以在这里修改
+#     "top_p": 1.0
+# }
 
 # Bot
 BOT_DESC = "一个简单的问答机器人"
