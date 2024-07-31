@@ -469,7 +469,7 @@ class LocalDocQA:
                 time_record['llm_first_return'] = round(first_return_time - t1, 2)
             if resp[6:].startswith("[DONE]"):
                 last_return_time = time.perf_counter()
-                time_record['llm_completed'] = round(last_return_time - t1, 2)
+                time_record['llm_completed'] = round(last_return_time - t1, 2) - time_record['llm_first_return']
             yield response, history
 
     def get_completed_document(self, file_id, limit=None):

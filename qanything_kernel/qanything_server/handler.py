@@ -706,7 +706,7 @@ async def local_doc_chat(req: request):
                     # result = resp['result']
                     time_record['chat_completed'] = round(time.perf_counter() - preprocess_start, 2)
                     time_record['tokens_per_second'] = round(
-                        len(result) / time_record['chat_completed'], 2)
+                        len(result) / time_record['llm_completed'], 2)
                     formatted_time_record = format_time_record(time_record)
                     chat_data = {'user_id': user_id, 'kb_ids': kb_ids, 'query': question, "model": model,
                                  "product_source": request_source, 'time_record': formatted_time_record,
