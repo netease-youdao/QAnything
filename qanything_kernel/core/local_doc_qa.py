@@ -264,7 +264,7 @@ class LocalDocQA:
                 ]
             debug_logger.info(f"formatted_chat_history: {formatted_chat_history}")
 
-            rewrite_q_chain = RewriteQuestionChain()
+            rewrite_q_chain = RewriteQuestionChain(model_name=model, openai_api_base=api_base, openai_api_key=api_key)
             full_prompt = rewrite_q_chain.condense_q_prompt.format(
                 chat_history=formatted_chat_history,
                 question=query

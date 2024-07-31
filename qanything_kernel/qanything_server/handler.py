@@ -1,6 +1,6 @@
 from qanything_kernel.core.local_file import LocalFile
 from qanything_kernel.core.local_doc_qa import LocalDocQA
-from qanything_kernel.utils.custom_log import debug_logger, qa_logger, writing_logger
+from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from qanything_kernel.configs.model_config import BOT_DESC, BOT_IMAGE, BOT_PROMPT, BOT_WELCOME
 from qanything_kernel.utils.general_utils import *
 from langchain.schema import Document

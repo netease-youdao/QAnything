@@ -1,26 +1,12 @@
-#!/usr/bin/python
-#-*- coding:utf-8 -*-
-#################################
-# File Name: condense_q_chain.py
-# Author: renzh
-# Date: 2023/12/20 20:05:04
-# Description: I can do anything.
-#################################
-import argparse
-import os
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.schema import StrOutputParser
 from langchain_openai import ChatOpenAI
-from qanything_kernel.configs.model_config import OPENAI_API_BASE, OPENAI_API_KEY, OPENAI_API_MODEL_NAME
-
-
-os.environ["OPENAI_API_BASE"] = OPENAI_API_BASE
-os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 
 
 class RewriteQuestionChain:
-    def __init__(self):
-        self.chat_model = ChatOpenAI(model_name=OPENAI_API_MODEL_NAME, temperature=0, model_kwargs={"top_p": 0.01, "seed": 1234})
+    def __init__(self, model_name, openai_api_key, openai_api_base):
+        self.chat_model = ChatOpenAI(model_name=model_name, openai_api_key=openai_api_key, openai_api_base=openai_api_base,
+                                     temperature=0, model_kwargs={"top_p": 0.01, "seed": 1234})
         self.condense_q_system_prompt = """
 假设你是极其专业的英语和汉语语言专家。你的任务是：给定一个聊天历史记录和一个可能涉及此聊天历史的用户最新的问题(新问题)，请构造一个不需要聊天历史就能理解的独立且语义完整的问题。
 
