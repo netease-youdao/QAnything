@@ -64,9 +64,10 @@ class SelfParentRetriever(ParentDocumentRetriever):
             add_to_docstore: bool = True,
             backup_vectorstore: Optional[Milvus] = None,
             es_store: Optional[ElasticsearchStore] = None,
+            single_parent: bool = False,
     ) -> int:
-        insert_logger.info(f"Inserting {len(documents)} complete documents")
-        if self.parent_splitter is not None:
+        insert_logger.info(f"Inserting {len(documents)} complete documents, single_parent: {single_parent}")
+        if self.parent_splitter is not None and not single_parent:
             documents = self.parent_splitter.split_documents(documents)
         insert_logger.info(f"Inserting {len(documents)} parent documents")
         if ids is None:
@@ -148,7 +149,7 @@ class ParentRetriever:
         self.backup_vectorstore: Optional[Milvus] = None
         self.es_store = es_client.es_store
 
-    async def insert_documents(self, docs):
+    async def insert_documents(self, docs, single_parent=False):
         # insert_logger.info(f'insert documents: {len(docs)}')
         embed_docs = copy.deepcopy(docs)
         # 补充metadata信息
@@ -160,11 +161,15 @@ class ParentRetriever:
                 if 'file_name' in doc.metadata:
                     metadata_infos += f"文件名: {doc.metadata['file_name']}\n"
                 doc.page_content = metadata_infos + '文件内容如下: \n' + doc.page_content
-            del doc.metadata['title_lst']
-            del doc.metadata['has_table']
-            del doc.metadata['images_number']
+            if 'title_lst' in doc.metadata:
+                del doc.metadata['title_lst']
+            if 'has_table' in doc.metadata:
+                del doc.metadata['has_table']
+            if 'images_number' in doc.metadata:
+                del doc.metadata['images_number']
+        ids = None if not single_parent else [doc.metadata['doc_id'] for doc in embed_docs]
         return await self.retriever.aadd_documents(embed_docs, backup_vectorstore=self.backup_vectorstore,
-                                                   es_store=self.es_store)
+                                                   es_store=self.es_store, ids=ids, single_parent=single_parent)
 
     async def get_retrieved_documents(self, query: str, partition_keys: List[str], time_record: dict, hybrid_search: bool):
         milvus_start_time = time.perf_counter()

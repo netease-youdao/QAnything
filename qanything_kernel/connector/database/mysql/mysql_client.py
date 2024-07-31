@@ -641,6 +641,13 @@ class KnowledgeBaseManager:
         query = "INSERT IGNORE INTO Documents (doc_id, json_data) VALUES (%s, %s)"
         self.execute_query_(query, (doc_id, json_data), commit=True, check=True)
 
+    def update_document(self, doc_id, update_content):
+        ori_doc_json = self.get_document_by_doc_id(doc_id)
+        ori_doc_json['kwargs']['page_content'] = update_content
+        new_doc_json = json.dumps(ori_doc_json, ensure_ascii=False)
+        query = "UPDATE Documents SET json_data = %s WHERE doc_id = %s"
+        self.execute_query_(query, (new_doc_json, doc_id), commit=True, check=True)
+
     def add_faq(self, faq_id, user_id, kb_id, question, answer, nos_keys):
         # insert_logger.info(f"add_faq: {faq_id}, {user_id}, {kb_id}, {question}, {nos_keys}")
         query = "INSERT INTO Faqs (faq_id, user_id, kb_id, question, answer, nos_keys) VALUES (%s, %s, %s, %s, %s, %s)"

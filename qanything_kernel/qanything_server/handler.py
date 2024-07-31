@@ -3,6 +3,7 @@ from qanything_kernel.core.local_doc_qa import LocalDocQA
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger, writing_logger
 from qanything_kernel.configs.model_config import BOT_DESC, BOT_IMAGE, BOT_PROMPT, BOT_WELCOME
 from qanything_kernel.utils.general_utils import *
+from langchain.schema import Document
 from sanic.response import ResponseStream
 from sanic.response import json as sanic_json
 from sanic.response import text as sanic_text
@@ -24,7 +25,7 @@ import aiohttp
 __all__ = ["new_knowledge_base", "upload_files", "list_kbs", "list_docs", "delete_knowledge_base", "delete_docs",
            "rename_knowledge_base", "get_total_status", "clean_files_by_status", "upload_weblink", "local_doc_chat",
            "document", "upload_faqs", "get_doc_completed", "get_qa_info", "get_user_id", "get_doc",
-           "get_rerank_results", "get_user_status", "health_check",
+           "get_rerank_results", "get_user_status", "health_check", "update_chunks",
            "get_random_qa", "get_related_qa", "new_bot", "delete_bot", "update_bot", "get_bot_info"]
 
 INVALID_USER_ID = f"fail, Invalid user_id: . user_id 必须只含有字母，数字和下划线且字母开头"
@@ -1231,3 +1232,28 @@ async def update_bot(req: request):
     local_doc_qa.milvus_summary.update_bot(user_id, bot_id, bot_name, description, head_image, prompt_setting,
                                            welcome_message, model, kb_ids_str, update_time)
     return sanic_json({"code": 200, "msg": "Bot {} update success".format(bot_id)})
+
+
+async def update_chunks(req: request):
+    local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
+    user_id = safe_get(req, 'user_id')
+    user_info = safe_get(req, 'user_info', "1234")
+    passed, msg = check_user_id_and_user_info(user_id, user_info)
+    if not passed:
+        return sanic_json({"code": 2001, "msg": msg})
+    local_doc_qa.init_retriever(user_id)
+    user_id = user_id + '__' + user_info
+    debug_logger.info("update_chunks %s", user_id)
+    doc_id = safe_get(req, 'doc_id')
+    update_content = safe_get(req, 'update_content')
+    doc_json = local_doc_qa.milvus_summary.get_document_by_doc_id(doc_id)
+    if not doc_json:
+        return sanic_json({"code": 2003, "msg": "fail, DocId {} not found".format(doc_id)})
+    doc = Document(page_content=update_content, metadata=doc_json['kwargs']['metadata'])
+    doc.metadata['doc_id'] = doc_id
+    local_doc_qa.milvus_summary.update_document(doc_id, update_content)
+    expr = f'doc_id == "{doc_id}"'
+    await local_doc_qa.milvus_kb.delete_expr(expr)
+    await local_doc_qa.retriever.insert_documents([doc], True)
+    return sanic_json({"code": 200, "msg": "success update doc_id {}".format(doc_id)})
+

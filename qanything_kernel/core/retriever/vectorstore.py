@@ -249,17 +249,10 @@ class VectorStoreMilvusClient:
         )
         debug_logger.info(
             f'init vectorstore {self.host}, {MILVUS_COLLECTION_NAME}')
-        self.cloud_vectorstore = None
-
 
     def get_local_chunks(self, expr, timeout=10):
         future = self.executor.submit(
             partial(self.local_vectorstore.get_pks, expr=expr, timeout=timeout))
-        return future.result()
-
-    def get_cloud_chunks(self, expr, timeout=10):
-        future = self.executor.submit(
-            partial(self.cloud_vectorstore.get_pks, expr=expr, timeout=timeout))
         return future.result()
 
     # def delete_chunks(self, chunk_ids):
@@ -276,13 +269,3 @@ class VectorStoreMilvusClient:
             debug_logger.info(f'local milvus delete expr: {expr} res: {res}')
         except Exception as e:
             debug_logger.error(f'local milvus delete expr: {expr} error: {e}')
-
-        if self.cloud_vectorstore is not None:
-            if len(self.get_cloud_chunks(expr)) == 0:
-                debug_logger.info(f'expr: {expr} not found in cloud milvus')
-                return
-            try:
-                res = self.cloud_vectorstore.delete(expr=expr, timeout=10)
-                debug_logger.info(f'cloud milvus delete expr: {expr} res: {res}')
-            except Exception as e:
-                debug_logger.error(f'cloud milvus delete expr: {expr} error: {e}')
