@@ -98,7 +98,7 @@ class LocalDocQA:
         try:
             web_content, source_documents = self.get_web_search([query], top_k)
         except Exception as e:
-            debug_logger.error(f"web search error: {e}")
+            debug_logger.error(f"web search error: {traceback.format_exc()}")
             return []
 
         return source_documents
