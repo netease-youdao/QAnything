@@ -587,7 +587,7 @@ class KnowledgeBaseManager:
             doc_ids = [doc[0].split('_')[1] for doc in doc_all]
             json_datas = [json.loads(doc[1]) for doc in doc_all]
             for doc_id, json_data in zip(doc_ids, json_datas):
-                json_data['chunk_id'] = file_id + '_' + str(doc_id)
+                json_data['kwargs']['chunk_id'] = file_id + '_' + str(doc_id)
 
             # 将doc_id和json_data打包并追加到结果列表
             all_json_datas.extend(zip(doc_ids, json_datas))
