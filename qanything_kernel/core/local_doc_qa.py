@@ -166,22 +166,6 @@ class LocalDocQA:
                 new_source_docs.append(doc)
                 total_token_num += doc_token_num
             else:
-                remaining_token_num = limited_token_nums - total_token_num
-                doc_content = doc.page_content
-                doc_content_token_num = custom_llm.num_tokens_from_messages([doc_content]) + metadata_infos_token_num
-                # doc_content_token_num = custom_llm.num_tokens_from_messages([doc_content])
-                while doc_content_token_num > remaining_token_num:
-                    # Truncate the doc content to fit the remaining tokens
-                    if len(doc_content) > 2 * custom_llm.truncate_len:
-                        doc_content = doc_content[custom_llm.truncate_len: -custom_llm.truncate_len]
-                    else:  # 如果最后不够truncate_len长度的2倍，说明不够切了，直接赋值为空
-                        doc_content = ""
-                        break
-                    doc_content_token_num = custom_llm.num_tokens_from_messages(
-                        [doc_content]) + metadata_infos_token_num
-                    # doc_content_token_num = custom_llm.num_tokens_from_messages([doc_content])
-                doc.page_content = doc_content
-                new_source_docs.append(doc)
                 break
 
         debug_logger.info(f"new_source_docs token nums: {custom_llm.num_tokens_from_docs(new_source_docs)}")
