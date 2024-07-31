@@ -1221,6 +1221,7 @@ async def update_chunks(req: request):
     user_id = user_id + '__' + user_info
     debug_logger.info("update_chunks %s", user_id)
     doc_id = safe_get(req, 'doc_id')
+    debug_logger.info(f"doc_id: {doc_id}")
     update_content = safe_get(req, 'update_content')
     doc_json = local_doc_qa.milvus_summary.get_document_by_doc_id(doc_id)
     if not doc_json:
@@ -1229,7 +1230,7 @@ async def update_chunks(req: request):
     doc.metadata['doc_id'] = doc_id
     local_doc_qa.milvus_summary.update_document(doc_id, update_content)
     expr = f'doc_id == "{doc_id}"'
-    await local_doc_qa.milvus_kb.delete_expr(expr)
+    local_doc_qa.milvus_kb.delete_expr(expr)
     await local_doc_qa.retriever.insert_documents([doc], True)
     return sanic_json({"code": 200, "msg": "success update doc_id {}".format(doc_id)})
 
