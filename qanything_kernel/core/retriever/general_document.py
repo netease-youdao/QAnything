@@ -1,4 +1,4 @@
-from qanything_kernel.utils.general_utils import get_time_async, num_tokens, get_time, get_table_infos
+from qanything_kernel.utils.general_utils import html_to_markdown, num_tokens, get_time, get_table_infos
 from typing import List
 from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, LOCAL_OCR_SERVICE_URL, PARENT_CHUNK_SIZE
 from langchain.docstore.document import Document
@@ -15,6 +15,9 @@ from qanything_kernel.utils.loader.csv_loader import CSVLoader
 from qanything_kernel.utils.loader.markdown_parser import convert_markdown_to_langchaindoc
 from qanything_kernel.utils.loader.pdf_data_parser import \
     convert_markdown_to_langchaindoc as convert_pdf_data_to_langchaindoc
+import asyncio
+import aiohttp
+import time
 import docx2txt
 import base64
 import pandas as pd
@@ -322,45 +325,52 @@ class LocalFileForInsert:
 
     @staticmethod
     @get_time
-    def url_to_documents(file_path, file_name, file_url, dir_path="tmp_files"):
+    async def url_to_documents(file_path, file_name, file_url, dir_path="tmp_files", max_retries=3):
         full_dir_path = os.path.join(os.path.dirname(file_path), dir_path)
         if not os.path.exists(full_dir_path):
             os.makedirs(full_dir_path)
-        try:
-            jina_response = requests.get(f"https://r.jina.ai/{file_url}", timeout=120)
-            if jina_response.status_code == 200:
-                parts = jina_response.text.split('\n')
-                metadata = {}
-                for part in parts:
-                    if 'Title: ' in part:
-                        metadata['title'] = part.replace('Title: ', '')
-                    elif 'URL Source: ' in part:
-                        metadata['url_source'] = part.replace('URL Source: ', '')
-                    elif 'Published Time: ' in part:
-                        metadata['published_time'] = part.replace('Published Time: ', '')
-                    elif 'Markdown Content\n:' in part:
-                        break
-                markdown_str = jina_response.text.split("Markdown Content\n:")[-1]
-                md_file_path = os.path.join(full_dir_path, "%s.md" % (file_name))
-                with open(md_file_path, 'w', encoding='utf-8') as fout:
-                    fout.write(markdown_str)
-                docs = convert_markdown_to_langchaindoc(md_file_path)
-                docs = LocalFileForInsert.markdown_process(docs)
-                return docs
-            else:
-                insert_logger.warning(f"jina get url error: {file_url}, {jina_response.text}")
-        except Exception as e:
-            insert_logger.warning(f"jina get url error: {file_url}, {traceback.format_exc()}")
+
+        for attempt in range(max_retries):
+            try:
+                headers = {
+                    "Accept": "application/json",
+                    "X-Return-Format": "markdown",
+                    "X-Timeout": "15",
+                }
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(f"https://r.jina.ai/{file_url}", headers=headers, timeout=30) as response:
+                        jina_response = await response.json()
+                        if jina_response['code'] == 200:
+                            title = jina_response['data'].get('title', '')
+                            markdown_str = jina_response['data'].get('content', '')
+                            markdown_str = html_to_markdown(markdown_str)
+                            md_file_path = os.path.join(full_dir_path, "%s.md" % (file_name))
+                            with open(md_file_path, 'w', encoding='utf-8') as fout:
+                                fout.write(markdown_str)
+                            docs = convert_markdown_to_langchaindoc(md_file_path)
+                            if title:
+                                for doc in docs:
+                                    doc.metadata['title'] = title
+                            docs = LocalFileForInsert.markdown_process(docs)
+                            return docs
+                        else:
+                            insert_logger.warning(f"jina get url warning: {file_url}, {jina_response}")
+            except Exception as e:
+                insert_logger.warning(f"jina get url error: {file_url}, {traceback.format_exc()}")
+
+            if attempt < max_retries - 1:  # 如果不是最后一次尝试，等待30秒后重试
+                await asyncio.sleep(30)
+
         return None
 
     @get_time
-    def split_file_to_docs(self):
+    async def split_file_to_docs(self):
         insert_logger.info(f"start split file to docs, file_path: {self.file_name}")
         if self.faq_dict:
             docs = [Document(page_content=self.faq_dict['question'], metadata={"faq_dict": self.faq_dict})]
         elif self.file_url:
             insert_logger.info("load url: {}".format(self.file_url))
-            docs = self.url_to_documents(self.file_path, self.file_name, self.file_url)
+            docs = await self.url_to_documents(self.file_path, self.file_name, self.file_url)
             if docs is None:
                 try:
                     article = newspaper.article(self.file_url, timeout=120)

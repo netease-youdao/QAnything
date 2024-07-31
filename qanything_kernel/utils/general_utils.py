@@ -18,12 +18,14 @@ from openpyxl.utils import get_column_letter
 from openpyxl import load_workbook
 import numpy as np
 from datetime import datetime, timedelta
+import html2text
 
 __all__ = ['isURL', 'get_time', 'get_time_async', 'format_source_documents', 'safe_get', 'truncate_filename',
            'shorten_data', 'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens',
            'clear_string', 'simplify_filename', 'string_bytes_length', 'correct_kb_id', 'clear_kb_id',
            'clear_string_is_equal', 'export_qalogs_to_excel', 'num_tokens_local', 'deduplicate_documents',
-           'check_user_id_and_user_info', 'get_table_infos', 'format_time_record', 'get_time_range']
+           'check_user_id_and_user_info', 'get_table_infos', 'format_time_record', 'get_time_range',
+           'html_to_markdown']
 
 
 def get_invalid_user_id_msg(user_id):
@@ -184,6 +186,7 @@ def validate_user_id(user_id):
 
 embedding_tokenizer = AutoTokenizer.from_pretrained(LOCAL_EMBED_PATH, local_files_only=True)
 
+
 # def num_tokens(text: str, model: str = 'gpt-3.5-turbo-0613') -> int:
 #     """Return the number of tokens in a string."""
 #     encoding = tiktoken.encoding_for_model(model)
@@ -192,6 +195,7 @@ embedding_tokenizer = AutoTokenizer.from_pretrained(LOCAL_EMBED_PATH, local_file
 def num_tokens(text: str):
     """Return the number of tokens in a string."""
     return len(embedding_tokenizer.encode(text, add_special_tokens=True))
+
 
 def num_tokens_local(text, tokenizer: AutoTokenizer) -> int:
     """Return the number of tokens in a string."""
@@ -411,3 +415,32 @@ def deduplicate_documents(source_docs):
             unique_docs.add(doc.page_content)
             deduplicated_docs.append(doc)
     return deduplicated_docs
+
+
+def html_to_markdown(html_content):
+    # 创建HTML到文本转换器
+    h = html2text.HTML2Text()
+
+    # 配置转换器
+    h.ignore_images = True
+    h.ignore_emphasis = True
+    h.ignore_links = True
+    h.body_width = 0  # 禁用换行
+    h.tables = True  # 保留表格
+
+    # 转换HTML到Markdown
+    markdown = h.handle(html_content)
+
+    # 删除所有图片标记
+    markdown = re.sub(r'!\[.*?\]\(.*?\)', '', markdown)
+
+    # 删除所有链接标记，保留文字
+    markdown = re.sub(r'\[([^\]]*)\]\(.*?\)', r'\1', markdown)
+
+    # 删除多余的空行，但保留表格结构
+    # markdown = re.sub(r'(\n\s*){3,}', '\n\n', markdown)
+
+    # 删除行首的特殊字符（如*、-等），但保留表格的|符号
+    # markdown = re.sub(r'^(?!\|)\s*[-*]\s+', '', markdown, flags=re.MULTILINE)
+
+    return markdown.strip()
