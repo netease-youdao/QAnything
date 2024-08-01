@@ -77,6 +77,8 @@ export default {
       'Comprehensive results returned using vector retrieval and full-text retrieval',
     onlySearch: 'Search mode only',
     onlySearchDescription: 'This mode does not return description text',
+    rerank: 'Search enhancement',
+    rerankDescription: 'Search enhancements, but longer search times',
     chatUpload: 'Upload Files',
     chatUploadNoKbId: 'Please create a conversation first',
     chatToPic: 'Save chat as picture',

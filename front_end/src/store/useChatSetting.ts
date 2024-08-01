@@ -18,9 +18,10 @@ export const useChatSetting = defineStore(
       temperature: 0.5,
       top_P: 1,
       capabilities: {
-        onlineSearch: false,
+        networkSearch: false,
         mixedSearch: false,
         onlySearch: false,
+        rerank: false,
       },
       active: false,
     };

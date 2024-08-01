@@ -161,37 +161,40 @@
           :step="1"
           :tip-formatter="sliderFormatter"
         />
-        <!--      :marks="contextMarks"-->
-        <!--        <template #mark="{ label }">-->
-        <!--          <span>{{ label }}</span>-->
-        <!--        </template>-->
-        <!--      </a-slider>-->
       </a-form-item>
       <a-form-item :label="common.capabilitiesLabel" name="capabilities">
         <a-checkbox-group v-model:value="capabilitiesOptionsState" style="width: 100%">
           <a-row>
-            <a-col :span="8">
+            <!--            <a-col :span="8">-->
+            <!--              <a-popover placement="topLeft">-->
+            <!--                <template #content>-->
+            <!--                  <p>{{ common.networkSearchDescription }}</p>-->
+            <!--                </template>-->
+            <!--                <a-checkbox value="onlineSearch">{{ common.networkSearch }}</a-checkbox>-->
+            <!--              </a-popover>-->
+            <!--            </a-col>-->
+            <!--            <a-col :span="8">-->
+            <!--              <a-popover placement="topLeft">-->
+            <!--                <template #content>-->
+            <!--                  <p>{{ common.mixedSearchDescription }}</p>-->
+            <!--                </template>-->
+            <!--                <a-checkbox value="mixedSearch">{{ common.mixedSearch }}</a-checkbox>-->
+            <!--              </a-popover>-->
+            <!--            </a-col>-->
+            <!--            <a-col :span="8">-->
+            <!--              <a-popover placement="topLeft">-->
+            <!--                <template #content>-->
+            <!--                  <p>{{ common.onlySearchDescription }}</p>-->
+            <!--                </template>-->
+            <!--                <a-checkbox value="onlySearch">{{ common.onlySearch }}</a-checkbox>-->
+            <!--              </a-popover>-->
+            <!--            </a-col>-->
+            <a-col v-for="key in Object.keys(chatSettingForm.capabilities)" :key="key" :span="6">
               <a-popover placement="topLeft">
                 <template #content>
-                  <p>{{ common.networkSearchDescription }}</p>
+                  <p>{{ common[`${key}Description`] }}</p>
                 </template>
-                <a-checkbox value="onlineSearch">{{ common.networkSearch }}</a-checkbox>
-              </a-popover>
-            </a-col>
-            <a-col :span="8">
-              <a-popover placement="topLeft">
-                <template #content>
-                  <p>{{ common.mixedSearchDescription }}</p>
-                </template>
-                <a-checkbox value="mixedSearch">{{ common.mixedSearch }}</a-checkbox>
-              </a-popover>
-            </a-col>
-            <a-col :span="8">
-              <a-popover placement="topLeft">
-                <template #content>
-                  <p>{{ common.onlySearchDescription }}</p>
-                </template>
-                <a-checkbox value="onlySearch">{{ common.onlySearch }}</a-checkbox>
+                <a-checkbox :value="key">{{ common[key] }}</a-checkbox>
               </a-popover>
             </a-col>
           </a-row>

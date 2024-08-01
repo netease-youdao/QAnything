@@ -184,7 +184,7 @@
               class="send-textarea"
               max-length="200"
               :placeholder="common.problemPlaceholder"
-              :auto-size="{ minRows: 3, maxRows: 8 }"
+              :auto-size="{ minRows: 4, maxRows: 8 }"
               @keyup.enter="send"
             />
             <div class="send-action">
@@ -516,8 +516,9 @@ const send = () => {
       history: history.value,
       question: q,
       streaming: chatSettingFormActive.value.capabilities.onlySearch === false,
-      networking: chatSettingFormActive.value.capabilities.onlineSearch,
+      networking: chatSettingFormActive.value.capabilities.networkSearch,
       product_source: 'saas',
+      rerank: chatSettingFormActive.value.capabilities.rerank,
       only_need_search_results: chatSettingFormActive.value.capabilities.onlySearch,
       hybrid_search: chatSettingFormActive.value.capabilities.mixedSearch,
       max_token: chatSettingFormActive.value.maxToken,
@@ -1060,29 +1061,52 @@ scrollBottom();
       width: 100%;
       height: 100%;
       display: flex;
+      flex-direction: column;
       justify-content: flex-end;
       align-items: center;
+      background-color: #fff;
+      border: 1px solid #d9d9d9;
+      border-radius: 18px;
+
+      &:hover {
+        border-color: $baseColor;
+        transition: border-color 0.3s, height 0s;
+      }
+
+      &:not(:hover) {
+        border-color: #d9d9d9;
+        transition: border-color 0.3s;
+      }
+
+      &:focus {
+        box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+      }
 
       .send-textarea {
         //position: absolute;
         //bottom: 0;
         min-height: 42px;
-        line-height: 33px;
+        line-height: 25px;
         padding: 11px 15px;
         display: flex;
         align-items: center;
-        font-size: 1rem;
+        font-size: 14px;
         border-radius: 18px;
+
+        border-width: 0;
+
+        &:focus {
+          box-shadow: none;
+        }
       }
     }
 
     .send-action {
-      position: absolute;
-      bottom: 10px;
-      height: 32px;
+      width: 100%;
+      height: 40px;
       padding-right: 10px;
       display: flex;
-      justify-content: center;
+      justify-content: flex-end;
       align-items: center;
       color: #fff;
       z-index: 101;
@@ -1126,7 +1150,7 @@ scrollBottom();
       }
 
       :deep(.ant-btn-primary:disabled) {
-        height: 100%;
+        height: 36px;
         display: flex;
         justify-content: center;
         align-items: center;

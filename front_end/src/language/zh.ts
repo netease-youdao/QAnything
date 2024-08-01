@@ -74,6 +74,8 @@ export default {
     mixedSearchDescription: '使用向量检索与全文检索的综合结果返回',
     onlySearch: '仅检索模式',
     onlySearchDescription: '此模式不会返回说明文字',
+    rerank: '检索增强',
+    rerankDescription: '检索增强，但会延长检索时间',
     chatUpload: '上传文件',
     chatUploadNoKbId: '请先创建对话',
     chatToPic: '将会话保存为图片',

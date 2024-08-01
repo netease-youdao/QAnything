@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2024-01-09 15:28:56
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-08-01 15:00:32
+ * @LastEditTime: 2024-08-01 19:35:04
  * @FilePath: front_end/src/utils/types.ts
  * @Description:
  */
@@ -105,11 +105,13 @@ export interface IFileListItem {
 // 模型设置
 type ICapabilities = {
   /* 是否联网搜索 */
-  onlineSearch: boolean;
+  networkSearch: boolean;
   /* 是否混合搜索 */
   mixedSearch: boolean;
   /* 是否仅检索 */
   onlySearch: boolean;
+  /* 是否增强检索 */
+  rerank: boolean;
 };
 
 export interface IChatSetting {
