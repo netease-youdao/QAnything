@@ -2,7 +2,7 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-26 14:08:46
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-31 19:47:35
+ * @LastEditTime: 2024-08-01 20:39:59
  * @FilePath: front_end/src/components/ChunkViewDialog.vue
  * @Description: 上传文件解析结果切片的弹窗
  -->
@@ -98,7 +98,7 @@ const columns = [
   {
     title: '操作',
     dataIndex: 'operation',
-    width: '15%',
+    width: '100px',
   },
 ];
 
@@ -200,6 +200,10 @@ watch(
   .chunk-table {
     flex: 1;
     overflow-y: auto;
+
+    :deep(.ant-table-cell) {
+      vertical-align: top;
+    }
   }
 
   .footer {
