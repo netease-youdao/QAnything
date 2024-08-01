@@ -42,6 +42,10 @@
                   >
                     <HighLightMarkDown v-if="item.answer" :content="item.answer" />
                     <span v-else>{{ item.answer }}</span>
+                    <ChatInfoPanel
+                      v-if="Object.keys(item?.itemInfo?.tokenInfo || {}).length"
+                      :chat-item-info="item.itemInfo"
+                    />
                   </p>
                   <p
                     v-else-if="item.onlySearch && !item.source.length"
@@ -54,6 +58,7 @@
                     <span v-if="language === 'zh'">未找到信息来源</span>
                     <span v-else>Information source not found</span>
                   </p>
+
                   <template v-if="item.source.length">
                     <div
                       :class="[
@@ -237,12 +242,13 @@ import html2canvas from 'html2canvas';
 import urlResquest, { userId } from '@/services/urlConfig';
 import { getLanguage } from '@/language';
 import { useLanguage } from '@/store/useLanguage';
-import { resultControl } from '@/utils/utils';
+import { ChatInfoClass, resultControl } from '@/utils/utils';
 import ChatSettingDialog from '@/components/ChatSettingDialog.vue';
 import HistoryChat from '@/components/Home/HistoryChat.vue';
 import { useHomeChat } from '@/store/useHomeChat';
 import HighLightMarkDown from '@/components/HighLightMarkDown.vue';
 import { useChatSetting } from '@/store/useChatSetting';
+import ChatInfoPanel from '@/components/ChatInfoPanel.vue';
 
 const common = getLanguage().common;
 
@@ -398,6 +404,8 @@ const addAnswer = (question: string) => {
   });
 };
 
+const chatInfoClass = new ChatInfoClass();
+
 const setObserveDom = value => {
   observeDom.value = value;
 };
@@ -523,6 +531,8 @@ const send = () => {
     signal: ctrl.signal,
     onopen(e: any) {
       console.log('open');
+      // 模型配置添加进去
+      chatInfoClass.addChatSetting(chatSettingFormActive.value);
       if (e.ok && e.headers.get('content-type') === 'text/event-stream') {
         // addAnswer(question.value);
         // question.value = '';
@@ -542,14 +552,19 @@ const send = () => {
       }
     },
     onmessage(msg: { data: string }) {
-      console.log('message');
+      console.log('message', msg);
       const res: any = JSON.parse(msg.data);
-      console.log(res);
       if (res?.code == 200 && res?.response && res.msg === 'success') {
         // QA_List.value[QA_List.value.length - 1].answer += res.result.response;
         // typewriter.add(res?.response.replaceAll('\n', '<br/>'));
         typewriter.add(res?.response);
         scrollBottom();
+      } else {
+        const timeObj = res.time_record.time_usage;
+        delete timeObj['retriever_search_by_milvus'];
+        chatInfoClass.addTime(res.time_record.time_usage);
+        chatInfoClass.addToken(res.time_record.token_usage);
+        chatInfoClass.addDate(Date.now());
       }
 
       if (res?.source_documents?.length) {
@@ -567,11 +582,14 @@ const send = () => {
       ctrl.abort();
       showLoading.value = false;
       QA_List.value[QA_List.value.length - 1].showTools = true;
+      // 将chat info添加进回答中
+      QA_List.value.at(-1).itemInfo = chatInfoClass.getChatInfo();
       // 更新最大的chatList
       addChatList(chatId.value, QA_List.value);
       nextTick(() => {
         scrollBottom();
       });
+      console.log(QA_List.value);
     },
     onerror(err: any) {
       console.log('error');

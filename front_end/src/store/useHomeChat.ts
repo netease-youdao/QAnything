@@ -1,25 +1,25 @@
-import { IHistoryList } from '@/utils/types';
+import { IChatItem, IHistoryList } from '@/utils/types';
 
 /**
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-11 09:39:35
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-31 15:10:33
+ * @LastEditTime: 2024-08-01 12:25:17
  * @FilePath: front_end/src/store/useHomeChat.ts
  * @Description: 修改配置记得清除localStorage缓存
  */
 
 interface IChatList {
   historyId: number;
-  // list: IChatItem[];
-  list: any[];
+  list: IChatItem[];
+  // list: any[];
 }
 
 export const useHomeChat = defineStore(
   'useHomeChat',
   () => {
     // 当前对话问答列表
-    const QA_List = ref([]);
+    const QA_List = ref<IChatItem[]>([]);
     const setQaList = value => {
       QA_List.value = value;
     };
@@ -72,7 +72,7 @@ export const useHomeChat = defineStore(
     //   // chatList.value = value;
     //   // localStorage.setItem('chatList', JSON.stringify(chatList.value));
     // };
-    const addChatList = (historyId: number, QA_List: any[]) => {
+    const addChatList = (historyId: number, QA_List: IChatItem[]) => {
       const newChat: IChatList = {
         historyId,
         list: QA_List,

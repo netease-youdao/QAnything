@@ -2,17 +2,18 @@
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2024-01-09 15:28:56
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-31 18:59:28
+ * @LastEditTime: 2024-08-01 17:15:29
  * @FilePath: front_end/src/utils/utils.ts
  * @Description:
  */
 
 import { useUser } from '@/store/useUser';
-import { IFileListItem } from './types';
+import { IChatSetting, IFileListItem, ITimeInfo, ITokenInfo } from './types';
 
 export function addWindowsAttr(name, value) {
   window[name] = value;
 }
+
 export function getRandomString(strLen = 5) {
   const strCeils = 'abcdefghijklmnopqrstuvwxyz1234567890';
   let str = '';
@@ -21,6 +22,7 @@ export function getRandomString(strLen = 5) {
   }
   return str;
 }
+
 export function clearTimer(timer) {
   if (timer) {
     clearTimeout(timer);
@@ -152,3 +154,69 @@ export const parseFileName = (filePath: string) => {
     fileExtension: fileExtension,
   };
 };
+
+/**
+ * @description 保存ai回答的time token信息和当前ai的模型配置
+ */
+export class ChatInfoClass {
+  private timeObj: ITimeInfo;
+  private tokenObj: ITokenInfo;
+  private settingObj: IChatSetting;
+  private date: number;
+
+  constructor() {
+    this.timeObj = {
+      preprocess: 0,
+      condense_q_chain: 0,
+      retriever_search: 0,
+      web_search: 0,
+      rerank: 0,
+      reprocess: 0,
+      llm_first_return: 0,
+      first_return: 0,
+      llm_completed: 0,
+      chat_completed: 0,
+    };
+  }
+
+  addTime(timeInfo: ITimeInfo) {
+    this.timeObj = { ...this.timeObj, ...timeInfo };
+  }
+
+  addToken(tokenInfo: ITokenInfo) {
+    this.tokenObj = tokenInfo;
+  }
+
+  addChatSetting(chatSettingInfo: IChatSetting) {
+    this.settingObj = chatSettingInfo;
+  }
+
+  addDate(date: number) {
+    this.date = date;
+  }
+
+  getChatInfo() {
+    return {
+      timeInfo: this.timeObj,
+      tokenInfo: this.tokenObj,
+      settingInfo: this.settingObj,
+      dateInfo: this.date,
+    };
+  }
+}
+
+/**
+ * @description 将时间戳格式化为 2024/8/1 12:30:12 的格式
+ * @param timestamp {number} 时间戳
+ */
+export function formatTimestamp(timestamp: number): string {
+  const date = new Date(timestamp);
+  const year = date.getFullYear(); // 获取年份
+  const month = (date.getMonth() + 1).toString().padStart(2, '0'); // 获取月份，月份从0开始计数
+  const day = date.getDate().toString().padStart(2, '0'); // 获取日
+  const hours = date.getHours().toString().padStart(2, '0'); // 获取小时
+  const minutes = date.getMinutes().toString().padStart(2, '0'); // 获取分钟
+  const seconds = date.getSeconds().toString().padStart(2, '0'); // 获取秒
+
+  return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+}

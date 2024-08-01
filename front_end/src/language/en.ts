@@ -86,7 +86,7 @@ export default {
     customModelType: 'custom model configuration',
     modelNameLabel: 'Custom model name',
     apiKeyLabel: 'API key',
-    apiPathLabel: 'API path',
+    apiBaseLabel: 'API path',
     apiModelNameLabel: 'Model name',
     apiContextLengthLabel: 'Context tokens',
     maxTokenLabel: 'Maximum tokens',

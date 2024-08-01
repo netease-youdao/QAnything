@@ -83,7 +83,7 @@ export default {
     customModelType: '自定义模型配置',
     modelNameLabel: '自定义模型名称',
     apiKeyLabel: 'API密钥',
-    apiPathLabel: 'API路径',
+    apiBaseLabel: 'API路径',
     apiModelNameLabel: '模型名称',
     apiContextLengthLabel: '上下文token数',
     maxTokenLabel: '最大token数',

@@ -48,7 +48,7 @@
           placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx"
         />
       </a-form-item>
-      <a-form-item ref="apiBase" :label="common.apiPathLabel" name="apiBase">
+      <a-form-item ref="apiBase" :label="common.apiBaseLabel" name="apiBase">
         <a-input v-model:value="chatSettingForm.apiBase" aria-autocomplete="none" />
       </a-form-item>
       <a-form-item ref="apiModelName" :label="common.apiModelNameLabel" name="apiModelName">
@@ -307,7 +307,7 @@ const rules: Record<string, Rule[]> = {
     { required: true, message: `${common.plsInput}${common.apiKeyLabel}`, trigger: 'change' },
   ],
   apiBase: [
-    { required: true, message: `${common.plsInput}${common.apiPathLabel}`, trigger: 'change' },
+    { required: true, message: `${common.plsInput}${common.apiBaseLabel}`, trigger: 'change' },
   ],
   apiModelName: [
     {

@@ -1,7 +1,7 @@
 // import { resultControl } from '@/utils/utils';
 // import urlResquest from '@/services/urlConfig';
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
-import { IChatItem, IChatItemInfo } from '@/utils/types';
+import { IChatItem } from '@/utils/types';
 
 const { currentId, knowledgeBaseList } = storeToRefs(useKnowledgeBase());
 
@@ -9,7 +9,7 @@ const { currentId, knowledgeBaseList } = storeToRefs(useKnowledgeBase());
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-22 18:18:48
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-31 15:39:39
+ * @LastEditTime: 2024-08-01 11:04:05
  * @FilePath: front_end/src/store/useQuickStart.ts
  * @Description:
  */
@@ -23,7 +23,6 @@ interface IChatList {
   historyId: number;
   // list: IChatItem[];
   list: IChatItem[];
-  info: IChatItemInfo[];
 }
 
 export const useQuickStart = defineStore(

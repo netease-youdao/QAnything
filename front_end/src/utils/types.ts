@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2024-01-09 15:28:56
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-31 15:19:37
+ * @LastEditTime: 2024-08-01 15:00:32
  * @FilePath: front_end/src/utils/types.ts
  * @Description:
  */
@@ -26,7 +26,7 @@ export interface IDataSourceItem {
 }
 
 export interface IChatItem {
-  type: string; //区别用户提问 和ai回复
+  type: 'ai' | 'user'; //区别用户提问 和ai回复
   question?: string; //问题
   answer?: string; //问题 | 回复内容
   like?: boolean; //点赞
@@ -35,7 +35,11 @@ export interface IChatItem {
   onlySearch?: boolean; // 只检索知识库来源不回答
 
   showTools?: boolean; //当期问答是否结束 结束展示复制等小工具和取消闪烁
-  source?: Array<IDataSourceItem>;
+  source?: Array<IDataSourceItem>; // 数据来源
+
+  picList?: any; // 不知道是啥，但是模板用到了，不知道有没有
+
+  itemInfo?: IChatItemInfo; // 当前对话相关信息 token time chatSetting
 }
 
 // 历史记录
@@ -46,7 +50,7 @@ export interface IHistoryList {
 }
 
 // 对话的耗时信息
-interface ITimeInfo {
+export interface ITimeInfo {
   preprocess: number;
   condense_q_chain: number;
   retriever_search: number;
@@ -56,22 +60,23 @@ interface ITimeInfo {
   llm_first_return: number;
   first_return: number; // 前7个加起来。外层显示
   llm_completed: number;
-  chat_completed: number; // 都加起来。外层显示
+  chat_completed: number; // 后俩加起来。外层显示
 }
 
 // 对话的耗token信息
-interface ITokenInfo {
+export interface ITokenInfo {
   total_tokens: number; // 外层显示
   prompt_tokens: number; // 外层显示
   completion_tokens: number; // 外层显示
   tokens_per_second: number;
 }
 
-// 对话的信息：耗token、耗时、当时的模型信息等
+// 对话的信息：耗token、耗时、当时的模型信息、当时聊天的日期等
 export interface IChatItemInfo {
   timeInfo: ITimeInfo; // 耗时相关
   tokenInfo: ITokenInfo; // token相关
   settingInfo: IChatSetting; // 模型配置相关
+  dateInfo: number; // 当时聊天的日期，时间戳
 }
 
 //url解析状态（前端展示）

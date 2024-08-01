@@ -2,7 +2,7 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-22 16:10:06
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-31 15:31:53
+ * @LastEditTime: 2024-08-01 14:59:59
  * @FilePath: front_end/src/views/QuickStart/index.vue
  * @Description: 快速开始，每个对话对应一个知识库（自动创建），传文件自动放入该对话对应的知识库
  -->
@@ -248,7 +248,7 @@ import { apiBase } from '@/services';
 import urlResquest, { userId } from '@/services/urlConfig';
 import { useChat } from '@/store/useChat';
 import html2canvas from 'html2canvas';
-import { resultControl } from '@/utils/utils';
+import { ChatInfoClass, resultControl } from '@/utils/utils';
 import { useChatSource } from '@/store/useChatSource';
 import { useLanguage } from '@/store/useLanguage';
 import { useQuickStart } from '@/store/useQuickStart';
@@ -375,6 +375,8 @@ const addAnswer = (question: string) => {
   });
 };
 
+const chatInfoClass = new ChatInfoClass();
+
 const updateChat = (title: string, chatId: number, kbId: string) => {
   try {
     updateHistoryList(title, chatId, kbId);
@@ -466,6 +468,8 @@ const send = async () => {
     signal: ctrl.signal,
     async onopen(e: any) {
       console.log('eee', e);
+      // 模型配置添加进去
+      chatInfoClass.addChatSetting(chatSettingFormActive.value);
       if (e.ok && e.headers.get('content-type') === 'text/event-stream') {
         // addAnswer(question.value);
         // question.value = '';
@@ -495,6 +499,12 @@ const send = async () => {
         // typewriter.add(res?.response.replaceAll('\n', '<br/>'));
         typewriter.add(res?.response);
         scrollBottom();
+      } else {
+        const timeObj = res.time_record.time_usage;
+        delete timeObj['retriever_search_by_milvus'];
+        chatInfoClass.addTime(res.time_record.time_usage);
+        chatInfoClass.addToken(res.time_record.token_usage);
+        chatInfoClass.addDate(Date.now());
       }
 
       if (res?.source_documents?.length) {
@@ -507,6 +517,8 @@ const send = async () => {
       ctrl.abort();
       showLoading.value = false;
       QA_List.value[QA_List.value.length - 1].showTools = true;
+      // 将chat info添加进回答中
+      QA_List.value.at(-1).itemInfo = chatInfoClass.getChatInfo();
       // 更新最大的chatList
       addChatList(chatId.value, QA_List.value);
       nextTick(() => {

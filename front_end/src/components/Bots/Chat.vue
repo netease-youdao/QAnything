@@ -147,9 +147,10 @@
           <div v-show="showLoading" ref="stopBtn" class="stop-btn">
             <a-button @click="stopChat">
               <template #icon>
-                <SvgIcon name="stop" :class="showLoading ? 'loading' : ''"></SvgIcon> </template
-              >{{ common.stop }}</a-button
-            >
+                <SvgIcon name="stop" :class="showLoading ? 'loading' : ''"></SvgIcon>
+              </template>
+              {{ common.stop }}
+            </a-button>
           </div>
         </ul>
       </div>
@@ -219,7 +220,7 @@ import { getLanguage } from '@/language/index';
 import { useLanguage } from '@/store/useLanguage';
 import { userId } from '@/services/urlConfig';
 import urlResquest from '@/services/urlConfig';
-import { resultControl } from '@/utils/utils';
+import { ChatInfoClass, resultControl } from '@/utils/utils';
 import { useChatSetting } from '@/store/useChatSetting';
 
 const props = defineProps({
@@ -332,6 +333,8 @@ const addAnswer = (question: string) => {
   });
 };
 
+const chatInfoClass = new ChatInfoClass();
+
 const stopChat = () => {
   if (ctrl) {
     ctrl.abort();
@@ -389,6 +392,8 @@ const send = () => {
     signal: ctrl.signal,
     onopen(e: any) {
       console.log('open');
+      // 模型配置添加进去
+      chatInfoClass.addChatSetting(chatSettingFormActive.value);
       if (e.ok && e.headers.get('content-type') === 'text/event-stream') {
         console.log("everything's good");
         // addAnswer(question.value);
@@ -416,6 +421,12 @@ const send = () => {
         // QA_List.value[QA_List.value.length - 1].answer += res.result.response;
         typewriter.add(res?.response.replaceAll('\n', '<br/>'));
         scrollBottom();
+      } else {
+        const timeObj = res.time_record.time_usage;
+        delete timeObj['retriever_search_by_milvus'];
+        chatInfoClass.addTime(res.time_record.time_usage);
+        chatInfoClass.addToken(res.time_record.token_usage);
+        chatInfoClass.addDate(Date.now());
       }
 
       if (res?.source_documents?.length) {
@@ -433,6 +444,8 @@ const send = () => {
       ctrl.abort();
       showLoading.value = false;
       QA_List.value[QA_List.value.length - 1].showTools = true;
+      // 将chat info添加进回答中
+      QA_List.value.at(-1).itemInfo = chatInfoClass.getChatInfo();
       nextTick(() => {
         scrollBottom();
       });
@@ -588,6 +601,7 @@ let b64Types = [
   'image/png',
   'image/jpeg',
 ];
+
 function getB64Type(suffix) {
   const index = supportSourceTypes.indexOf(suffix);
   return b64Types[index];
@@ -611,12 +625,14 @@ scrollBottom();
   position: relative;
   // background-color: #26293b;
 }
+
 .my-page {
   position: relative;
   margin: 0 auto;
   // border-radius: 12px 0 0 0;
   // background: #f3f6fd;
 }
+
 .header {
   width: 100%;
   height: 52px;
@@ -629,12 +645,14 @@ scrollBottom();
   align-items: center;
   justify-content: center;
   border-bottom: 1px solid #ededed;
+
   img {
     width: 32px;
     height: 32px;
     margin-right: 8px;
   }
 }
+
 .chat {
   margin: 0 auto;
   width: calc(90% - 52px);
@@ -674,6 +692,7 @@ scrollBottom();
 
   .ai {
     margin: 16px 0 28px 0;
+
     .content {
       display: flex;
 
@@ -710,15 +729,18 @@ scrollBottom();
       background: #f9f9fc;
       display: flex;
       align-items: center;
+
       span {
         margin-right: 5px;
       }
+
       svg {
         width: 16px !important;
         height: 16px !important;
         cursor: pointer !important;
       }
     }
+
     .source-total-last {
       border-radius: 0px 0 12px 12px;
     }
@@ -742,12 +764,14 @@ scrollBottom();
       &:nth-first-of-type(1) {
         border-radius: 0px 12px 12px 12px;
       }
+
       .control {
         width: 100%;
         overflow-wrap: break-word;
         display: flex;
         align-items: center;
         flex-wrap: wrap;
+
         .file {
           max-width: 100%;
           word-wrap: break-word;
@@ -817,6 +841,7 @@ scrollBottom();
         align-items: center;
         margin-right: auto;
         color: #5a47e5;
+
         .reload-text {
           height: 22px;
           line-height: 22px;
@@ -850,6 +875,7 @@ scrollBottom();
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
+
   :deep(.ant-btn) {
     width: 92px;
     height: 32px;
@@ -859,6 +885,7 @@ scrollBottom();
     justify-content: center;
     align-items: center;
   }
+
   svg {
     width: 12px;
     height: 12px;
@@ -869,6 +896,7 @@ scrollBottom();
     animation: loading 3s infinite;
   }
 }
+
 .stop-placeholder {
   width: 100%;
   height: 52px;
@@ -911,10 +939,12 @@ scrollBottom();
         width: 24px;
         height: 24px;
       }
+
       &.network-true {
         border: 1px solid #5a47e5;
         color: #5a47e5;
       }
+
       &.network-false {
         border: 1px solid #e5e5e5;
         color: #666666;
@@ -952,6 +982,7 @@ scrollBottom();
       max-width: 1108px;
       border-color: #e5e5e5;
       box-shadow: none !important;
+
       &:hover,
       &:focus,
       &:active {
@@ -963,9 +994,11 @@ scrollBottom();
     :deep(.ant-input:hover) {
       border-color: $baseColor;
     }
+
     :deep(.ant-input:focus) {
       border-color: $baseColor;
     }
+
     :deep(.ant-input-affix-wrapper) {
       padding: 4px 4px 4px 11px;
     }
@@ -986,24 +1019,28 @@ scrollBottom();
   position: absolute;
   top: 0;
   left: 0;
+
   img {
     width: 40px;
     height: 40px;
     margin-bottom: 10px;
   }
+
   p {
     padding: 0 40px;
   }
 }
 
-.sourceitem-leave,   // 离开前,进入后透明度是1
+.sourceitem-leave, // 离开前,进入后透明度是1
 .sourceitem-enter-to {
   opacity: 1;
 }
+
 .sourceitem-leave-active,
 .sourceitem-enter-active {
   transition: opacity 0.5s; //过度是.5s秒
 }
+
 .sourceitem-leave-to,
 .sourceitem-enter {
   opacity: 0;
