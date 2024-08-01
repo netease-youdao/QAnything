@@ -22,13 +22,20 @@
               <div class="content">
                 <img class="avatar" src="@/assets/home/ai-avatar.png" alt="头像" />
                 <p
+                  v-if="!item.onlySearch"
                   class="question-text"
                   :class="[
                     !item.source.length && !item?.picList?.length ? 'change-radius' : '',
                     item.showTools ? '' : 'flashing',
                   ]"
-                  v-html="item.answer"
-                ></p>
+                >
+                  <HighLightMarkDown v-if="item.answer" :content="item.answer" />
+                  <span v-else>{{ item.answer }}</span>
+                  <ChatInfoPanel
+                    v-if="Object.keys(item?.itemInfo?.tokenInfo || {}).length"
+                    :chat-item-info="item.itemInfo"
+                  />
+                </p>
               </div>
               <template v-if="item?.picList?.length">
                 <div
@@ -222,6 +229,8 @@ import { userId } from '@/services/urlConfig';
 import urlResquest from '@/services/urlConfig';
 import { ChatInfoClass, resultControl } from '@/utils/utils';
 import { useChatSetting } from '@/store/useChatSetting';
+import ChatInfoPanel from '@/components/ChatInfoPanel.vue';
+import HighLightMarkDown from '@/components/HighLightMarkDown.vue';
 
 const props = defineProps({
   chatType: {

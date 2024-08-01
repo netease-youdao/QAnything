@@ -2,7 +2,7 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-22 16:10:06
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-08-01 14:59:59
+ * @LastEditTime: 2024-08-01 19:12:30
  * @FilePath: front_end/src/views/QuickStart/index.vue
  * @Description: 快速开始，每个对话对应一个知识库（自动创建），传文件自动放入该对话对应的知识库
  -->
@@ -38,6 +38,10 @@
                   >
                     <HighLightMarkDown v-if="item.answer" :content="item.answer" />
                     <span v-else>{{ item.answer }}</span>
+                    <ChatInfoPanel
+                      v-if="Object.keys(item?.itemInfo?.tokenInfo || {}).length"
+                      :chat-item-info="item.itemInfo"
+                    />
                   </p>
                   <p
                     v-else-if="item.onlySearch && !item.source.length"
@@ -262,6 +266,7 @@ import FileBlock from '@/views/QuickStart/children/FileBlock.vue';
 import { useUploadFiles } from '@/store/useUploadFiles';
 import { useChatSetting } from '@/store/useChatSetting';
 import FileUploadDialog from '@/components/FileUploadDialog.vue';
+import ChatInfoPanel from '@/components/ChatInfoPanel.vue';
 
 const { common, home } = getLanguage();
 
