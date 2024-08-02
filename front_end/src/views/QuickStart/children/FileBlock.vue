@@ -2,7 +2,7 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-24 14:43:45
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-31 13:27:58
+ * @LastEditTime: 2024-08-02 18:16:28
  * @FilePath: front_end/src/views/QuickStart/children/FileBlock.vue
  * @Description: 这是默认设置,可以在设置》工具》File Description中进行配置
  -->
@@ -27,22 +27,25 @@
 <script setup lang="ts">
 import { IFileListItem } from '@/utils/types';
 import SvgIcon from '@/components/SvgIcon.vue';
-import { formatFileSize, parseFileName } from '@/utils/utils';
+import { formatFileSize, parseFileName, resultControl } from '@/utils/utils';
 import LoadingImg from '@/components/LoadingImg.vue';
+import urlResquest from '@/services/urlConfig';
 
 interface IProps {
   fileData: IFileListItem;
+  kbId: string;
 }
 
-// eslint-disable-next-line vue/no-setup-props-destructure
-const { fileData } = defineProps<IProps>();
+const props = defineProps<IProps>();
+
+const { fileData, kbId } = toRefs(props);
 
 const isLoading = computed(() => {
   return fileStatus.value !== 'green';
 });
 
 const fileInfo = computed(() => {
-  return parseFileName(fileData.file_name);
+  return parseFileName(fileData.value.file_name);
 });
 
 const fileIcon = computed(() => {
@@ -52,7 +55,7 @@ const fileIcon = computed(() => {
   return 'file-' + iconMap.get(fileInfo.value.fileExtension);
 });
 
-const fileStatus = ref(fileData.status);
+const fileStatus = ref(fileData.value.status);
 
 // 后缀 -> icon的map
 const iconMap: Map<string, string> = new Map([
@@ -68,9 +71,6 @@ const iconMap: Map<string, string> = new Map([
   ['eml', 'eml'],
   ['csv', 'xlsx'],
 ]);
-onMounted(() => {
-  console.log(fileData);
-});
 
 // 文件当前状态
 /**
@@ -82,6 +82,36 @@ const fileStatusMap = new Map([
   ['green', '解析成功'],
   ['red', '上传失败'],
 ]);
+
+const getDetail = () => {
+  let timer = ref(null);
+  // if (fileData.value.status === 'green' || fileData.value.status === 'red') {
+  //   console.log(fileData.value, 'over');
+  //   clearInterval(timer.value);
+  //   timer.value = null;
+  // } else {
+  timer.value = setInterval(async () => {
+    if (fileData.value.status === 'green' || fileData.value.status === 'red') {
+      console.log(fileData.value, 'over');
+      clearInterval(timer.value);
+      timer.value = null;
+    } else {
+      await resultControl(
+        await urlResquest.fileList({
+          kb_id: kbId.value,
+          file_id: fileData.value.file_id,
+        })
+      );
+    }
+  }, 10000000);
+  // }
+};
+
+onMounted(() => {
+  getDetail();
+  console.log(fileData.value);
+  // fileData.value.status = 'gray';
+});
 </script>
 
 <style lang="scss" scoped>

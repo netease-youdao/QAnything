@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-07 19:32:26
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-31 19:38:45
+ * @LastEditTime: 2024-08-02 18:13:24
  * @FilePath: front_end/src/components/FileUploadDialog.vue
  * @Description:
 -->
@@ -247,7 +247,7 @@ const fileChange = e => {
 
 const uplolad = async () => {
   if (props.dialogType === 0) {
-    showUploadList.value = true;
+    showUploadList.value = false;
   }
   // else if (props.dialogType === 1) {
   //   handleCancel();
@@ -279,7 +279,7 @@ const uplolad = async () => {
       }
     })
     .then(data => {
-      console.log('uploadList', uploadFileList.value);
+      console.log('uploadList', uploadFileList.value, data);
       // 在此处对接口返回的数据进行处理
       if (data.code === 200) {
         if (data.data.length === 0) {
@@ -295,6 +295,7 @@ const uplolad = async () => {
             status = 'error';
           }
           uploadFileList.value[item.order].status = status;
+          uploadFileList.value[item.order].file_id = data;
           uploadFileList.value[item.order].errorText = common.upSucceeded;
         });
       } else {

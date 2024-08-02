@@ -2,7 +2,7 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-22 16:10:06
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-08-01 20:55:29
+ * @LastEditTime: 2024-08-02 18:03:16
  * @FilePath: front_end/src/views/QuickStart/index.vue
  * @Description: 快速开始，每个对话对应一个知识库（自动创建），传文件自动放入该对话对应的知识库
  -->
@@ -178,6 +178,7 @@
               v-for="file of uploadFileList"
               :key="file.file.lastModified"
               :file-data="file"
+              :kb-id="kbId"
             />
           </div>
           <div class="send-box">
@@ -185,9 +186,10 @@
               v-model:value="question"
               class="send-textarea"
               max-length="200"
+              :bordered="false"
               :placeholder="common.problemPlaceholder"
               :auto-size="{ minRows: 4, maxRows: 8 }"
-              @keyup.enter="send"
+              @pressEnter="send"
             />
             <div class="send-action">
               <a-popover>
@@ -237,6 +239,11 @@
   <ChatSettingDialog />
   <DefaultModal :content="content" :confirm-loading="confirmLoading" @ok="confirm" />
   <FileUploadDialog :dialog-type="1" />
+  <a-float-button class="scroll-btn" type="primary" @click="scrollBottom">
+    <template #icon>
+      <SvgIcon name="scroll" />
+    </template>
+  </a-float-button>
 </template>
 
 <script setup lang="ts">
@@ -272,7 +279,14 @@ const { common, home } = getLanguage();
 
 const { copy } = useClipboard();
 const { QA_List, chatId, kbId, showLoading } = storeToRefs(useQuickStart());
-const { addHistoryList, updateHistoryList, addChatList, clearChatList } = useQuickStart();
+const {
+  addHistoryList,
+  updateHistoryList,
+  addChatList,
+  clearChatList,
+  getHistoryById,
+  renameHistory,
+} = useQuickStart();
 const { setChatSourceVisible, setSourceType, setSourceUrl, setTextContent } = useChatSource();
 const { chatSettingFormActive } = storeToRefs(useChatSetting());
 const { showDefault } = storeToRefs(useKnowledgeBase());
@@ -316,7 +330,10 @@ const scrollDom = ref(null);
 
 const scrollBottom = () => {
   nextTick(() => {
-    scrollDom.value?.scrollIntoView(false);
+    scrollDom.value?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'end',
+    });
   });
 };
 
@@ -382,14 +399,6 @@ const addAnswer = (question: string) => {
 
 const chatInfoClass = new ChatInfoClass();
 
-const updateChat = (title: string, chatId: number, kbId: string) => {
-  try {
-    updateHistoryList(title, chatId, kbId);
-  } catch (e) {
-    message.error(e.msg || '更新对话失败');
-  }
-};
-
 const stopChat = () => {
   if (ctrl) {
     ctrl.abort();
@@ -402,9 +411,15 @@ const stopChat = () => {
 // 问答前处理 判断创建对话
 const beforeSend = async title => {
   try {
-    // 判断需不需要新建对话, 为null直接跳出
-    if (chatId.value !== null) return;
-    // 需要新建对话
+    // 判断需不需要新建对话, 为null跳出
+    if (chatId.value !== null) {
+      // 判断是不是刚新建的对话（title = '未命名对话'）是就重命名知识库名字为第一句话
+      if (getHistoryById(chatId.value).title === '未命名对话') {
+        renameHistory(chatId.value, title);
+      }
+      return;
+    }
+    // 需要新建对话（正常操作不会进入这里）
     if (title.length > 100) {
       title = title.substring(0, 100);
     }
@@ -413,7 +428,7 @@ const beforeSend = async title => {
     kbId.value = res.kb_id;
     // 当前对话id为新建的historyId
     chatId.value = addHistoryList(title);
-    updateChat(title, chatId.value, kbId.value);
+    updateHistoryList(title, chatId.value, kbId.value);
   } catch (e) {
     message.error(e.msg || '创建对话失败');
   }
@@ -494,6 +509,7 @@ const send = async () => {
         // if (res.code !== 200) {
         //   message.error(data?.msg || '出错了,请稍后刷新重试。');
         // }
+        console.log('ssss');
         addAnswer(q);
       }
     },
@@ -1021,12 +1037,6 @@ function getB64Type(suffix) {
         align-items: center;
         font-size: 14px;
         border-radius: 18px;
-
-        border-width: 0;
-
-        &:focus {
-          box-shadow: none;
-        }
       }
     }
 
@@ -1091,6 +1101,14 @@ function getB64Type(suffix) {
         height: 24px;
       }
     }
+  }
+}
+
+.scroll-btn {
+  svg {
+    width: 20px;
+    height: 20px;
+    margin-top: 5px;
   }
 }
 

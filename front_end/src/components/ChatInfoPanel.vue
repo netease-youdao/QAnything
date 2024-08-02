@@ -2,7 +2,7 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-29 10:00:43
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-08-01 18:36:06
+ * @LastEditTime: 2024-08-02 15:59:11
  * @FilePath: front_end/src/components/ChatInfoPanel.vue
  * @Description: ai对话的消耗token和耗时, 还有当时对话的模型信息
  -->

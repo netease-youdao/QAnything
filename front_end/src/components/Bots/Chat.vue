@@ -359,6 +359,10 @@ const send = () => {
     message.warn('正在聊天中...请等待结束');
     return;
   }
+  if (!checkChatSetting()) {
+    message.error('模型设置错误，请先检查模型配置');
+    return;
+  }
   const q = question.value;
   question.value = '';
   addQuestion(q);
@@ -448,8 +452,7 @@ const send = () => {
       // }
     },
     onclose(e: any) {
-      console.log('close');
-      console.log(e);
+      console.log('close', e);
       typewriter.done();
       ctrl.abort();
       showLoading.value = false;
@@ -549,6 +552,15 @@ const confirm = async () => {
   content.value = '';
   confirmLoading.value = false;
   showModal.value = false;
+};
+
+// 模型配置是否正确
+const checkChatSetting = () => {
+  return !!(
+    chatSettingFormActive.value.apiKey &&
+    chatSettingFormActive.value.apiBase &&
+    chatSettingFormActive.value.apiModelName
+  );
 };
 
 // 检查信息来源的文件是否支持窗口化渲染

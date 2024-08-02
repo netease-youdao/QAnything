@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2023-12-26 14:49:41
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-31 21:21:18
+ * @LastEditTime: 2024-08-02 11:01:23
  * @FilePath: front_end/src/components/OptionList.vue
  * @Description: 
 -->
@@ -346,7 +346,6 @@ const deleteItem = item => {
 // 预览chunks
 const docId = ref('');
 const viewItem = async item => {
-  console.log('item', item);
   docId.value = item.fileId;
   // 打开弹窗
   showChunkModel.value = true;
@@ -371,7 +370,6 @@ const deleteQaItem = item => {
 };
 
 const qaConfirm = async () => {
-  console.log(qaOptionItem);
   try {
     await resultControl(
       await urlResquest.deleteFile({
@@ -408,7 +406,6 @@ const showUrlUpload = () => {
 const showEditQaSet = () => {
   setFaqType('upload');
   setEditModalVisible(true);
-  console.log('showEditQaSet');
 };
 
 const clearUpload = () => {
@@ -489,13 +486,12 @@ const addKnowledge = async () => {
   }
   //获取到知识库id后  赋值给newId
   try {
-    const res: any = await resultControl(
+    await resultControl(
       await urlResquest.createKb({
         kb_name: `${currentKbName.value}_FAQ`,
         kb_id: `${currentId.value}_FAQ`,
       })
     );
-    console.log(res);
   } catch (e) {
     message.error(e.msg || common.error);
     return false;

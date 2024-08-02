@@ -112,6 +112,7 @@ watch(
   background: #333;
   color: #f0f0f0;
   padding: 20px;
+  overflow-x: auto;
 }
 
 .hight-light-comp p {

@@ -2,7 +2,7 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-26 14:08:46
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-08-01 20:39:59
+ * @LastEditTime: 2024-08-02 11:14:28
  * @FilePath: front_end/src/components/ChunkViewDialog.vue
  * @Description: 上传文件解析结果切片的弹窗
  -->
@@ -15,7 +15,9 @@
       centered
       width="40vw"
       wrap-class-name="chunk-modal"
+      :destroy-on-close="true"
       :footer="null"
+      @cancel="handleCancel"
     >
       <div class="chunk-table">
         <a-table
@@ -33,6 +35,8 @@
                   v-if="editableData[record.key]"
                   v-model:value="editableData[record.key][column.dataIndex]"
                   style="margin: -5px 0"
+                  show-count
+                  :maxlength="2000"
                   auto-size
                 />
                 <template v-else>
@@ -42,13 +46,26 @@
             </template>
             <template v-else-if="column.dataIndex === 'operation'">
               <div class="editable-row-operations">
-                <div v-if="editableData[record.key]">
-                  <a-typography-link v-if="editableData[record.key]" @click="save(record.key)">
-                    {{ common.save }}
-                  </a-typography-link>
-                  <a-typography-text @click="cancel(record.key)">
+                <div v-if="editableData[record.key]" class="operation-div">
+                  <a-button
+                    class="operation-btn"
+                    size="small"
+                    :loading="isShowLoading"
+                    type="link"
+                    @click="save(record.key)"
+                  >
+                    {{ !isShowLoading ? common.save : '' }}
+                  </a-button>
+                  <a-button
+                    v-if="!isShowLoading"
+                    class="operation-btn"
+                    size="small"
+                    :loading="isShowLoading"
+                    type="text"
+                    @click="cancel(record.key)"
+                  >
                     {{ common.cancel }}
-                  </a-typography-text>
+                  </a-button>
                 </div>
                 <a-typography-link v-else @click="edit(record.key)">
                   {{ common.edit }}
@@ -69,7 +86,7 @@
 <script setup lang="ts">
 import { useChunkView } from '@/store/useChunkView';
 import { getLanguage } from '@/language';
-import { UnwrapRef } from 'vue';
+import { Ref } from 'vue';
 import { resultControl } from '@/utils/utils';
 import urlResquest from '@/services/urlConfig';
 import { message } from 'ant-design-vue';
@@ -111,6 +128,9 @@ interface IChunkData {
   content: string;
 }
 
+// 保存的loading
+const isShowLoading = ref(false);
+
 // 分页参数
 const paginationConfig = ref({
   pageNum: 1, // 当前页码
@@ -128,35 +148,37 @@ const changePage = pagination => {
 
 // 数据
 const chunkData = ref<IChunkData[]>([]);
-const editableData: UnwrapRef<Record<string, IChunkData>> = reactive({});
+const editableData: Ref<Record<string, IChunkData>> = ref({});
 const chunkId = ref(1);
 
 const edit = (key: string) => {
-  editableData[key] = chunkData.value.filter(item => key === item.key)[0];
+  editableData.value[key] = chunkData.value.filter(item => key === item.key)[0];
 };
 
 const save = async (key: string) => {
-  try {
-    await resultControl(
-      await urlResquest.updateDocCompleted({
-        doc_id: key,
-        update_content: editableData[key].content,
-      })
-    );
-    message.success('修改成功');
-    Object.assign(chunkData.value.filter(item => key === item.key)[0], editableData[key]);
-    delete editableData[key];
-  } catch (e) {
-    message.error(e.msg || '更新文档解析结果失败');
-  }
+  // try {
+  isShowLoading.value = true;
+  message.success('正在更新，大概需要10s');
+  await resultControl(
+    await urlResquest.updateDocCompleted({
+      doc_id: key,
+      update_content: editableData.value[key].content,
+    })
+  );
+  isShowLoading.value = false;
+  message.success('修改成功');
+  Object.assign(chunkData.value.filter(item => key === item.key)[0], editableData[key]);
+  delete editableData.value[key];
+  // }
 };
 
 const cancel = (key: string) => {
-  delete editableData[key];
+  delete editableData.value[key];
 };
 
 const handleCancel = () => {
   showChunkModel.value = false;
+  !isShowLoading && (editableData.value = {});
 };
 
 // 获取切片
@@ -170,6 +192,7 @@ const getChunks = async (kbId: string, docId: string) => {
         page_limit: paginationConfig.value.pageSize,
       })
     )) as any;
+    paginationConfig.value.total = res.total_count;
     res.chunks.forEach((item: any) => {
       chunkData.value.push({
         id: chunkId.value++,
@@ -186,8 +209,9 @@ watch(
   () => showChunkModel.value,
   () => {
     if (showChunkModel.value) {
+      chunkData.value = [];
       getChunks(kbId.value, docId.value);
-    } else {
+    } else if (!isShowLoading) {
       chunkData.value = [];
       chunkId.value = 1;
     }
@@ -217,6 +241,16 @@ watch(
 .editable-row-operations {
   width: 100%;
   height: 100%;
+
+  .operation-div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .operation-btn {
+      padding: 0;
+    }
+  }
 
   a {
     margin-right: 8px;

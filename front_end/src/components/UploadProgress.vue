@@ -96,7 +96,6 @@ const progressLength = ref<Percent>({
 const computedPercent = () => {
   // 先计算每个状态的总数
   progressPercentCount.value = totalStatus.value;
-  console.log(progressPercentCount.value);
   // 计算每个状态的百分比，并保留两位小数
   for (const status in progressPercentCount.value) {
     const percent = (progressPercentCount.value[status] / kbTotal.value) * 100;

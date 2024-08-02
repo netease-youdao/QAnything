@@ -42,10 +42,12 @@
                   >
                     <HighLightMarkDown v-if="item.answer" :content="item.answer" />
                     <span v-else>{{ item.answer }}</span>
+
                     <ChatInfoPanel
                       v-if="Object.keys(item?.itemInfo?.tokenInfo || {}).length"
                       :chat-item-info="item.itemInfo"
                     />
+                    <!--                    {{ item.itemInfo }}-->
                   </p>
                   <p
                     v-else-if="item.onlySearch && !item.source.length"
@@ -183,9 +185,10 @@
               v-model:value="question"
               class="send-textarea"
               max-length="200"
+              :bordered="false"
               :placeholder="common.problemPlaceholder"
               :auto-size="{ minRows: 4, maxRows: 8 }"
-              @keyup.enter="send"
+              @pressEnter="send"
             />
             <div class="send-action">
               <a-popover placement="topLeft">
@@ -225,6 +228,11 @@
   </div>
   <ChatSettingDialog />
   <DefaultModal :content="content" :confirm-loading="confirmLoading" @ok="confirm" />
+  <a-float-button class="scroll-btn" type="primary" @click="scrollBottom">
+    <template #icon>
+      <SvgIcon name="scroll" />
+    </template>
+  </a-float-button>
 </template>
 <script lang="ts" setup>
 import { apiBase } from '@/services';
@@ -248,7 +256,7 @@ import HistoryChat from '@/components/Home/HistoryChat.vue';
 import { useHomeChat } from '@/store/useHomeChat';
 import HighLightMarkDown from '@/components/HighLightMarkDown.vue';
 import { useChatSetting } from '@/store/useChatSetting';
-import ChatInfoPanel from '@/components/ChatInfoPanel.vue';
+// import ChatInfoPanel from '@/components/ChatInfoPanel.vue';
 
 const common = getLanguage().common;
 
@@ -269,6 +277,11 @@ const { language } = storeToRefs(useLanguage());
 declare module _czc {
   const push: (array: any) => void;
 }
+
+// ai下面的ChatInfoPanel
+// const hasTokenInfo = item => {
+//   return Object.keys(item?.itemInfo?.tokenInfo || {}).length > 0;
+// };
 
 //当前问的问题
 const question = ref('');
@@ -302,7 +315,10 @@ const scrollDom = ref(null);
 
 const scrollBottom = () => {
   nextTick(() => {
-    scrollDom.value?.scrollIntoView(false);
+    scrollDom.value?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'end',
+    });
   });
 };
 
@@ -481,6 +497,10 @@ const send = () => {
     message.warn('正在聊天中...请等待结束');
     return;
   }
+  if (!checkChatSetting()) {
+    message.error('模型设置错误，请先检查模型配置');
+    return;
+  }
   checkKbSelect();
   if (!selectList.value.length) {
     return message.warning(common.chooseError);
@@ -531,7 +551,7 @@ const send = () => {
     }),
     signal: ctrl.signal,
     onopen(e: any) {
-      console.log('open');
+      console.log('open', e);
       // 模型配置添加进去
       chatInfoClass.addChatSetting(chatSettingFormActive.value);
       if (e.ok && e.headers.get('content-type') === 'text/event-stream') {
@@ -577,7 +597,7 @@ const send = () => {
       // }
     },
     onclose(e: any) {
-      console.log('close');
+      console.log('close', e);
       console.log(e);
       typewriter.done();
       ctrl.abort();
@@ -593,7 +613,7 @@ const send = () => {
       console.log(QA_List.value);
     },
     onerror(err: any) {
-      console.log('error');
+      console.log('error', err);
       typewriter?.done();
       ctrl?.abort();
       showLoading.value = false;
@@ -695,6 +715,15 @@ const { showSettingModal } = storeToRefs(useChat());
 
 const handleModalChange = newVal => {
   showSettingModal.value = newVal;
+};
+
+// 模型配置是否正确
+const checkChatSetting = () => {
+  return !!(
+    chatSettingFormActive.value.apiKey &&
+    chatSettingFormActive.value.apiBase &&
+    chatSettingFormActive.value.apiModelName
+  );
 };
 
 // 检查信息来源的文件是否支持窗口化渲染
@@ -1092,12 +1121,6 @@ scrollBottom();
         align-items: center;
         font-size: 14px;
         border-radius: 18px;
-
-        border-width: 0;
-
-        &:focus {
-          box-shadow: none;
-        }
       }
     }
 
@@ -1164,6 +1187,14 @@ scrollBottom();
         height: 24px;
       }
     }
+  }
+}
+
+.scroll-btn {
+  svg {
+    width: 20px;
+    height: 20px;
+    margin-top: 5px;
   }
 }
 

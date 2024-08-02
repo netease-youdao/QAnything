@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-01 14:57:33
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-31 15:40:55
+ * @LastEditTime: 2024-08-02 16:52:03
  * @FilePath: front_end/src/components/Sider.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -75,7 +75,8 @@ import SvgIcon from '@/components/SvgIcon.vue';
 import { getLanguage } from '@/language';
 // import { message } from 'ant-design-vue';
 // import { useKnowledgeModal } from '@/store/useKnowledgeModal';
-import { message } from 'ant-design-vue';
+import { resultControl } from '@/utils/utils';
+import urlResquest from '@/services/urlConfig';
 // import urlResquest from '@/services/urlConfig';
 // import { pageStatus } from '@/utils/enum';
 // import { resultControl } from '@/utils/utils';
@@ -88,7 +89,7 @@ import { message } from 'ant-design-vue';
 // const { knowledgeBaseList, selectList } = storeToRefs(useKnowledgeBase());
 const { knowledgeBaseList } = storeToRefs(useKnowledgeBase());
 const { historyList, showLoading, chatId, QA_List, kbId } = storeToRefs(useQuickStart());
-const { getChatById } = useQuickStart();
+const { getChatById, addHistoryList, updateHistoryList, addChatList } = useQuickStart();
 const { navIndex } = storeToRefs(useHeader());
 const { changePage } = routeController();
 
@@ -117,22 +118,24 @@ function addAnswer(question: string, answer: string, picList, qaId, source) {
 }
 
 // 0新建对话, 1选中对话
-const quickClickHandle = (type: 0 | 1, cardData?: IHistoryList) => {
+const quickClickHandle = async (type: 0 | 1, cardData?: IHistoryList) => {
   if (showLoading.value) return;
   if (type === 0) {
-    if (chatId.value === null) {
-      message.info('已切换最新对话');
-      return;
-    }
-    chatId.value = null;
+    // 新建对话，需要创建对话（知识库）并跳转到新对话
+    const res: any = await resultControl(await urlResquest.createKb({ kb_name: '未命名对话' }));
+    kbId.value = res.kb_id;
     QA_List.value = [];
-    kbId.value = '';
+    // 当前对话id为新建的historyId
+    chatId.value = addHistoryList('未命名对话');
+    updateHistoryList('未命名对话', chatId.value, kbId.value);
+    // 更新最大的chatList
+    addChatList(chatId.value, QA_List.value);
   } else if (type === 1) {
     if (chatId.value === cardData.historyId) return;
     chatId.value = cardData.historyId;
+    console.log(cardData);
     QA_List.value = [];
     kbId.value = cardData.kbId;
-    // try {
     const chat = getChatById(chatId.value);
     chat.list.forEach(item => {
       if (item.type === 'user') {
@@ -141,9 +144,6 @@ const quickClickHandle = (type: 0 | 1, cardData?: IHistoryList) => {
         addAnswer(item.question, item.answer, item.picList, item.qaId, item.source);
       }
     });
-    // } catch (e) {
-    //   message.error(e.msg || '获取问答历史失败');
-    // }
   }
 };
 

@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2024-01-09 15:28:56
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-08-01 19:35:04
+ * @LastEditTime: 2024-08-02 16:40:41
  * @FilePath: front_end/src/utils/types.ts
  * @Description:
  */
@@ -37,7 +37,8 @@ export interface IChatItem {
   showTools?: boolean; //当期问答是否结束 结束展示复制等小工具和取消闪烁
   source?: Array<IDataSourceItem>; // 数据来源
 
-  picList?: any; // 不知道是啥，但是模板用到了，不知道有没有
+  picList?: any; // 不知道是啥，用到了，不敢删
+  qaId?: any; // 同上
 
   itemInfo?: IChatItemInfo; // 当前对话相关信息 token time chatSetting
 }

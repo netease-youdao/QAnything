@@ -2,6 +2,8 @@
 // import urlResquest from '@/services/urlConfig';
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
 import { IChatItem } from '@/utils/types';
+import { resultControl } from '@/utils/utils';
+import urlResquest from '@/services/urlConfig';
 
 const { currentId, knowledgeBaseList } = storeToRefs(useKnowledgeBase());
 
@@ -9,7 +11,7 @@ const { currentId, knowledgeBaseList } = storeToRefs(useKnowledgeBase());
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-22 18:18:48
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-08-01 11:04:05
+ * @LastEditTime: 2024-08-02 17:23:08
  * @FilePath: front_end/src/store/useQuickStart.ts
  * @Description:
  */
@@ -76,6 +78,19 @@ export const useQuickStart = defineStore(
         return item;
       });
       setHistoryList(curHistoryList);
+    };
+    const getHistoryById = (historyId: number) => {
+      return historyList.value.find(item => item.historyId === historyId);
+    };
+    const renameHistory = (historyId: number, title: string) => {
+      historyList.value.forEach(async item => {
+        if (item.historyId === historyId) {
+          await resultControl(
+            await urlResquest.kbConfig({ kb_id: kbId.value, new_kb_name: title })
+          );
+          item.title = title;
+        }
+      });
     };
 
     // 总的对话列表，二维数组，有每个数据里面有自己的historyId
@@ -147,6 +162,8 @@ export const useQuickStart = defineStore(
       addHistoryList,
       deleteHistoryList,
       updateHistoryList,
+      getHistoryById,
+      renameHistory,
       chatList,
       addChatList,
       getChatById,

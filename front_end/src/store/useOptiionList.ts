@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-01 14:57:33
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-26 10:41:05
+ * @LastEditTime: 2024-08-02 11:19:06
  * @FilePath: front_end/src/store/useOptiionList.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -101,7 +101,6 @@ export const useOptiionList = defineStore(
         if (timer.value) {
           clearTimeout(timer.value);
         }
-        console.log(kbPageNum.value);
         const res: any = await resultControl(
           // 接口的page_offset为页码，page_limit为一页几个
           await urlResquest.fileList({
@@ -118,7 +117,6 @@ export const useOptiionList = defineStore(
 
         // 更新状态计数
         Object.assign(totalStatus.value, res.status_count);
-        console.log('----', totalStatus.value);
 
         setDataSource([]);
 
@@ -140,7 +138,6 @@ export const useOptiionList = defineStore(
         const flag = res?.details.some(item => {
           return item.status === 'gray' || item.status === 'yellow';
         });
-        console.log(flag);
         if (flag) {
           console.log('有解析中的  5后再次请求');
           //有解析中的
@@ -152,7 +149,6 @@ export const useOptiionList = defineStore(
           console.log('全部解析完成');
         }
       } catch (error) {
-        console.log(error);
         message.error(error.msg || '获取知识库详情失败');
       }
     };
@@ -213,7 +209,6 @@ export const useOptiionList = defineStore(
         const flag = res?.details.some(item => {
           return item.status === 'gray' || item.status === 'yellow';
         });
-        console.log('flag', flag);
         if (flag) {
           console.log('有解析中的  5s后再次请求');
           //有解析中的

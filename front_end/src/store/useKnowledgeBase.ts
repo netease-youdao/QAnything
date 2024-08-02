@@ -1,9 +1,9 @@
 /*
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2024-01-09 15:28:56
- * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2024-01-11 10:45:35
- * @FilePath: /QAnything/front_end/src/store/useKnowledgeBase.ts
+ * @LastEditors: Ianarua 306781523@qq.com
+ * @LastEditTime: 2024-08-02 16:02:06
+ * @FilePath: front_end/src/store/useKnowledgeBase.ts
  * @Description:
  */
 
@@ -43,7 +43,7 @@ export const useKnowledgeBase = defineStore('knowledgeBase', () => {
   };
 
   //需要判断是否有知识库 如果没有知识库 展示default内容
-  const showDefault = ref(pageStatus.initing);
+  const showDefault = ref(pageStatus.default);
   const setDefault = str => {
     showDefault.value = str;
   };
