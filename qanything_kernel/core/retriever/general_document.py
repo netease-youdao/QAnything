@@ -1,6 +1,6 @@
 from qanything_kernel.utils.general_utils import html_to_markdown, num_tokens, get_time, get_table_infos
 from typing import List
-from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, LOCAL_OCR_SERVICE_URL, PARENT_CHUNK_SIZE
+from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, LOCAL_OCR_SERVICE_URL, DEFAULT_PARENT_CHUNK_SIZE
 from langchain.docstore.document import Document
 from qanything_kernel.utils.loader.my_recursive_url_loader import MyRecursiveUrlLoader
 from qanything_kernel.utils.custom_log import insert_logger
@@ -89,7 +89,7 @@ def get_word_to_markdown(file_path, file_id):
         return None
 
 
-pdf_text_splitter = RecursiveCharacterTextSplitter(chunk_size=PARENT_CHUNK_SIZE, chunk_overlap=0,
+pdf_text_splitter = RecursiveCharacterTextSplitter(chunk_size=DEFAULT_PARENT_CHUNK_SIZE, chunk_overlap=0,
                                                    length_function=num_tokens)
 
 
@@ -157,7 +157,7 @@ class LocalFileForInsert:
         new_docs = []
         if table_infos is not None:
             tmp_content = '\n'.join(title_lst) + '\n' + doc.page_content
-            if num_tokens(tmp_content) <= PARENT_CHUNK_SIZE:
+            if num_tokens(tmp_content) <= DEFAULT_PARENT_CHUNK_SIZE:
                 doc.page_content = tmp_content
                 return [doc]
             head_line = table_infos['head_line']
@@ -172,7 +172,7 @@ class LocalFileForInsert:
             tmp_doc = '\n'.join(title_lst) + '\n' + table_head
             for line in table_infos['lines'][head_line + 2:end_line + 1]:
                 tmp_doc += '\n' + line
-                if num_tokens(tmp_doc) + num_tokens(line) > PARENT_CHUNK_SIZE:
+                if num_tokens(tmp_doc) + num_tokens(line) > DEFAULT_PARENT_CHUNK_SIZE:
                     tmp_doc = Document(page_content=tmp_doc, metadata=doc.metadata)
                     new_docs.append(tmp_doc)
                     tmp_doc = '\n'.join(title_lst) + '\n' + table_head

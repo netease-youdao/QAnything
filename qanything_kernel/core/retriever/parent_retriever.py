@@ -3,7 +3,7 @@ from qanything_kernel.core.retriever.vectorstore import VectorStoreMilvusClient
 from qanything_kernel.core.retriever.elasticsearchstore import StoreElasticSearchClient
 from qanything_kernel.connector.database.mysql.mysql_client import KnowledgeBaseManager
 from qanything_kernel.core.retriever.docstrore import MysqlStore
-from qanything_kernel.configs.model_config import VECTOR_SEARCH_TOP_K, ES_TOP_K, CHILD_CHUNK_SIZE, PARENT_CHUNK_SIZE
+from qanything_kernel.configs.model_config import VECTOR_SEARCH_TOP_K, ES_TOP_K, DEFAULT_CHILD_CHUNK_SIZE, DEFAULT_PARENT_CHUNK_SIZE
 from qanything_kernel.utils.custom_log import debug_logger, insert_logger
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from qanything_kernel.utils.general_utils import num_tokens, get_time_async
@@ -131,15 +131,15 @@ class ParentRetriever:
         # This text splitter is used to create the parent documents
         parent_splitter = RecursiveCharacterTextSplitter(
             separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
-            chunk_size=PARENT_CHUNK_SIZE,
+            chunk_size=DEFAULT_PARENT_CHUNK_SIZE,
             chunk_overlap=0,
             length_function=num_tokens)
         # This text splitter is used to create the child documents
         # It should create documents smaller than the parent
         child_splitter = RecursiveCharacterTextSplitter(
             separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
-            chunk_size=CHILD_CHUNK_SIZE,
-            chunk_overlap=int(CHILD_CHUNK_SIZE / 4),
+            chunk_size=DEFAULT_CHILD_CHUNK_SIZE,
+            chunk_overlap=int(DEFAULT_CHILD_CHUNK_SIZE / 4),
             length_function=num_tokens)
         self.retriever = SelfParentRetriever(
             vectorstore=vectorstore_client.local_vectorstore,

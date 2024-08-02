@@ -64,7 +64,7 @@ CACHED_VS_NUM = 100
 SENTENCE_SIZE = 100
 
 # 知识库检索时返回的匹配内容条数
-VECTOR_SEARCH_TOP_K = 60 
+VECTOR_SEARCH_TOP_K = 60
 
 VECTOR_SEARCH_SCORE_THRESHOLD = 0.3
 
@@ -105,8 +105,8 @@ LOCAL_EMBED_MODEL_PATH = os.path.join(LOCAL_EMBED_PATH, "embed.onnx")
 
 TOKENIZER_PATH = os.path.join(root_path, 'qanything_kernel/connector/llm/tokenizer_files')
 
-CHILD_CHUNK_SIZE = 400
-PARENT_CHUNK_SIZE = 800
+DEFAULT_CHILD_CHUNK_SIZE = 400
+DEFAULT_PARENT_CHUNK_SIZE = 800
 
 # llm_config = {
 #     # 回答的最大token数，一般来说对于国内模型一个中文不到1个token，国外模型一个中文1.5-2个token

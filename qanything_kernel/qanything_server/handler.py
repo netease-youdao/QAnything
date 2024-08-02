@@ -1,7 +1,7 @@
 from qanything_kernel.core.local_file import LocalFile
 from qanything_kernel.core.local_doc_qa import LocalDocQA
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger
-from qanything_kernel.configs.model_config import BOT_DESC, BOT_IMAGE, BOT_PROMPT, BOT_WELCOME
+from qanything_kernel.configs.model_config import BOT_DESC, BOT_IMAGE, BOT_PROMPT, BOT_WELCOME, DEFAULT_PARENT_CHUNK_SIZE
 from qanything_kernel.utils.general_utils import *
 from langchain.schema import Document
 from sanic.response import ResponseStream
@@ -629,6 +629,7 @@ async def local_doc_chat(req: request):
     max_token = safe_get(req, 'max_token')
     request_source = safe_get(req, 'source', 'unknown')
     hybrid_search = safe_get(req, 'hybrid_search', False)
+    parent_chunk_size = safe_get(req, 'parent_chunk_size', DEFAULT_PARENT_CHUNK_SIZE)
 
     debug_logger.info("history: %s ", history)
     debug_logger.info("question: %s", question)
@@ -646,6 +647,8 @@ async def local_doc_chat(req: request):
     debug_logger.info("api_context_length: %s", api_context_length)
     debug_logger.info("top_p: %s", top_p)
     debug_logger.info("temperature: %s", temperature)
+    debug_logger.info("hybrid_search: %s", hybrid_search)
+    debug_logger.info("parent_chunk_size: %s", parent_chunk_size)
 
     time_record = {}
     if kb_ids:
@@ -689,6 +692,7 @@ async def local_doc_chat(req: request):
                                                                                     time_record=time_record,
                                                                                     need_web_search=need_web_search,
                                                                                     hybrid_search=hybrid_search,
+                                                                                    parent_chunk_size=parent_chunk_size,
                                                                                     temperature=temperature,
                                                                                     api_base=api_base,
                                                                                     api_key=api_key,
@@ -766,6 +770,7 @@ async def local_doc_chat(req: request):
                                                                            only_need_search_results=only_need_search_results,
                                                                            need_web_search=need_web_search,
                                                                            hybrid_search=hybrid_search,
+                                                                           parent_chunk_size=parent_chunk_size,
                                                                            temperature=temperature,
                                                                            api_base=api_base,
                                                                            api_key=api_key,

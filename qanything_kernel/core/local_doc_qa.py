@@ -1,5 +1,5 @@
 from qanything_kernel.configs.model_config import VECTOR_SEARCH_TOP_K, VECTOR_SEARCH_SCORE_THRESHOLD, \
-    PROMPT_TEMPLATE, STREAMING, SYSTEM, INSTRUCTIONS, LOCAL_RERANK_PATH, PARENT_CHUNK_SIZE
+    PROMPT_TEMPLATE, STREAMING, SYSTEM, INSTRUCTIONS, LOCAL_RERANK_PATH
 from typing import List, Tuple, Union
 import time
 from qanything_kernel.connector.embedding.embedding_for_online_client import YouDaoEmbeddings
@@ -42,12 +42,6 @@ class LocalDocQA:
         self.es_client: StoreElasticSearchClient = None
         self.rerank_tokenizer = AutoTokenizer.from_pretrained(LOCAL_RERANK_PATH, local_files_only=True)
         self.session = self.create_retry_session(retries=3, backoff_factor=1)
-        self.web_splitter = RecursiveCharacterTextSplitter(
-            separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
-            chunk_size=PARENT_CHUNK_SIZE,
-            chunk_overlap=int(PARENT_CHUNK_SIZE / 4),
-            length_function=num_tokens,
-        )
 
     @staticmethod
     def create_retry_session(retries, backoff_factor):
@@ -85,12 +79,12 @@ class LocalDocQA:
             doc.metadata['file_name'] = file_name + '.web'
             doc.metadata['file_url'] = doc.metadata['source']
             doc.metadata['embed_version'] = self.embeddings.embed_version
+            doc.metadata['score'] = 1 - (idx / len(web_documents))
             source_documents.append(doc)
             if 'description' in doc.metadata:
                 desc_doc = Document(page_content=doc.metadata['description'], metadata=doc.metadata)
                 source_documents.append(desc_doc)
-            doc.metadata['score'] = 1 - (idx / len(web_documents))
-        source_documents = self.web_splitter.split_documents(source_documents)
+        # source_documents = self.web_splitter.split_documents(source_documents)
         return web_content, source_documents
 
     def web_page_search(self, query, top_k=None):
@@ -246,7 +240,7 @@ class LocalDocQA:
             return docs
 
     async def get_knowledge_based_answer(self, model, max_token, kb_ids, query, retriever, custom_prompt, time_record,
-                                         temperature, api_base, api_key, api_context_length, top_p,
+                                         temperature, api_base, api_key, api_context_length, top_p, parent_chunk_size,
                                          chat_history=None, streaming: bool = STREAMING, rerank: bool = False,
                                          only_need_search_results: bool = False, need_web_search=False,
                                          hybrid_search=False):
@@ -314,6 +308,13 @@ class LocalDocQA:
         if need_web_search:
             t1 = time.perf_counter()
             web_search_results = self.web_page_search(query, top_k=3)
+            web_splitter = RecursiveCharacterTextSplitter(
+                separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
+                chunk_size=parent_chunk_size,
+                chunk_overlap=int(parent_chunk_size / 4),
+                length_function=num_tokens,
+            )
+            web_search_results = web_splitter.split_documents(web_search_results)
             t2 = time.perf_counter()
             time_record['web_search'] = round(t2 - t1, 2)
             source_documents += web_search_results
