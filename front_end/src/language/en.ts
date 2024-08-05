@@ -90,9 +90,24 @@ export default {
     apiKeyLabel: 'API key',
     apiBaseLabel: 'API path',
     apiModelNameLabel: 'Model name',
-    apiContextLengthLabel: 'Context tokens',
-    maxTokenLabel: 'Maximum tokens',
-    contextLabel: 'Context Number',
+    apiContextLengthLabel: 'Total Tokens',
+    apiContextLengthLabelDescription:
+      'The upper limit of the total number of tokens input and outputted by LLM',
+    maxTokenLabel: 'Output Tokens',
+    maxTokenLabelDescription:
+      'The upper limit of the number of tokens output by LLM. The maximum value is the Total Tokens / 4',
+    chunkSizeLabel: 'Chunk Size',
+    chunkSizeLabelDescription:
+      'The upper limit of the number of tokens in a single chunk. The maximum value is the Total Tokens / 4',
+    contextLabel: 'Context Message Limit',
+    contextLabelDescription:
+      'The maximum number of historical messages retained in a single round of conversation',
+    temperatureLabel: 'Temperature',
+    temperatureLabelDescription:
+      'Control the randomness of the output. Lower values make the output more certain, higher values increase creativity',
+    top_PLabel: 'Top P',
+    top_PLabelDescription:
+      'Limit vocabulary selection. Lower values make the output more focused, higher values add variety',
     capabilitiesLabel: 'Model capabilities',
     saveModel: 'Save current custom model',
     plsInput: 'Please Input',
@@ -110,7 +125,7 @@ export default {
     remark: 'Remarks or Notes',
     operate: 'Operate',
     conversation: 'Conversation',
-    knowledgeID: 'Knowledge Base ID',
+    knowledgeID: 'Knowledge Base id:',
     upload: 'Upload Documents',
     addUrl: 'Add URL',
     homeTitle1: 'Chat with ',

@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-07 19:32:26
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-07-31 13:22:17
+ * @LastEditTime: 2024-08-05 17:11:59
  * @FilePath: front_end/src/components/UrlUploadDialog.vue
  * @Description: 
 -->
@@ -41,12 +41,14 @@ import UploadInput from '@/components/UploadInput.vue';
 import urlResquest from '@/services/urlConfig';
 import { useOptiionList } from '@/store/useOptiionList';
 import { getLanguage } from '@/language/index';
+import { useChatSetting } from '@/store/useChatSetting';
 
 const common = getLanguage().common;
 const { setKnowledgeName } = useKnowledgeModal();
 const { urlModalVisible, modalTitle, urlList } = storeToRefs(useKnowledgeModal());
 const { currentId, currentKbName } = storeToRefs(useKnowledgeBase());
 const { getDetails } = useOptiionList();
+const { chatSettingFormActive } = storeToRefs(useChatSetting());
 
 const confirmLoading = ref<boolean>(false);
 
@@ -80,6 +82,7 @@ const handleOk = async () => {
 
 const senRequest = async params => {
   let response = await urlResquest.uploadUrl({
+    chunk_size: chatSettingFormActive.value.chunkSize,
     kb_id: currentId.value,
     url: params.text,
     mode: 'strong',

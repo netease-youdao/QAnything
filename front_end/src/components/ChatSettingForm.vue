@@ -74,11 +74,15 @@
         </a-select>
       </a-form-item>
       <div class="form-item-inline">
-        <a-form-item
-          ref="apiContextLength"
-          :label="common.apiContextLengthLabel"
-          name="apiContextLength"
-        >
+        <a-form-item ref="apiContextLength" name="apiContextLength">
+          <template #label>
+            <a-popover placement="topLeft">
+              <template #content>
+                <p>{{ common.apiContextLengthLabelDescription }}</p>
+              </template>
+              <span>{{ common.apiContextLengthLabel }}</span>
+            </a-popover>
+          </template>
           <a-slider
             v-model:value="apiContextTokenK"
             :min="4"
@@ -101,7 +105,15 @@
         </a-form-item>
       </div>
       <div class="form-item-inline">
-        <a-form-item ref="maxToken" :label="common.maxTokenLabel" name="maxToken">
+        <a-form-item ref="maxToken" name="maxToken">
+          <template #label>
+            <a-popover placement="topLeft">
+              <template #content>
+                <p>{{ common.maxTokenLabelDescription }}</p>
+              </template>
+              <span>{{ common.maxTokenLabel }}</span>
+            </a-popover>
+          </template>
           <a-slider
             v-model:value="chatSettingForm.maxToken"
             :min="1"
@@ -122,7 +134,44 @@
         </a-form-item>
       </div>
       <div class="form-item-inline">
-        <a-form-item ref="temperature" label="Temperature" name="temperature">
+        <a-form-item ref="chunkSize" name="chunkSize">
+          <template #label>
+            <a-popover placement="topLeft">
+              <template #content>
+                <p>{{ common.chunkSizeLabelDescription }}</p>
+              </template>
+              <span>{{ common.chunkSizeLabel }}</span>
+            </a-popover>
+          </template>
+          <a-slider
+            v-model:value="chatSettingForm.chunkSize"
+            :min="400"
+            :max="chatSettingForm.apiContextLength / TOKENRATIO"
+            :step="1"
+          />
+        </a-form-item>
+        <a-form-item name="chunkSize">
+          <a-input-number
+            v-model:value="chatSettingForm.chunkSize"
+            :min="400"
+            :max="chatSettingForm.apiContextLength / TOKENRATIO"
+            :step="1"
+            style="margin-left: 16px"
+            :precision="0"
+            :controls="false"
+          />
+        </a-form-item>
+      </div>
+      <div class="form-item-inline">
+        <a-form-item ref="temperature" name="temperature">
+          <template #label>
+            <a-popover placement="topLeft">
+              <template #content>
+                <p>{{ common.temperatureLabelDescription }}</p>
+              </template>
+              <span>{{ common.temperatureLabel }}</span>
+            </a-popover>
+          </template>
           <a-slider v-model:value="chatSettingForm.temperature" :min="0" :max="1" :step="0.01" />
         </a-form-item>
         <a-form-item name="temperature">
@@ -138,7 +187,15 @@
         </a-form-item>
       </div>
       <div class="form-item-inline">
-        <a-form-item ref="top_P" label="top_P" name="top_P">
+        <a-form-item ref="top_P" name="top_P">
+          <template #label>
+            <a-popover placement="topLeft">
+              <template #content>
+                <p>{{ common.top_PLabelDescription }}</p>
+              </template>
+              <span>{{ common.top_PLabel }}</span>
+            </a-popover>
+          </template>
           <a-slider v-model:value="chatSettingForm.top_P" :min="0" :max="1" :step="0.01" />
         </a-form-item>
         <a-form-item name="top_P">
@@ -153,7 +210,15 @@
           />
         </a-form-item>
       </div>
-      <a-form-item ref="context" :label="common.contextLabel" name="context">
+      <a-form-item ref="context" name="context">
+        <template #label>
+          <a-popover placement="topLeft">
+            <template #content>
+              <p>{{ common.contextLabelDescription }}</p>
+            </template>
+            <span>{{ common.contextLabel }}</span>
+          </a-popover>
+        </template>
         <a-slider
           v-model:value="chatSettingForm.context"
           :min="0"
@@ -304,6 +369,9 @@ const rules: Record<string, Rule[]> = {
   ],
   maxToken: [
     { required: true, message: `${common.plsInput}${common.maxTokenLabel}`, trigger: 'change' },
+  ],
+  chunkSize: [
+    { required: true, message: `${common.plsInput}${common.chunkSizeLabel}`, trigger: 'change' },
   ],
   temperature: [{ required: true, message: `${common.plsInput}temperature`, trigger: 'change' }],
   top_P: [{ required: true, message: `${common.plsInput}top_P`, trigger: 'change' }],

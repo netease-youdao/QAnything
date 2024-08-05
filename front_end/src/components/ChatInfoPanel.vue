@@ -2,7 +2,7 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-29 10:00:43
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-08-02 15:59:11
+ * @LastEditTime: 2024-08-05 16:08:44
  * @FilePath: front_end/src/components/ChatInfoPanel.vue
  * @Description: ai对话的消耗token和耗时, 还有当时对话的模型信息
  -->
@@ -105,12 +105,7 @@ const settingInfo = computed(() => {
   const obj = {};
   for (let i in settingInfoOrigin.value) {
     if (MODELINFO.has(i)) {
-      if (i === 'temperature' || i === 'top_P') {
-        // 处理不在国际化的词语
-        obj[i] = settingInfoOrigin.value[i];
-      } else {
-        obj[getLabel(i)] = settingInfoOrigin.value[i];
-      }
+      obj[getLabel(i)] = settingInfoOrigin.value[i];
     }
   }
   return obj;

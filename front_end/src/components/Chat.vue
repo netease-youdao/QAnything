@@ -217,22 +217,19 @@
               </a-button>
             </div>
           </div>
-          <!--          <a-popover placement="topLeft">-->
-          <!--            <template #content>-->
-          <!--              <p>可以设置混合检索、联网检索、模型大小哦！</p>-->
-          <!--            </template>-->
-          <!--          </a-popover>-->
         </div>
       </div>
     </div>
   </div>
   <ChatSettingDialog />
   <DefaultModal :content="content" :confirm-loading="confirmLoading" @ok="confirm" />
-  <a-float-button class="scroll-btn" type="primary" @click="scrollBottom">
-    <template #icon>
-      <SvgIcon name="scroll" />
-    </template>
-  </a-float-button>
+  <a-config-provider :theme="{ token: { colorPrimary: '#5a47e5' } }">
+    <a-float-button class="scroll-btn" type="primary" @click="scrollBottom">
+      <template #icon>
+        <SvgIcon name="scroll" />
+      </template>
+    </a-float-button>
+  </a-config-provider>
 </template>
 <script lang="ts" setup>
 import { apiBase } from '@/services';
@@ -546,6 +543,7 @@ const send = () => {
       api_key: chatSettingFormActive.value.apiKey,
       model: chatSettingFormActive.value.apiModelName,
       api_context_length: chatSettingFormActive.value.apiContextLength,
+      chunk_size: chatSettingFormActive.value.chunkSize,
       top_p: chatSettingFormActive.value.top_P,
       temperature: chatSettingFormActive.value.temperature,
     }),
@@ -1191,6 +1189,9 @@ scrollBottom();
 }
 
 .scroll-btn {
+  inset-inline-end: 17%;
+  inset-block-end: 18%;
+
   svg {
     width: 20px;
     height: 20px;

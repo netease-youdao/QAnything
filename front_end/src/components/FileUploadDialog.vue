@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-07 19:32:26
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-08-05 15:34:11
+ * @LastEditTime: 2024-08-05 17:48:27
  * @FilePath: front_end/src/components/FileUploadDialog.vue
  * @Description:
 -->
@@ -109,6 +109,7 @@ import { message } from 'ant-design-vue';
 import { userId } from '@/services/urlConfig';
 import { getLanguage } from '@/language/index';
 import { useUploadFiles } from '@/store/useUploadFiles';
+import { useChatSetting } from '@/store/useChatSetting';
 // import { useLanguage } from '@/store/useLanguage';
 
 // const { language } = storeToRefs(useLanguage());
@@ -120,6 +121,7 @@ const { modalVisible, modalTitle } = storeToRefs(useKnowledgeModal());
 const { currentId, currentKbName } = storeToRefs(useKnowledgeBase());
 const { uploadFileList } = storeToRefs(useUploadFiles()); // 上传的文件列表
 const { initUploadFileList } = useUploadFiles();
+const { chatSettingFormActive } = storeToRefs(useChatSetting());
 
 const props = defineProps({
   // 0为知识库上传，1为快速开始上传
@@ -266,6 +268,7 @@ const uplolad = async () => {
   }
   formData.append('kb_id', currentId.value);
   formData.append('user_id', userId);
+  formData.append('chunk_size', chatSettingFormActive.value.chunkSize.toString());
   // 上传模式，soft：文件名重复的文件不再上传，strong：文件名重复的文件强制上传
   formData.append('mode', 'strong');
 

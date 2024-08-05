@@ -2,7 +2,7 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-22 16:10:06
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-08-02 18:03:16
+ * @LastEditTime: 2024-08-05 16:56:13
  * @FilePath: front_end/src/views/QuickStart/index.vue
  * @Description: 快速开始，每个对话对应一个知识库（自动创建），传文件自动放入该对话对应的知识库
  -->
@@ -239,11 +239,13 @@
   <ChatSettingDialog />
   <DefaultModal :content="content" :confirm-loading="confirmLoading" @ok="confirm" />
   <FileUploadDialog :dialog-type="1" />
-  <a-float-button class="scroll-btn" type="primary" @click="scrollBottom">
-    <template #icon>
-      <SvgIcon name="scroll" />
-    </template>
-  </a-float-button>
+  <a-config-provider :theme="{ token: { colorPrimary: '#5a47e5' } }">
+    <a-float-button class="scroll-btn" type="primary" @click="scrollBottom">
+      <template #icon>
+        <SvgIcon name="scroll" />
+      </template>
+    </a-float-button>
+  </a-config-provider>
 </template>
 
 <script setup lang="ts">
@@ -483,6 +485,7 @@ const send = async () => {
       api_key: chatSettingFormActive.value.apiKey,
       model: chatSettingFormActive.value.apiModelName,
       api_context_length: chatSettingFormActive.value.apiContextLength,
+      chunk_size: chatSettingFormActive.value.chunkSize,
       top_p: chatSettingFormActive.value.top_P,
       temperature: chatSettingFormActive.value.temperature,
     }),
@@ -1105,6 +1108,9 @@ function getB64Type(suffix) {
 }
 
 .scroll-btn {
+  inset-inline-end: 17%;
+  inset-block-end: 18%;
+
   svg {
     width: 20px;
     height: 20px;

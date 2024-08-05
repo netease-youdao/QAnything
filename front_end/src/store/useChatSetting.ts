@@ -14,6 +14,7 @@ export const useChatSetting = defineStore(
       apiModelName: '',
       apiContextLength: 4096,
       maxToken: 512,
+      chunkSize: 800,
       context: 0,
       temperature: 0.5,
       top_P: 1,
@@ -47,7 +48,6 @@ export const useChatSetting = defineStore(
       },
     ]);
     const setChatSettingConfigured = (chatSetting: IChatSetting) => {
-      console.log('chatSetting-------', chatSetting);
       // 先把所有active设置为false;
       chatSettingConfigured.value.forEach(item => {
         item.active = false;

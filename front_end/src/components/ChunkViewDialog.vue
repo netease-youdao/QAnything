@@ -2,7 +2,7 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-26 14:08:46
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-08-02 11:14:28
+ * @LastEditTime: 2024-08-05 17:11:23
  * @FilePath: front_end/src/components/ChunkViewDialog.vue
  * @Description: 上传文件解析结果切片的弹窗
  -->
@@ -36,7 +36,6 @@
                   v-model:value="editableData[record.key][column.dataIndex]"
                   style="margin: -5px 0"
                   show-count
-                  :maxlength="2000"
                   auto-size
                 />
                 <template v-else>
@@ -90,9 +89,11 @@ import { Ref } from 'vue';
 import { resultControl } from '@/utils/utils';
 import urlResquest from '@/services/urlConfig';
 import { message } from 'ant-design-vue';
+import { useChatSetting } from '@/store/useChatSetting';
 
 const { showChunkModel } = storeToRefs(useChunkView());
 const { common } = getLanguage();
+const { chatSettingFormActive } = storeToRefs(useChatSetting());
 
 interface IProps {
   kbId: string;
@@ -161,6 +162,7 @@ const save = async (key: string) => {
   message.success('正在更新，大概需要10s');
   await resultControl(
     await urlResquest.updateDocCompleted({
+      chunk_size: chatSettingFormActive.value.chunkSize,
       doc_id: key,
       update_content: editableData.value[key].content,
     })

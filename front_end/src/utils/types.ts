@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2024-01-09 15:28:56
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-08-02 16:40:41
+ * @LastEditTime: 2024-08-05 16:36:28
  * @FilePath: front_end/src/utils/types.ts
  * @Description:
  */
@@ -134,6 +134,8 @@ export interface IChatSetting {
   context: number;
   /* 返回的最大token */
   maxToken: number;
+  /* 切片的token数 */
+  chunkSize: number;
   /* 联想与发散 0~1 */
   temperature: number;
   /* top_P 0~1 */

@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2023-12-26 14:49:41
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-08-05 15:36:43
+ * @LastEditTime: 2024-08-05 18:12:53
  * @FilePath: front_end/src/components/OptionList.vue
  * @Description: 
 -->
@@ -16,7 +16,7 @@
         </div>
         <p class="kb-name">
           <span class="name">{{ currentKbName }}</span>
-          <!-- <span class="id">{{ home.knowledgeID }} {{ currentId }}</span> -->
+          <span class="id">{{ home.knowledgeID }} {{ currentId }}</span>
         </p>
       </div>
       <div class="nav-info">
@@ -72,19 +72,6 @@
                   alt="&copy"
                 />
               </a-tooltip>
-              <!--              <span-->
-              <!--                class="small"-->
-              <!--                style="-->
-              <!--                   {-->
-              <!--                    font-size: 12px;-->
-              <!--                    font-weight: normal;-->
-              <!--                    line-height: 18px;-->
-              <!--                    color: #44464e;-->
-              <!--                  }-->
-              <!--                "-->
-              <!--              >-->
-              <!--                (解析成功后可问答)-->
-              <!--              </span>-->
             </template>
           </template>
 
@@ -242,8 +229,8 @@ const navList = [
 const columns = [
   {
     title: home.documentId,
-    dataIndex: 'id',
-    key: 'id',
+    dataIndex: 'fileId',
+    key: 'fileId',
     width: '11%',
   },
   {
@@ -603,7 +590,9 @@ onBeforeUnmount(() => {
     }
 
     .id {
-      font-size: 12px;
+      font-size: 14px;
+      font-weight: 400;
+      color: #999;
     }
   }
 }
@@ -747,10 +736,13 @@ onBeforeUnmount(() => {
     }
   }
 
-  :deep(.ant-table-cell-ellipsis[colstart='2']) {
-    display: flex;
-    align-items: center;
-  }
+  //:deep(.ant-table-cell-ellipsis[colstart='2']) {
+  //  //display: flex;
+  //  //align-items: center;
+  //  //img {
+  //  //  margin-top: 5px;
+  //  //}
+  //}
 }
 
 :deep(.ant-table-wrapper .ant-table-thead > tr > th) {

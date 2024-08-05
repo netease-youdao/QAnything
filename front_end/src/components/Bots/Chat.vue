@@ -400,6 +400,7 @@ const send = () => {
       api_key: chatSettingFormActive.value.apiKey,
       model: chatSettingFormActive.value.apiModelName,
       api_context_length: chatSettingFormActive.value.apiContextLength,
+      chunk_size: chatSettingFormActive.value.chunkSize,
       top_p: chatSettingFormActive.value.top_P,
       temperature: chatSettingFormActive.value.temperature,
     }),

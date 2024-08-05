@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-01 14:57:33
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-08-05 14:36:00
+ * @LastEditTime: 2024-08-05 18:16:09
  * @FilePath: front_end/src/store/useOptiionList.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -116,19 +116,12 @@ export const useOptiionList = defineStore(
         });
 
         // 更新状态计数
-        Object.assign(totalStatus.value, res.total);
+        Object.assign(totalStatus.value, res.status_count);
 
         setDataSource([]);
 
         // 设置一共几个文件
-        const computedTotal = (obj: { [key: string]: number }): number => {
-          let total = 0;
-          for (let i in obj) {
-            total += obj[i];
-          }
-          return total;
-        };
-        setKbTotal(computedTotal(res.total));
+        setKbTotal(res.total);
 
         res?.details.forEach((item: any, index) => {
           dataSource.value.push({
@@ -138,7 +131,7 @@ export const useOptiionList = defineStore(
             status: item?.status,
             bytes: formatFileSize(item?.bytes || 0),
             createtime: formatDate(item?.timestamp),
-            errortext: item?.status === 'gray' || item?.status === 'green' ? '' : item?.msg,
+            errortext: item?.status === 'gray' ? '' : item?.msg,
           });
         });
 
