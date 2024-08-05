@@ -129,23 +129,23 @@ class ParentRetriever:
     def __init__(self, vectorstore_client: VectorStoreMilvusClient, mysql_client: KnowledgeBaseManager, es_client: StoreElasticSearchClient):
         self.mysql_client = mysql_client
         # This text splitter is used to create the parent documents
-        # parent_splitter = RecursiveCharacterTextSplitter(
-        #     separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
-        #     chunk_size=DEFAULT_PARENT_CHUNK_SIZE,
-        #     chunk_overlap=0,
-        #     length_function=num_tokens)
+        init_parent_splitter = RecursiveCharacterTextSplitter(
+            separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
+            chunk_size=DEFAULT_PARENT_CHUNK_SIZE,
+            chunk_overlap=0,
+            length_function=num_tokens)
         # # This text splitter is used to create the child documents
         # # It should create documents smaller than the parent
-        # child_splitter = RecursiveCharacterTextSplitter(
-        #     separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
-        #     chunk_size=DEFAULT_CHILD_CHUNK_SIZE,
-        #     chunk_overlap=int(DEFAULT_CHILD_CHUNK_SIZE / 4),
-        #     length_function=num_tokens)
+        init_child_splitter = RecursiveCharacterTextSplitter(
+            separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
+            chunk_size=DEFAULT_CHILD_CHUNK_SIZE,
+            chunk_overlap=int(DEFAULT_CHILD_CHUNK_SIZE / 4),
+            length_function=num_tokens)
         self.retriever = SelfParentRetriever(
             vectorstore=vectorstore_client.local_vectorstore,
             docstore=MysqlStore(mysql_client),
-            child_splitter=None,
-            parent_splitter=None,
+            child_splitter=init_parent_splitter,
+            parent_splitter=init_child_splitter,
         )
         self.backup_vectorstore: Optional[Milvus] = None
         self.es_store = es_client.es_store
