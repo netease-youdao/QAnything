@@ -64,7 +64,6 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
     split_timeout_seconds = 600
     insert_timeout_seconds = 120
     content_length = -1
-    chunk_size = -1
     status = 'green'
     insert_logger.info(f'Start insert file: {file_info}')
     _, file_id, user_id, file_name, kb_id, file_location, file_size, file_url = file_info
@@ -76,7 +75,7 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
     download_end = time.perf_counter()
     time_record['download_nos_file'] = round(download_end - download_start, 2)
     msg = "success"
-    chunk_size = 0
+    chunks_number = 0
     if local_file.error is not None:
         insert_logger.error(f'download nos error: {local_file.error}')
         status = 'red'
@@ -98,13 +97,13 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
             msg = f"{file_name} content_length too large, {content_length} >= MaxLength(1000000)"
             # await post_data(user_id=user_id, charsize=-1, docid=local_file.file_id,
             #                 status=status, msg=msg)
-            return status, content_length, chunk_size, msg
+            return status, content_length, chunks_number, msg
         elif content_length == 0:
             status = 'red'
             msg = f"{file_name} content_length is 0, file content is empty or The URL exists anti-crawling or requires login."
             # await post_data(user_id=user_id, charsize=-1, docid=local_file.file_id,
             #                 status=status, msg=msg)
-            return status, content_length, chunk_size, msg
+            return status, content_length, chunks_number, msg
         # progress = random.randint(5, 15)
         # await post_data(user_id=user_id, charsize=file_size, docid=local_file.file_id,
         #                 status="Processing", msg=str(progress))
@@ -116,7 +115,7 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
         msg = f"split_file_to_docs timeout: {split_timeout_seconds}s"
         # await post_data(user_id=user_id, charsize=-1, docid=local_file.file_id, status=status,
         #                 msg=msg)
-        return status, content_length, chunk_size, msg
+        return status, content_length, chunks_number, msg
     except Exception as e:
         error_info = f'split_file_to_docs error: {traceback.format_exc()}'
         msg = error_info
@@ -125,7 +124,7 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
         msg = f"split_file_to_docs error"
         # await post_data(user_id=user_id, charsize=-1, docid=local_file.file_id, status=status,
         #                 msg=msg)
-        return status, content_length, chunk_size, msg
+        return status, content_length, chunks_number, msg
     end = time.perf_counter()
     time_record['split'] = round(end - start, 2)
     insert_logger.info(f'split time: {end - start} {len(local_file.docs)}')
@@ -133,11 +132,11 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
 
     try:
         start = time.perf_counter()
-        chunk_size = await retriever.insert_documents(local_file.docs)
+        chunks_number = await retriever.insert_documents(local_file.docs)
         insert_time = time.perf_counter()
         time_record['insert_time'] = round(insert_time - start, 2)
         insert_logger.info(f'insert time: {insert_time - start}')
-        mysql_client.update_chunk_size(local_file.file_id, chunk_size)
+        mysql_client.update_chunks_number(local_file.file_id, chunks_number)
     except asyncio.TimeoutError:
         insert_logger.error(f'Timeout: milvus insert took longer than {insert_timeout_seconds} seconds')
         expr = f'file_id == \"{local_file.file_id}\"'
@@ -148,7 +147,7 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
         # await post_data(user_id=user_id, charsize=-1, docid=local_file.file_id,
         #                 status=status,
         #                 msg=msg)
-        return status, content_length, chunk_size, msg
+        return status, content_length, chunks_number, msg
     except Exception as e:
         error_info = f'milvus insert error: {traceback.format_exc()}'
         insert_logger.error(error_info)
@@ -156,14 +155,14 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
         time_record['insert_error'] = True
         msg = f"milvus insert error"
         # await post_data(user_id=user_id, charsize=-1, docid=local_file.file_id, status=status, msg=msg)
-        return status, content_length, chunk_size, msg
+        return status, content_length, chunks_number, msg
 
     mysql_client.update_file_msg(file_id, f'Processing:{random.randint(75, 100)}%')
-    # await post_data(user_id=user_id, charsize=content_length, docid=local_file.file_id, status=status, msg=msg, chunk_size=chunk_size)
+    # await post_data(user_id=user_id, charsize=content_length, docid=local_file.file_id, status=status, msg=msg, chunks_number=chunks_number)
 
     insert_logger.info(f'insert_files_to_milvus: {user_id}, {kb_id}, {file_id}, {file_name}, {status}')
 
-    return status, content_length, chunk_size, msg
+    return status, content_length, chunks_number, msg
 
 
 async def check_and_process(pool):
@@ -214,14 +213,14 @@ async def check_and_process(pool):
 
                         time_record = {}
                         # 现在处理数据
-                        status, content_length, chunk_size, msg = await process_data(retriever, milvus_kb, mysql_client,
+                        status, content_length, chunks_number, msg = await process_data(retriever, milvus_kb, mysql_client,
                                                                                      file_info, time_record)
 
                         insert_logger.info('time_record: ' + json.dumps(time_record, ensure_ascii=False))
                         # 更新文件处理后的状态和相关信息
                         await cur.execute(
-                            "UPDATE File SET status=%s, content_length=%s, chunk_size=%s, msg=%s WHERE id=%s",
-                            (status, content_length, chunk_size, msg, file_info[0]))
+                            "UPDATE File SET status=%s, content_length=%s, chunks_number=%s, msg=%s WHERE id=%s",
+                            (status, content_length, chunks_number, msg, file_info[0]))
                         await conn.commit()
                         insert_logger.info(f"UPDATE FILE: {timestamp}, {file_id}, {file_name}, {status}")
                         sleep_time = 0.1

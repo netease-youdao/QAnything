@@ -143,7 +143,7 @@ class KnowledgeBaseManager:
                 deleted BOOL DEFAULT 0,
                 file_size INT DEFAULT -1,
                 content_length INT DEFAULT -1,
-                chunk_size INT DEFAULT -1,
+                chunks_number INT DEFAULT -1,
                 file_location VARCHAR(255) DEFAULT 'unknown',
                 file_url VARCHAR(2048) DEFAULT '',
                 upload_infos TEXT,
@@ -464,10 +464,10 @@ class KnowledgeBaseManager:
         query = "UPDATE File SET content_length = %s WHERE file_id = %s"
         self.execute_query_(query, (content_length, file_id), commit=True)
 
-    #  更新file中的chunk_size
-    def update_chunk_size(self, file_id, chunk_size):
+    #  更新file中的chunk_number
+    def update_chunks_number(self, file_id, chunks_number):
         query = "UPDATE File SET chunk_size = %s WHERE file_id = %s"
-        self.execute_query_(query, (chunk_size, file_id), commit=True)
+        self.execute_query_(query, (chunks_number, file_id), commit=True)
 
     def update_file_status(self, file_id, status):
         query = "UPDATE File SET status = %s WHERE file_id = %s"
