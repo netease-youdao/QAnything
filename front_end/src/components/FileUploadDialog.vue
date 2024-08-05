@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-07 19:32:26
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-08-05 14:47:15
+ * @LastEditTime: 2024-08-05 15:34:11
  * @FilePath: front_end/src/components/FileUploadDialog.vue
  * @Description:
 -->
@@ -136,6 +136,7 @@ const timer = ref();
 
 //控制确认按钮 是否能提交
 const canSubmit = computed(() => {
+  console.log(currentId.value, uploadFileList.value);
   return (
     currentId.value.length > 0 &&
     uploadFileList.value.length > 0 &&
@@ -248,7 +249,7 @@ const fileChange = e => {
 
 const uplolad = async () => {
   if (props.dialogType === 0) {
-    showUploadList.value = false;
+    showUploadList.value = true;
   }
   // else if (props.dialogType === 1) {
   //   handleCancel();
@@ -311,14 +312,10 @@ const uplolad = async () => {
           uploadFileList.value[item.order].errorText = data?.msg || common.upFailed;
         });
       }
+    })
+    .finally(() => {
+      getDetails();
     });
-  // .catch(error => {
-  //   list.forEach(item => {
-  //     uploadFileList.value[item.order].status = 'error';
-  //     uploadFileList.value[item.order].errorText = error?.msg || common.upFailed;
-  //   });
-  //   message.error(JSON.stringify(error?.msg) || '出错了');
-  // });
 };
 
 const handleOk = async () => {

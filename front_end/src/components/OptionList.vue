@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2023-12-26 14:49:41
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-08-02 11:01:23
+ * @LastEditTime: 2024-08-05 15:36:43
  * @FilePath: front_end/src/components/OptionList.vue
  * @Description: 
 -->
@@ -37,9 +37,15 @@
           <a-button v-if="navIndex === 0" danger class="clear-upload" @click="clearUpload">
             {{ home.clearAllFile }}
           </a-button>
-          <div v-if="navIndex === 0" class="upload" @click="showFileUpload">{{ home.upload }}</div>
-          <div v-if="navIndex === 0" class="add-link" @click="showUrlUpload">{{ home.addUrl }}</div>
-          <div v-if="navIndex === 1" class="upload" @click="showEditQaSet">{{ home.inputQa }}</div>
+          <a-button v-if="navIndex === 0" class="upload" @click="showFileUpload">
+            {{ home.upload }}
+          </a-button>
+          <a-button v-if="navIndex === 0" class="add-link" @click="showUrlUpload">
+            {{ home.addUrl }}
+          </a-button>
+          <a-button v-if="navIndex === 1" class="upload" @click="showEditQaSet">
+            {{ home.inputQa }}
+          </a-button>
         </div>
       </div>
       <div class="table">
@@ -664,6 +670,7 @@ onBeforeUnmount(() => {
 
     .add-link {
       cursor: pointer;
+      height: 40px;
       margin-left: 16px;
       padding: 8px 20px;
       border-radius: 4px;
