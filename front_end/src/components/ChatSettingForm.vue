@@ -247,12 +247,12 @@ const openAIModelSelect = (value: any) => {
 };
 
 // maxToken是上下文token的 1/TOKENRATIO 倍
-const TOKENRATIO = 2;
+const TOKENRATIO = 4;
 
 // 上下文条数，无限制tooltip
 const sliderFormatter = (value: number) => {
-  if (value >= 22) {
-    // 22代表无限制，所以最后发送的时候如果是22，需要做无限制处理
+  if (value >= 11) {
+    // 11代表无限制，所以最后发送的时候如果是11，需要做无限制处理
     return '无限制';
   }
   return value;

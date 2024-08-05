@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-07 19:32:26
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-08-02 18:13:24
+ * @LastEditTime: 2024-08-05 14:47:15
  * @FilePath: front_end/src/components/FileUploadDialog.vue
  * @Description:
 -->
@@ -186,6 +186,7 @@ const beforeFileUpload = async (file, index) => {
         file_id: '',
         order: uploadFileList.value.length,
       });
+      // initCurUploadFileNum();
       resolve(index);
     } else {
       reject(file.name);
@@ -265,7 +266,7 @@ const uplolad = async () => {
   formData.append('kb_id', currentId.value);
   formData.append('user_id', userId);
   // 上传模式，soft：文件名重复的文件不再上传，strong：文件名重复的文件强制上传
-  formData.append('mode', 'soft');
+  formData.append('mode', 'strong');
 
   fetch(apiBase + '/local_doc_qa/upload_files', {
     method: 'POST',
@@ -285,6 +286,10 @@ const uplolad = async () => {
         if (data.data.length === 0) {
           message.warn(data.msg || '出错了');
           handleCancel();
+          list.forEach(item => {
+            uploadFileList.value[item.order].status = 'error';
+            uploadFileList.value[item.order].errorText = data?.msg || common.upFailed;
+          });
           return;
         }
         list.forEach((item, index) => {
@@ -295,7 +300,8 @@ const uplolad = async () => {
             status = 'error';
           }
           uploadFileList.value[item.order].status = status;
-          uploadFileList.value[item.order].file_id = data;
+          console.log('data', data, item);
+          uploadFileList.value[item.order].file_id = data.data[index].file_id;
           uploadFileList.value[item.order].errorText = common.upSucceeded;
         });
       } else {

@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-01 14:57:33
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-08-02 11:19:06
+ * @LastEditTime: 2024-08-05 14:36:00
  * @FilePath: front_end/src/store/useOptiionList.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -41,7 +41,7 @@ export const useOptiionList = defineStore(
       red: 0,
     });
 
-    // 知识库总数
+    // 知识库文件总数
     const kbTotal = ref(0);
     const setKbTotal = value => {
       kbTotal.value = value;
@@ -116,12 +116,19 @@ export const useOptiionList = defineStore(
         });
 
         // 更新状态计数
-        Object.assign(totalStatus.value, res.status_count);
+        Object.assign(totalStatus.value, res.total);
 
         setDataSource([]);
 
-        // 设置分页参数
-        setKbTotal(res.total);
+        // 设置一共几个文件
+        const computedTotal = (obj: { [key: string]: number }): number => {
+          let total = 0;
+          for (let i in obj) {
+            total += obj[i];
+          }
+          return total;
+        };
+        setKbTotal(computedTotal(res.total));
 
         res?.details.forEach((item: any, index) => {
           dataSource.value.push({

@@ -2,7 +2,7 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-24 14:43:45
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-08-02 18:16:28
+ * @LastEditTime: 2024-08-05 14:40:16
  * @FilePath: front_end/src/views/QuickStart/children/FileBlock.vue
  * @Description: 这是默认设置,可以在设置》工具》File Description中进行配置
  -->
@@ -41,7 +41,11 @@ const props = defineProps<IProps>();
 const { fileData, kbId } = toRefs(props);
 
 const isLoading = computed(() => {
-  return fileStatus.value !== 'green';
+  return fileStatus.value !== 'green' && fileStatus.value !== 'red';
+});
+
+onMounted(() => {
+  console.log('00---fileData0', fileData.value);
 });
 
 const fileInfo = computed(() => {
@@ -55,7 +59,9 @@ const fileIcon = computed(() => {
   return 'file-' + iconMap.get(fileInfo.value.fileExtension);
 });
 
-const fileStatus = ref(fileData.value.status);
+const fileStatus = computed(() => {
+  return fileData.value.status;
+});
 
 // 后缀 -> icon的map
 const iconMap: Map<string, string> = new Map([
@@ -85,35 +91,30 @@ const fileStatusMap = new Map([
 
 const getDetail = () => {
   let timer = ref(null);
-  // if (fileData.value.status === 'green' || fileData.value.status === 'red') {
-  //   console.log(fileData.value, 'over');
-  //   clearInterval(timer.value);
-  //   timer.value = null;
-  // } else {
   timer.value = setInterval(async () => {
+    console.log('setinterval', fileData.value);
     if (fileData.value.status === 'green' || fileData.value.status === 'red') {
-      console.log(fileData.value, 'over');
       clearInterval(timer.value);
       timer.value = null;
     } else {
-      await resultControl(
+      const res = (await resultControl(
         await urlResquest.fileList({
           kb_id: kbId.value,
           file_id: fileData.value.file_id,
         })
-      );
+      )) as any;
+      console.log(res);
+      fileData.value.status = res.details[0].status;
     }
-  }, 10000000);
+  }, 5000);
   // }
 };
 
 onMounted(() => {
   getDetail();
-  console.log(fileData.value);
-  // fileData.value.status = 'gray';
 });
 </script>
-
+z
 <style lang="scss" scoped>
 .contain {
   position: relative;
