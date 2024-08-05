@@ -161,7 +161,8 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
     # await post_data(user_id=user_id, charsize=content_length, docid=local_file.file_id, status=status, msg=msg, chunks_number=chunks_number)
 
     insert_logger.info(f'insert_files_to_milvus: {user_id}, {kb_id}, {file_id}, {file_name}, {status}')
-
+    msg = {"msg": msg, "time_record": time_record, "status": status}
+    msg = json.dumps(msg, ensure_ascii=False)
     return status, content_length, chunks_number, msg
 
 
