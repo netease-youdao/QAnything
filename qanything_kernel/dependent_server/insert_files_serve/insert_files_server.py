@@ -66,12 +66,12 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
     content_length = -1
     status = 'green'
     insert_logger.info(f'Start insert file: {file_info}')
-    _, file_id, user_id, file_name, kb_id, file_location, file_size, file_url = file_info
+    _, file_id, user_id, file_name, kb_id, file_location, file_size, file_url, chunk_size = file_info
     # 获取格式为'2021-08-01 00:00:00'的时间戳
     insert_timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
     mysql_client.update_knowlegde_base_latest_insert_time(kb_id, insert_timestamp)
     download_start = time.perf_counter()
-    local_file = LocalFileForInsert(user_id, kb_id, file_id, file_location, file_name, file_url, mysql_client)
+    local_file = LocalFileForInsert(user_id, kb_id, file_id, file_location, file_name, file_url, chunk_size, mysql_client)
     download_end = time.perf_counter()
     time_record['download_nos_file'] = round(download_end - download_start, 2)
     msg = "success"
@@ -132,7 +132,7 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
 
     try:
         start = time.perf_counter()
-        chunks_number = await retriever.insert_documents(local_file.docs)
+        chunks_number = await retriever.insert_documents(local_file.docs, chunk_size)
         insert_time = time.perf_counter()
         time_record['insert_time'] = round(insert_time - start, 2)
         insert_logger.info(f'insert time: {insert_time - start}')
@@ -207,14 +207,15 @@ async def check_and_process(pool):
                         insert_logger.info(f"UPDATE FILE: {timestamp}, {file_id}, {file_name}, yellow")
 
                         await cur.execute(
-                            "SELECT id, file_id, user_id, file_name, kb_id, file_location, file_size, file_url FROM File WHERE id=%s",
-                            (id,))
+                            "SELECT id, file_id, user_id, file_name, kb_id, file_location, file_size, file_url, "
+                            "chunk_size FROM File WHERE id=%s", (id,))
                         file_info = await cur.fetchone()
 
                         time_record = {}
                         # 现在处理数据
-                        status, content_length, chunks_number, msg = await process_data(retriever, milvus_kb, mysql_client,
-                                                                                     file_info, time_record)
+                        status, content_length, chunks_number, msg = await process_data(retriever, milvus_kb,
+                                                                                        mysql_client,
+                                                                                        file_info, time_record)
 
                         insert_logger.info('time_record: ' + json.dumps(time_record, ensure_ascii=False))
                         # 更新文件处理后的状态和相关信息

@@ -147,6 +147,7 @@ class KnowledgeBaseManager:
                 file_location VARCHAR(255) DEFAULT 'unknown',
                 file_url VARCHAR(2048) DEFAULT '',
                 upload_infos TEXT,
+                chunk_size INT DEFAULT -1,
                 timestamp VARCHAR(255) DEFAULT '197001010000'
             );
 
@@ -451,11 +452,12 @@ class KnowledgeBaseManager:
         self.execute_query_(query, (timestamp, kb_id), commit=True)
 
     # [文件] 向指定知识库下面增加文件
-    def add_file(self, file_id, user_id, kb_id, file_name, file_size, file_location, timestamp, file_url='',
+    def add_file(self, file_id, user_id, kb_id, file_name, file_size, file_location, chunk_size, timestamp, file_url='',
                  status="gray"):
-        query = "INSERT INTO File (file_id, user_id, kb_id, file_name, status, file_size, file_location, timestamp, file_url) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        query = ("INSERT INTO File (file_id, user_id, kb_id, file_name, status, file_size, file_location, chunk_size, "
+                 "timestamp, file_url) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)")
         self.execute_query_(query,
-                            (file_id, user_id, kb_id, file_name, status, file_size, file_location, timestamp, file_url),
+                            (file_id, user_id, kb_id, file_name, status, file_size, file_location, chunk_size, timestamp, file_url),
                             commit=True)
         return "success"
 

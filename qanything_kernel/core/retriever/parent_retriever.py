@@ -129,29 +129,41 @@ class ParentRetriever:
     def __init__(self, vectorstore_client: VectorStoreMilvusClient, mysql_client: KnowledgeBaseManager, es_client: StoreElasticSearchClient):
         self.mysql_client = mysql_client
         # This text splitter is used to create the parent documents
-        parent_splitter = RecursiveCharacterTextSplitter(
-            separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
-            chunk_size=DEFAULT_PARENT_CHUNK_SIZE,
-            chunk_overlap=0,
-            length_function=num_tokens)
-        # This text splitter is used to create the child documents
-        # It should create documents smaller than the parent
-        child_splitter = RecursiveCharacterTextSplitter(
-            separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
-            chunk_size=DEFAULT_CHILD_CHUNK_SIZE,
-            chunk_overlap=int(DEFAULT_CHILD_CHUNK_SIZE / 4),
-            length_function=num_tokens)
+        # parent_splitter = RecursiveCharacterTextSplitter(
+        #     separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
+        #     chunk_size=DEFAULT_PARENT_CHUNK_SIZE,
+        #     chunk_overlap=0,
+        #     length_function=num_tokens)
+        # # This text splitter is used to create the child documents
+        # # It should create documents smaller than the parent
+        # child_splitter = RecursiveCharacterTextSplitter(
+        #     separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
+        #     chunk_size=DEFAULT_CHILD_CHUNK_SIZE,
+        #     chunk_overlap=int(DEFAULT_CHILD_CHUNK_SIZE / 4),
+        #     length_function=num_tokens)
         self.retriever = SelfParentRetriever(
             vectorstore=vectorstore_client.local_vectorstore,
             docstore=MysqlStore(mysql_client),
-            child_splitter=child_splitter,
-            parent_splitter=parent_splitter,
+            child_splitter=None,
+            parent_splitter=None,
         )
         self.backup_vectorstore: Optional[Milvus] = None
         self.es_store = es_client.es_store
 
     @get_time_async
-    async def insert_documents(self, docs, single_parent=False):
+    async def insert_documents(self, docs, parent_chunk_size, single_parent=False):
+        self.retriever.parent_splitter = RecursiveCharacterTextSplitter(
+            separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
+            chunk_size=parent_chunk_size,
+            chunk_overlap=0,
+            length_function=num_tokens)
+        child_chunk_size = min(DEFAULT_CHILD_CHUNK_SIZE, int(parent_chunk_size / 2))
+        self.retriever.child_splitter = RecursiveCharacterTextSplitter(
+            separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
+            chunk_size=child_chunk_size,
+            chunk_overlap=int(child_chunk_size / 4),
+            length_function=num_tokens)
+
         # insert_logger.info(f'insert documents: {len(docs)}')
         embed_docs = copy.deepcopy(docs)
         # 补充metadata信息

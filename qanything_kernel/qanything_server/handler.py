@@ -130,6 +130,9 @@ async def upload_weblink(req: request):
         file_names.append(file_name)
 
     mode = safe_get(req, 'mode', default='soft')  # soft代表不上传同名文件，strong表示强制上传同名文件
+    debug_logger.info("mode: %s", mode)
+    chunk_size = safe_get(req, 'chunk_size', default=DEFAULT_PARENT_CHUNK_SIZE)
+    debug_logger.info("chunk_size: %s", chunk_size)
 
     exist_file_names = []
     if mode == 'soft':
@@ -139,11 +142,6 @@ async def upload_weblink(req: request):
             file_id, file_name, file_size, status = exist_file
             debug_logger.info(f"{url}, {status}, existed files, skip upload")
             # await post_data(user_id, -1, file_id, status, msg='existed files, skip upload')
-    # if exist_files:
-    #     file_id, file_name, file_size, status = exist_files[0]
-    #     await post_data(user_id, file_size, file_id, status, msg="existed files, skip upload")
-    #     msg = f'warning，当前的mode是soft，无法上传同名文件，如果想强制上传同名文件，请设置mode：strong'
-    #     data = [{"file_id": file_id, "file_name": file_name, "status": status, "bytes": file_size, "timestamp": timestamp}]
     now = datetime.now()
     timestamp = now.strftime("%Y%m%d%H%M")
 
@@ -151,12 +149,12 @@ async def upload_weblink(req: request):
     for url, file_name in zip(urls, file_names):
         if file_name in exist_file_names:
             continue
-        local_file = LocalFile(user_id, kb_id, url, file_name, local_doc_qa.milvus_summary)
+        local_file = LocalFile(user_id, kb_id, url, file_name)
         file_id = local_file.file_id
         file_size = len(local_file.file_content)
         file_location = local_file.file_location
         msg = local_doc_qa.milvus_summary.add_file(file_id, user_id, kb_id, file_name, file_size, file_location,
-                                                   timestamp, url)
+                                                   chunk_size, timestamp, url)
         debug_logger.info(f"{url}, {file_name}, {file_id}, {msg}")
         data.append({"file_id": file_id, "file_name": file_name, "file_url": url, "status": "gray", "bytes": 0,
                      "timestamp": timestamp})
@@ -184,6 +182,8 @@ async def upload_files(req: request):
     debug_logger.info("kb_id %s", kb_id)
     mode = safe_get(req, 'mode', default='soft')  # soft代表不上传同名文件，strong表示强制上传同名文件
     debug_logger.info("mode: %s", mode)
+    chunk_size = safe_get(req, 'chunk_size', default=DEFAULT_PARENT_CHUNK_SIZE)
+    debug_logger.info("chunk_size: %s", chunk_size)
     use_local_file = safe_get(req, 'use_local_file', 'false')
     if use_local_file == 'true':
         files = read_files_with_extensions()
@@ -234,13 +234,13 @@ async def upload_files(req: request):
     for file, file_name in zip(files, file_names):
         if file_name in exist_file_names:
             continue
-        local_file = LocalFile(user_id, kb_id, file, file_name, local_doc_qa.milvus_summary)
+        local_file = LocalFile(user_id, kb_id, file, file_name)
         file_id = local_file.file_id
         file_size = len(local_file.file_content)
         file_location = local_file.file_location
         local_files.append(local_file)
         msg = local_doc_qa.milvus_summary.add_file(file_id, user_id, kb_id, file_name, file_size, file_location,
-                                                   timestamp)
+                                                   chunk_size, timestamp)
         debug_logger.info(f"{file_name}, {file_id}, {msg}")
         data.append(
             {"file_id": file_id, "file_name": file_name, "status": "gray", "bytes": len(local_file.file_content),
@@ -303,12 +303,13 @@ async def upload_faqs(req: request):
         #         "timestamp": local_doc_qa.milvus_summary.get_file_timestamp(faq_id)
         #     })
         #     continue
-        local_file = LocalFile(user_id, kb_id, faq, file_name, local_doc_qa.milvus_summary)
+        local_file = LocalFile(user_id, kb_id, faq, file_name)
         file_id = local_file.file_id
         file_location = local_file.file_location
         local_files.append(local_file)
-        msg = local_doc_qa.milvus_summary.add_file(file_id, user_id, kb_id, file_name, file_size, file_location,
-                                                   timestamp)
+        local_doc_qa.milvus_summary.add_faq(file_id, user_id, kb_id, faq['question'], faq['answer'], faq.get('nos_keys', ''))
+        local_doc_qa.milvus_summary.add_file(file_id, user_id, kb_id, file_name, file_size, file_location,
+                                             -1, timestamp)
         # debug_logger.info(f"{file_name}, {file_id}, {msg}, {faq}")
         data.append(
             {"file_id": file_id, "file_name": file_name, "status": "gray", "length": file_size,
@@ -629,7 +630,7 @@ async def local_doc_chat(req: request):
     max_token = safe_get(req, 'max_token')
     request_source = safe_get(req, 'source', 'unknown')
     hybrid_search = safe_get(req, 'hybrid_search', False)
-    parent_chunk_size = safe_get(req, 'parent_chunk_size', DEFAULT_PARENT_CHUNK_SIZE)
+    web_chunk_size = safe_get(req, 'web_chunk_size', DEFAULT_PARENT_CHUNK_SIZE)
 
     debug_logger.info("history: %s ", history)
     debug_logger.info("question: %s", question)
@@ -648,7 +649,7 @@ async def local_doc_chat(req: request):
     debug_logger.info("top_p: %s", top_p)
     debug_logger.info("temperature: %s", temperature)
     debug_logger.info("hybrid_search: %s", hybrid_search)
-    debug_logger.info("parent_chunk_size: %s", parent_chunk_size)
+    debug_logger.info("web_chunk_size: %s", web_chunk_size)
 
     time_record = {}
     if kb_ids:
@@ -692,7 +693,7 @@ async def local_doc_chat(req: request):
                                                                                     time_record=time_record,
                                                                                     need_web_search=need_web_search,
                                                                                     hybrid_search=hybrid_search,
-                                                                                    parent_chunk_size=parent_chunk_size,
+                                                                                    web_chunk_size=web_chunk_size,
                                                                                     temperature=temperature,
                                                                                     api_base=api_base,
                                                                                     api_key=api_key,
@@ -770,7 +771,7 @@ async def local_doc_chat(req: request):
                                                                            only_need_search_results=only_need_search_results,
                                                                            need_web_search=need_web_search,
                                                                            hybrid_search=hybrid_search,
-                                                                           parent_chunk_size=parent_chunk_size,
+                                                                           web_chunk_size=web_chunk_size,
                                                                            temperature=temperature,
                                                                            api_base=api_base,
                                                                            api_key=api_key,
@@ -1242,6 +1243,9 @@ async def update_chunks(req: request):
     doc_id = safe_get(req, 'doc_id')
     debug_logger.info(f"doc_id: {doc_id}")
     update_content = safe_get(req, 'update_content')
+    debug_logger.info(f"update_content: {update_content}")
+    chunk_size = safe_get(req, 'chunk_size', DEFAULT_PARENT_CHUNK_SIZE)
+    debug_logger.info(f"chunk_size: {chunk_size}")
     doc_json = local_doc_qa.milvus_summary.get_document_by_doc_id(doc_id)
     if not doc_json:
         return sanic_json({"code": 2003, "msg": "fail, DocId {} not found".format(doc_id)})
@@ -1250,5 +1254,5 @@ async def update_chunks(req: request):
     local_doc_qa.milvus_summary.update_document(doc_id, update_content)
     expr = f'doc_id == "{doc_id}"'
     local_doc_qa.milvus_kb.delete_expr(expr)
-    await local_doc_qa.retriever.insert_documents([doc], True)
+    await local_doc_qa.retriever.insert_documents([doc], chunk_size, True)
     return sanic_json({"code": 200, "msg": "success update doc_id {}".format(doc_id)})

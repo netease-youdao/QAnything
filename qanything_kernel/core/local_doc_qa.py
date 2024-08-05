@@ -240,7 +240,7 @@ class LocalDocQA:
             return docs
 
     async def get_knowledge_based_answer(self, model, max_token, kb_ids, query, retriever, custom_prompt, time_record,
-                                         temperature, api_base, api_key, api_context_length, top_p, parent_chunk_size,
+                                         temperature, api_base, api_key, api_context_length, top_p, web_chunk_size,
                                          chat_history=None, streaming: bool = STREAMING, rerank: bool = False,
                                          only_need_search_results: bool = False, need_web_search=False,
                                          hybrid_search=False):
@@ -310,8 +310,8 @@ class LocalDocQA:
             web_search_results = self.web_page_search(query, top_k=3)
             web_splitter = RecursiveCharacterTextSplitter(
                 separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
-                chunk_size=parent_chunk_size,
-                chunk_overlap=int(parent_chunk_size / 4),
+                chunk_size=web_chunk_size,
+                chunk_overlap=int(web_chunk_size / 4),
                 length_function=num_tokens,
             )
             web_search_results = web_splitter.split_documents(web_search_results)

@@ -7,14 +7,13 @@ import os
 
 
 class LocalFile:
-    def __init__(self, user_id, kb_id, file: Union[File, str, Dict], file_name, mysql_client: KnowledgeBaseManager):
+    def __init__(self, user_id, kb_id, file: Union[File, str, Dict], file_name):
         self.user_id = user_id
         self.kb_id = kb_id
         self.file_id = uuid.uuid4().hex
         self.file_name = file_name
         self.file_url = ''
         if isinstance(file, Dict):
-            mysql_client.add_faq(self.file_id, user_id, kb_id, file['question'], file['answer'], file.get('nos_keys', ''))
             self.file_location = "FAQ"
             self.file_content = b''
         elif isinstance(file, str):

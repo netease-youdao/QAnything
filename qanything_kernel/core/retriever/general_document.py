@@ -1,5 +1,5 @@
 from qanything_kernel.utils.general_utils import html_to_markdown, num_tokens, get_time, get_table_infos
-from typing import List
+from typing import List, Optional
 from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, LOCAL_OCR_SERVICE_URL, DEFAULT_PARENT_CHUNK_SIZE
 from langchain.docstore.document import Document
 from qanything_kernel.utils.loader.my_recursive_url_loader import MyRecursiveUrlLoader
@@ -13,11 +13,8 @@ from qanything_kernel.utils.loader.self_pdf_loader import PdfLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from qanything_kernel.utils.loader.csv_loader import CSVLoader
 from qanything_kernel.utils.loader.markdown_parser import convert_markdown_to_langchaindoc
-from qanything_kernel.utils.loader.pdf_data_parser import \
-    convert_markdown_to_langchaindoc as convert_pdf_data_to_langchaindoc
 import asyncio
 import aiohttp
-import time
 import docx2txt
 import base64
 import pandas as pd
@@ -89,12 +86,14 @@ def get_word_to_markdown(file_path, file_id):
         return None
 
 
-pdf_text_splitter = RecursiveCharacterTextSplitter(chunk_size=DEFAULT_PARENT_CHUNK_SIZE, chunk_overlap=0,
-                                                   length_function=num_tokens)
-
-
 class LocalFileForInsert:
-    def __init__(self, user_id, kb_id, file_id, file_location, file_name, file_url, mysql_client):
+    chunk_size: Optional[int] = None
+    markdown_text_splitter: RecursiveCharacterTextSplitter = None
+
+    def __init__(self, user_id, kb_id, file_id, file_location, file_name, file_url, chunk_size, mysql_client):
+        self.chunk_size = chunk_size
+        self.markdown_text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=0,
+                                                                     length_function=num_tokens)
         self.user_id = user_id
         self.kb_id = kb_id
         self.file_id = file_id
@@ -157,7 +156,7 @@ class LocalFileForInsert:
         new_docs = []
         if table_infos is not None:
             tmp_content = '\n'.join(title_lst) + '\n' + doc.page_content
-            if num_tokens(tmp_content) <= DEFAULT_PARENT_CHUNK_SIZE:
+            if num_tokens(tmp_content) <= LocalFileForInsert.chunk_size:
                 doc.page_content = tmp_content
                 return [doc]
             head_line = table_infos['head_line']
@@ -172,7 +171,7 @@ class LocalFileForInsert:
             tmp_doc = '\n'.join(title_lst) + '\n' + table_head
             for line in table_infos['lines'][head_line + 2:end_line + 1]:
                 tmp_doc += '\n' + line
-                if num_tokens(tmp_doc) + num_tokens(line) > DEFAULT_PARENT_CHUNK_SIZE:
+                if num_tokens(tmp_doc) + num_tokens(line) > LocalFileForInsert.chunk_size:
                     tmp_doc = Document(page_content=tmp_doc, metadata=doc.metadata)
                     new_docs.append(tmp_doc)
                     tmp_doc = '\n'.join(title_lst) + '\n' + table_head
@@ -228,16 +227,17 @@ class LocalFileForInsert:
                 cleaned_list = [re.sub(r'^#+\s*', '', item) for item in title_lst]
                 doc.page_content = '\n'.join(cleaned_list)
                 doc.metadata['title_lst'] = []  # 清空title_lst
-                slices = pdf_text_splitter.split_documents([doc])
+                slices = LocalFileForInsert.markdown_text_splitter.split_documents([doc])
                 new_docs.extend(slices)
-            else: 
-                slices = pdf_text_splitter.split_documents([doc])
-                # insert_logger.info(f"pdf_text_splitter: {len(slices)}")
+            else:
+                slices = LocalFileForInsert.markdown_text_splitter.split_documents([doc])
+                # insert_logger.info(f"markdown_text_splitter: {len(slices)}")
                 if len(slices) == 1:
                     slices[0].page_content = '\n\n'.join(title_lst) + '\n\n' + slices[0].page_content
                 else:
                     for idx, slice in enumerate(slices):
-                        slice.page_content = '\n\n'.join(title_lst) + f'\n\n###### 第{idx+1}段内容如下：\n' + slice.page_content
+                        slice.page_content = '\n\n'.join(
+                            title_lst) + f'\n\n###### 第{idx + 1}段内容如下：\n' + slice.page_content
                 new_docs.extend(slices)
         return new_docs
 
@@ -256,52 +256,6 @@ class LocalFileForInsert:
             doc.page_content = '\n'.join(lines)
             doc.metadata['images_number'] = len(image_lines)
             insert_logger.info(f"set_file_images: {doc.metadata['images_number']}")
-
-    @staticmethod
-    @get_time
-    def pdf_to_documents(file_path, file_name, file_id, dir_path="tmp_files"):
-        full_dir_path = os.path.join(os.path.dirname(file_path), dir_path)
-        if not os.path.exists(full_dir_path):
-            os.makedirs(full_dir_path)
-        pages = get_pdf_to_markdown(file_path, file_id)
-        if not pages:
-            return None
-        pages = sorted(pages, key=lambda x: x['page_id'])
-
-        if pages:
-            json_file_path = os.path.join(full_dir_path, "%s_mark.json" % (file_name))
-            # 写入json文件
-            with open(json_file_path, 'w', encoding='utf-8') as fout:
-                json.dump(pages, fout, ensure_ascii=False)
-            try:
-                docs = convert_pdf_data_to_langchaindoc(file_name, pages)
-                docs = LocalFileForInsert.markdown_process(docs)
-                return docs
-            except Exception as e:
-                insert_logger.error(f"convert_pdf_data_to_langchaindoc error: {file_path}, {traceback.format_exc()}")
-                return None
-        else:
-            return None
-
-    @staticmethod
-    @get_time
-    def word_to_documents(file_path, file_name, file_id, dir_path="tmp_files"):
-        full_dir_path = os.path.join(os.path.dirname(file_path), dir_path)
-        if not os.path.exists(full_dir_path):
-            os.makedirs(full_dir_path)
-        markdown_str = get_word_to_markdown(file_path, file_id)
-        if markdown_str is not None:
-            md_file_path = os.path.join(full_dir_path, "%s.md" % (file_name))
-            with open(md_file_path, 'w', encoding='utf-8') as fout:
-                fout.write(markdown_str)
-            try:
-                docs = convert_markdown_to_langchaindoc(md_file_path)
-                docs = LocalFileForInsert.markdown_process(docs)
-            except Exception as e:
-                insert_logger.error(f"convert_markdown_to_langchaindoc error: {file_path}, {traceback.format_exc()}")
-                return None 
-            return docs
-        return None
 
     @staticmethod
     @get_time
@@ -354,7 +308,8 @@ class LocalFileForInsert:
             if docs is None:
                 try:
                     article = newspaper.article(self.file_url, timeout=120)
-                    docs = [Document(page_content=article.text, metadata={"title": article.title, "url": self.file_url})]
+                    docs = [
+                        Document(page_content=article.text, metadata={"title": article.title, "url": self.file_url})]
                 except Exception as e:
                     insert_logger.error(f"newspaper get url error: {self.file_url}, {traceback.format_exc()}")
                     loader = MyRecursiveUrlLoader(url=self.file_url)
@@ -364,7 +319,8 @@ class LocalFileForInsert:
                 docs = convert_markdown_to_langchaindoc(self.file_path)
                 docs = self.markdown_process(docs)
             except Exception as e:
-                insert_logger.error(f"convert_markdown_to_langchaindoc error: {self.file_path}, {traceback.format_exc()}")
+                insert_logger.error(
+                    f"convert_markdown_to_langchaindoc error: {self.file_path}, {traceback.format_exc()}")
                 loader = UnstructuredFileLoader(self.file_path, strategy="fast")
                 docs = loader.load()
         elif self.file_path.lower().endswith(".txt"):
@@ -377,7 +333,8 @@ class LocalFileForInsert:
                 docs = convert_markdown_to_langchaindoc(markdown_dir)
                 docs = self.markdown_process(docs)
             except Exception as e:
-                insert_logger.warning(f'Error in Powerful PDF parsing: {traceback.format_exc()}, use fast PDF parser instead.')
+                insert_logger.warning(
+                    f'Error in Powerful PDF parsing: {traceback.format_exc()}, use fast PDF parser instead.')
                 loader = UnstructuredPaddlePDFLoader(self.file_path, strategy="fast")
                 docs = loader.load()
         elif self.file_path.lower().endswith(".jpg") or self.file_path.lower().endswith(
