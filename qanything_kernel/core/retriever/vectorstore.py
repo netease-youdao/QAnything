@@ -230,7 +230,7 @@ class SelfMilvus(Milvus):
                 )
                 raise e
 
-        await asyncio.to_thread(self.col.flush)
+        self.col.flush()
         return pks
 
 
