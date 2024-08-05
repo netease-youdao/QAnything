@@ -710,8 +710,9 @@ async def local_doc_chat(req: request):
                     result = next_history[-1][1]
                     # result = resp['result']
                     time_record['chat_completed'] = round(time.perf_counter() - preprocess_start, 2)
-                    time_record['tokens_per_second'] = round(
-                        len(result) / time_record['llm_completed'], 2)
+                    if time_record.get('llm_completed', 0) > 0:
+                       time_record['tokens_per_second'] = round(
+                            len(result) / time_record['llm_completed'], 2)
                     formatted_time_record = format_time_record(time_record)
                     chat_data = {'user_id': user_id, 'kb_ids': kb_ids, 'query': question, "model": model,
                                  "product_source": request_source, 'time_record': formatted_time_record,
@@ -905,7 +906,7 @@ async def get_doc_completed(req: request):
     current_page_chunks = chunks[start_index:end_index]
 
     return sanic_json({"code": 200, "msg": "success", "completed_text": completed_doc.page_content,
-                       "chunks": current_page_chunks, "page_id": page})
+                       "chunks": current_page_chunks, "page_id": page, "total_count": total_count})
 
 
 @get_time_async
