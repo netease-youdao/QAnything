@@ -8,9 +8,11 @@
  -->
 <template>
   <div class="contain">
-    <SvgIcon :name="fileIcon" />
-    <div v-if="isLoading" class="loading">
-      <LoadingImg />
+    <div class="file-icon">
+      <SvgIcon :name="fileIcon" />
+      <div v-if="isLoading" class="loading">
+        <LoadingImg />
+      </div>
     </div>
     <div class="file-info">
       <span class="file-name">{{ fileInfo.fileName }}</span>
@@ -129,16 +131,21 @@ z
   background-color: #fff;
   box-shadow: 0 8px 16px 0 #0000000d;
 
-  svg {
-    width: 40px;
-    height: 40px;
-  }
+  .file-icon {
+    display: flex;
+    align-items: center;
 
-  .loading {
-    position: absolute;
-    left: 9px;
-    width: 20px;
-    height: 20px;
+    svg {
+      width: 40px;
+      height: 40px;
+    }
+
+    .loading {
+      position: absolute;
+      left: 9px;
+      width: 20px;
+      height: 20px;
+    }
   }
 
   .file-info {
@@ -146,21 +153,21 @@ z
     display: flex;
     flex-direction: column;
     justify-content: center;
+    overflow: hidden;
 
-    //.file-name {
-    //}
-    //
-    //.file-extension {
-    //}
+    .file-name {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      word-break: keep-all;
+    }
+
     span {
       min-height: 20px;
       font-family: PingFang SC;
       font-weight: 500;
       font-size: 12px;
       line-height: 20px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
   }
 }

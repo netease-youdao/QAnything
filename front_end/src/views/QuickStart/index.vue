@@ -234,18 +234,18 @@
           </div>
         </div>
       </div>
+      <a-config-provider :theme="{ token: { colorPrimary: '#5a47e5' } }">
+        <a-float-button class="scroll-btn" type="primary" @click="scrollBottom">
+          <template #icon>
+            <SvgIcon name="scroll" />
+          </template>
+        </a-float-button>
+      </a-config-provider>
     </div>
   </div>
   <ChatSettingDialog />
   <DefaultModal :content="content" :confirm-loading="confirmLoading" @ok="confirm" />
   <FileUploadDialog :dialog-type="1" />
-  <a-config-provider :theme="{ token: { colorPrimary: '#5a47e5' } }">
-    <a-float-button class="scroll-btn" type="primary" @click="scrollBottom">
-      <template #icon>
-        <SvgIcon name="scroll" />
-      </template>
-    </a-float-button>
-  </a-config-provider>
 </template>
 
 <script setup lang="ts">
@@ -1122,7 +1122,7 @@ function getB64Type(suffix) {
 }
 
 .scroll-btn {
-  inset-inline-end: 26%;
+  inset-inline-end: 20%;
   inset-block-end: 18%;
 
   svg {

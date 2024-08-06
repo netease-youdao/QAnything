@@ -1189,7 +1189,7 @@ scrollBottom();
 }
 
 .scroll-btn {
-  inset-inline-end: 26%;
+  inset-inline-end: 20%;
   inset-block-end: 18%;
 
   svg {

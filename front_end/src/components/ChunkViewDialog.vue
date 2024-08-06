@@ -29,9 +29,13 @@
           :loading="loading"
           @change="changePage"
         >
-          <template #bodyCell="{ column, text, record }">
+          <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'content'">
-              <HighLightMarkDown :content="record.content" />
+              <HighLightMarkDown
+                :content="
+                  editableData[record.key] ? editableData[record.key].editContent : record.content
+                "
+              />
             </template>
             <template v-else-if="column.dataIndex === 'editContent'">
               <div>
@@ -43,7 +47,7 @@
                   auto-size
                 />
                 <template v-else>
-                  {{ text }}
+                  {{ record.content }}
                 </template>
               </div>
             </template>
@@ -115,11 +119,13 @@ const columns = [
     width: '10%',
   },
   {
-    title: '分析结果',
+    title: 'markdown预览',
+    key: 'content',
     dataIndex: 'content',
   },
   {
-    title: '编辑',
+    title: '分析结果',
+    key: 'editContent',
     dataIndex: 'editContent',
   },
   {
@@ -166,7 +172,10 @@ const editableData: Ref<Record<string, IChunkData>> = ref({});
 const chunkId = ref(1);
 
 const edit = (key: string) => {
-  editableData.value[key] = chunkData.value.filter(item => key === item.key)[0];
+  // console.log('chunk', chunkData.value.filter(item => key === item.key)[0]);
+  editableData.value[key] = JSON.parse(
+    JSON.stringify(chunkData.value.filter(item => key === item.key)[0])
+  );
 };
 
 const save = async (key: string) => {
@@ -186,7 +195,9 @@ const save = async (key: string) => {
 };
 
 const cancel = (key: string) => {
+  console.log(editableData.value[key]);
   delete editableData.value[key];
+  console.log(editableData.value);
 };
 
 const handleCancel = () => {
@@ -236,6 +247,16 @@ watch(
       paginationConfig.value.pageNum = 1;
       paginationConfig.value.total = 1;
     }
+  }
+);
+
+watch(
+  () => chunkData.value,
+  () => {
+    console.log('chanmge');
+  },
+  {
+    deep: true,
   }
 );
 </script>
