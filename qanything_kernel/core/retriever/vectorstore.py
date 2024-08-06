@@ -4,17 +4,33 @@ from typing import Optional, List, Any, Iterable, Callable
 from qanything_kernel.utils.custom_log import debug_logger, insert_logger
 from qanything_kernel.configs.model_config import MILVUS_PORT, MILVUS_COLLECTION_NAME, MILVUS_HOST_LOCAL
 from qanything_kernel.connector.embedding.embedding_for_online_client import YouDaoEmbeddings
-from qanything_kernel.utils.general_utils import get_time
+from qanything_kernel.utils.general_utils import get_time, get_time_async
 from langchain_community.vectorstores.milvus import Milvus
+from pymilvus.orm.collection import MutationResult
 import asyncio
+import time
 
 
 class SelfMilvus(Milvus):
-    # def _select_relevance_score_fn(self) -> Callable[[float], float]:
-    #     def relevance_score_fn(score):
-    #         return score
-    #
-    #     return relevance_score_fn
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.last_flush_time = 0  # 初始化为0，确保首次调用_should_flush时返回True
+        self.inserted_since_last_flush = 0
+        self.flush_interval = 600  # 600 seconds
+        self.flush_threshold = 10000  # 10,000 entities
+
+    def _should_flush(self) -> bool:
+        current_time = time.time()
+        time_since_last_flush = current_time - self.last_flush_time
+        return (self.inserted_since_last_flush >= self.flush_threshold or
+                time_since_last_flush >= self.flush_interval or self.last_flush_time == 0)
+
+    @get_time
+    def _milvus_flush(self):
+        asyncio.create_task(asyncio.to_thread(self.col.flush))
+        self.last_flush_time = time.time()
+        self.inserted_since_last_flush = 0
+        insert_logger.info(f"Flushed Milvus collection at {self.last_flush_time}")
 
     def _create_collection(
             self, embeddings: list, metadatas: Optional[list[dict]] = None
@@ -147,6 +163,8 @@ class SelfMilvus(Milvus):
             **kwargs: Any,
     ) -> List[str]:
         """Asynchronously run texts through embeddings and add to the vectorstore."""
+        # 从kwargs中获取time_record
+        time_record = kwargs.get('time_record', {})
 
         from pymilvus import Collection, MilvusException
 
@@ -157,10 +175,12 @@ class SelfMilvus(Milvus):
             assert all(len(x.encode()) <= 65_535 for x in ids), "Each id should be a string less than 65535 bytes."
 
         # Assuming self.embedding_func has an async method embed_documents_async
+        embedding_start = time.perf_counter()
         try:
             embeddings = await self.embedding_func.aembed_documents(texts)
         except NotImplementedError:
             embeddings = [await self.embedding_func.aembed_query(x) for x in texts]
+        time_record['milvus_embedding_time'] = round(time.perf_counter() - embedding_start, 2)
 
         if len(embeddings) == 0:
             insert_logger.info("Nothing to insert, skipping.")
@@ -208,6 +228,7 @@ class SelfMilvus(Milvus):
 
         pks: list[str] = []
 
+        insert_start = time.perf_counter()
         assert isinstance(self.col, Collection)
         for i in range(0, total_count, batch_size):
             # Grab end index
@@ -218,7 +239,7 @@ class SelfMilvus(Milvus):
             ]
             # Insert into the collection.
             try:
-                res: Collection = await asyncio.to_thread(
+                res: MutationResult = await asyncio.to_thread(
                     self.col.insert, insert_list, timeout=timeout, **kwargs
                 )
                 # insert_logger.info(f"insert: {res}, insert keys: {res.primary_keys}")
@@ -229,8 +250,15 @@ class SelfMilvus(Milvus):
                     "Failed to insert batch starting at entity: %s/%s", i, total_count
                 )
                 raise e
+            self.inserted_since_last_flush += end - i
 
-        self.col.flush()
+        time_record['milvus_insert_time'] = round(time.perf_counter() - insert_start, 2)
+
+        asyncio.create_task(asyncio.to_thread(self.col.flush))
+        # if self._should_flush():
+        #     self._milvus_flush()
+
+        # self.col.flush()
         return pks
 
 

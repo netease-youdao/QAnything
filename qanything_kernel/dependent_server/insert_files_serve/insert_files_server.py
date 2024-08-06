@@ -61,7 +61,7 @@ db_config = {
 
 @get_time_async
 async def process_data(retriever, milvus_kb, mysql_client, file_info, time_record):
-    split_timeout_seconds = 600
+    parse_timeout_seconds = 600
     insert_timeout_seconds = 120
     content_length = -1
     status = 'green'
@@ -84,7 +84,7 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
     # 这里是把文件做向量化，然后写入Milvus的逻辑
     start = time.perf_counter()
     try:
-        await asyncio.wait_for(local_file.split_file_to_docs(), timeout=split_timeout_seconds)
+        await asyncio.wait_for(local_file.split_file_to_docs(), timeout=parse_timeout_seconds)
         content_length = sum([len(doc.page_content) for doc in local_file.docs])
         if content_length > 1000000:
             status = 'red'
@@ -104,9 +104,9 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
     except asyncio.TimeoutError:
         # executor.shutdown(wait=False)
         local_file.event.set()
-        insert_logger.error(f'Timeout: split_file_to_docs took longer than {split_timeout_seconds} seconds')
+        insert_logger.error(f'Timeout: split_file_to_docs took longer than {parse_timeout_seconds} seconds')
         status = 'red'
-        msg = f"split_file_to_docs timeout: {split_timeout_seconds}s"
+        msg = f"split_file_to_docs timeout: {parse_timeout_seconds}s"
         # await post_data(user_id=user_id, charsize=-1, docid=local_file.file_id, status=status,
         #                 msg=msg)
         return status, content_length, chunks_number, msg
@@ -120,15 +120,16 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
         #                 msg=msg)
         return status, content_length, chunks_number, msg
     end = time.perf_counter()
-    time_record['split'] = round(end - start, 2)
-    insert_logger.info(f'split time: {end - start} {len(local_file.docs)}')
+    time_record['parse_time'] = round(end - start, 2)
+    insert_logger.info(f'parse time: {end - start} {len(local_file.docs)}')
     mysql_client.update_file_msg(file_id, f'Processing:{random.randint(5, 75)}%')
 
     try:
         start = time.perf_counter()
-        chunks_number = await retriever.insert_documents(local_file.docs, chunk_size)
+        chunks_number, insert_time_record = await retriever.insert_documents(local_file.docs, chunk_size)
         insert_time = time.perf_counter()
-        time_record['insert_time'] = round(insert_time - start, 2)
+        # time_record['insert_time'] = round(insert_time - start, 2)
+        time_record.update(insert_time_record)
         insert_logger.info(f'insert time: {insert_time - start}')
         mysql_client.update_chunks_number(local_file.file_id, chunks_number)
     except asyncio.TimeoutError:
@@ -155,9 +156,7 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
     # await post_data(user_id=user_id, charsize=content_length, docid=local_file.file_id, status=status, msg=msg, chunks_number=chunks_number)
     time_record['upload_total_time'] = round(time.perf_counter() - process_start, 2)
     insert_logger.info(f'insert_files_to_milvus: {user_id}, {kb_id}, {file_id}, {file_name}, {status}')
-    msg = {"msg": msg, "store_insert_time": str(time_record.get("insert_time", 0)) + 's',
-           "parsing_time": str(time_record.get("split", 0)) + 's', "upload_total_time": str(time_record.get("upload_total_time", 0)) + 's'}
-    msg = json.dumps(msg, ensure_ascii=False)
+    msg = json.dumps(time_record, ensure_ascii=False)
     return status, content_length, chunks_number, msg
 
 

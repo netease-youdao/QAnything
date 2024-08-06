@@ -8,7 +8,7 @@ from qanything_kernel.utils.custom_log import debug_logger, insert_logger
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from qanything_kernel.utils.general_utils import num_tokens, get_time_async
 import copy
-from typing import List, Optional
+from typing import List, Optional, Tuple, Dict
 from langchain_core.documents import Document
 from langchain_core.callbacks import (
     AsyncCallbackManagerForRetrieverRun,
@@ -36,6 +36,7 @@ class SelfParentRetriever(ParentDocumentRetriever):
             List of relevant documents
         """
         debug_logger.info(f"Search: query: {query}, {self.search_type} with {self.search_kwargs}")
+        # self.vectorstore.col.load()
         if self.search_type == "mmr":
             sub_docs = await self.vectorstore.amax_marginal_relevance_search(
                 query, **self.search_kwargs
@@ -66,8 +67,9 @@ class SelfParentRetriever(ParentDocumentRetriever):
             backup_vectorstore: Optional[Milvus] = None,
             es_store: Optional[ElasticsearchStore] = None,
             single_parent: bool = False,
-    ) -> int:
+    ) -> Tuple[int, Dict]:
         insert_logger.info(f"Inserting {len(documents)} complete documents, single_parent: {single_parent}")
+        split_start = time.perf_counter()
         if self.parent_splitter is not None and not single_parent:
             documents = self.parent_splitter.split_documents(documents)
         insert_logger.info(f"Inserting {len(documents)} parent documents")
@@ -101,11 +103,8 @@ class SelfParentRetriever(ParentDocumentRetriever):
             docs.extend(sub_docs)
             full_docs.append((_id, doc))
         insert_logger.info(f"Inserting {len(docs)} child documents, metadata: {docs[0].metadata}")
-        # if backup_vectorstore is not None:
-        #     res = await self.vectorstore.aadd_documents(docs, ids=doc_ids)
-        # else:
-        #     res = await self.vectorstore.aadd_documents(docs)
-        res = await self.vectorstore.aadd_documents(docs)
+        time_record = {"split_time": round(time.perf_counter() - split_start, 2)}
+        res = await self.vectorstore.aadd_documents(docs, time_record=time_record)
         insert_logger.info(f'vectorstore insert number: {len(res)}, {res[0]}')
         if backup_vectorstore is not None:
             backup_res = await backup_vectorstore.aadd_documents(docs)
@@ -113,16 +112,18 @@ class SelfParentRetriever(ParentDocumentRetriever):
                 f'backup vectorstore insert number: {len(backup_res)}, {backup_res[0]}')
         if es_store is not None:
             try:
+                es_start = time.perf_counter()
                 # docs的doc_id是file_id + '_' + i
                 docs_ids = [doc.metadata['file_id'] + '_' + str(i) for i, doc in enumerate(docs)]
                 es_res = await es_store.aadd_documents(docs, ids=docs_ids)
+                time_record['es_time'] = round(time.perf_counter() - es_start, 2)
                 insert_logger.info(f'es_store insert number: {len(es_res)}, {es_res[0]}')
             except Exception as e:
                 insert_logger.error(f"Error in aadd_documents on es_store: {traceback.format_exc()}")
 
         if add_to_docstore:
             await self.docstore.amset(full_docs)
-        return len(res)
+        return len(res), time_record
 
 
 class ParentRetriever:
@@ -149,20 +150,23 @@ class ParentRetriever:
         )
         self.backup_vectorstore: Optional[Milvus] = None
         self.es_store = es_client.es_store
+        self.parent_chunk_size = DEFAULT_PARENT_CHUNK_SIZE
 
     @get_time_async
     async def insert_documents(self, docs, parent_chunk_size, single_parent=False):
-        self.retriever.parent_splitter = RecursiveCharacterTextSplitter(
-            separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
-            chunk_size=parent_chunk_size,
-            chunk_overlap=0,
-            length_function=num_tokens)
-        child_chunk_size = min(DEFAULT_CHILD_CHUNK_SIZE, int(parent_chunk_size / 2))
-        self.retriever.child_splitter = RecursiveCharacterTextSplitter(
-            separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
-            chunk_size=child_chunk_size,
-            chunk_overlap=int(child_chunk_size / 4),
-            length_function=num_tokens)
+        if parent_chunk_size != self.parent_chunk_size:
+            self.parent_chunk_size = parent_chunk_size
+            self.retriever.parent_splitter = RecursiveCharacterTextSplitter(
+                separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
+                chunk_size=parent_chunk_size,
+                chunk_overlap=0,
+                length_function=num_tokens)
+            child_chunk_size = min(DEFAULT_CHILD_CHUNK_SIZE, int(parent_chunk_size / 2))
+            self.retriever.child_splitter = RecursiveCharacterTextSplitter(
+                separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
+                chunk_size=child_chunk_size,
+                chunk_overlap=int(child_chunk_size / 4),
+                length_function=num_tokens)
 
         # insert_logger.info(f'insert documents: {len(docs)}')
         embed_docs = copy.deepcopy(docs)

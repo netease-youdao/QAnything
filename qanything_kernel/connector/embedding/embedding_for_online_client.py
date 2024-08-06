@@ -55,7 +55,7 @@ class YouDaoEmbeddings(Embeddings):
             debug_logger.error(f'sync embedding error: {traceback.format_exc()}')
             return None
 
-    @get_time
+    # @get_time
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         return self._get_embedding_sync(texts)
 
