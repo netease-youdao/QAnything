@@ -44,6 +44,7 @@ class EmbeddingAsyncBackend:
         return [item for sublist in results for item in sublist]
 
     # @get_time
+    @get_time
     def embed_documents(self, texts):
         inputs_onnx = self._tokenizer(texts, padding=True, truncation=True, max_length=LOCAL_EMBED_MAX_LENGTH,
                                       return_tensors=self.return_tensors)
@@ -54,7 +55,7 @@ class EmbeddingAsyncBackend:
         # debug_logger.info(f"onnx infer time: {time.time() - start_time}")
 
         embedding = outputs_onnx[0][:, 0]
-        # debug_logger.info(f'embedding shape: {embedding.shape}')
+        debug_logger.info(f'embedding shape: {embedding.shape}')
 
         norm_arr = np.linalg.norm(embedding, axis=1, keepdims=True)
         embeddings_normalized = embedding / norm_arr

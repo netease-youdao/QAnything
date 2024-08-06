@@ -5,6 +5,7 @@
 .DS_Store
 user.config
 venv
+custom_models
 __pycache__
 QANY_DB
 qanything_logs
