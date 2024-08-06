@@ -43,7 +43,7 @@ export const useKnowledgeBase = defineStore('knowledgeBase', () => {
   };
 
   //需要判断是否有知识库 如果没有知识库 展示default内容
-  const showDefault = ref(pageStatus.default);
+  const showDefault = ref(pageStatus.initing);
   const setDefault = str => {
     showDefault.value = str;
   };

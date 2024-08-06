@@ -157,7 +157,7 @@ const openInfoModal = () => {
   };
   Modal.info({
     title: '会话模型信息',
-    content: h('div', {}, [
+    content: h('div', { style: { 'user-select': 'text' } }, [
       h(TypographyParagraph, {}, () => `耗时信息: ${formatInfo(timeInfo.value)}`),
       h(
         TypographyParagraph,

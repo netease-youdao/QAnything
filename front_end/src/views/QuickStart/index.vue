@@ -189,7 +189,7 @@
               :bordered="false"
               :placeholder="common.problemPlaceholder"
               :auto-size="{ minRows: 4, maxRows: 8 }"
-              @pressEnter="send"
+              @keydown="textKeydownHandle"
             />
             <div class="send-action">
               <a-popover>
@@ -342,6 +342,20 @@ const scrollBottom = () => {
 onMounted(() => {
   scrollBottom();
 });
+
+// 聊天框keydown，不允许enter换行，alt/ctrl/shift/meta(Command或win) + enter可换行
+const textKeydownHandle = e => {
+  // 首先检查是否按下 Enter 键
+  if (e.keyCode === 13) {
+    if (e.altKey || e.ctrlKey || e.shiftKey || e.metaKey) {
+      question.value += '\n';
+    } else {
+      send();
+    }
+    // 放在外面因为shift + enter本来就是换行，会触发两次
+    e.preventDefault();
+  }
+};
 
 const like = useThrottleFn((item, e) => {
   item.like = !item.like;
@@ -826,7 +840,7 @@ function getB64Type(suffix) {
     }
 
     .source-total {
-      padding: 13px 20px;
+      padding: 0 20px 13px 20px;
       background: #fff;
       display: flex;
       align-items: center;

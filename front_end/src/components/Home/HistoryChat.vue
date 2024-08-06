@@ -39,6 +39,7 @@ import { useHomeChat } from '@/store/useHomeChat';
 import { message } from 'ant-design-vue';
 import SvgIcon from '@/components/SvgIcon.vue';
 import { getLanguage } from '@/language';
+import { IChatItemInfo } from '@/utils/types';
 
 const props = defineProps({
   observer: {
@@ -77,10 +78,18 @@ function addQuestion(q) {
   // scrollBottom();
 }
 
-function addAnswer(question: string, answer: string, picList, qaId, source) {
+function addAnswer(
+  question: string,
+  itemInfo: IChatItemInfo,
+  answer: string,
+  picList,
+  qaId,
+  source
+) {
   QA_List.value.push({
     answer,
     question,
+    itemInfo,
     type: 'ai',
     qaId,
     copied: false,
@@ -125,7 +134,7 @@ async function changeChat(item) {
       if (item.type === 'user') {
         addQuestion(item.question);
       } else if (item.type === 'ai') {
-        addAnswer(item.question, item.answer, item.picList, item.qaId, item.source);
+        addAnswer(item.question, item.itemInfo, item.answer, item.picList, item.qaId, item.source);
       }
     });
     emits('scrollBottom');

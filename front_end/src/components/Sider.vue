@@ -77,6 +77,7 @@ import { getLanguage } from '@/language';
 // import { useKnowledgeModal } from '@/store/useKnowledgeModal';
 import { resultControl } from '@/utils/utils';
 import urlResquest from '@/services/urlConfig';
+import { IChatItemInfo } from '@/utils/types';
 // import urlResquest from '@/services/urlConfig';
 // import { pageStatus } from '@/utils/enum';
 // import { resultControl } from '@/utils/utils';
@@ -102,9 +103,17 @@ function addQuestion(q) {
   // scrollBottom();
 }
 
-function addAnswer(question: string, answer: string, picList, qaId, source) {
+function addAnswer(
+  question: string,
+  itemInfo: IChatItemInfo,
+  answer: string,
+  picList,
+  qaId,
+  source
+) {
   QA_List.value.push({
     answer,
+    itemInfo,
     question,
     type: 'ai',
     qaId,
@@ -117,7 +126,7 @@ function addAnswer(question: string, answer: string, picList, qaId, source) {
   });
 }
 
-// 0新建对话, 1选中对话
+// 快速开始的：0新建对话, 1选中对话
 const quickClickHandle = async (type: 0 | 1, cardData?: IHistoryList) => {
   if (showLoading.value) return;
   if (type === 0) {
@@ -141,7 +150,7 @@ const quickClickHandle = async (type: 0 | 1, cardData?: IHistoryList) => {
       if (item.type === 'user') {
         addQuestion(item.question);
       } else if (item.type === 'ai') {
-        addAnswer(item.question, item.answer, item.picList, item.qaId, item.source);
+        addAnswer(item.question, item.itemInfo, item.answer, item.picList, item.qaId, item.source);
       }
     });
   }

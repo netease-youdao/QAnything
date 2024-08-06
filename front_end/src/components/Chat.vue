@@ -42,12 +42,10 @@
                   >
                     <HighLightMarkDown v-if="item.answer" :content="item.answer" />
                     <span v-else>{{ item.answer }}</span>
-
                     <ChatInfoPanel
                       v-if="Object.keys(item?.itemInfo?.tokenInfo || {}).length"
                       :chat-item-info="item.itemInfo"
                     />
-                    <!--                    {{ item.itemInfo }}-->
                   </p>
                   <p
                     v-else-if="item.onlySearch && !item.source.length"
@@ -188,8 +186,9 @@
               :bordered="false"
               :placeholder="common.problemPlaceholder"
               :auto-size="{ minRows: 4, maxRows: 8 }"
-              @pressEnter="send"
+              @keydown="textKeydownHandle"
             />
+            <!--            @pressEnter="send"-->
             <div class="send-action">
               <a-popover placement="topLeft">
                 <template #content>{{ common.chatToPic }}</template>
@@ -253,7 +252,7 @@ import HistoryChat from '@/components/Home/HistoryChat.vue';
 import { useHomeChat } from '@/store/useHomeChat';
 import HighLightMarkDown from '@/components/HighLightMarkDown.vue';
 import { useChatSetting } from '@/store/useChatSetting';
-// import ChatInfoPanel from '@/components/ChatInfoPanel.vue';
+import ChatInfoPanel from '@/components/ChatInfoPanel.vue';
 
 const common = getLanguage().common;
 
@@ -359,6 +358,20 @@ onBeforeUnmount(() => {
     qaObserver.unobserve(qaObserveDom.value);
   }
 });
+
+// 聊天框keydown，不允许enter换行，alt/ctrl/shift/meta(Command或win) + enter可换行
+const textKeydownHandle = e => {
+  // 首先检查是否按下 Enter 键
+  if (e.keyCode === 13) {
+    if (e.altKey || e.ctrlKey || e.shiftKey || e.metaKey) {
+      console.log('chufa');
+      question.value += '\n';
+    } else {
+      send();
+    }
+    e.preventDefault();
+  }
+};
 
 const like = useThrottleFn((item, e) => {
   item.like = !item.like;
@@ -574,11 +587,13 @@ const send = () => {
       console.log('message', msg);
       const res: any = JSON.parse(msg.data);
       if (res?.code == 200 && res?.response && res.msg === 'success') {
+        // 中间的回答
         // QA_List.value[QA_List.value.length - 1].answer += res.result.response;
         // typewriter.add(res?.response.replaceAll('\n', '<br/>'));
         typewriter.add(res?.response);
         scrollBottom();
       } else {
+        // 最后一次回答
         const timeObj = res.time_record.time_usage;
         delete timeObj['retriever_search_by_milvus'];
         chatInfoClass.addTime(res.time_record.time_usage);
@@ -911,7 +926,7 @@ scrollBottom();
     }
 
     .source-total {
-      padding: 13px 20px;
+      padding: 0 20px 13px 20px;
       background: #fff;
       display: flex;
       align-items: center;

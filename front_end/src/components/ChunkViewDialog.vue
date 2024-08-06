@@ -2,7 +2,7 @@
  * @Author: Ianarua 306781523@qq.com
  * @Date: 2024-07-26 14:08:46
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-08-05 17:11:23
+ * @LastEditTime: 2024-08-06 10:30:12
  * @FilePath: front_end/src/components/ChunkViewDialog.vue
  * @Description: 上传文件解析结果切片的弹窗
  -->
@@ -26,10 +26,14 @@
           bordered
           :scroll="{ y: '60vh' }"
           :pagination="paginationConfig"
+          :loading="loading"
           @change="changePage"
         >
           <template #bodyCell="{ column, text, record }">
-            <template v-if="['content'].includes(column.dataIndex)">
+            <template v-if="column.dataIndex === 'content'">
+              <HighLightMarkDown :content="record.content" />
+            </template>
+            <template v-else-if="column.dataIndex === 'editContent'">
               <div>
                 <a-textarea
                   v-if="editableData[record.key]"
@@ -90,6 +94,7 @@ import { resultControl } from '@/utils/utils';
 import urlResquest from '@/services/urlConfig';
 import { message } from 'ant-design-vue';
 import { useChatSetting } from '@/store/useChatSetting';
+import HighLightMarkDown from '@/components/HighLightMarkDown.vue';
 
 const { showChunkModel } = storeToRefs(useChunkView());
 const { common } = getLanguage();
@@ -114,6 +119,10 @@ const columns = [
     dataIndex: 'content',
   },
   {
+    title: '编辑',
+    dataIndex: 'editContent',
+  },
+  {
     title: '操作',
     dataIndex: 'operation',
     width: '100px',
@@ -125,11 +134,15 @@ interface IChunkData {
   key: string;
   // 显示的id
   id: number;
-  // 内容
+  // markdown内容
   content: string;
+  // 编辑内容
+  editContent: string;
 }
 
-// 保存的loading
+// 整体加载的loading
+const loading = ref(false);
+// 保存按钮的loading
 const isShowLoading = ref(false);
 
 // 分页参数
@@ -157,21 +170,19 @@ const edit = (key: string) => {
 };
 
 const save = async (key: string) => {
-  // try {
   isShowLoading.value = true;
-  message.success('正在更新，大概需要10s');
+  message.warn('正在更新，大概需要5s');
   await resultControl(
     await urlResquest.updateDocCompleted({
       chunk_size: chatSettingFormActive.value.chunkSize,
       doc_id: key,
-      update_content: editableData.value[key].content,
+      update_content: editableData.value[key].editContent,
     })
   );
   isShowLoading.value = false;
   message.success('修改成功');
   Object.assign(chunkData.value.filter(item => key === item.key)[0], editableData[key]);
   delete editableData.value[key];
-  // }
 };
 
 const cancel = (key: string) => {
@@ -185,6 +196,7 @@ const handleCancel = () => {
 
 // 获取切片
 const getChunks = async (kbId: string, docId: string) => {
+  loading.value = true;
   try {
     const res = (await resultControl(
       await urlResquest.getDocCompleted({
@@ -194,12 +206,16 @@ const getChunks = async (kbId: string, docId: string) => {
         page_limit: paginationConfig.value.pageSize,
       })
     )) as any;
+    chunkId.value = paginationConfig.value.pageSize * paginationConfig.value.pageNum - 2;
+    loading.value = false;
     paginationConfig.value.total = res.total_count;
+    chunkData.value = [];
     res.chunks.forEach((item: any) => {
       chunkData.value.push({
         id: chunkId.value++,
         key: item.chunk_id,
         content: item.page_content,
+        editContent: item.page_content,
       });
     });
   } catch (e) {
@@ -213,9 +229,12 @@ watch(
     if (showChunkModel.value) {
       chunkData.value = [];
       getChunks(kbId.value, docId.value);
-    } else if (!isShowLoading) {
+    } else if (!showChunkModel.value) {
+      console.log('close');
       chunkData.value = [];
       chunkId.value = 1;
+      paginationConfig.value.pageNum = 1;
+      paginationConfig.value.total = 1;
     }
   }
 );

@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-01 14:57:33
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-08-05 18:16:09
+ * @LastEditTime: 2024-08-06 10:25:59
  * @FilePath: front_end/src/store/useOptiionList.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -23,7 +23,7 @@ interface IDataSource {
   fileIdName: string;
   status: Status;
   createtime: string;
-  errortext: string;
+  remark: { [key: string]: string } | string;
 }
 
 export const useOptiionList = defineStore(
@@ -97,60 +97,71 @@ export const useOptiionList = defineStore(
     const timer = ref(null);
 
     const getDetails = async () => {
-      try {
-        if (timer.value) {
-          clearTimeout(timer.value);
-        }
-        const res: any = await resultControl(
-          // 接口的page_offset为页码，page_limit为一页几个
-          await urlResquest.fileList({
-            kb_id: currentId.value,
-            page_offset: kbPageNum.value,
-            page_limit: kbPageSize.value,
-          })
-        );
-
-        // 初始化状态计数
-        Object.keys(totalStatus.value).forEach(key => {
-          totalStatus.value[key] = 0;
-        });
-
-        // 更新状态计数
-        Object.assign(totalStatus.value, res.status_count);
-
-        setDataSource([]);
-
-        // 设置一共几个文件
-        setKbTotal(res.total);
-
-        res?.details.forEach((item: any, index) => {
-          dataSource.value.push({
-            id: 10000 + index,
-            fileId: item?.file_id,
-            fileIdName: item?.file_name,
-            status: item?.status,
-            bytes: formatFileSize(item?.bytes || 0),
-            createtime: formatDate(item?.timestamp),
-            errortext: item?.status === 'gray' ? '' : item?.msg,
-          });
-        });
-
-        const flag = res?.details.some(item => {
-          return item.status === 'gray' || item.status === 'yellow';
-        });
-        if (flag) {
-          console.log('有解析中的  5后再次请求');
-          //有解析中的
-          timer.value = setTimeout(() => {
-            clearTimeout(timer.value);
-            getDetails();
-          }, 5000);
-        } else {
-          console.log('全部解析完成');
-        }
-      } catch (error) {
-        message.error(error.msg || '获取知识库详情失败');
+      // try {
+      if (timer.value) {
+        clearTimeout(timer.value);
       }
+      const res: any = await resultControl(
+        // 接口的page_offset为页码，page_limit为一页几个
+        await urlResquest.fileList({
+          kb_id: currentId.value,
+          page_offset: kbPageNum.value,
+          page_limit: kbPageSize.value,
+        })
+      );
+
+      // 初始化状态计数
+      Object.keys(totalStatus.value).forEach(key => {
+        totalStatus.value[key] = 0;
+      });
+
+      // 更新状态计数
+      Object.assign(totalStatus.value, res.status_count);
+
+      setDataSource([]);
+
+      // 设置一共几个文件
+      setKbTotal(res.total);
+
+      // 格式化success
+      const computedRemark = (msg: string = '', status: string = 'green') => {
+        console.log('msg', msg, status);
+        if (status !== 'green') return msg;
+        // stringify转不了, 只能toString()
+        const obj = JSON.parse(msg.toString());
+        delete obj.msg;
+        return obj;
+      };
+
+      res?.details.forEach((item: any, index) => {
+        dataSource.value.push({
+          id: 10000 + index,
+          fileId: item?.file_id,
+          fileIdName: item?.file_name,
+          status: item?.status,
+          bytes: formatFileSize(item?.bytes || 0),
+          createtime: formatDate(item?.timestamp),
+          remark: item?.status === 'gray' ? '' : computedRemark(item?.msg, item?.status),
+          // remark: item?.status === 'gray' ? '' : item?.msg,
+        });
+      });
+
+      const flag = res?.details.some(item => {
+        return item.status === 'gray' || item.status === 'yellow';
+      });
+      if (flag) {
+        console.log('有解析中的  5后再次请求');
+        //有解析中的
+        timer.value = setTimeout(() => {
+          clearTimeout(timer.value);
+          getDetails();
+        }, 5000);
+      } else {
+        console.log('全部解析完成');
+      }
+      // } catch (error) {
+      //   message.error(error.msg || '获取知识库详情失败');
+      // }
     };
 
     const faqTimer = ref(null);

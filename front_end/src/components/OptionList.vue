@@ -2,7 +2,7 @@
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2023-12-26 14:49:41
  * @LastEditors: Ianarua 306781523@qq.com
- * @LastEditTime: 2024-08-05 18:12:53
+ * @LastEditTime: 2024-08-06 10:09:33
  * @FilePath: front_end/src/components/OptionList.vue
  * @Description: 
 -->
@@ -60,6 +60,7 @@
           @change="kbOnChange"
         >
           <template #headerCell="{ column }">
+            <!--            fileIdName-->
             <template v-if="column.key === 'status'">
               <span>{{ home.documentStatus }}</span>
               <a-tooltip color="#5a47e5">
@@ -76,7 +77,21 @@
           </template>
 
           <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'status'">
+            <template v-if="column.key === 'fileIdName'">
+              <a-tooltip color="#fff">
+                <template #title>
+                  <span style="color: #666; user-select: text">{{ record.fileIdName }}</span>
+                </template>
+                <span>{{ record.fileIdName }}</span>
+              </a-tooltip>
+              <!--              <a-popover>-->
+              <!--                <template #title>-->
+              <!--                  {{ record.fileIdName }}-->
+              <!--                </template>-->
+              <!--                <span>{{ record.fileIdName }}</span>-->
+              <!--              </a-popover>-->
+            </template>
+            <template v-else-if="column.key === 'status'">
               <div class="status-box">
                 <span class="icon-file-status">
                   <LoadingImg
@@ -90,6 +105,14 @@
                   />
                 </span>
                 <span> {{ parseStatus(record.status) }}</span>
+              </div>
+            </template>
+            <template v-else-if="column.key === 'remark'">
+              <div v-if="typeof record.remark === 'string'">{{ record.remark }}</div>
+              <div v-else>
+                <p v-for="(value, key) in record.remark" :key="key">
+                  {{ `${key}: ${value}` }}
+                </p>
               </div>
             </template>
             <template v-else-if="column.key === 'options'">
@@ -261,8 +284,8 @@ const columns = [
   },
   {
     title: home.remark,
-    dataIndex: 'errortext',
-    key: 'errortext',
+    dataIndex: 'remark',
+    key: 'remark',
     width: '15%',
   },
   {
