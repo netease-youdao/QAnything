@@ -65,24 +65,18 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
     insert_timeout_seconds = 120
     content_length = -1
     status = 'green'
+    process_start = time.perf_counter()
     insert_logger.info(f'Start insert file: {file_info}')
     _, file_id, user_id, file_name, kb_id, file_location, file_size, file_url, chunk_size = file_info
     # 获取格式为'2021-08-01 00:00:00'的时间戳
     insert_timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
     mysql_client.update_knowlegde_base_latest_insert_time(kb_id, insert_timestamp)
-    download_start = time.perf_counter()
+    # download_start = time.perf_counter()
     local_file = LocalFileForInsert(user_id, kb_id, file_id, file_location, file_name, file_url, chunk_size, mysql_client)
-    download_end = time.perf_counter()
-    time_record['download_nos_file'] = round(download_end - download_start, 2)
+    # download_end = time.perf_counter()
+    # time_record['download_nos_file'] = round(download_end - download_start, 2)
     msg = "success"
     chunks_number = 0
-    if local_file.error is not None:
-        insert_logger.error(f'download nos error: {local_file.error}')
-        status = 'red'
-        msg = f"download nos error"
-        # await post_data(user_id=user_id, charsize=-1, docid=local_file.file_id,
-        #                 status=status, msg=msg)
-        return status, -1, -1, msg
     # progress = random.randint(1, 5)
     # await post_data(user_id=user_id, charsize=file_size, docid=local_file.file_id,
     #                 status="Processing", msg=str(progress))
@@ -159,9 +153,10 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
 
     mysql_client.update_file_msg(file_id, f'Processing:{random.randint(75, 100)}%')
     # await post_data(user_id=user_id, charsize=content_length, docid=local_file.file_id, status=status, msg=msg, chunks_number=chunks_number)
-
+    time_record['upload_total_time'] = round(time.perf_counter() - process_start, 2)
     insert_logger.info(f'insert_files_to_milvus: {user_id}, {kb_id}, {file_id}, {file_name}, {status}')
-    msg = {"msg": msg, "time_record": time_record, "status": status}
+    msg = {"msg": msg, "store_insert_time": str(time_record.get("insert_time", 0)) + 's',
+           "parsing_time": str(time_record.get("split", 0)) + 's', "upload_total_time": str(time_record.get("upload_total_time", 0)) + 's'}
     msg = json.dumps(msg, ensure_ascii=False)
     return status, content_length, chunks_number, msg
 
