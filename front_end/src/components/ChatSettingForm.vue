@@ -86,7 +86,7 @@
           <a-slider
             v-model:value="apiContextTokenK"
             :min="4"
-            :max="200"
+            :max="openAIModelMax || 200"
             :step="1"
             :tip-formatter="(value: number) => `${value}K`"
           />
@@ -95,7 +95,7 @@
           <a-input-number
             v-model:value="apiContextTokenK"
             :min="4"
-            :max="200"
+            :max="openAIModelMax || 200"
             :step="1"
             style="margin-left: 16px"
             :precision="0"
@@ -289,6 +289,9 @@ const openAIModelDefault = ref([]);
 const inputRef = ref();
 const name = ref();
 
+// openai选中的话需要有最大值为默认值
+const openAIModelMax = ref(200);
+
 const addItem = e => {
   e.preventDefault();
   openAIModelDefault.value.push(name.value || `New item ${(index += 1)}`);
@@ -304,8 +307,10 @@ onMounted(() => {
 
 const openAIModelSelect = (value: any) => {
   const curContextLength = openAISettingMap.get(value)?.apiContextLength;
+  console.log('open', openAIModelMax.value);
   if (curContextLength) {
     apiContextTokenK.value = curContextLength / 1024;
+    openAIModelMax.value = curContextLength / 1024;
   } else {
     apiContextTokenK.value = 4;
   }
@@ -396,6 +401,7 @@ function onSubmit() {
 // 选择触发的函数
 const selectChange = (value: 'openAI' | 'ollama' | number) => {
   console.log('select', value);
+  openAIModelMax.value = 200;
   // 重新设置当前的表单项
   if (value === 'openAI') {
     chatSettingForm.value = JSON.parse(JSON.stringify(chatSettingConfigured.value[0]));
