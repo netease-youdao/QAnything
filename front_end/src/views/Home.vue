@@ -36,7 +36,6 @@ const change = str => {
 };
 
 onMounted(() => {
-  console.log(showDefault.value);
   getList();
 });
 </script>

@@ -259,7 +259,6 @@ const common = getLanguage().common;
 const typewriter = new Typewriter((str: string) => {
   if (str) {
     QA_List.value[QA_List.value.length - 1].answer += str || '';
-    console.log(QA_List.value);
   }
 });
 
@@ -344,9 +343,6 @@ const qaObserver = new IntersectionObserver(entries => {
 });
 
 onMounted(() => {
-  // getHistoryList(pageId.value);
-  // getPrivatizationInfo();
-  console.log('------chatId', chatId.value);
   scrollBottom();
 });
 
@@ -364,7 +360,6 @@ const textKeydownHandle = e => {
   // 首先检查是否按下 Enter 键
   if (e.keyCode === 13) {
     if (e.altKey || e.ctrlKey || e.shiftKey || e.metaKey) {
-      console.log('chufa');
       question.value += '\n';
     } else {
       send();
@@ -412,7 +407,6 @@ const addQuestion = q => {
     question: q,
     type: 'user',
   });
-  console.log('QALIST------', QA_List.value);
   scrollBottom();
 };
 
@@ -484,7 +478,6 @@ const stopChat = () => {
 // 问答前处理 判断创建对话
 const beforeSend = title => {
   try {
-    console.log('chat-title=', title);
     // 判断需不需要新建对话, 为null直接跳出
     if (chatId.value !== null) return;
     if (title.length > 100) {
@@ -840,14 +833,10 @@ scrollBottom();
 
 .chat {
   margin: 0 auto;
-  //width: 75.36%;
-  width: 50%;
-  min-width: 900px;
-  max-width: 1239px;
+  width: 35%;
+  min-width: 500px;
   padding: 28px 0 0 0;
-  //height: calc(100vh - 54px - 48px - 28px - 28px - 32px - 50px);
   flex: 1;
-  //overflow: hidden;
   overflow-y: auto;
 
   &.showSider {
@@ -1062,16 +1051,12 @@ scrollBottom();
 }
 
 .question-box {
-  //position: fixed;
-  //bottom: 28px;
-  //left: 280px;
   width: 100%;
   margin-bottom: 30px;
 
   .question {
-    //width: 75.36%;
-    width: 60%;
-    //height: 48px;
+    width: 40%;
+    min-width: 550px;
     margin: 0 auto;
     display: flex;
     align-items: center;
@@ -1204,7 +1189,7 @@ scrollBottom();
 }
 
 .scroll-btn {
-  inset-inline-end: 17%;
+  inset-inline-end: 26%;
   inset-block-end: 18%;
 
   svg {

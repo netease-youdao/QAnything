@@ -44,19 +44,18 @@ const isLoading = computed(() => {
   return fileStatus.value !== 'green' && fileStatus.value !== 'red';
 });
 
-onMounted(() => {
-  console.log('00---fileData0', fileData.value);
-});
-
 const fileInfo = computed(() => {
   return parseFileName(fileData.value.file_name);
 });
 
 const fileIcon = computed(() => {
-  if (fileStatus.value !== 'green') {
+  if (fileStatus.value === 'red') {
+    return 'file-error';
+  } else if (fileStatus.value === 'green') {
+    return 'file-' + iconMap.get(fileInfo.value.fileExtension);
+  } else {
     return 'file-unknown';
   }
-  return 'file-' + iconMap.get(fileInfo.value.fileExtension);
 });
 
 const fileStatus = computed(() => {
@@ -92,7 +91,10 @@ const fileStatusMap = new Map([
 const getDetail = () => {
   let timer = ref(null);
   timer.value = setInterval(async () => {
-    console.log('setinterval', fileData.value);
+    // soft上传重复名字的时候，传来的是fileId: ''
+    if (fileData.value.file_id === '' && fileData.value.status !== 'loading') {
+      fileData.value.status = 'red';
+    }
     if (fileData.value.status === 'green' || fileData.value.status === 'red') {
       clearInterval(timer.value);
       timer.value = null;
@@ -106,7 +108,7 @@ const getDetail = () => {
       console.log(res);
       fileData.value.status = res.details[0].status;
     }
-  }, 5000);
+  }, 2000);
   // }
 };
 

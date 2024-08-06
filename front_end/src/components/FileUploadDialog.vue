@@ -14,7 +14,6 @@
       centered
       width="480px"
       wrap-class-name="upload-file-modal"
-      :destroy-on-close="true"
     >
       <div class="file">
         <div class="box">
@@ -252,10 +251,9 @@ const fileChange = e => {
 const uplolad = async () => {
   if (props.dialogType === 0) {
     showUploadList.value = true;
+  } else if (props.dialogType === 1) {
+    handleCancel();
   }
-  // else if (props.dialogType === 1) {
-  //   handleCancel();
-  // }
   const list = [];
   uploadFileList.value.forEach((file: IFileListItem) => {
     if (file.status == 'loading') {
@@ -270,8 +268,7 @@ const uplolad = async () => {
   formData.append('user_id', userId);
   formData.append('chunk_size', chatSettingFormActive.value.chunkSize.toString());
   // 上传模式，soft：文件名重复的文件不再上传，strong：文件名重复的文件强制上传
-  formData.append('mode', 'strong');
-
+  formData.append('mode', 'soft');
   fetch(apiBase + '/local_doc_qa/upload_files', {
     method: 'POST',
     body: formData,
@@ -288,6 +285,7 @@ const uplolad = async () => {
       // 在此处对接口返回的数据进行处理
       if (data.code === 200) {
         if (data.data.length === 0) {
+          // 上传相同文件
           message.warn(data.msg || '出错了');
           handleCancel();
           list.forEach(item => {

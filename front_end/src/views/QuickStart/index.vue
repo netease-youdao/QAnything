@@ -760,9 +760,8 @@ function getB64Type(suffix) {
 
 .chat {
   margin: 0 auto;
-  width: 50%;
-  min-width: 900px;
-  max-width: 1239px;
+  width: 35%;
+  min-width: 500px;
   padding: 28px 0 0 0;
   flex: 1;
   overflow-y: auto;
@@ -990,7 +989,8 @@ function getB64Type(suffix) {
   margin-bottom: 30px;
 
   .question {
-    width: 60%;
+    width: 40%;
+    min-width: 550px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
@@ -1122,7 +1122,7 @@ function getB64Type(suffix) {
 }
 
 .scroll-btn {
-  inset-inline-end: 17%;
+  inset-inline-end: 26%;
   inset-block-end: 18%;
 
   svg {
