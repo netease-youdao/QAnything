@@ -2,6 +2,8 @@ import os
 from copy import deepcopy
 import onnxruntime as ort
 from qanything_kernel.utils.loader.pdf_to_markdown.core.vision.operators import *
+from qanything_kernel.utils.custom_log import insert_logger
+
 
 class Recognizer(object):
     def __init__(self, label_list, task_name, model_dir=None):
@@ -23,9 +25,12 @@ class Recognizer(object):
         if False and ort.get_device() == "GPU":
             options = ort.SessionOptions()
             options.enable_cpu_mem_arena = False
-            self.ort_sess = ort.InferenceSession(model_file_path, options=options, providers=[('CUDAExecutionProvider')])
+            self.ort_sess = ort.InferenceSession(model_file_path, options=options,
+                                                 providers=[('CUDAExecutionProvider')])
         else:
-            self.ort_sess = ort.InferenceSession(model_file_path, providers=['CPUExecutionProvider'])
+            sess_options = ort.SessionOptions()
+            sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+            self.ort_sess = ort.InferenceSession(model_file_path, sess_options, providers=['CPUExecutionProvider'])
         self.input_names = [node.name for node in self.ort_sess.get_inputs()]
         self.output_names = [node.name for node in self.ort_sess.get_outputs()]
         self.input_shape = self.ort_sess.get_inputs()[0].shape[2:4]
@@ -146,7 +151,8 @@ class Recognizer(object):
 
             if layouts[i].get("score") and layouts[j].get("score"):
                 if layouts[i]["type"] == 'figure' or layouts[i]["type"] == 'equation':
-                    if Recognizer.overlapped_area(layouts[j], layouts[i]) > Recognizer.overlapped_area(layouts[i], layouts[j]):
+                    if Recognizer.overlapped_area(layouts[j], layouts[i]) > Recognizer.overlapped_area(layouts[i],
+                                                                                                       layouts[j]):
                         layouts.pop(j)
                     else:
                         layouts.pop(i)
@@ -251,9 +257,10 @@ class Recognizer(object):
         if not boxes:
             return
         min_dis, min_i = 1000000, None
-        for i,b in enumerate(boxes):
+        for i, b in enumerate(boxes):
             if box.get("layoutno", "0") != b.get("layoutno", "0"): continue
-            dis = min(abs(box["x0"] - b["x0"]), abs(box["x1"] - b["x1"]), abs(box["x0"]+box["x1"] - b["x1"] - b["x0"])/2)
+            dis = min(abs(box["x0"] - b["x0"]), abs(box["x1"] - b["x1"]),
+                      abs(box["x0"] + box["x1"] - b["x1"] - b["x0"]) / 2)
             if dis < min_dis:
                 min_i = i
                 min_dis = dis
@@ -284,21 +291,21 @@ class Recognizer(object):
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             scale = min(hh / h, ww / w)
             img = cv2.resize(np.array(img).astype('float32'), (int(round(scale * w)), int(round(scale * h))))
-            dw, dh = hh - img.shape[1], ww - img.shape[0]    
+            dw, dh = hh - img.shape[1], ww - img.shape[0]
             dw /= 2  # divide padding into 2 sides
             dh /= 2
             top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
             left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
-            img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=(114, 114, 114)) 
+            img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=(114, 114, 114))
             # img = cv2.resize(np.array(img).astype('float32'), (ww, hh))
             # Scale input pixel values to 0 to 1
 
             input_img = img
-            r_h,r_w = input_img.shape[:2]
+            r_h, r_w = input_img.shape[:2]
             img /= 255.0
             img = img.transpose(2, 0, 1)
             img = img[np.newaxis, :, :, :].astype(np.float32)
-            inputs.append({self.input_names[0]: img, "scale_factor": [r_h,r_w,h,w]})
+            inputs.append({self.input_names[0]: img, "scale_factor": [r_h, r_w, h, w]})
         return inputs
 
     def postprocess(self, boxes, inputs, thr):
@@ -311,7 +318,7 @@ class Recognizer(object):
             y[:, 2] = x[:, 0] + x[:, 2] / 2
             y[:, 3] = x[:, 1] + x[:, 3] / 2
             return y
-        
+
         def scale_boxes(img1_shape, boxes, img0_shape):
             gain = min(img1_shape[0] / img0_shape[0], img1_shape[1] / img0_shape[1])  # gain  = old / new
             pad = (img1_shape[1] - img0_shape[1] * gain) / 2, (img1_shape[0] - img0_shape[0] * gain) / 2  # wh padding
@@ -385,7 +392,6 @@ class Recognizer(object):
 
             return keep_boxes
 
-
         boxes = np.squeeze(boxes).T
         # Filter out object confidence scores below threshold
         scores = np.max(boxes[:, 4:], axis=1)
@@ -407,13 +413,14 @@ class Recognizer(object):
             "score": float(scores[i])
         } for i in indices]
 
-    def __call__(self, image_list, thr=0.7, batch_size=16):
+    def __call__(self, image_list, thr=0.4, batch_size=16):
         res = []
         imgs = []
         for i in range(len(image_list)):
             if not isinstance(image_list[i], np.ndarray):
                 imgs.append(np.array(image_list[i]))
-            else: imgs.append(image_list[i])
+            else:
+                imgs.append(image_list[i])
 
         batch_loop_cnt = math.ceil(float(len(imgs)) / batch_size)
         for i in range(batch_loop_cnt):
@@ -423,7 +430,9 @@ class Recognizer(object):
             inputs = self.preprocess(batch_image_list)
             print("preprocess")
             for ins in inputs:
-                bb = self.postprocess(self.ort_sess.run(None, {k:v for k,v in ins.items() if k in self.input_names})[0], ins, thr)
+                bb = self.postprocess(
+                    self.ort_sess.run(None, {k: v for k, v in ins.items() if k in self.input_names})[0], ins, thr)
+                print(f"page_rec_res: {bb}")
                 res.append(bb)
 
         return res

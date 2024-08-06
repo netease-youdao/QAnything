@@ -1,10 +1,9 @@
-import onnxruntime
 from PIL import Image
 import numpy as np
 import torch
+from onnxruntime import InferenceSession, SessionOptions, GraphOptimizationLevel
 from torchvision import transforms
 from qanything_kernel.configs.model_config import PDF_MODEL_PATH
-import cv2
 import os
 
 data_transform = transforms.Compose(
@@ -15,13 +14,15 @@ cls = {0: 'wired', 1: 'wireless'}
 
 
 class TableCls():
-    def __init__(self, device=torch.device('cpu')):
+    def __init__(self, device='cpu'):
+        sess_options = SessionOptions()
+        sess_options.graph_optimization_level = GraphOptimizationLevel.ORT_ENABLE_ALL
         # 输出当前文件绝对路径
         cls_model = os.path.join(PDF_MODEL_PATH, 'checkpoints/table/table_cls_l.onnx')
-        if device == torch.device('cuda'):
-            self.table_cls = onnxruntime.InferenceSession(cls_model, None, providers=['CUDAExecutionProvider'])
+        if device == 'cuda':
+            self.table_cls = InferenceSession(cls_model, sess_options, providers=['CUDAExecutionProvider'])
         else:
-            self.table_cls = onnxruntime.InferenceSession(cls_model, None, providers=['CPUExecutionProvider'])
+            self.table_cls = InferenceSession(cls_model, sess_options, providers=['CPUExecutionProvider'])
 
     def process(self, image):
         img = Image.fromarray(np.uint8(image))

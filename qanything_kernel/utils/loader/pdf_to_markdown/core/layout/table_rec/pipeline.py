@@ -162,16 +162,6 @@ def show_results(results, corner, logi=None):
     return polygons
 
 
-# def sort_logi_by_polygons(
-#         sorted_polygons: np.ndarray, polygons: np.ndarray, logi_points: np.ndarray
-#     ) -> np.ndarray:
-#         sorted_idx = []
-#         for v in sorted_polygons:
-#             loc_idx = np.argwhere(v[0, 0] == polygons[:, 0, 0]).squeeze()
-#             sorted_idx.append(int(loc_idx))
-#         logi_points = logi_points[sorted_idx]
-#         return logi_points
-
 def sort_logi_by_polygons(
         sorted_polygons: np.ndarray, polygons: np.ndarray, logi_points: np.ndarray
 ) -> np.ndarray:
@@ -197,79 +187,6 @@ def sort_logi(
     return sorted_logi_points, sorted_polygons
 
 
-def wired_table_rec(image_path):
-    # onnx_model = '/ssd8/exec/huangjy/AdvancedLiterateMachinery/DocumentUnderstanding/LORE-TSR/src/wired_model.onnx'
-    # sess1 = _ort.InferenceSession(onnx_model, None, providers=['CUDAExecutionProvider'])
-    model = torch.jit.load(
-        '/ssd8/exec/huangjy/AdvancedLiterateMachinery/DocumentUnderstanding/LORE-TSR/src/wired_model.pt').to('cuda')
-    model.eval()
-    onnx_processor = '/ssd8/exec/huangjy/AdvancedLiterateMachinery/DocumentUnderstanding/LORE-TSR/src/wired_processor.onnx'
-    sess2 = _ort.InferenceSession(onnx_processor, None, providers=['CUDAExecutionProvider'])
-    table_recover = TableRecover()
-    image = cv2.imread(image_path)
-    input, meta = pre_process(image, 1024, 1024)
-    # hm, st, wh, ax, cr, reg = sess1.run(None, {'image': input})
-    # hm = torch.from_numpy(hm).sigmoid_().cuda()
-    # st, wh, ax, cr, reg = torch.from_numpy(st).cuda(), torch.from_numpy(wh).cuda(), torch.from_numpy(ax).cuda(), torch.from_numpy(cr).cuda(), torch.from_numpy(reg).cuda()
-    hm, st, wh, ax, cr, reg = model(torch.from_numpy(input).cuda())
-    hm = hm.sigmoid_().detach().cuda()
-    st, wh, ax, cr, reg = st.detach().cuda(), wh.detach().cuda(), ax.detach().cuda(), cr.detach().cuda(), reg.detach().cuda()
-    scores, inds, ys, xs, st_reg, corner_dict = corner_decode(hm[:, 1:2, :, :], st, reg, K=1000)
-    dets, keep, logi, cr = ctdet_4ps_decode(hm[:, 0:1, :, :], wh, ax, cr, corner_dict, reg=reg, K=3000, wiz_rev=True)
-    raw_dets = dets
-    corner_output = np.concatenate((np.transpose(xs.cpu().numpy()), np.transpose(ys.cpu().numpy()),
-                                    np.array(st_reg.cpu().numpy()), np.transpose(scores.cpu().numpy())), axis=2)
-    dets, corner_st_reg = post_process(dets, meta, corner_output)
-    results = merge_outputs([dets])
-    logi = logi + cr
-    slct_logi, slct_dets = filter(results, logi, raw_dets[:, :, :8], 0.15)
-    slct_dets = _normalized_ps(slct_dets, 256)
-    _, slct_logi = sess2.run(None, {'vis_feat': slct_logi.cpu().numpy()})
-    slct_logi = process_logi(torch.from_numpy(slct_logi).cuda())
-    polygons = show_results(results, corner_st_reg, slct_logi.squeeze())
-    polygons = np.array(polygons)
-    polygons = sorted_boxes(polygons)
-    try:
-        polygons = merge_adjacent_polys(polygons)
-    except:
-        polygons = polygons
-    table_res = table_recover(polygons)
-
-    return polygons, table_res
-
-
-def wireless_table_rec(image_path):
-    onnx_model = '/ssd8/exec/huangjy/AdvancedLiterateMachinery/DocumentUnderstanding/LORE-TSR/src/wireless_model.onnx'
-    sess1 = _ort.InferenceSession(onnx_model, None, providers=['CUDAExecutionProvider'])
-    onnx_processor = '/ssd8/exec/huangjy/AdvancedLiterateMachinery/DocumentUnderstanding/LORE-TSR/src/wireless_processor.onnx'
-    sess2 = _ort.InferenceSession(onnx_processor, None, providers=['CUDAExecutionProvider'])
-    image = cv2.imread(image_path)
-    input, meta = pre_process(image, 768, 768, upper_left=True)
-    hm, st, wh, ax, cr, reg = sess1.run(None, {'image': input})
-    hm = torch.from_numpy(hm).sigmoid_().cuda()
-    st, wh, ax, cr, reg = torch.from_numpy(st).cuda(), torch.from_numpy(wh).cuda(), torch.from_numpy(
-        ax).cuda(), torch.from_numpy(cr).cuda(), torch.from_numpy(reg).cuda()
-    scores, inds, ys, xs, st_reg, corner_dict = corner_decode(hm[:, 1:2, :, :], st, reg, K=5000)
-    dets, keep, logi, cr = ctdet_4ps_decode(hm[:, 0:1, :, :], wh, ax, cr, corner_dict, reg=reg, K=3000, wiz_rev=False)
-    raw_dets = dets
-    corner_output = np.concatenate(
-        (np.transpose(xs.cpu()), np.transpose(ys.cpu()), np.array(st_reg.cpu()), np.transpose(scores.cpu())), axis=2)
-    print(dets.device)
-    dets, corner_st_reg = post_process(dets, meta, corner_output, upper_left=True)
-    results = merge_outputs([dets])
-    logi = logi + cr
-    slct_logi, slct_dets = filter(results, logi, raw_dets[:, :, :8], 0.2)
-    slct_dets = _normalized_ps(slct_dets, 256)
-    # slct_dets = slct_dets.to(torch.float)
-    _, slct_logi = sess2.run(None, {'slct_logi_feat': slct_logi.cpu().numpy(), 'dets': slct_dets.cpu().numpy()})
-    slct_logi = process_logi(torch.from_numpy(slct_logi).cuda())
-    polygons = show_results(results, corner_st_reg, slct_logi.squeeze())
-    polygons = np.array(polygons)
-    sorted_polygons = sorted_boxes(polygons)
-
-    return polygons, sorted_polygons, slct_logi[0].cpu().numpy()
-
-
 def request_service(input_dict, url):
     data = urllib.parse.urlencode(input_dict).encode("utf-8")
     f = urllib.request.urlopen(url=url, data=data)
@@ -279,23 +196,24 @@ def request_service(input_dict, url):
 
 
 class TableParser(object):
-    def __init__(self, device=torch.device("cpu")):
+    def __init__(self, device='cpu'):
         # self.wired_model_stage1 = torch.jit.load('layout/table_rec/checkpoint/wired_model.pt').to('cuda')
         self.device = device
-        print(self.device)
-        self.device = device
-        if self.device == torch.device('cuda'):
+        if self.device == 'cuda':
             onnx_backend = 'CUDAExecutionProvider'
         else:
             onnx_backend = 'CPUExecutionProvider'
 
+        sess_options = _ort.SessionOptions()
+        sess_options.graph_optimization_level = _ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+
         self.wired_model_stage1 = torch.jit.load(os.path.join(PDF_MODEL_PATH, 'checkpoints/table/wired_model.pt')).to(self.device)
         onnx_processor = os.path.join(PDF_MODEL_PATH, 'checkpoints/table/wired_processor.onnx')
-        self.wired_model_stage2 = _ort.InferenceSession(onnx_processor, None, providers=[onnx_backend])
+        self.wired_model_stage2 = _ort.InferenceSession(onnx_processor, sess_options, providers=[onnx_backend])
         wireless_onnx1 = os.path.join(PDF_MODEL_PATH, 'checkpoints/table/wireless_model.onnx')
-        self.wireless_model_stage1 = _ort.InferenceSession(wireless_onnx1, None, providers=[onnx_backend])
+        self.wireless_model_stage1 = _ort.InferenceSession(wireless_onnx1, sess_options, providers=[onnx_backend])
         wireless_onnx2 = os.path.join(PDF_MODEL_PATH, 'checkpoints/table/wireless_processor.onnx')
-        self.wireless_model_stage2 = _ort.InferenceSession(wireless_onnx2, None, providers=[onnx_backend])
+        self.wireless_model_stage2 = _ort.InferenceSession(wireless_onnx2, sess_options, providers=[onnx_backend])
         self.table_recover = TableRecover()
 
     def wired_rec(self, image):
@@ -374,23 +292,22 @@ class TableParser(object):
         return polygons, sorted_polygons, slct_logi[0].cpu().numpy()
 
     def process(self, image, table_type, ocr_result, convert2markdown=True):
+        table_markdown = ''
         if table_type == 'wired':
             polygons, table_res = self.wired_rec(image)
+            cell_box_map, head_box_map, tail_box_map = match_ocr_cell(polygons, ocr_result)
+            table_str = plot_html_table(table_res, cell_box_map, head_box_map, tail_box_map)
+            if convert2markdown:
+                table_markdown = html2markdown(table_str)
+            return table_str, table_markdown
         else:
             polygons, sorted_polygons, slct_logi = self.wireless_rec(image)
-        if table_type == 'wireless':
             slct_logi = sort_logi_by_polygons(
                 sorted_polygons, polygons, slct_logi
             )
             sorted_logi_points, sorted_polygons = sort_logi(sorted_polygons, slct_logi)
             cell_box_map, _, _ = match_ocr_cell(sorted_polygons, ocr_result)
             table_str = plot_html_wireless_table(sorted_logi_points, cell_box_map)
-            if convert2markdown:
-                table_markdown = html2markdown(table_str)
-            return table_str, table_markdown
-        else:
-            cell_box_map, head_box_map, tail_box_map = match_ocr_cell(polygons, ocr_result)
-            table_str = plot_html_table(table_res, cell_box_map, head_box_map, tail_box_map)
             if convert2markdown:
                 table_markdown = html2markdown(table_str)
             return table_str, table_markdown

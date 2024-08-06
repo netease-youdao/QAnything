@@ -1,12 +1,13 @@
 import re
 from qanything_kernel.utils.loader.pdf_to_markdown.core.layout import TableRecognizer
+from qanything_kernel.utils.custom_log import insert_logger
 import numpy as np
-import torch
 import cv2
+import traceback
 
 
 class TableStructureRecognizer_LORE():
-    def __init__(self, device=torch.device('cpu')):
+    def __init__(self, device='cpu'):
         self.table_rec = TableRecognizer(device=device)
 
     @staticmethod
@@ -28,7 +29,6 @@ class TableStructureRecognizer_LORE():
         zoomin = 3
         t_x1, t_x2, t_y1, t_y2 = table_box
         table_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-        vis_image = table_image.copy()
         for item in boxes:
             if item['layout_type'] == 'caption':
                 table_caption += item['text']
@@ -42,7 +42,13 @@ class TableStructureRecognizer_LORE():
                 new_item.append(item['text'])
                 new_item.append(1.0)
                 ocr_result.append(new_item)
-        table_html, table_markdown = self.table_rec.extract_table(table_image, ocr_result)
+        try:
+            table_html, table_markdown = self.table_rec.extract_table(table_image, ocr_result)
+        except Exception as e:
+            insert_logger.warning(f"construct_table error: {traceback.format_exc()}")
+            ocr_str = '\n'.join([item[1] for item in ocr_result])
+            insert_logger.warning(f"ocr_str: {ocr_str[:100]}")
+            table_html, table_markdown = ocr_str, ocr_str
         return {
             'table_html': table_html,
             'table_caption': table_caption,
