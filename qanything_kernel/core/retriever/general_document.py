@@ -87,9 +87,6 @@ def get_word_to_markdown(file_path, file_id):
 
 
 class LocalFileForInsert:
-    chunk_size: Optional[int] = None
-    markdown_text_splitter: RecursiveCharacterTextSplitter = None
-
     def __init__(self, user_id, kb_id, file_id, file_location, file_name, file_url, chunk_size, mysql_client):
         self.chunk_size = chunk_size
         self.markdown_text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=0,
@@ -103,7 +100,6 @@ class LocalFileForInsert:
         self.file_location = file_location
         self.file_url = ""
         self.faq_dict = {}
-        self.error = None
         self.file_path = ""
         self.mysql_client = mysql_client
         if self.file_location == 'FAQ':
@@ -149,14 +145,13 @@ class LocalFileForInsert:
 
         return txt_file_path
 
-    @staticmethod
-    def table_process(doc):
+    def table_process(self, doc):
         table_infos = get_table_infos(doc.page_content)
         title_lst = doc.metadata['title_lst']
         new_docs = []
         if table_infos is not None:
             tmp_content = '\n'.join(title_lst) + '\n' + doc.page_content
-            if num_tokens(tmp_content) <= LocalFileForInsert.chunk_size:
+            if num_tokens(tmp_content) <= self.chunk_size:
                 doc.page_content = tmp_content
                 return [doc]
             head_line = table_infos['head_line']
@@ -171,7 +166,7 @@ class LocalFileForInsert:
             tmp_doc = '\n'.join(title_lst) + '\n' + table_head
             for line in table_infos['lines'][head_line + 2:end_line + 1]:
                 tmp_doc += '\n' + line
-                if num_tokens(tmp_doc) + num_tokens(line) > LocalFileForInsert.chunk_size:
+                if num_tokens(tmp_doc) + num_tokens(line) > self.chunk_size:
                     tmp_doc = Document(page_content=tmp_doc, metadata=doc.metadata)
                     new_docs.append(tmp_doc)
                     tmp_doc = '\n'.join(title_lst) + '\n' + table_head
@@ -201,8 +196,7 @@ class LocalFileForInsert:
                     continue
         return pre_page_id
 
-    @staticmethod
-    def markdown_process(docs: List[Document]):
+    def markdown_process(self, docs: List[Document]):
         new_docs = []
         for doc in docs:
             if 'coord_lst' in doc.metadata:
@@ -219,7 +213,7 @@ class LocalFileForInsert:
             title_lst = [t for t in title_lst if t.replace('#', '') != '']
             has_table = doc.metadata['has_table']
             if has_table:
-                table_docs = LocalFileForInsert.table_process(doc)
+                table_docs = self.table_process(doc)
                 if table_docs:
                     new_docs.extend(table_docs)
                     continue
@@ -227,10 +221,10 @@ class LocalFileForInsert:
                 cleaned_list = [re.sub(r'^#+\s*', '', item) for item in title_lst]
                 doc.page_content = '\n'.join(cleaned_list)
                 doc.metadata['title_lst'] = []  # 清空title_lst
-                slices = LocalFileForInsert.markdown_text_splitter.split_documents([doc])
+                slices = self.markdown_text_splitter.split_documents([doc])
                 new_docs.extend(slices)
             else:
-                slices = LocalFileForInsert.markdown_text_splitter.split_documents([doc])
+                slices = self.markdown_text_splitter.split_documents([doc])
                 # insert_logger.info(f"markdown_text_splitter: {len(slices)}")
                 if len(slices) == 1:
                     slices[0].page_content = '\n\n'.join(title_lst) + '\n\n' + slices[0].page_content
@@ -257,9 +251,8 @@ class LocalFileForInsert:
             doc.metadata['images_number'] = len(image_lines)
             insert_logger.info(f"set_file_images: {doc.metadata['images_number']}")
 
-    @staticmethod
     @get_time
-    async def url_to_documents(file_path, file_name, file_url, dir_path="tmp_files", max_retries=3):
+    async def url_to_documents(self, file_path, file_name, file_url, dir_path="tmp_files", max_retries=3):
         full_dir_path = os.path.join(os.path.dirname(file_path), dir_path)
         if not os.path.exists(full_dir_path):
             os.makedirs(full_dir_path)
@@ -285,7 +278,7 @@ class LocalFileForInsert:
                             if title:
                                 for doc in docs:
                                     doc.metadata['title'] = title
-                            docs = LocalFileForInsert.markdown_process(docs)
+                            docs = self.markdown_process(docs)
                             return docs
                         else:
                             insert_logger.warning(f"jina get url warning: {file_url}, {jina_response}")
