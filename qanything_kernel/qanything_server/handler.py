@@ -68,6 +68,11 @@ async def new_knowledge_base(req: request):
     default_kb_id = 'KB' + uuid.uuid4().hex
     kb_id = safe_get(req, 'kb_id', default_kb_id)
     kb_id = correct_kb_id(kb_id)
+
+    is_quick = safe_get(req, 'quick', '')
+    if is_quick == '1':
+        kb_id += "-Quick"
+
     if kb_id[:2] != 'KB':
         return sanic_json({"code": 2001, "msg": "fail, kb_id must start with 'KB'"})
     not_exist_kb_ids = local_doc_qa.milvus_summary.check_kb_exist(user_id, [kb_id])
