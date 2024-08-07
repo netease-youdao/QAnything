@@ -600,7 +600,7 @@ async def local_doc_chat(req: request):
     need_web_search = safe_get(req, 'networking', False)
 
     api_base = safe_get(req, 'api_base', '')
-    api_key = safe_get(req, 'api_key', '')
+    api_key = safe_get(req, 'api_key', 'ollama')
     api_context_length = safe_get(req, 'api_context_length', 4096)
     top_p = safe_get(req, 'top_p', 0.99)
     temperature = safe_get(req, 'temperature', 0.5)
