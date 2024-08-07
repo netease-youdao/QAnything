@@ -19,6 +19,7 @@
       :footer="null"
       @cancel="handleCancel"
     >
+      <div class="file-preview"></div>
       <div class="chunk-table">
         <a-table
           :columns="columns"
@@ -172,7 +173,6 @@ const editableData: Ref<Record<string, IChunkData>> = ref({});
 const chunkId = ref(1);
 
 const edit = (key: string) => {
-  // console.log('chunk', chunkData.value.filter(item => key === item.key)[0]);
   editableData.value[key] = JSON.parse(
     JSON.stringify(chunkData.value.filter(item => key === item.key)[0])
   );
@@ -180,24 +180,27 @@ const edit = (key: string) => {
 
 const save = async (key: string) => {
   isShowLoading.value = true;
-  message.warn('正在更新，大概需要5s');
-  await resultControl(
-    await urlResquest.updateDocCompleted({
-      chunk_size: chatSettingFormActive.value.chunkSize,
-      doc_id: key,
-      update_content: editableData.value[key].editContent,
-    })
-  );
-  isShowLoading.value = false;
-  message.success('修改成功');
-  Object.assign(chunkData.value.filter(item => key === item.key)[0], editableData[key]);
-  delete editableData.value[key];
+  message.warn('正在更新……');
+  try {
+    await resultControl(
+      await urlResquest.updateDocCompleted({
+        chunk_size: chatSettingFormActive.value.chunkSize,
+        doc_id: key,
+        update_content: editableData.value[key].editContent,
+      })
+    );
+    message.success('修改成功');
+    Object.assign(chunkData.value.filter(item => key === item.key)[0], editableData[key]);
+    delete editableData.value[key];
+  } catch (e) {
+    message.error(e.msg);
+  } finally {
+    isShowLoading.value = false;
+  }
 };
 
 const cancel = (key: string) => {
-  console.log(editableData.value[key]);
   delete editableData.value[key];
-  console.log(editableData.value);
 };
 
 const handleCancel = () => {
@@ -218,7 +221,6 @@ const getChunks = async (kbId: string, docId: string) => {
       })
     )) as any;
     chunkId.value = paginationConfig.value.pageSize * paginationConfig.value.pageNum - 2;
-    loading.value = false;
     paginationConfig.value.total = res.total_count;
     chunkData.value = [];
     res.chunks.forEach((item: any) => {
@@ -231,6 +233,8 @@ const getChunks = async (kbId: string, docId: string) => {
     });
   } catch (e) {
     message.error(e.msg || '获取文档解析结果失败');
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -241,7 +245,6 @@ watch(
       chunkData.value = [];
       getChunks(kbId.value, docId.value);
     } else if (!showChunkModel.value) {
-      console.log('close');
       chunkData.value = [];
       chunkId.value = 1;
       paginationConfig.value.pageNum = 1;
@@ -249,21 +252,12 @@ watch(
     }
   }
 );
-
-watch(
-  () => chunkData.value,
-  () => {
-    console.log('chanmge');
-  },
-  {
-    deep: true,
-  }
-);
 </script>
 
 <style lang="scss" scoped>
 .chunk-modal {
   .chunk-table {
+    height: 60vh;
     flex: 1;
     overflow-y: auto;
 

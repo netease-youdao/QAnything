@@ -635,7 +635,7 @@ onBeforeUnmount(() => {
     display: flex;
 
     .nav-item {
-      // width: 100px;
+      min-width: 96px;
       padding: 0 24px;
       height: 32px;
       font-size: 16px;

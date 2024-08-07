@@ -125,8 +125,8 @@
                           <div v-show="sourceItem.showDetailDataSource" class="source-content">
                             <p v-html="sourceItem.content?.replaceAll('\n', '<br/>')"></p>
                             <p class="score">
-                              <span class="tips">{{ common.correlation }}</span
-                              >{{ sourceItem.score }}
+                              <span class="tips">{{ common.correlation }}</span>
+                              {{ sourceItem.score }}
                             </p>
                           </div>
                         </Transition>
@@ -220,7 +220,7 @@
       </div>
     </div>
   </div>
-  <ChatSettingDialog />
+  <ChatSettingDialog ref="chatSettingForDialogRef" />
   <DefaultModal :content="content" :confirm-loading="confirmLoading" @ok="confirm" />
   <a-config-provider :theme="{ token: { colorPrimary: '#5a47e5' } }">
     <a-float-button class="scroll-btn" type="primary" @click="scrollBottom">
@@ -724,12 +724,14 @@ const handleModalChange = newVal => {
 };
 
 // 模型配置是否正确
+const chatSettingForDialogRef = ref<InstanceType<typeof ChatSettingDialog>>();
 const checkChatSetting = () => {
-  return !!(
-    chatSettingFormActive.value.apiKey &&
-    chatSettingFormActive.value.apiBase &&
-    chatSettingFormActive.value.apiModelName
-  );
+  // return !!(
+  //   chatSettingFormActive.value.apiKey &&
+  //   chatSettingFormActive.value.apiBase &&
+  //   chatSettingFormActive.value.apiModelName
+  // );
+  return chatSettingForDialogRef.value.handleOk();
 };
 
 // 检查信息来源的文件是否支持窗口化渲染
@@ -960,6 +962,7 @@ scrollBottom();
       }
 
       .tips {
+        min-width: 78px;
         height: 22px;
         line-height: 22px;
         color: $title2;
@@ -975,6 +978,9 @@ scrollBottom();
         color: #5a47e5;
         text-decoration: underline;
         cursor: pointer;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       svg {

@@ -307,7 +307,6 @@ onMounted(() => {
 
 const openAIModelSelect = (value: any) => {
   const curContextLength = openAISettingMap.get(value)?.apiContextLength;
-  console.log('open', openAIModelMax.value);
   if (curContextLength) {
     apiContextTokenK.value = curContextLength / 1024;
     openAIModelMax.value = curContextLength / 1024;
@@ -321,11 +320,8 @@ const TOKENRATIO = 4;
 
 // 上下文条数，无限制tooltip
 const sliderFormatter = (value: number) => {
-  if (value >= 11) {
-    // 11代表无限制，所以最后发送的时候如果是11，需要做无限制处理
-    return '无限制';
-  }
-  return value;
+  // 11代表无限制，所以最后发送的时候如果是11，需要做无限制处理
+  return value >= 11 ? '无限制' : value;
 };
 
 // 上下文长度，单位k，绑定到模板上
@@ -437,6 +433,11 @@ function transformCheckbox(type: 0 | 1) {
 // 初始化表单项，将active = true的表单项作为默认
 const initForm = () => {
   const activeForm = chatSettingConfigured.value.find(item => item.active === true);
+  console.log(activeForm, 'aaa');
+  // 如果是openai，就设置最大值
+  if (activeForm.modelType === 'openAI' && openAISettingMap.has(activeForm.apiModelName as any)) {
+    openAIModelSelect(activeForm.apiModelName);
+  }
   chatSettingForm.value = JSON.parse(JSON.stringify(activeForm));
 };
 
@@ -455,25 +456,11 @@ watch(
   }
 );
 
-// 监听上下文token数，上下文token一变，回复最大token自动变为最大（上下文token / TOKENRATIO）
-// watch(
-//   () => chatSettingForm.value?.apiContextLength,
-//   () => {
-//     chatSettingForm.value.maxToken = chatSettingForm.value.apiContextLength / TOKENRATIO;
-//   }
-// );
-
 // 在dom加载前初始化，onMounted会报错
 onBeforeMount(() => {
   // 初始化表单项
   initForm();
 });
-
-// onMounted(() => {
-//   // 转化表单项 -> checkbox-group
-//   transformCheckbox(0);
-//
-// });
 </script>
 
 <style lang="scss" scoped>

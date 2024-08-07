@@ -15,7 +15,7 @@
         </div>
         <div class="footer">
           <a-button @click="handleCancel">{{ common.cancel }}</a-button>
-          <a-button type="primary" style="width: auto; margin-left: 10px" @click="handleOk">
+          <a-button type="primary" style="width: auto; margin-left: 10px" @click="handleConfirm">
             {{ common.confirmApplication }}
           </a-button>
         </div>
@@ -36,23 +36,33 @@ const { contextLength } = storeToRefs(useHomeChat());
 const { showSettingModal } = storeToRefs(useChat());
 const { setChatSettingConfigured } = useChatSetting();
 
-const chatSettingFormRef = ref('');
+const chatSettingFormRef = ref<InstanceType<typeof ChatSettingForm>>();
 const { common } = getLanguage();
 
 const handleCancel = () => {
   showSettingModal.value = false;
 };
 
-const handleOk = async () => {
-  // @ts-ignore 这里确定有onCheck，因为暴露出来了
+const handleOk = async (fn?: Function) => {
   const checkRes = await chatSettingFormRef.value.onCheck();
-  console.log('checkRes', checkRes, Object.hasOwn(checkRes, 'errorFields'));
   if (!Object.hasOwn(checkRes, 'errorFields')) {
-    showSettingModal.value = false;
-    setChatSettingConfigured(checkRes);
-    message.success('应用成功');
+    fn && fn(checkRes);
+    return true;
   }
+  return false;
 };
+
+const handleOkCB = checkRes => {
+  showSettingModal.value = false;
+  setChatSettingConfigured(checkRes);
+  message.success('应用成功');
+};
+
+const handleConfirm = () => {
+  handleOk(handleOkCB);
+};
+
+defineExpose({ handleOk });
 </script>
 
 <style lang="scss" scoped>

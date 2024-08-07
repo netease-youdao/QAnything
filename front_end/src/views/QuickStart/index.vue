@@ -243,7 +243,7 @@
       </a-config-provider>
     </div>
   </div>
-  <ChatSettingDialog />
+  <ChatSettingDialog ref="chatSettingForDialogRef" />
   <DefaultModal :content="content" :confirm-loading="confirmLoading" @ok="confirm" />
   <FileUploadDialog :dialog-type="1" />
 </template>
@@ -673,12 +673,14 @@ const handleModalChange = newVal => {
 };
 
 // 模型配置是否正确
+const chatSettingForDialogRef = ref<InstanceType<typeof ChatSettingDialog>>();
 const checkChatSetting = () => {
-  return !!(
-    chatSettingFormActive.value.apiKey &&
-    chatSettingFormActive.value.apiBase &&
-    chatSettingFormActive.value.apiModelName
-  );
+  // return !!(
+  //   chatSettingFormActive.value.apiKey &&
+  //   chatSettingFormActive.value.apiBase &&
+  //   chatSettingFormActive.value.apiModelName
+  // );
+  return chatSettingForDialogRef.value.handleOk();
 };
 
 // 检查信息来源的文件是否支持窗口化渲染
