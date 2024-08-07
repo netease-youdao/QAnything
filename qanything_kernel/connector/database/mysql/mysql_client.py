@@ -852,3 +852,7 @@ class KnowledgeBaseManager:
         self.execute_query_(query, (
         bot_name, description, head_image, prompt_setting, welcome_message, model, kb_ids_str, update_time, user_id,
         bot_id), commit=True)
+
+    def get_files_by_status(self, status):
+        query = "SELECT file_id, file_name FROM File WHERE status = %s AND deleted = 0"
+        return self.execute_query_(query, (status,), fetch=True)
