@@ -71,7 +71,7 @@ async def new_knowledge_base(req: request):
 
     is_quick = safe_get(req, 'quick', '')
     if is_quick == '1':
-        kb_id += "-Quick"
+        kb_id += "_QUICK"
 
     if kb_id[:2] != 'KB':
         return sanic_json({"code": 2001, "msg": "fail, kb_id must start with 'KB'"})
