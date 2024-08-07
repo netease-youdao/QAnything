@@ -68,6 +68,11 @@ async def new_knowledge_base(req: request):
     default_kb_id = 'KB' + uuid.uuid4().hex
     kb_id = safe_get(req, 'kb_id', default_kb_id)
     kb_id = correct_kb_id(kb_id)
+
+    is_quick = safe_get(req, 'quick', '')
+    if is_quick == '1':
+        kb_id += "_QUICK"
+
     if kb_id[:2] != 'KB':
         return sanic_json({"code": 2001, "msg": "fail, kb_id must start with 'KB'"})
     not_exist_kb_ids = local_doc_qa.milvus_summary.check_kb_exist(user_id, [kb_id])
@@ -600,7 +605,7 @@ async def local_doc_chat(req: request):
     need_web_search = safe_get(req, 'networking', False)
 
     api_base = safe_get(req, 'api_base', '')
-    api_key = safe_get(req, 'api_key', '')
+    api_key = safe_get(req, 'api_key', 'ollama')
     api_context_length = safe_get(req, 'api_context_length', 4096)
     top_p = safe_get(req, 'top_p', 0.99)
     temperature = safe_get(req, 'temperature', 0.5)
