@@ -310,9 +310,12 @@ const scrollDom = ref(null);
 
 const scrollBottom = () => {
   nextTick(() => {
-    scrollDom.value?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'end',
+    nextTick(() => {
+      console.log('bottom');
+      scrollDom.value?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'end',
+      });
     });
   });
 };
@@ -846,6 +849,7 @@ scrollBottom();
   }
 
   #chat-ul {
+    padding-bottom: 20px;
     background: #f3f6fd;
     overflow: hidden;
   }

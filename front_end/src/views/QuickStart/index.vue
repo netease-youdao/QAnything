@@ -776,6 +776,7 @@ onBeforeUnmount(() => {
   overflow-y: auto;
 
   #chat-ul {
+    padding-bottom: 20px;
     background: #f3f6fd;
     overflow: hidden;
   }
