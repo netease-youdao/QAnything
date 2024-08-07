@@ -98,7 +98,7 @@ class LayoutRecognizer(Recognizer):
                 findLayout(ty)
             # add box to figure layouts which has not text box
             for i, lt in enumerate(
-                    [lt for lt in lts if lt["type"] in ["figure", "equation"]]):
+                    [lt for lt in lts if lt["type"] in ["figure", "equation", "table"]]):
                 if lt.get("visited"):
                     continue
                 lt = deepcopy(lt)

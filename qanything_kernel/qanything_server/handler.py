@@ -1243,18 +1243,21 @@ async def update_chunks(req: request):
     debug_logger.info("update_chunks %s", user_id)
     doc_id = safe_get(req, 'doc_id')
     debug_logger.info(f"doc_id: {doc_id}")
+    yellow_files = local_doc_qa.milvus_summary.get_files_by_status("yellow")
+    if len(yellow_files) > 0:
+        return sanic_json({"code": 2002, "msg": f"fail, currently, there are {len(yellow_files)} files being parsed, please wait for all files to finish parsing before updating the chunk."})
     update_content = safe_get(req, 'update_content')
     debug_logger.info(f"update_content: {update_content}")
     chunk_size = safe_get(req, 'chunk_size', DEFAULT_PARENT_CHUNK_SIZE)
     debug_logger.info(f"chunk_size: {chunk_size}")
     update_content_tokens = num_tokens(update_content)
     if update_content_tokens > chunk_size:
-        return sanic_json({"code": 2002, "msg": f"fail, update_content too long, please reduce the length, "
+        return sanic_json({"code": 2003, "msg": f"fail, update_content too long, please reduce the length, "
                                                 f"your update_content tokens is {update_content_tokens}, "
                                                 f"the max tokens is {chunk_size}"})
     doc_json = local_doc_qa.milvus_summary.get_document_by_doc_id(doc_id)
     if not doc_json:
-        return sanic_json({"code": 2003, "msg": "fail, DocId {} not found".format(doc_id)})
+        return sanic_json({"code": 2004, "msg": "fail, DocId {} not found".format(doc_id)})
     doc = Document(page_content=update_content, metadata=doc_json['kwargs']['metadata'])
     doc.metadata['doc_id'] = doc_id
     local_doc_qa.milvus_summary.update_document(doc_id, update_content)
