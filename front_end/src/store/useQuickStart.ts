@@ -140,11 +140,14 @@ export const useQuickStart = defineStore(
       }
     );
 
+    // 拷贝来的kbId,页面销毁前会复制到这个里面
+    const kbIdCopy = ref('');
+
     watch(
       () => knowledgeBaseList.value,
       () => {
         historyList.value = historyList.value.filter(item => {
-          // 这里使用 some 方法检查 knowledgeBaseList 中是否存在当前 item 的 kbId
+          // 检查 knowledgeBaseList 中是否存在当前 item 的 kbId
           return knowledgeBaseList.value.some(i => i.kb_id === item.kbId);
         });
       }
@@ -171,6 +174,7 @@ export const useQuickStart = defineStore(
       chatId,
       setChatId,
       kbId,
+      kbIdCopy,
       setKbId,
       deleteChatId,
     };

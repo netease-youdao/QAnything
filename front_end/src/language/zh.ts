@@ -75,7 +75,7 @@ export default {
     onlySearch: '仅检索模式',
     onlySearchDescription: '此模式不会返回说明文字',
     rerank: '检索增强',
-    rerankDescription: '检索增强，但会延长检索时间',
+    rerankDescription: '开启二阶段检索（rerank），会大幅增加检索耗时',
     chatUpload: '上传文件',
     chatUploadNoKbId: '请先创建对话',
     chatToPic: '将会话保存为图片',
@@ -106,7 +106,8 @@ export default {
     edit: '编辑',
   },
   home: {
-    newConversation: '新建对话',
+    newConversation: '新建对话窗口',
+    newConversationQuick: '开启新对话',
     documentId: '文档ID',
     documentName: '文档名称',
     documentStatus: '文档状态',

@@ -78,7 +78,8 @@ export default {
     onlySearch: 'SearchOnly',
     onlySearchDescription: 'This mode does not return description text',
     rerank: 'Rerank',
-    rerankDescription: 'Search enhancements, but longer search times',
+    rerankDescription:
+      'Enabling the second-stage rerank will significantly increase the retrieval time.',
     chatUpload: 'Upload Files',
     chatUploadNoKbId: 'Please create a conversation first',
     chatToPic: 'Save chat as picture',
@@ -116,6 +117,7 @@ export default {
   },
   home: {
     newConversation: 'New Conversation',
+    newConversationQuick: 'Start new conversation',
     documentId: 'Document ID',
     documentName: 'Document Name',
     documentStatus: 'Document Status',

@@ -38,7 +38,7 @@
           @click="quickClickHandle(0)"
         >
           <SvgIcon name="new-chat" />
-          {{ getLanguage().home.newConversation }}
+          {{ getLanguage().home.newConversationQuick }}
         </div>
         <SiderCardItem
           v-for="item of historyList"

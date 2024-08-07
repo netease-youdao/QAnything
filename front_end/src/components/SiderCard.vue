@@ -8,9 +8,12 @@
 -->
 <template>
   <div
-    v-for="(item, index) in props.list"
+    v-for="(item, index) in list"
     :key="index"
-    :class="{ active: selectList.includes(item.kb_id) }"
+    :class="{
+      active: selectList.includes(item.kb_id),
+      'card-option-active': currentId === item.kb_id,
+    }"
     class="card"
     :style="props.style"
     @click="selectKnowledgeBase(item)"
@@ -67,7 +70,7 @@ import { getLanguage } from '@/language/index';
 const common = getLanguage().common;
 // import { useDebounceFn } from '@vueuse/core';
 const { setShowDeleteModal, setCurrentId, setCurrentKbName, setDefault } = useKnowledgeBase();
-const { showDeleteModal, selectList } = storeToRefs(useKnowledgeBase());
+const { showDeleteModal, selectList, currentId } = storeToRefs(useKnowledgeBase());
 
 const props = defineProps({
   list: {
@@ -151,6 +154,15 @@ const close = (item: IKnowledgeItem) => {
   oldValue.value = '';
   item.edit = !item.edit;
 };
+
+// 筛出不含-Quick的list
+const list = computed(() => {
+  return props.list.map(item => {
+    if (!item.kb_id.includes('-Quick')) {
+      return item;
+    }
+  });
+});
 </script>
 <style lang="scss" scoped>
 .card {
@@ -186,6 +198,7 @@ const close = (item: IKnowledgeItem) => {
     .editing {
       display: flex;
       align-items: center;
+
       .title-text {
         width: 160px;
         height: 28px;
@@ -230,8 +243,14 @@ const close = (item: IKnowledgeItem) => {
     line-height: 20px;
   }
 }
+
 .active {
   background: linear-gradient(284deg, #7b5ef2 -1%, #c383fe 97%);
+}
+
+// 切到这个知识库管理
+.card-option-active {
+  border: 2px solid #d9d9d9;
 }
 
 .fade-enter-active {
@@ -253,10 +272,13 @@ const close = (item: IKnowledgeItem) => {
   height: 100%;
   overflow: hidden;
 }
+
 .tools-box {
   background: #333647;
+
   ul {
     width: 100%;
+
     li {
       cursor: pointer;
       display: flex;
@@ -293,10 +315,12 @@ const close = (item: IKnowledgeItem) => {
     }
   }
 }
+
 .card-hover {
   .ant-popover-arrow {
     display: none;
   }
+
   .ant-popover-content {
     .ant-popover-inner {
       transform: translateY(10px);

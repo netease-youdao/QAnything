@@ -280,7 +280,7 @@ import ChatInfoPanel from '@/components/ChatInfoPanel.vue';
 const { common, home } = getLanguage();
 
 const { copy } = useClipboard();
-const { QA_List, chatId, kbId, showLoading } = storeToRefs(useQuickStart());
+const { QA_List, chatId, kbId, kbIdCopy, showLoading } = storeToRefs(useQuickStart());
 const {
   addHistoryList,
   updateHistoryList,
@@ -340,6 +340,7 @@ const scrollBottom = () => {
 };
 
 onMounted(() => {
+  kbId.value = kbIdCopy.value;
   scrollBottom();
 });
 
@@ -740,6 +741,12 @@ function getB64Type(suffix) {
   const index = supportSourceTypes.indexOf(suffix);
   return b64Types[index];
 }
+
+onBeforeUnmount(() => {
+  console.log('unmounted');
+  kbIdCopy.value = kbId.value;
+  kbId.value = '';
+});
 </script>
 
 <style lang="scss" scoped>

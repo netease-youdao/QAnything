@@ -205,7 +205,7 @@ import UploadProgress from '@/components/UploadProgress.vue';
 import ChunkViewDialog from '@/components/ChunkViewDialog.vue';
 import FileUploadDialog from '@/components/FileUploadDialog.vue';
 
-const { setDefault } = useKnowledgeBase();
+const { setDefault, setCurrentId } = useKnowledgeBase();
 const { currentKbName, currentId } = storeToRefs(useKnowledgeBase());
 const { setModalVisible, setUrlModalVisible, setModalTitle } = useKnowledgeModal();
 const { showChunkModel } = storeToRefs(useChunkView());
@@ -553,6 +553,7 @@ watch(
 onBeforeUnmount(() => {
   clearTimeout(timer.value);
   clearTimeout(faqTimer.value);
+  setCurrentId('');
 });
 </script>
 
