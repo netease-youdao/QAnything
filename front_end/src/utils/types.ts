@@ -20,8 +20,9 @@ export interface IDataSourceItem {
   detailDataSource?: string; //详细来源信息
   file_name: string | null; //文件名
   content: string | null; //内容
-  score: number | null; //评分
-  file_id: string | null;
+  score: number | null; // 相关性
+  file_id: string | null; // 来源文件id（知识库的文件）
+  file_url: string | null; // 来源网址（联网检索）
   showDetailDataSource?: boolean; //是否展示详细来源信息
 }
 

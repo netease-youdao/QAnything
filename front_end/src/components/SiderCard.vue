@@ -155,10 +155,10 @@ const close = (item: IKnowledgeItem) => {
   item.edit = !item.edit;
 };
 
-// 筛出不含-Quick的list
+// 筛出不含_QUICK的list
 const list = computed(() => {
   return props.list.map(item => {
-    if (!item.kb_id.includes('-Quick')) {
+    if (!item.kb_id.includes('_QUICK')) {
       return item;
     }
   });

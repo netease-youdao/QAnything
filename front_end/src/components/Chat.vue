@@ -94,8 +94,8 @@
                         <p v-show="sourceItem.file_name" class="control">
                           <span class="tips">{{ common.dataSource }}{{ sourceIndex + 1 }}:</span>
                           <a
-                            v-if="sourceItem.file_id.startsWith('http')"
-                            :href="sourceItem.file_id"
+                            v-if="sourceItem.file_url.startsWith('http')"
+                            :href="sourceItem.file_url"
                             target="_blank"
                           >
                             {{ sourceItem.file_name }}
@@ -272,11 +272,6 @@ const { language } = storeToRefs(useLanguage());
 declare module _czc {
   const push: (array: any) => void;
 }
-
-// ai下面的ChatInfoPanel
-// const hasTokenInfo = item => {
-//   return Object.keys(item?.itemInfo?.tokenInfo || {}).length > 0;
-// };
 
 //当前问的问题
 const question = ref('');
