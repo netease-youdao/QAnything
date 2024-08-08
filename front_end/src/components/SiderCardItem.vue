@@ -7,7 +7,9 @@
  * @Description: QuickStart -> SiderCard的每一项，传入HistoryList和点击函数
  -->
 <template>
-  <div :class="['card', kbId === cardData.kbId ? 'active' : '', showLoading ? 'disabled' : '']">
+  <div
+    :class="['card', chatId === cardData.historyId ? 'active' : '', showLoading ? 'disabled' : '']"
+  >
     <a-popover overlay-class-name="card-hover" placement="right">
       <template #content>
         <div class="tools-box">
@@ -43,7 +45,7 @@ import { getLanguage } from '@/language';
 const { setShowDeleteModal, setCurrentId, setCurrentKbName, setDefault } = useKnowledgeBase();
 const { showDeleteModal } = storeToRefs(useKnowledgeBase());
 const common = getLanguage().common;
-const { kbId, showLoading, deleteChatId } = storeToRefs(useQuickStart());
+const { chatId, showLoading, deleteChatId } = storeToRefs(useQuickStart());
 
 interface IHistoryListOptional extends Partial<IHistoryList> {
   title: string;
@@ -57,6 +59,7 @@ interface IProps {
 
 const props = defineProps<IProps>();
 const { cardData } = toRefs(props);
+console.log('cardData.value', cardData.value);
 
 // 管理知识库
 const manage = (item: IKnowledgeItem) => {

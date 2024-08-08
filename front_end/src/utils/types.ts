@@ -94,7 +94,7 @@ export interface IUrlListItem {
 
 //上传文件
 export interface IFileListItem {
-  file?: File;
+  file?: File; // 这个只有在上传时候加，接收没有这个
   file_name: string;
   status: string;
   file_id: string;
@@ -102,6 +102,7 @@ export interface IFileListItem {
   errorText?: string;
   text?: string;
   order?: number;
+  bytes: number;
 }
 
 // 模型设置

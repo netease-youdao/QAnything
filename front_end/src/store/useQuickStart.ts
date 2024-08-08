@@ -1,7 +1,7 @@
 // import { resultControl } from '@/utils/utils';
 // import urlResquest from '@/services/urlConfig';
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
-import { IChatItem } from '@/utils/types';
+import { IChatItem, IFileListItem } from '@/utils/types';
 import { resultControl } from '@/utils/utils';
 import urlResquest from '@/services/urlConfig';
 
@@ -19,19 +19,24 @@ export interface IHistoryList {
   historyId: number;
   title: string;
   kbId?: string;
+  fileToBeSendList: IFileListItem[];
+}
+
+interface IQuickChatItem extends IChatItem {
+  fileDataList?: IFileListItem[];
 }
 
 interface IChatList {
   historyId: number;
   // list: IChatItem[];
-  list: IChatItem[];
+  list: IQuickChatItem[];
 }
 
 export const useQuickStart = defineStore(
   'useQuickStart',
   () => {
     // 当前对话问答列表
-    const QA_List = ref([]);
+    const QA_List = ref<IQuickChatItem[]>([]);
     const setQaList = value => {
       QA_List.value = value;
     };
@@ -58,6 +63,7 @@ export const useQuickStart = defineStore(
       const newHistory: IHistoryList = {
         historyId: newHistoryId,
         title,
+        fileToBeSendList: [],
         // kbId: value.kbId,
       };
 
@@ -92,10 +98,18 @@ export const useQuickStart = defineStore(
         }
       });
     };
+    const addFileToBeSendList = (historyId: number, fileList: IFileListItem | IFileListItem[]) => {
+      const list = getHistoryById(historyId);
+      if (Array.isArray(fileList)) {
+        list.fileToBeSendList.push(...fileList);
+      } else {
+        list.fileToBeSendList.push(fileList);
+      }
+    };
 
     // 总的对话列表，二维数组，有每个数据里面有自己的historyId
     const chatList = ref<IChatList[]>([]);
-    const addChatList = (historyId: number, QA_List: any[]) => {
+    const addChatList = (historyId: number, QA_List: IQuickChatItem[]) => {
       const newChat: IChatList = {
         historyId,
         list: QA_List,
@@ -167,6 +181,7 @@ export const useQuickStart = defineStore(
       updateHistoryList,
       getHistoryById,
       renameHistory,
+      addFileToBeSendList,
       chatList,
       addChatList,
       getChatById,

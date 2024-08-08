@@ -15,14 +15,19 @@
           <li v-for="(item, index) in QA_List" :key="index">
             <div v-if="item.type === 'user'" class="user">
               <img class="avatar" src="@/assets/home/avatar.png" alt="头像" />
-              <p class="question-text">{{ item.question }}</p>
-              <!--              <div class="file-list-box">-->
-              <!--                <FileBlock-->
-              <!--                  v-for="file of uploadFileList"-->
-              <!--                  :key="file.file.lastModified"-->
-              <!--                  :file-data="file"-->
-              <!--                />-->
-              <!--              </div>-->
+              <div class="question-inner">
+                <p class="question-text">{{ item.question }}</p>
+                <div v-if="item.fileDataList.length" class="file-list-box">
+                  <FileBlock
+                    v-for="file of item.fileDataList"
+                    :key="file.file.lastModified"
+                    :file-data="file"
+                    :kb-id="kbId"
+                    :chat-id="chatId"
+                    status="send"
+                  />
+                </div>
+              </div>
             </div>
             <div v-else class="ai">
               <img class="avatar" src="@/assets/home/ai-avatar.png" alt="头像" />
@@ -130,7 +135,7 @@
                   </template>
                   <div v-if="item.showTools" class="feed-back">
                     <div class="reload-box" @click="reAnswer(item)">
-                      <SvgIcon name="reload"></SvgIcon>
+                      <SvgIcon name="reload" />
                       <span class="reload-text">{{ common.regenerate }}</span>
                     </div>
                     <div class="tools">
@@ -140,21 +145,21 @@
                         }"
                         name="copy"
                         @click="myCopy(item)"
-                      ></SvgIcon>
+                      />
                       <SvgIcon
                         :style="{
                           color: item.like ? '#4D71FF' : '',
                         }"
                         name="like"
                         @click="like(item, $event)"
-                      ></SvgIcon>
+                      />
                       <SvgIcon
                         :style="{
                           color: item.unlike ? '#4D71FF' : '',
                         }"
                         name="unlike"
                         @click="unlike(item)"
-                      ></SvgIcon>
+                      />
                     </div>
                   </div>
                 </div>
@@ -173,12 +178,15 @@
       </div>
       <div class="question-box">
         <div class="question">
-          <div v-if="uploadFileList.length" class="file-list-box">
+          <div v-if="fileBlockArr.length" class="file-list-box">
             <FileBlock
-              v-for="file of uploadFileList"
-              :key="file.file.lastModified"
+              v-for="file of fileBlockArr"
+              :key="file.file_id"
               :file-data="file"
               :kb-id="kbId"
+              :chat-id="chatId"
+              status="toBeSend"
+              @deleteFile="deleteFile"
             />
           </div>
           <div class="send-box">
@@ -210,15 +218,6 @@
                   @click="downloadChat"
                 >
                   <SvgIcon name="chat-download" />
-                </span>
-              </a-popover>
-              <a-popover>
-                <template #content>{{ common.clearChat }}</template>
-                <span
-                  :class="['question-icon', showLoading ? 'isPreventClick' : '']"
-                  @click="deleteChat"
-                >
-                  <SvgIcon name="chat-delete" />
                 </span>
               </a-popover>
               <a-popover>
@@ -254,7 +253,7 @@ import SvgIcon from '@/components/SvgIcon.vue';
 import { getLanguage } from '@/language';
 import { Typewriter } from '@/utils/typewriter';
 import { useClipboard, useThrottleFn } from '@vueuse/core';
-import { IChatItem } from '@/utils/types';
+import { IChatItem, IFileListItem } from '@/utils/types';
 import { message } from 'ant-design-vue';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { apiBase } from '@/services';
@@ -288,18 +287,24 @@ const {
   clearChatList,
   getHistoryById,
   renameHistory,
+  addFileToBeSendList,
 } = useQuickStart();
 const { setChatSourceVisible, setSourceType, setSourceUrl, setTextContent } = useChatSource();
 const { chatSettingFormActive } = storeToRefs(useChatSetting());
 const { showDefault } = storeToRefs(useKnowledgeBase());
 const { setModalVisible, setModalTitle } = useKnowledgeModal();
-const { uploadFileList } = storeToRefs(useUploadFiles());
-const { initUploadFileList } = useUploadFiles();
+const { uploadFileListQuick } = storeToRefs(useUploadFiles());
+const { initUploadFileListQuick } = useUploadFiles();
 const { language } = storeToRefs(useLanguage());
 
 declare module _czc {
   const push: (array: any) => void;
 }
+
+// 当前对话的historyList
+const historyList = computed(() => {
+  return getHistoryById(chatId.value);
+});
 
 const typewriter = new Typewriter((str: string) => {
   if (str) {
@@ -317,9 +322,6 @@ const history = computed(() => {
   const historyChat = context === 1 ? usefulChat : usefulChat.slice(-context);
   return historyChat.map(item => [item.question, item.answer]);
 });
-
-// //当前是否回答中
-// const showLoading = ref(false);
 
 const showSourceIdxs = ref([]);
 
@@ -339,9 +341,23 @@ const scrollBottom = () => {
   });
 };
 
+// fileBlock的数组，为缓存拿的和这次上传的联合起来的
+const fileBlockArr = computed<IFileListItem[]>(() => {
+  const arr = historyList.value?.fileToBeSendList.concat(uploadFileListQuick?.value) || [];
+  return arr.filter(item => item.file_id.length !== 0);
+});
+
 onMounted(() => {
-  kbId.value = kbIdCopy.value;
+  kbIdCopy.value && (kbId.value = kbIdCopy.value);
   scrollBottom();
+});
+
+// 切换到知识库或者bot，切换对话的在Sider里面
+onBeforeUnmount(() => {
+  if (uploadFileListQuick.value.length) {
+    addFileToBeSendList(chatId.value, [...uploadFileListQuick.value]);
+    initUploadFileListQuick();
+  }
 });
 
 // 聊天框keydown，不允许enter换行，alt/ctrl/shift/meta(Command或win) + enter可换行
@@ -392,10 +408,32 @@ const myCopy = (item: IChatItem) => {
     });
 };
 
+// 删除文件
+const deleteFile = async (file_id: string, kb_id: string) => {
+  console.log(file_id);
+  try {
+    await resultControl(await urlResquest.deleteFile({ file_ids: [file_id], kb_id }));
+    message.success('删除成功');
+    const index: number = uploadFileListQuick.value.findIndex(item => item.file_id === file_id);
+    if (index !== -1) {
+      // 在uploadFileListQuick里面
+      uploadFileListQuick.value.splice(index, 1);
+    } else {
+      // 在本地存储里面
+      historyList.value.fileToBeSendList = historyList.value.fileToBeSendList.filter(
+        item => item.file_id !== file_id
+      );
+    }
+  } catch (e) {
+    message.error(e.msg || '删除失败');
+  }
+};
+
 const addQuestion = q => {
   QA_List.value.push({
     question: q,
     type: 'user',
+    fileDataList: [...fileBlockArr.value],
   });
   scrollBottom();
 };
@@ -436,7 +474,7 @@ const beforeSend = async title => {
       }
       return;
     }
-    // 需要新建对话（正常操作不会进入这里）
+    // 需要新建对话（正常操作不会进入这里，因为点击开启新对话就是新建了）
     if (title.length > 100) {
       title = title.substring(0, 100);
     }
@@ -460,21 +498,18 @@ const send = async () => {
     message.warn('正在聊天中...请等待结束');
     return;
   }
-  if (!checkChatSetting()) {
+  if (!(await checkChatSetting())) {
     message.error('模型设置错误，请先检查模型配置');
     return;
   }
-  // 清除fileList
-  initUploadFileList();
-  // if (!kbId.value) {
-  //   return message.warning(common.chooseError);
-  // }
   const q = question.value;
   await beforeSend(q);
   question.value = '';
   addQuestion(q);
   // 更新最大的chatList
   addChatList(chatId.value, QA_List.value);
+  initUploadFileListQuick();
+  historyList.value.fileToBeSendList = [];
   showLoading.value = true;
   ctrl = new AbortController();
   fetchEventSource(apiBase + '/local_doc_qa/local_doc_chat', {
@@ -623,13 +658,6 @@ const downloadChat = () => {
   content.value = common.saveTip;
 };
 
-const deleteChat = () => {
-  if (showLoading.value) return;
-  type.value = 'delete';
-  showModal.value = true;
-  content.value = common.clearTip;
-};
-
 const confirm = async () => {
   confirmLoading.value = true;
   if (type.value === 'download') {
@@ -676,11 +704,6 @@ const handleModalChange = newVal => {
 // 模型配置是否正确
 const chatSettingForDialogRef = ref<InstanceType<typeof ChatSettingDialog>>();
 const checkChatSetting = () => {
-  // return !!(
-  //   chatSettingFormActive.value.apiKey &&
-  //   chatSettingFormActive.value.apiBase &&
-  //   chatSettingFormActive.value.apiModelName
-  // );
   return chatSettingForDialogRef.value.handleOk();
 };
 
@@ -795,6 +818,18 @@ onBeforeUnmount(() => {
 
     .avatar {
       margin: 0 0 0 16px;
+    }
+
+    .question-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+
+      .file-list-box {
+        padding-right: 5px;
+        display: flex;
+        justify-content: flex-end;
+      }
     }
 
     .question-text {
@@ -987,8 +1022,10 @@ onBeforeUnmount(() => {
 .file-list-box {
   width: 100%;
   max-height: 160px;
-  padding: 14px;
+  padding: 10px 20px;
+  margin: 0 auto;
   display: flex;
+  justify-content: flex-start;
   flex-wrap: wrap;
   gap: 8px;
   overflow-y: auto;

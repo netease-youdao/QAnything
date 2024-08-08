@@ -17,17 +17,17 @@ export const useUploadFiles = defineStore('useUploadFiles', () => {
     uploadFileList.value = [];
   };
 
-  // 本次上传的文件上传列表
-  const curUploadFileNum = ref(0);
+  // 快速开始的便捷文件上传
+  const uploadFileListQuick = ref<IFileListItem[]>([]);
 
-  const initCurUploadFileNum = () => {
-    curUploadFileNum.value = 0;
+  const initUploadFileListQuick = () => {
+    uploadFileListQuick.value = [];
   };
 
   return {
     uploadFileList,
     initUploadFileList,
-    curUploadFileNum,
-    initCurUploadFileNum,
+    uploadFileListQuick,
+    initUploadFileListQuick,
   };
 });

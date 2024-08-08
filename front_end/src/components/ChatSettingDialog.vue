@@ -7,7 +7,7 @@
       width="700px"
       wrap-class-name="model-set-modal"
       :footer="null"
-      :destroy-on-close="true"
+      :force-render="true"
     >
       <div class="model-set-dialog-comp">
         <div class="select-model">
@@ -44,6 +44,7 @@ const handleCancel = () => {
 };
 
 const handleOk = async (fn?: Function) => {
+  console.log('asdad', chatSettingFormRef.value);
   const checkRes = await chatSettingFormRef.value.onCheck();
   if (!Object.hasOwn(checkRes, 'errorFields')) {
     fn && fn(checkRes);

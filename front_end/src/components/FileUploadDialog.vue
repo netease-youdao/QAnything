@@ -67,7 +67,7 @@
                 </ul>
               </template>
             </UploadList>
-            <div class="note">{{ common.errorTip }}</div>
+            <!--            <div class="note">{{ common.errorTip }}</div>-->
           </div>
         </div>
       </div>
@@ -118,7 +118,7 @@ const { setDefault } = useKnowledgeBase();
 const { getDetails } = useOptiionList();
 const { modalVisible, modalTitle } = storeToRefs(useKnowledgeModal());
 const { currentId, currentKbName } = storeToRefs(useKnowledgeBase());
-const { uploadFileList } = storeToRefs(useUploadFiles()); // 上传的文件列表
+const { uploadFileList, uploadFileListQuick } = storeToRefs(useUploadFiles()); // 上传的文件列表
 const { initUploadFileList } = useUploadFiles();
 const { chatSettingFormActive } = storeToRefs(useChatSetting());
 
@@ -148,8 +148,12 @@ const canSubmit = computed(() => {
 watch(
   () => modalVisible.value,
   () => {
+    console.log('uploadlist', uploadFileList.value);
     setKnowledgeName(currentKbName.value);
     showUploadList.value = !!uploadFileList.value.length;
+    if (props.dialogType === 1) {
+      uploadFileList.value = uploadFileListQuick.value;
+    }
     if (!modalVisible.value && props.dialogType === 0) {
       initUploadFileList();
     }
@@ -187,6 +191,7 @@ const beforeFileUpload = async (file, index) => {
         text: common.uploading,
         file_id: '',
         order: uploadFileList.value.length,
+        bytes: 0,
       });
       // initCurUploadFileNum();
       resolve(index);
@@ -304,6 +309,7 @@ const uplolad = async () => {
           uploadFileList.value[item.order].status = status;
           console.log('data', data, item);
           uploadFileList.value[item.order].file_id = data.data[index].file_id;
+          uploadFileList.value[item.order].bytes = data.data[index].bytes;
           uploadFileList.value[item.order].errorText = common.upSucceeded;
         });
       } else {

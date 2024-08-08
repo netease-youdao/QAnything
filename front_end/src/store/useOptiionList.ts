@@ -127,9 +127,7 @@ export const useOptiionList = defineStore(
       const computedRemark = (msg: string = '', status: string = 'green') => {
         if (status !== 'green') return msg;
         // stringify转不了, 只能toString()
-        const obj = JSON.parse(msg.toString());
-        delete obj.msg;
-        return obj;
+        return JSON.parse(msg.toString());
       };
 
       res?.details.forEach((item: any, index) => {

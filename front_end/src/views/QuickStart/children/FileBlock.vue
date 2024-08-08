@@ -17,11 +17,14 @@
     <div class="file-info">
       <span class="file-name">{{ fileInfo.fileName }}</span>
       <span v-if="fileStatus === 'green'" class="file-extension">
-        {{ fileInfo.fileExtension.toUpperCase() }}, {{ formatFileSize(fileData.file.size) || 0 }}
+        {{ fileInfo.fileExtension.toUpperCase() }}, {{ formatFileSize(fileData.bytes) || 0 }}
       </span>
       <span v-else class="file-extension">
         {{ fileStatusMap.get(fileStatus) }}
       </span>
+    </div>
+    <div v-if="status === 'toBeSend'" class="file-close" @click="cancelFile">
+      <SvgIcon name="close" />
     </div>
   </div>
 </template>
@@ -36,7 +39,10 @@ import urlResquest from '@/services/urlConfig';
 interface IProps {
   fileData: IFileListItem;
   kbId: string;
+  status: 'toBeSend' | 'send';
 }
+
+const emit = defineEmits(['deleteFile']);
 
 const props = defineProps<IProps>();
 
@@ -87,7 +93,7 @@ const fileStatusMap = new Map([
   ['gray', '上传中'],
   ['yellow', '解析中'],
   ['green', '解析成功'],
-  ['red', '上传失败'],
+  ['red', '解析失败'],
 ]);
 
 const getDetail = () => {
@@ -108,10 +114,13 @@ const getDetail = () => {
         })
       )) as any;
       console.log(res);
-      fileData.value.status = res.details[0].status;
+      fileData.value.status = res.details[0]?.status || 'red';
     }
   }, 2000);
-  // }
+};
+
+const cancelFile = async () => {
+  emit('deleteFile', fileData.value.file_id, kbId.value);
 };
 
 onMounted(() => {
@@ -123,6 +132,7 @@ z
 .contain {
   position: relative;
   width: calc((100% - 16px) / 3);
+  min-width: 160px;
   height: 62px;
   padding: 8px;
   display: flex;
@@ -168,6 +178,19 @@ z
       font-weight: 500;
       font-size: 12px;
       line-height: 20px;
+    }
+  }
+
+  .file-close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    transform: translate(20%, -20%);
+    cursor: pointer;
+
+    svg {
+      width: 16px;
+      height: 16px;
     }
   }
 }

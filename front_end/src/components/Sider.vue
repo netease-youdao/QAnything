@@ -77,7 +77,8 @@ import { getLanguage } from '@/language';
 // import { useKnowledgeModal } from '@/store/useKnowledgeModal';
 import { resultControl } from '@/utils/utils';
 import urlResquest from '@/services/urlConfig';
-import { IChatItemInfo } from '@/utils/types';
+import { IChatItemInfo, IFileListItem } from '@/utils/types';
+import { useUploadFiles } from '@/store/useUploadFiles';
 // import urlResquest from '@/services/urlConfig';
 // import { pageStatus } from '@/utils/enum';
 // import { resultControl } from '@/utils/utils';
@@ -90,15 +91,19 @@ import { IChatItemInfo } from '@/utils/types';
 // const { knowledgeBaseList, selectList } = storeToRefs(useKnowledgeBase());
 const { knowledgeBaseList } = storeToRefs(useKnowledgeBase());
 const { historyList, showLoading, chatId, QA_List, kbId } = storeToRefs(useQuickStart());
-const { getChatById, addHistoryList, updateHistoryList, addChatList } = useQuickStart();
+const { getChatById, addHistoryList, updateHistoryList, addChatList, addFileToBeSendList } =
+  useQuickStart();
+const { uploadFileListQuick } = storeToRefs(useUploadFiles());
+const { initUploadFileListQuick } = useUploadFiles();
 const { navIndex } = storeToRefs(useHeader());
 const { changePage } = routeController();
 
 // 快速开始逻辑
-function addQuestion(q) {
+function addQuestion(q, fileDataList: IFileListItem[]) {
   QA_List.value.push({
     question: q,
     type: 'user',
+    fileDataList: fileDataList,
   });
   // scrollBottom();
 }
@@ -129,6 +134,11 @@ function addAnswer(
 // 快速开始的：0新建对话, 1选中对话
 const quickClickHandle = async (type: 0 | 1, cardData?: IHistoryList) => {
   if (showLoading.value) return;
+  // 切换对话的时候保存当前文件的上传情况
+  if (uploadFileListQuick.value.length) {
+    addFileToBeSendList(chatId.value, [...uploadFileListQuick.value]);
+    initUploadFileListQuick();
+  }
   if (type === 0) {
     // 新建对话，需要创建对话（知识库）并跳转到新对话
     const res: any = await resultControl(
@@ -150,7 +160,7 @@ const quickClickHandle = async (type: 0 | 1, cardData?: IHistoryList) => {
     const chat = getChatById(chatId.value);
     chat.list.forEach(item => {
       if (item.type === 'user') {
-        addQuestion(item.question);
+        addQuestion(item.question, item.fileDataList);
       } else if (item.type === 'ai') {
         addAnswer(item.question, item.itemInfo, item.answer, item.picList, item.qaId, item.source);
       }

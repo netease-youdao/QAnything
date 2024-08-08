@@ -17,6 +17,7 @@
       wrap-class-name="chunk-modal"
       :destroy-on-close="true"
       :footer="null"
+      draggable="true"
       @cancel="handleCancel"
     >
       <div class="file-preview"></div>
