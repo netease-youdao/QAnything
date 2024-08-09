@@ -24,6 +24,12 @@ export const useKnowledgeBase = defineStore('knowledgeBase', () => {
     currentId.value = id;
   };
 
+  // 新建的知识库暂存
+  const newKbId = ref('');
+  const setNewKbId = (id: string) => {
+    newKbId.value = id;
+  };
+
   //选中的知识库id
   const selectList = ref<string[]>([]);
   const setSelectList = list => {
@@ -78,6 +84,8 @@ export const useKnowledgeBase = defineStore('knowledgeBase', () => {
 
   return {
     currentId,
+    newKbId,
+    setNewKbId,
     setCurrentId,
     knowledgeBaseList,
     setKnowledgeBaseList,

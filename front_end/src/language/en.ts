@@ -22,9 +22,9 @@ export default {
     click: 'Click',
     close: 'Close',
     updesc1:
-      'Support: md, txt, pdf, jpg, png, jpeg, docx, xlsx, pptx, eml, csv. single document less than 30M, single picture less than 5M',
+      'Support: md, txt, pdf, jpg, png, jpeg, docx, xlsx, pptx, eml, csv. single document less than 30M, single picture less than 5M, total file size must not exceed 125M',
     updesc2:
-      'Can upload files in batches, supported file type: doc、docx、ppt、pptx、xls、xlsx、pdf、md、JPG、JPEG、PNG、BMP、txt、eml, single document less than 30MB, single image less than 5MB',
+      'Can upload files in batches, supported file type: md, txt, pdf, jpg, png, jpeg, docx, xlsx, pptx, eml, csv, single document less than 30MB, single image less than 5MB, total file size must not exceed 125M',
     confirm: 'Confirm',
     confirm2: 'Confirm',
     confirmApplication: 'Confirm application',
@@ -114,6 +114,12 @@ export default {
     plsInput: 'Please Input',
     save: 'Save',
     edit: 'Edit',
+    modelInfoView: 'View all information',
+    modelInfoTitle: 'Session Model Information',
+    modelInfoTime: 'time Information',
+    modelInfoToken: 'Token Information',
+    modelInfoSetting: 'Model Information',
+    note: 'Note',
   },
   home: {
     newConversation: 'New Conversation',
@@ -142,7 +148,7 @@ export default {
     inputQa: 'Input question and answer',
     deleteQaSetText:
       'Confirm deletion? After deletion will affect the robot training results, can not be restored!',
-    docSet: 'Document set',
+    docSet: 'Doc set',
     qaSet: 'QA set',
     question: 'question',
     status: 'status',
@@ -223,7 +229,7 @@ export default {
     creationTime: 'Creation time',
   },
   progress: {
-    uploadTotalProgress: 'Upload Total Progress',
+    uploadTotalProgress: 'Upload Progress',
     putStorage: 'Success',
     inLine: 'In Line',
     parsing: 'Parsing',

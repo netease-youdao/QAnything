@@ -142,7 +142,7 @@ const quickClickHandle = async (type: 0 | 1, cardData?: IHistoryList) => {
   if (type === 0) {
     // 新建对话，需要创建对话（知识库）并跳转到新对话
     const res: any = await resultControl(
-      await urlResquest.createKb({ kb_name: '未命名对话', quick: 1 })
+      await urlResquest.createKb({ kb_name: '未命名对话', quick: true })
     );
     kbId.value = res.kb_id;
     QA_List.value = [];

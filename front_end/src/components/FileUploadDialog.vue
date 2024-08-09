@@ -42,7 +42,7 @@
             </div>
           </div>
           <div
-            v-show="showUploadList"
+            v-show="showUploadList && props.dialogType !== 1"
             class="upload-box"
             :class="showUploadList ? 'upload-list' : ''"
           >
@@ -137,7 +137,6 @@ const timer = ref();
 
 //控制确认按钮 是否能提交
 const canSubmit = computed(() => {
-  console.log(currentId.value, uploadFileList.value);
   return (
     currentId.value.length > 0 &&
     uploadFileList.value.length > 0 &&
@@ -148,9 +147,9 @@ const canSubmit = computed(() => {
 watch(
   () => modalVisible.value,
   () => {
-    console.log('uploadlist', uploadFileList.value);
     setKnowledgeName(currentKbName.value);
     showUploadList.value = !!uploadFileList.value.length;
+    // 如果是快速开始的便捷上传，将quick的引用给uploadFileList，因为便捷上传和知识库上传用两个data
     if (props.dialogType === 1) {
       uploadFileList.value = uploadFileListQuick.value;
     }
@@ -180,10 +179,30 @@ const acceptList = [
   // '.wav',
 ];
 
+// 文件大小限制
+const fileSizeLimit = {
+  document: 30 * 1024 * 1024, // 单个文档小于30M
+  image: 5 * 1024 * 1024, // 单张图片小于5M
+};
+
+// 文件总大小限制
+const totalSizeLimit = 125 * 1024 * 1024; // 文件总大小不超过125MB
+
 //上传前校验
 const beforeFileUpload = async (file, index) => {
   return new Promise((resolve, reject) => {
+    // 检查文件扩展名是否被接受
     if (file.name && acceptList.includes('.' + file.name.split('.').pop().toLowerCase())) {
+      // 根据文件类型设置大小限制
+      const limit = file.type.startsWith('image/') ? fileSizeLimit.image : fileSizeLimit.document;
+
+      // 检查文件大小是否超过限制
+      if (file.size > limit) {
+        reject(`文件太大，不能超过 ${limit / 1024 / 1024} MB`);
+        return;
+      }
+
+      // 如果文件通过所有检查，将其添加到上传列表
       uploadFileList.value.push({
         file_name: file.name,
         file: file,
@@ -193,65 +212,37 @@ const beforeFileUpload = async (file, index) => {
         order: uploadFileList.value.length,
         bytes: 0,
       });
-      // initCurUploadFileNum();
       resolve(index);
     } else {
-      reject(file.name);
+      reject(`${file.name}的文件格式不符`);
     }
   });
 };
 
 //input上传
 const fileChange = e => {
-  const files = e.target.files;
-  console.log('fileChange', files);
+  const files: FileList = e.target.files;
+  // 先检查文件总大小
+  let totalFilesSize = 0;
+  Array.from(files).forEach(file => {
+    totalFilesSize += file.size;
+    // 检查文件总大小是否超过限制
+    if (totalFilesSize >= totalSizeLimit) {
+      message.error('文件总大小超过125MB');
+      return;
+    }
+  });
   Array.from(files).forEach(async (file: any, index) => {
     try {
       await beforeFileUpload(file, index);
     } catch (e) {
-      message.error(`${e}的文件格式不符`);
-      // uploadFileList.value.push({
-      //   file_name: file.name,
-      //   file: file,
-      //   status: 'error',
-      //   text: '文件格式不符',
-      //   file_id: '',
-      // });
+      message.error(e);
     }
   });
   setTimeout(() => {
     uploadFileList.value.length && uplolad();
   });
 };
-
-// const uplolad = () => {
-//   showUploadList.value = true;
-//   uploadFileList.value.forEach(async (file: IFileListItem, index) => {
-//     if (file.status == 'loading') {
-//       try {
-//         // 上传模式，soft：文件名重复的文件不再上传，strong：文件名重复的文件强制上传
-//         const param = { files: file.file, kb_id: newId.value, mode: 'strong' };
-//         console.log(param);
-//         const res = await urlResquest.uploadFile(param, {
-//           headers: {
-//             'Content-Type': 'multipart/form-data',
-//           },
-//         });
-//         if (+res.code === 200 && res.data[0].status !== 'red' && res.data[0].status !== 'yellow') {
-//           uploadFileList.value[index].status = 'success';
-//           uploadFileList.value[index].text = '上传成功';
-//           uploadFileList.value[index].file_id = res.data[0].file_id;
-//         } else {
-//           uploadFileList.value[index].status = 'error';
-//           uploadFileList.value[index].text = '上传失败';
-//         }
-//       } catch (e) {
-//         uploadFileList.value[index].status = 'error';
-//         uploadFileList.value[index].text = '上传失败';
-//       }
-//     }
-//   });
-// };
 
 const uplolad = async () => {
   if (props.dialogType === 0) {
@@ -286,7 +277,6 @@ const uplolad = async () => {
       }
     })
     .then(data => {
-      console.log('uploadList', uploadFileList.value, data);
       // 在此处对接口返回的数据进行处理
       if (data.code === 200) {
         if (data.data.length === 0) {
@@ -307,7 +297,6 @@ const uplolad = async () => {
             status = 'error';
           }
           uploadFileList.value[item.order].status = status;
-          console.log('data', data, item);
           uploadFileList.value[item.order].file_id = data.data[index].file_id;
           uploadFileList.value[item.order].bytes = data.data[index].bytes;
           uploadFileList.value[item.order].errorText = common.upSucceeded;

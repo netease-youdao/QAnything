@@ -17,7 +17,7 @@
         @click="openInfoModal"
       >
         <template #title>
-          <span>查看所有信息</span>
+          <span>{{ common.modelInfoView }}</span>
         </template>
         <SvgIcon name="question" />
       </a-tooltip>
@@ -156,13 +156,13 @@ const openInfoModal = () => {
     return formattedString;
   };
   Modal.info({
-    title: '会话模型信息',
+    title: `${common.modelInfoTitle}`,
     content: h('div', { style: { 'user-select': 'text' } }, [
-      h(TypographyParagraph, {}, () => `耗时信息: ${formatInfo(timeInfo.value)}`),
+      h(TypographyParagraph, {}, () => `${common.modelInfoTime}: ${formatInfo(timeInfo.value)}`),
       h(
         TypographyParagraph,
         { mark: true },
-        () => `注：${formatTimeInfo(
+        () => `${common.note}：${formatTimeInfo(
           timeInfo.value,
           [...TIMEINFO.values()].slice(0, 7)
         )} = first_return: ${timeInfo.value['first_return']}
@@ -170,9 +170,9 @@ const openInfoModal = () => {
           timeInfo.value['chat_completed']
         }`
       ),
-      h(TypographyParagraph, {}, () => `token信息: ${formatInfo(tokenInfo.value)}`),
+      h(TypographyParagraph, {}, () => `${common.modelInfoToken}: ${formatInfo(tokenInfo.value)}`),
       h(TypographyParagraph, {}, () => [
-        '模型信息：', // 直接作为文本节点返回
+        `${common.modelInfoSetting}：`,
         ...Object.entries(settingInfo.value).map(([key, value]) =>
           h(TypographyParagraph, {}, () => `${key}: ${value}`)
         ),

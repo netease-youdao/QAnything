@@ -178,10 +178,12 @@ import { fileStatus } from '@/utils/enum';
 import { useLanguage } from '@/store/useLanguage';
 import { IFileListItem } from '@/utils/types';
 import { userId } from '@/services/urlConfig';
+import { useChatSetting } from '@/store/useChatSetting';
 
 const { setEditModalVisible, setEditQaSet, getFaqList } = useOptiionList();
 const { editModalVisible, editQaSet, faqType } = storeToRefs(useOptiionList());
 const { currentId } = storeToRefs(useKnowledgeBase());
+const { chatSettingFormActive } = storeToRefs(useChatSetting());
 const home = getLanguage().home;
 const common = getLanguage().common;
 const { language } = storeToRefs(useLanguage());
@@ -274,7 +276,11 @@ const onFinish = async (values: any) => {
       },
     ];
     const res: any = await resultControl(
-      await urlResquest.uploadFaqs({ kb_id: `${currentId.value}_FAQ`, faqs: faqs })
+      await urlResquest.uploadFaqs({
+        kb_id: `${currentId.value}_FAQ`,
+        faqs: faqs,
+        chunk_size: chatSettingFormActive.value.chunkSize.toString(),
+      })
     );
     console.log(res);
     message.success('上传成功');

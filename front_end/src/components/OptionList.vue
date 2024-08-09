@@ -205,8 +205,8 @@ import UploadProgress from '@/components/UploadProgress.vue';
 import ChunkViewDialog from '@/components/ChunkViewDialog.vue';
 import FileUploadDialog from '@/components/FileUploadDialog.vue';
 
-const { setDefault, setCurrentId } = useKnowledgeBase();
-const { currentKbName, currentId } = storeToRefs(useKnowledgeBase());
+const { setDefault, setCurrentId, setNewKbId } = useKnowledgeBase();
+const { currentKbName, currentId, newKbId } = storeToRefs(useKnowledgeBase());
 const { setModalVisible, setUrlModalVisible, setModalTitle } = useKnowledgeModal();
 const { showChunkModel } = storeToRefs(useChunkView());
 
@@ -518,6 +518,7 @@ const addKnowledge = async () => {
 const navClick = value => {
   navIndex.value = value;
   if (value === 0) {
+    setKbPageNum(1);
     clearTimeout(faqTimer.value);
     getDetails();
   } else {
@@ -542,7 +543,7 @@ watch(
   currentId,
   () => {
     navIndex.value = 0;
-    setPageNum(1);
+    setKbPageNum(1);
     getDetails();
   },
   {
@@ -553,8 +554,11 @@ watch(
 onBeforeUnmount(() => {
   clearTimeout(timer.value);
   clearTimeout(faqTimer.value);
-  setCurrentId('');
-  setKbPageNum(0);
+  // 不加这个判断的话，new的知识库跳转后kb会为''
+  console.log(newKbId.value);
+  !newKbId.value && setCurrentId('');
+  setNewKbId('');
+  setKbPageNum(1);
 });
 </script>
 
@@ -637,8 +641,8 @@ onBeforeUnmount(() => {
     display: flex;
 
     .nav-item {
-      min-width: 96px;
-      padding: 0 24px;
+      min-width: 100px;
+      padding: 0 20px;
       height: 32px;
       font-size: 16px;
       color: #666666;
@@ -656,8 +660,10 @@ onBeforeUnmount(() => {
   }
 
   .nav-progress {
-    width: 40%;
+    //width: 40%;
+    margin: 0 50px;
     display: flex;
+    flex: 1;
     align-items: center;
   }
 

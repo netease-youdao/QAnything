@@ -22,9 +22,9 @@ export default {
     click: '点击上传',
     close: '关闭',
     updesc1:
-      '支持文件格式md、txt、pdf、jpg、png、jpeg、docx、xlsx、pptx、eml、csv, 单个文档小于30M,单张图片小于5M',
+      '支持文件格式md、txt、pdf、jpg、png、jpeg、docx、xlsx、pptx、eml、csv, 单个文档小于30M, 单张图片小于5M, 文件总大小不得超过125M',
     updesc2:
-      '可批量上传，支持文件格式doc、docx、ppt、pptx、xls、xlsx、pdf、md、JPG、JPEG、PNG、BMP、txt、eml, 单个文档小于30M,单张图片小于5M',
+      '可批量上传，支持文件格式md、txt、pdf、jpg、png、jpeg、docx、xlsx、pptx、eml、csv, 单个文档小于30M, 单张图片小于5M, 文件总大小不得超过125M',
     confirm: '确定',
     confirm2: '确认',
     confirmApplication: '确认应用',
@@ -104,6 +104,12 @@ export default {
     plsInput: '请输入',
     save: '保存',
     edit: '编辑',
+    modelInfoView: '查看所有信息',
+    modelInfoTitle: '会话模型信息',
+    modelInfoTime: '耗时信息',
+    modelInfoToken: 'Token信息',
+    modelInfoSetting: '模型信息',
+    note: '注',
   },
   home: {
     newConversation: '新建对话窗口',

@@ -34,30 +34,17 @@
               <div class="ai-content">
                 <div class="ai-right">
                   <p
-                    v-if="!item.onlySearch"
                     class="question-text"
                     :class="[
                       !item.source.length && !item?.picList?.length ? 'change-radius' : '',
                       item.showTools ? '' : 'flashing',
                     ]"
                   >
-                    <HighLightMarkDown v-if="item.answer" :content="item.answer" />
-                    <span v-else>{{ item.answer }}</span>
+                    <HighLightMarkDown :content="item.answer" />
                     <ChatInfoPanel
                       v-if="Object.keys(item?.itemInfo?.tokenInfo || {}).length"
                       :chat-item-info="item.itemInfo"
                     />
-                  </p>
-                  <p
-                    v-else-if="item.onlySearch && !item.source.length"
-                    class="question-text"
-                    :class="[
-                      !item.source.length && !item?.picList?.length ? 'change-radius' : '',
-                      item.showTools ? '' : 'flashing',
-                    ]"
-                  >
-                    <span v-if="language === 'zh'">未找到信息来源</span>
-                    <span v-else>Information source not found</span>
                   </p>
                   <template v-if="item.source.length">
                     <div
@@ -67,13 +54,9 @@
                       ]"
                     >
                       <span v-if="language === 'zh'">
-                        <span v-if="item.onlySearch">检索完成，</span>
                         找到了{{ item.source.length }}个信息来源：
                       </span>
-                      <span v-else>
-                        <span v-if="item.onlySearch">Search completed，</span>
-                        Found {{ item.source.length }} source of information
-                      </span>
+                      <span v-else> Found {{ item.source.length }} source of information </span>
                       <SvgIcon
                         v-show="!showSourceIdxs.includes(index)"
                         name="down"
@@ -534,10 +517,24 @@ const send = async () => {
   };
 
   if (chatSettingFormActive.value.capabilities.onlySearch) {
+    // 模型配置添加进去
+    chatInfoClass.addChatSetting(chatSettingFormActive.value);
+    addAnswer(q);
     const res: any = await resultControl(await urlResquest.sendQuestion(sendData));
     if (res.code === 200) {
+      QA_List.value[QA_List.value.length - 1].answer = res?.source_documents.length
+        ? '检索完成'
+        : '未找到信息来源';
       QA_List.value[QA_List.value.length - 1].source = res?.source_documents;
     }
+    // 无论成不成功,结束后的操作
+    showLoading.value = false;
+    QA_List.value[QA_List.value.length - 1].showTools = true;
+    // 更新最大的chatList
+    addChatList(chatId.value, QA_List.value);
+    await nextTick(() => {
+      scrollBottom();
+    });
   } else {
     fetchEventSource(apiBase + '/local_doc_qa/local_doc_chat', {
       method: 'POST',
@@ -557,14 +554,8 @@ const send = async () => {
         chatInfoClass.addChatSetting(chatSettingFormActive.value);
         addAnswer(q);
         if (e.ok && e.headers.get('content-type') === 'text/event-stream') {
-          // addAnswer(question.value);
-          // question.value = '';
           typewriter.start();
         }
-        // else if (e.headers.get('content-type') === 'application/json') {
-        //
-        //   console.log('非流式');
-        // }
       },
       onmessage(msg: { data: string }) {
         console.log('message', msg);
@@ -836,7 +827,6 @@ onBeforeUnmount(() => {
     }
 
     .question-text {
-      //display: flex;
       padding: 13px 20px;
       margin-left: 48px;
       font-size: 14px;
@@ -887,7 +877,7 @@ onBeforeUnmount(() => {
     }
 
     .source-total {
-      padding: 0 20px 13px 20px;
+      padding: 10px 20px;
       background: #fff;
       display: flex;
       align-items: center;
@@ -932,6 +922,7 @@ onBeforeUnmount(() => {
       }
 
       .tips {
+        min-width: 78px;
         height: 22px;
         line-height: 22px;
         color: $title2;
@@ -941,6 +932,9 @@ onBeforeUnmount(() => {
       .file {
         color: $baseColor;
         margin-right: 8px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .filename-active {
