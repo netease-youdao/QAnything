@@ -274,6 +274,8 @@ async def upload_faqs(req: request):
     kb_id = correct_kb_id(kb_id)
     debug_logger.info("kb_id %s", kb_id)
     faqs = safe_get(req, 'faqs')
+    chunk_size = safe_get(req, 'chunk_size', default=DEFAULT_PARENT_CHUNK_SIZE)
+    debug_logger.info("chunk_size: %s", chunk_size)
 
     if len(faqs) > 1000:
         return sanic_json({"code": 2002, "msg": f"fail, faqs too many, max length is 1000."})
@@ -314,7 +316,7 @@ async def upload_faqs(req: request):
         local_files.append(local_file)
         local_doc_qa.milvus_summary.add_faq(file_id, user_id, kb_id, faq['question'], faq['answer'], faq.get('nos_keys', ''))
         local_doc_qa.milvus_summary.add_file(file_id, user_id, kb_id, file_name, file_size, file_location,
-                                             -1, timestamp)
+                                             chunk_size, timestamp)
         # debug_logger.info(f"{file_name}, {file_id}, {msg}, {faq}")
         data.append(
             {"file_id": file_id, "file_name": file_name, "status": "gray", "length": file_size,
