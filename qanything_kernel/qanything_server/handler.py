@@ -69,8 +69,8 @@ async def new_knowledge_base(req: request):
     kb_id = safe_get(req, 'kb_id', default_kb_id)
     kb_id = correct_kb_id(kb_id)
 
-    is_quick = safe_get(req, 'quick', '')
-    if is_quick == '1':
+    is_quick = safe_get(req, 'quick', False)
+    if is_quick:
         kb_id += "_QUICK"
 
     if kb_id[:2] != 'KB':
