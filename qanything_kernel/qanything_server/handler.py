@@ -25,7 +25,7 @@ import base64
 __all__ = ["new_knowledge_base", "upload_files", "list_kbs", "list_docs", "delete_knowledge_base", "delete_docs",
            "rename_knowledge_base", "get_total_status", "clean_files_by_status", "upload_weblink", "local_doc_chat",
            "document", "upload_faqs", "get_doc_completed", "get_qa_info", "get_user_id", "get_doc",
-           "get_rerank_results", "get_user_status", "health_check", "update_chunks",
+           "get_rerank_results", "get_user_status", "health_check", "update_chunks", "get_file_base64",
            "get_random_qa", "get_related_qa", "new_bot", "delete_bot", "update_bot", "get_bot_info"]
 
 INVALID_USER_ID = f"fail, Invalid user_id: . user_id 必须只含有字母，数字和下划线且字母开头"

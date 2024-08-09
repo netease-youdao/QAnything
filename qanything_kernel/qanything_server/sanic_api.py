@@ -101,6 +101,7 @@ app.add_route(delete_bot, "/api/local_doc_qa/delete_bot", methods=['POST'])  # t
 app.add_route(update_bot, "/api/local_doc_qa/update_bot", methods=['POST'])  # tags=["更新Bot"]
 app.add_route(get_bot_info, "/api/local_doc_qa/get_bot_info", methods=['POST'])  # tags=["获取Bot信息"]
 app.add_route(update_chunks, "/api/local_doc_qa/update_chunks", methods=['POST'])  # tags=["更新chunk"]
+app.add_route(get_file_base64, "/api/local_doc_qa/get_file_base64", methods=['POST'])  # tags=["更新chunk"]
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=args.port, workers=args.workers, access_log=False)
