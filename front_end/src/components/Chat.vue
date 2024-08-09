@@ -178,6 +178,19 @@
       </div>
       <div class="question-box">
         <div class="question">
+          <div class="scroll-btn-div">
+            <a-button
+              class="scroll-btn"
+              type="primary"
+              shape="circle"
+              size="large"
+              @click="scrollBottom"
+            >
+              <template #icon>
+                <SvgIcon name="scroll" />
+              </template>
+            </a-button>
+          </div>
           <div class="send-box">
             <a-textarea
               v-model:value="question"
@@ -222,13 +235,6 @@
   </div>
   <ChatSettingDialog ref="chatSettingForDialogRef" />
   <DefaultModal :content="content" :confirm-loading="confirmLoading" @ok="confirm" />
-  <a-config-provider :theme="{ token: { colorPrimary: '#5a47e5' } }">
-    <a-float-button class="scroll-btn" type="primary" @click="scrollBottom">
-      <template #icon>
-        <SvgIcon name="scroll" />
-      </template>
-    </a-float-button>
-  </a-config-provider>
 </template>
 <script lang="ts" setup>
 import { apiBase } from '@/services';
@@ -1060,11 +1066,24 @@ scrollBottom();
   margin-bottom: 30px;
 
   .question {
+    position: relative;
     width: 40%;
     min-width: 550px;
     margin: 0 auto;
     display: flex;
     align-items: center;
+
+    .scroll-btn-div {
+      position: absolute;
+      top: -40px;
+      right: -25px;
+
+      svg {
+        width: 20px;
+        height: 20px;
+        margin-top: 5px;
+      }
+    }
 
     :deep(.ant-input-affix-wrapper) {
       width: 100%;
