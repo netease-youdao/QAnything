@@ -1,7 +1,7 @@
 from sanic.request import Request
 from sanic.exceptions import BadRequest
 from qanything_kernel.utils.custom_log import debug_logger, insert_logger, qa_logger
-from qanything_kernel.configs.model_config import (KB_SUFFIX, UPLOAD_ROOT_PATH, LOCAL_EMBED_PATH)
+from qanything_kernel.configs.model_config import (KB_SUFFIX, UPLOAD_ROOT_PATH, LOCAL_EMBED_PATH, LOCAL_RERANK_PATH)
 from transformers import AutoTokenizer
 import pandas as pd
 import inspect
@@ -11,6 +11,7 @@ import time
 import os
 import logging
 import re
+import requests
 import aiohttp
 from functools import wraps
 import tiktoken
@@ -18,6 +19,8 @@ from openpyxl.utils import get_column_letter
 from openpyxl import load_workbook
 import numpy as np
 from datetime import datetime, timedelta
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
 import html2text
 
 __all__ = ['isURL', 'get_time', 'get_time_async', 'format_source_documents', 'safe_get', 'truncate_filename',
@@ -25,7 +28,7 @@ __all__ = ['isURL', 'get_time', 'get_time_async', 'format_source_documents', 'sa
            'clear_string', 'simplify_filename', 'string_bytes_length', 'correct_kb_id', 'clear_kb_id',
            'clear_string_is_equal', 'export_qalogs_to_excel', 'num_tokens_local', 'deduplicate_documents',
            'check_user_id_and_user_info', 'get_table_infos', 'format_time_record', 'get_time_range',
-           'html_to_markdown']
+           'html_to_markdown', "num_tokens_embed", "num_tokens_rerank", "get_all_subpages"]
 
 
 def get_invalid_user_id_msg(user_id):
@@ -51,6 +54,7 @@ def format_source_documents(ori_source_documents):
                        'nos_keys': doc.metadata.get('nos_keys', ''),
                        'doc_id': doc.metadata.get('doc_id', ''),
                        'retrieval_source': doc.metadata.get('retrieval_source', ''),
+                       'headers': doc.metadata.get('headers', {}),
                        }
         source_documents.append(source_info)
     return source_documents
@@ -183,22 +187,24 @@ def validate_user_id(user_id):
         return False
 
 
+def num_tokens(text: str, model: str = 'gpt-3.5-turbo-0613') -> int:
+    """Return the number of tokens in a string."""
+    encoding = tiktoken.encoding_for_model(model)
+    return len(encoding.encode(text, disallowed_special=()))
+
+
 embedding_tokenizer = AutoTokenizer.from_pretrained(LOCAL_EMBED_PATH, local_files_only=True)
+rerank_tokenizer = AutoTokenizer.from_pretrained(LOCAL_RERANK_PATH, local_files_only=True)
 
 
-# def num_tokens(text: str, model: str = 'gpt-3.5-turbo-0613') -> int:
-#     """Return the number of tokens in a string."""
-#     encoding = tiktoken.encoding_for_model(model)
-#     return len(encoding.encode(text, disallowed_special=()))
-
-def num_tokens(text: str):
+def num_tokens_embed(text: str) -> int:
     """Return the number of tokens in a string."""
     return len(embedding_tokenizer.encode(text, add_special_tokens=True))
 
 
-def num_tokens_local(text, tokenizer: AutoTokenizer) -> int:
+def num_tokens_rerank(text: str) -> int:
     """Return the number of tokens in a string."""
-    return len(tokenizer.encode(text, add_special_tokens=True))
+    return len(rerank_tokenizer.encode(text, add_special_tokens=True))
 
 
 def shorten_data(data):
@@ -275,7 +281,6 @@ def clear_string_is_equal(str1, str2):
 def correct_kb_id(kb_id):
     if not kb_id:
         return kb_id
-    # kb_id = kb_id.replace(KB_PRE_SUFFIX, KB_SUFFIX)
     # 如果kb_id末尾不是KB_SUFFIX,则加上
     if KB_SUFFIX not in kb_id:
         if kb_id.endswith('_FAQ'):  # KBc86eaa3f278f4ef9908780e8e558c6eb_FAQ
@@ -414,6 +419,30 @@ def deduplicate_documents(source_docs):
             unique_docs.add(doc.page_content)
             deduplicated_docs.append(doc)
     return deduplicated_docs
+
+
+def get_all_subpages(url):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+    except requests.RequestException as e:
+        print(f"Error fetching {url}: {e}")
+        return []
+
+    soup = BeautifulSoup(response.text, 'html.parser')
+    links = soup.find_all('a', href=True)
+    subpages = set()
+
+    for link in links:
+        href = link['href']
+        full_url = urljoin(url, href)
+        subpages.add(full_url)
+
+    return list(subpages)
 
 
 def html_to_markdown(html_content):

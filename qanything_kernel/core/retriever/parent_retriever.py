@@ -6,7 +6,7 @@ from qanything_kernel.core.retriever.docstrore import MysqlStore
 from qanything_kernel.configs.model_config import VECTOR_SEARCH_TOP_K, ES_TOP_K, DEFAULT_CHILD_CHUNK_SIZE, DEFAULT_PARENT_CHUNK_SIZE
 from qanything_kernel.utils.custom_log import debug_logger, insert_logger
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from qanything_kernel.utils.general_utils import num_tokens, get_time_async
+from qanything_kernel.utils.general_utils import num_tokens_embed, get_time_async
 import copy
 from typing import List, Optional, Tuple, Dict
 from langchain_core.documents import Document
@@ -37,14 +37,17 @@ class SelfParentRetriever(ParentDocumentRetriever):
         """
         debug_logger.info(f"Search: query: {query}, {self.search_type} with {self.search_kwargs}")
         # self.vectorstore.col.load()
+        scores = []
         if self.search_type == "mmr":
             sub_docs = await self.vectorstore.amax_marginal_relevance_search(
                 query, **self.search_kwargs
             )
         else:
-            sub_docs = await self.vectorstore.asimilarity_search(
+            res = await self.vectorstore.asimilarity_search_with_score(
                 query, **self.search_kwargs
             )
+            scores = [score for _, score in res]
+            sub_docs = [doc for doc, _ in res]
 
         # We do this to maintain the order of the ids that are returned
         ids = []
@@ -52,6 +55,10 @@ class SelfParentRetriever(ParentDocumentRetriever):
             if self.id_key in d.metadata and d.metadata[self.id_key] not in ids:
                 ids.append(d.metadata[self.id_key])
         docs = await self.docstore.amget(ids)
+        if scores:
+            for i, doc in enumerate(docs):
+                if doc is not None:
+                    doc.metadata['score'] = scores[i]
         res = [d for d in docs if d is not None]
         sub_docs_lengths = [len(d.page_content) for d in sub_docs]
         res_lengths = [len(d.page_content) for d in res]
@@ -100,9 +107,11 @@ class SelfParentRetriever(ParentDocumentRetriever):
                     }
             for _doc in sub_docs:
                 _doc.metadata[self.id_key] = _id
+                _doc.page_content = f"[headers]({_doc.metadata['headers']})\n" + _doc.page_content  # 存入page_content，向量检索时会带上headers
             docs.extend(sub_docs)
+            doc.page_content = f"[headers]({doc.metadata['headers']})\n" + doc.page_content  # 存入page_content，等检索后rerank时会带上headers信息
             full_docs.append((_id, doc))
-        insert_logger.info(f"Inserting {len(docs)} child documents, metadata: {docs[0].metadata}")
+        insert_logger.info(f"Inserting {len(docs)} child documents, metadata: {docs[0].metadata}, page_content: {docs[0].page_content[:100]}...")
         time_record = {"split_time": round(time.perf_counter() - split_start, 2)}
         res = await self.vectorstore.aadd_documents(docs, time_record=time_record)
         insert_logger.info(f'vectorstore insert number: {len(res)}, {res[0]}')
@@ -134,14 +143,14 @@ class ParentRetriever:
             separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
             chunk_size=DEFAULT_PARENT_CHUNK_SIZE,
             chunk_overlap=0,
-            length_function=num_tokens)
+            length_function=num_tokens_embed)
         # # This text splitter is used to create the child documents
         # # It should create documents smaller than the parent
         init_child_splitter = RecursiveCharacterTextSplitter(
             separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
             chunk_size=DEFAULT_CHILD_CHUNK_SIZE,
             chunk_overlap=int(DEFAULT_CHILD_CHUNK_SIZE / 4),
-            length_function=num_tokens)
+            length_function=num_tokens_embed)
         self.retriever = SelfParentRetriever(
             vectorstore=vectorstore_client.local_vectorstore,
             docstore=MysqlStore(mysql_client),
@@ -160,31 +169,22 @@ class ParentRetriever:
                 separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
                 chunk_size=parent_chunk_size,
                 chunk_overlap=0,
-                length_function=num_tokens)
+                length_function=num_tokens_embed)
             child_chunk_size = min(DEFAULT_CHILD_CHUNK_SIZE, int(parent_chunk_size / 2))
             self.retriever.child_splitter = RecursiveCharacterTextSplitter(
                 separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
                 chunk_size=child_chunk_size,
                 chunk_overlap=int(child_chunk_size / 4),
-                length_function=num_tokens)
+                length_function=num_tokens_embed)
 
         # insert_logger.info(f'insert documents: {len(docs)}')
         embed_docs = copy.deepcopy(docs)
         # 补充metadata信息
         for idx, doc in enumerate(embed_docs):
-            if 'kb_id' not in doc.metadata:
-                kb_name = self.mysql_client.get_knowledge_base_name([doc.metadata['kb_id']])
-                kb_name = kb_name[0][2]
-                metadata_infos = f"知识库名: {kb_name}\n"
-                if 'file_name' in doc.metadata:
-                    metadata_infos += f"文件名: {doc.metadata['file_name']}\n"
-                doc.page_content = metadata_infos + '文件内容如下: \n' + doc.page_content
-            if 'title_lst' in doc.metadata:
                 del doc.metadata['title_lst']
-            if 'has_table' in doc.metadata:
                 del doc.metadata['has_table']
-            if 'images_number' in doc.metadata:
                 del doc.metadata['images_number']
+
         ids = None if not single_parent else [doc.metadata['doc_id'] for doc in embed_docs]
         return await self.retriever.aadd_documents(embed_docs, backup_vectorstore=self.backup_vectorstore,
                                                    es_store=self.es_store, ids=ids, single_parent=single_parent)

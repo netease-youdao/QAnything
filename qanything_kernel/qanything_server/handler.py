@@ -1000,8 +1000,9 @@ async def get_related_qa(req: request):
     if not qa_id:
         return sanic_json({"code": 2005, "msg": "fail, qa_id is None"})
     need_info = safe_get(req, 'need_info')
+    need_more = safe_get(req, 'need_more', False)
     debug_logger.info("get_related_qa %s", qa_id)
-    qa_log, recent_logs, older_logs = local_doc_qa.milvus_summary.get_related_qa_infos(qa_id, need_info)
+    qa_log, recent_logs, older_logs = local_doc_qa.milvus_summary.get_related_qa_infos(qa_id, need_info, need_more)
     # 按kb_ids划分sections
     recent_sections = defaultdict(list)
     for log in recent_logs:

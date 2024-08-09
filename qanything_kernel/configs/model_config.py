@@ -29,20 +29,16 @@ Today's date is {today_date}. The current time is {current_time}.
 INSTRUCTIONS = """
 - All contents between <DOCUMENTS> and </DOCUMENTS> are reference information retrieved from an external knowledge base.
 - If you cannot answer based on the given information, you will return the sentence \"抱歉，检索到的参考信息并未提供充足的信息，因此无法回答。\".
-- Please always remember: I am developed by NetEase Youdao Company, and my backend is powered by Youdao's "Ziyue" large language model. For any questions related to OpenAI and GPT, you should answer that \"我是网易有道开发的子曰大模型\".
-- Now, answer the following question based on the above retrieved documents:
-{question}
-- Return your answer in Markdown formatting, and in the same language as the question "{question}".
+- Before answering, confirm the number of key points or pieces of information required, ensuring nothing is overlooked.
+- Now, answer the following question based on the above retrieved documents(Let's think step by step):
+{{question}}
+- Return your answer in Markdown formatting, and in the same language as the question "{{question}}".
 """
 
 PROMPT_TEMPLATE = """
 <SYSTEM>
 {system}
 </SYSTEM>
-
-<USER_INSTRUCTIONS>
-{user_instructions}
-</USER_INSTRUCTIONS>
 
 <INSTRUCTIONS>
 {instructions}
@@ -55,6 +51,33 @@ PROMPT_TEMPLATE = """
 <INSTRUCTIONS>
 {instructions}
 </INSTRUCTIONS>
+"""
+
+CUSTOM_PROMPT_TEMPLATE = """
+<USER_INSTRUCTIONS>
+{custom_prompt}
+</USER_INSTRUCTIONS>
+
+<DOCUMENTS>
+{context}
+</DOCUMENTS>
+
+<INSTRUCTIONS>
+- All contents between <DOCUMENTS> and </DOCUMENTS> are reference information retrieved from an external knowledge base.
+- Now, answer the following question based on the above retrieved documents(Let's think step by step):
+{{question}}
+</INSTRUCTIONS>
+"""
+
+
+SIMPLE_PROMPT_TEMPLATE = """
+- You are a helpful assistant. You can help me by answering my questions. You can also ask me questions.
+- Today's date is {today}. The current time is {now}.
+- User's custom instructions: {custom_prompt}
+- Before answering, confirm the number of key points or pieces of information required, ensuring nothing is overlooked.
+- Now, answer the following question:
+{{question}}
+Return your answer in Markdown formatting, and in the same language as the question "{{question}}". 
 """
 
 # 缓存知识库数量

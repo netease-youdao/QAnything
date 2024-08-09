@@ -303,9 +303,15 @@ class KnowledgeBaseManager:
         self.execute_query_(query, (msg, file_id), commit=True)
 
     def add_file_images(self, image_id, file_id, user_id, kb_id, nos_key):
+        nos_key = nos_key.split(' ')[0]
         query = "INSERT INTO FileImages (image_id, file_id, user_id, kb_id, nos_key) VALUES (%s, %s, %s, %s, %s)"
         self.execute_query_(query, (image_id, file_id, user_id, kb_id, nos_key), commit=True)
         insert_logger.info(f"Add file image: {image_id} {file_id} {user_id} {kb_id} {nos_key}")
+
+    def get_image_id_by_nos_key(self, nos_key):
+        query = "SELECT image_id FROM FileImages WHERE nos_key = %s"
+        result = self.execute_query_(query, (nos_key,), fetch=True)
+        return result[0][0] if result else None
 
     def get_nos_key_by_image_id(self, image_id):
         query = "SELECT nos_key FROM FileImages WHERE image_id = %s"
@@ -754,7 +760,7 @@ class KnowledgeBaseManager:
             qa_info['timestamp'] = qa_info['timestamp'].strftime("%Y-%m-%d %H:%M:%S")
         return qa_infos
 
-    def get_related_qa_infos(self, qa_id, need_info=None):
+    def get_related_qa_infos(self, qa_id, need_info=None, need_more=False):
         if need_info is None:
             need_info = ["user_id", "kb_ids", "query", "condense_question", "result", "timestamp", "product_source"]
         if "user_id" not in need_info:
@@ -769,6 +775,9 @@ class KnowledgeBaseManager:
         # 获取当前时间和7天前的时间
         current_time = datetime.utcnow()
         seven_days_ago = current_time - timedelta(days=7)
+        if not need_more:
+            return qa_log, [], []
+
         # 查询7天以内的日志
         recent_logs = []
         offset = 0

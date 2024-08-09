@@ -1,4 +1,4 @@
-from qanything_kernel.utils.general_utils import html_to_markdown, num_tokens, get_time, get_table_infos
+from qanything_kernel.utils.general_utils import get_time, get_table_infos, num_tokens_embed, get_all_subpages, html_to_markdown
 from typing import List, Optional
 from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, LOCAL_OCR_SERVICE_URL, DEFAULT_PARENT_CHUNK_SIZE
 from langchain.docstore.document import Document
@@ -34,7 +34,6 @@ def get_ocr_result_sync(image_data):
         response = requests.post(f"http://{LOCAL_OCR_SERVICE_URL}/ocr", data=image_data)
         response.raise_for_status()  # 如果请求返回了错误状态码，将会抛出异常
         ocr_res = response.text
-        # insert_logger.info(f"ocr_res[:100]: {ocr_res[:100]}")
         ocr_res = json.loads(ocr_res)
         return ocr_res['result']
     except Exception as e:
@@ -42,55 +41,11 @@ def get_ocr_result_sync(image_data):
         return None
 
 
-def get_pdf_to_markdown(file_path, file_id):
-    try:
-        base64_pdf_file = base64.b64encode(open(file_path, 'rb').read()).decode()
-        data = {"pdf_data": base64_pdf_file, "uuid": file_id}
-        response = requests.post('http://rag-parse.inner.youdao.com/parse_pdf', json=data, timeout=480)
-        response.raise_for_status()  # 如果请求返回了错误状态码，将会抛出异常
-        pdf2markdown_res = response.text
-        pdf2markdown_res = json.loads(pdf2markdown_res)
-        if pdf2markdown_res['status'] != 'success':
-            insert_logger.warning(f"pdf2markdown_res error: {data['uuid']}")
-            return None
-        data = json.loads(pdf2markdown_res['res_data'])
-        insert_logger.info(f"pdf2markdown_res: {data['pages'][:1]}")
-        return data['pages']
-    except Exception as e:
-        insert_logger.warning(f"pdf2markdown_res error: {traceback.format_exc()}")
-        # file_path文件复制到UPLOAD_ROOT_PATH下的error_pdfs文件夹
-        error_pdf_dir = os.path.join(UPLOAD_ROOT_PATH, 'error_pdfs')
-        os.makedirs(error_pdf_dir, exist_ok=True)
-        shutil.copy(file_path, error_pdf_dir)
-        return None
-
-
-def get_word_to_markdown(file_path, file_id):
-    try:
-        files = {'docx_file': open(file_path, 'rb')}
-        data = {"uuid": file_id}
-        response = requests.post('http://rag-parse.inner.youdao.com/parse_docx', files=files, data=data)
-        response.raise_for_status()  # 如果请求返回了错误状态码，将会抛出异常
-        word2markdown_res = response.text
-        word2markdown_res = json.loads(word2markdown_res)
-        if word2markdown_res['status'] != 'success':
-            insert_logger.warning(f"word2markdown_res error: {data['uuid']}")
-            return None
-        return word2markdown_res['res_data']
-    except Exception as e:
-        insert_logger.warning(f"word2markdown_res error: {traceback.format_exc()}")
-        # file_path文件复制到UPLOAD_ROOT_PATH下的error_pdfs文件夹
-        error_docx_dir = os.path.join(UPLOAD_ROOT_PATH, 'error_docxs')
-        os.makedirs(error_docx_dir, exist_ok=True)
-        shutil.copy(file_path, error_docx_dir)
-        return None
-
-
 class LocalFileForInsert:
     def __init__(self, user_id, kb_id, file_id, file_location, file_name, file_url, chunk_size, mysql_client):
         self.chunk_size = chunk_size
         self.markdown_text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=0,
-                                                                     length_function=num_tokens)
+                                                                     length_function=num_tokens_embed)
         self.user_id = user_id
         self.kb_id = kb_id
         self.file_id = file_id
@@ -151,7 +106,7 @@ class LocalFileForInsert:
         new_docs = []
         if table_infos is not None:
             tmp_content = '\n'.join(title_lst) + '\n' + doc.page_content
-            if num_tokens(tmp_content) <= self.chunk_size:
+            if num_tokens_embed(tmp_content) <= self.chunk_size:
                 doc.page_content = tmp_content
                 return [doc]
             head_line = table_infos['head_line']
@@ -166,7 +121,7 @@ class LocalFileForInsert:
             tmp_doc = '\n'.join(title_lst) + '\n' + table_head
             for line in table_infos['lines'][head_line + 2:end_line + 1]:
                 tmp_doc += '\n' + line
-                if num_tokens(tmp_doc) + num_tokens(line) > self.chunk_size:
+                if num_tokens_embed(tmp_doc) + num_tokens_embed(line) > self.chunk_size:
                     tmp_doc = Document(page_content=tmp_doc, metadata=doc.metadata)
                     new_docs.append(tmp_doc)
                     tmp_doc = '\n'.join(title_lst) + '\n' + table_head
@@ -213,14 +168,21 @@ class LocalFileForInsert:
             title_lst = [t for t in title_lst if t.replace('#', '') != '']
             has_table = doc.metadata['has_table']
             if has_table:
+                table_doc_id = str(uuid.uuid4())
+                self.mysql_client.add_document(table_doc_id, doc.to_json())
+                doc.metadata['table_doc_id'] = table_doc_id
                 table_docs = self.table_process(doc)
                 if table_docs:
                     new_docs.extend(table_docs)
                     continue
             if doc.page_content is "":  # page_content为空时把title_lst当做正文
-                cleaned_list = [re.sub(r'^#+\s*', '', item) for item in title_lst]
-                doc.page_content = '\n'.join(cleaned_list)
-                doc.metadata['title_lst'] = []  # 清空title_lst
+                if len(doc.metadata['title_lst']) > 1:
+                    cleaned_list = [re.sub(r'^#+\s*', '', item) for item in title_lst[1:]]
+                    doc.page_content = '\n'.join(cleaned_list)
+                    doc.metadata['title_lst'] = [title_lst[0]]
+                else:
+                    doc.page_content = re.sub(r'^#+\s*', '', title_lst[0])
+                    doc.metadata['title_lst'] = []
                 slices = self.markdown_text_splitter.split_documents([doc])
                 new_docs.extend(slices)
             else:
@@ -290,6 +252,22 @@ class LocalFileForInsert:
 
         return None
 
+    @staticmethod
+    def load_text(file_path):
+        encodings = ['utf-8', 'iso-8859-1', 'windows-1252']
+
+        for encoding in encodings:
+            try:
+                loader = TextLoader(file_path, encoding=encoding)
+                docs = loader.load()
+                insert_logger.info(f"TextLoader {encoding} success: {file_path}")
+                return docs
+            except Exception:
+                insert_logger.warning(f"TextLoader {encoding} error: {file_path}, {traceback.format_exc()}")
+
+        insert_logger.error(f"Failed to load file with all attempted encodings: {file_path}")
+        raise UnicodeDecodeError(f"Unable to decode the file {file_path} with any of the encodings: {encodings}")
+
     @get_time
     async def split_file_to_docs(self):
         insert_logger.info(f"start split file to docs, file_path: {self.file_name}")
@@ -317,8 +295,7 @@ class LocalFileForInsert:
                 loader = UnstructuredFileLoader(self.file_path, strategy="fast")
                 docs = loader.load()
         elif self.file_path.lower().endswith(".txt"):
-            loader = TextLoader(self.file_path, autodetect_encoding=True)
-            docs = loader.load()
+            docs = self.load_text(self.file_path)
         elif self.file_path.lower().endswith(".pdf"):
             try:
                 loader = PdfLoader(filename=self.file_path, save_dir=os.path.dirname(self.file_path))
@@ -366,7 +343,6 @@ class LocalFileForInsert:
             docs = loader.load()
         else:
             raise TypeError("文件类型不支持，目前仅支持：[md,txt,pdf,jpg,png,jpeg,docx,xlsx,pptx,eml,csv]")
-
         self.inject_metadata(docs)
 
     def inject_metadata(self, docs: List[Document]):
@@ -384,6 +360,9 @@ class LocalFileForInsert:
             new_doc.metadata["title_lst"] = doc.metadata.get("title_lst", [])
             new_doc.metadata["has_table"] = doc.metadata.get("has_table", False)
             new_doc.metadata["images_number"] = doc.metadata.get("images_number", 0)
+            kb_name = self.mysql_client.get_knowledge_base_name([self.kb_id])[0][2]
+            metadata_infos = {"知识库名": kb_name, '文件名': self.file_name}
+            new_doc.metadata['headers'] = metadata_infos
 
             if 'faq_dict' not in doc.metadata:
                 new_doc.metadata['faq_dict'] = {}
