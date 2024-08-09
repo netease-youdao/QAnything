@@ -20,7 +20,7 @@ from tqdm import tqdm
 import time
 import math
 from concurrent.futures import ThreadPoolExecutor
-import aiohttp
+import base64
 
 __all__ = ["new_knowledge_base", "upload_files", "list_kbs", "list_docs", "delete_knowledge_base", "delete_docs",
            "rename_knowledge_base", "get_total_status", "clean_files_by_status", "upload_weblink", "local_doc_chat",
@@ -1271,3 +1271,17 @@ async def update_chunks(req: request):
     local_doc_qa.milvus_kb.delete_expr(expr)
     await local_doc_qa.retriever.insert_documents([doc], chunk_size, True)
     return sanic_json({"code": 200, "msg": "success update doc_id {}".format(doc_id)})
+
+
+@get_time_async
+async def get_file_base64(req: request):
+    local_doc_qa: LocalDocQA = req.app.ctx.local_doc_qa
+    file_id = safe_get(req, 'file_id')
+    debug_logger.info("get_file_base64 %s", file_id)
+    file_location = local_doc_qa.milvus_summary.get_file_location(file_id)
+    # file_location = '/home/liujx/Downloads/2021-08-01 00:00:00.pdf'
+    if not file_location:
+        return sanic_json({"code": 2005, "msg": "fail, file_id is Invalid"})
+    with open(file_location, "rb") as f:
+        file_base64 = base64.b64encode(f.read()).decode()
+    return sanic_json({"code": 200, "msg": "success", "file_base64": file_base64})

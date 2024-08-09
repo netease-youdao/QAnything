@@ -220,31 +220,6 @@ class KnowledgeBaseManager:
         # self.execute_query_(create_index_query, (), commit=True)
 
         query = """
-            CREATE TABLE IF NOT EXISTS SmartWriteLogs (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                sw_id VARCHAR(64) UNIQUE,
-                user_id VARCHAR(64) NOT NULL,
-                need_web_search BOOL DEFAULT 0,
-                smart_write_kb_id VARCHAR(64) NOT NULL,
-                kb_ids VARCHAR(2048),
-                topic VARCHAR(512) NOT NULL,
-                keywords VARCHAR(128),
-                description VARCHAR(512),
-                time_record VARCHAR(512),
-                urls TEXT,
-                raw_outline TEXT, 
-                draft_outline TEXT,
-                usr_outline TEXT,
-                related_docs TEXT,
-                updated_related_docs TEXT,
-                conversation MEDIUMTEXT,
-                article MEDIUMTEXT,
-                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-                """
-        self.execute_query_(query, (), commit=True)
-
-        query = """
             CREATE TABLE IF NOT EXISTS FileImages (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 image_id VARCHAR(255) UNIQUE,
@@ -865,3 +840,9 @@ class KnowledgeBaseManager:
     def get_files_by_status(self, status):
         query = "SELECT file_id, file_name FROM File WHERE status = %s AND deleted = 0"
         return self.execute_query_(query, (status,), fetch=True)
+
+    def get_file_location(self, file_id):
+        query = "SELECT file_location FROM File WHERE file_id = %s"
+        result = self.execute_query_(query, (file_id,), fetch=True)
+        file_location = result[0][0] if result else None
+        return file_location
