@@ -1256,7 +1256,7 @@ async def update_chunks(req: request):
     debug_logger.info(f"update_content: {update_content}")
     chunk_size = safe_get(req, 'chunk_size', DEFAULT_PARENT_CHUNK_SIZE)
     debug_logger.info(f"chunk_size: {chunk_size}")
-    update_content_tokens = num_tokens(update_content)
+    update_content_tokens = num_tokens_embed(update_content)
     if update_content_tokens > chunk_size:
         return sanic_json({"code": 2003, "msg": f"fail, update_content too long, please reduce the length, "
                                                 f"your update_content tokens is {update_content_tokens}, "

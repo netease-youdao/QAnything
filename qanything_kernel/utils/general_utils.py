@@ -26,7 +26,7 @@ import html2text
 __all__ = ['isURL', 'get_time', 'get_time_async', 'format_source_documents', 'safe_get', 'truncate_filename',
            'shorten_data', 'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens',
            'clear_string', 'simplify_filename', 'string_bytes_length', 'correct_kb_id', 'clear_kb_id',
-           'clear_string_is_equal', 'export_qalogs_to_excel', 'num_tokens_local', 'deduplicate_documents',
+           'clear_string_is_equal', 'export_qalogs_to_excel', 'deduplicate_documents',
            'check_user_id_and_user_info', 'get_table_infos', 'format_time_record', 'get_time_range',
            'html_to_markdown', "num_tokens_embed", "num_tokens_rerank", "get_all_subpages"]
 
