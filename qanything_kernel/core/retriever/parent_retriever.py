@@ -181,9 +181,13 @@ class ParentRetriever:
         embed_docs = copy.deepcopy(docs)
         # 补充metadata信息
         for idx, doc in enumerate(embed_docs):
-                del doc.metadata['title_lst']
-                del doc.metadata['has_table']
-                del doc.metadata['images_number']
+            del doc.metadata['title_lst']
+            del doc.metadata['has_table']
+            del doc.metadata['images_number']
+            del doc.metadata['file_name']
+            del doc.metadata['nos_key']
+            del doc.metadata['faq_dict']
+            del doc.metadata['source_info']
 
         ids = None if not single_parent else [doc.metadata['doc_id'] for doc in embed_docs]
         return await self.retriever.aadd_documents(embed_docs, backup_vectorstore=self.backup_vectorstore,
