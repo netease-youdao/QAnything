@@ -154,7 +154,6 @@ const quickClickHandle = async (type: 0 | 1, cardData?: IHistoryList) => {
   } else if (type === 1) {
     if (chatId.value === cardData.historyId) return;
     chatId.value = cardData.historyId;
-    console.log(cardData);
     QA_List.value = [];
     kbId.value = cardData.kbId;
     const chat = getChatById(chatId.value);
@@ -173,30 +172,6 @@ onUnmounted(() => {
   chatId.value = null;
   kbId.value = '';
 });
-
-//创建知识库
-// const addKb = async kbName => {
-//   console.log(kbName);
-//   if (!kbName.length) {
-//     message.error('请输入知识库名称');
-//     return;
-//   }
-
-//   try {
-//     const res: any = await resultControl(await urlResquest.createKb({ kbName: kbName }));
-
-//     console.log(res);
-//     setCurrentId(res?.kbId);
-//     setCurrentKbName(res?.kbName);
-//     selectList.value.push(res?.kbId);
-//     await getList();
-//     setModalVisible(!modalVisible.value);
-//     setDefault(pageStatus.optionlist);
-//   } catch (e) {
-//     console.log(e);
-//     message.error(e.msg || '请求失败');
-//   }
-// };
 </script>
 
 <style lang="scss" scoped>

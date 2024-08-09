@@ -32,6 +32,7 @@ enum EUrlKey {
   getDocCompleted = 'getDocCompleted',
   updateDocCompleted = 'updateDocCompleted',
   clearUpload = 'clearUpload',
+  sendQuestion = 'sendQuestion',
 }
 
 interface IUrlValueConfig {
@@ -203,6 +204,14 @@ const urlConfig: IUrlConfig = {
   clearUpload: {
     type: EUrlType.POST,
     url: '/local_doc_qa/clean_files_by_status',
+    param: {
+      user_id: userId,
+    },
+  },
+  // 发送问题，非流式需要用这个
+  sendQuestion: {
+    type: EUrlType.POST,
+    url: '/local_doc_qa/local_doc_chat',
     param: {
       user_id: userId,
     },

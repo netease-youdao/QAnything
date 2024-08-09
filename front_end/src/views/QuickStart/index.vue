@@ -179,13 +179,7 @@
       <div class="question-box">
         <div class="question">
           <div class="scroll-btn-div">
-            <a-button
-              class="scroll-btn"
-              type="primary"
-              shape="circle"
-              size="large"
-              @click="scrollBottom"
-            >
+            <a-button type="primary" shape="circle" size="large" @click="scrollBottom">
               <template #icon>
                 <SvgIcon name="scroll" />
               </template>
@@ -518,109 +512,113 @@ const send = async () => {
   historyList.value.fileToBeSendList = [];
   showLoading.value = true;
   ctrl = new AbortController();
-  fetchEventSource(apiBase + '/local_doc_qa/local_doc_chat', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: ['text/event-stream', 'application/json'],
-    },
-    openWhenHidden: true,
-    body: JSON.stringify({
-      user_id: userId,
-      kb_ids: [kbId.value],
-      history: history.value,
-      question: q,
-      streaming: chatSettingFormActive.value.capabilities.onlySearch === false,
-      networking: chatSettingFormActive.value.capabilities.networkSearch,
-      product_source: 'saas',
-      rerank: chatSettingFormActive.value.capabilities.rerank,
-      only_need_search_results: chatSettingFormActive.value.capabilities.onlySearch,
-      hybrid_search: chatSettingFormActive.value.capabilities.mixedSearch,
-      max_token: chatSettingFormActive.value.maxToken,
-      api_base: chatSettingFormActive.value.apiBase,
-      api_key: chatSettingFormActive.value.apiKey,
-      model: chatSettingFormActive.value.apiModelName,
-      api_context_length: chatSettingFormActive.value.apiContextLength,
-      chunk_size: chatSettingFormActive.value.chunkSize,
-      top_p: chatSettingFormActive.value.top_P,
-      temperature: chatSettingFormActive.value.temperature,
-    }),
-    signal: ctrl.signal,
-    async onopen(e: any) {
-      console.log('eee', e);
-      // 模型配置添加进去
-      chatInfoClass.addChatSetting(chatSettingFormActive.value);
-      if (e.ok && e.headers.get('content-type') === 'text/event-stream') {
-        // addAnswer(question.value);
-        // question.value = '';
-        addAnswer(q);
-        typewriter.start();
-      } else if (e.headers.get('content-type') === 'application/json') {
-        // showLoading.value = false;
-        // return e
-        //   .json()
-        //   .then(data => {
-        //     message.error(data?.msg || '出错了,请稍后刷新重试。');
-        //   })
-        //   .catch(() => {
-        //     message.error('出错了,请稍后刷新重试。');
-        //   }); // 将响应解析为 JSON
-        // if (res.code !== 200) {
-        //   message.error(data?.msg || '出错了,请稍后刷新重试。');
-        // }
-        console.log('ssss');
-        addAnswer(q);
-      }
-    },
-    onmessage(msg: { data: string }) {
-      console.log('onmessage', msg);
-      const res: any = JSON.parse(msg.data);
-      if (res?.code == 200 && res?.response && res.msg === 'success') {
-        // QA_List.value[QA_List.value.length - 1].answer += res.result.response;
-        // typewriter.add(res?.response.replaceAll('\n', '<br/>'));
-        typewriter.add(res?.response);
-        scrollBottom();
-      } else {
-        const timeObj = res.time_record.time_usage;
-        delete timeObj['retriever_search_by_milvus'];
-        chatInfoClass.addTime(res.time_record.time_usage);
-        chatInfoClass.addToken(res.time_record.token_usage);
-        chatInfoClass.addDate(Date.now());
-      }
 
-      if (res?.source_documents?.length) {
-        QA_List.value[QA_List.value.length - 1].source = res?.source_documents;
-      }
-    },
-    onclose() {
-      console.log('onclose');
-      typewriter.done();
-      ctrl.abort();
-      showLoading.value = false;
-      QA_List.value[QA_List.value.length - 1].showTools = true;
-      // 将chat info添加进回答中
-      QA_List.value.at(-1).itemInfo = chatInfoClass.getChatInfo();
-      // 更新最大的chatList
-      addChatList(chatId.value, QA_List.value);
-      nextTick(() => {
-        scrollBottom();
-      });
-    },
-    onerror(err: any) {
-      console.log('onerror', err);
-      typewriter?.done();
-      ctrl?.abort();
-      showLoading.value = false;
-      QA_List.value[QA_List.value.length - 1].showTools = true;
-      message.error(err.msg || '出错了');
-      // 更新最大的chatList
-      addChatList(chatId.value, QA_List.value);
-      nextTick(() => {
-        scrollBottom();
-      });
-      throw err;
-    },
-  });
+  const sendData = {
+    kb_ids: [kbId.value],
+    history: history.value,
+    question: q,
+    streaming: chatSettingFormActive.value.capabilities.onlySearch === false,
+    networking: chatSettingFormActive.value.capabilities.networkSearch,
+    product_source: 'saas',
+    rerank: chatSettingFormActive.value.capabilities.rerank,
+    only_need_search_results: chatSettingFormActive.value.capabilities.onlySearch,
+    hybrid_search: chatSettingFormActive.value.capabilities.mixedSearch,
+    max_token: chatSettingFormActive.value.maxToken,
+    api_base: chatSettingFormActive.value.apiBase,
+    api_key: chatSettingFormActive.value.apiKey,
+    model: chatSettingFormActive.value.apiModelName,
+    api_context_length: chatSettingFormActive.value.apiContextLength,
+    chunk_size: chatSettingFormActive.value.chunkSize,
+    top_p: chatSettingFormActive.value.top_P,
+    temperature: chatSettingFormActive.value.temperature,
+  };
+
+  if (chatSettingFormActive.value.capabilities.onlySearch) {
+    const res: any = await resultControl(await urlResquest.sendQuestion(sendData));
+    if (res.code === 200) {
+      QA_List.value[QA_List.value.length - 1].source = res?.source_documents;
+    }
+  } else {
+    fetchEventSource(apiBase + '/local_doc_qa/local_doc_chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: ['text/event-stream', 'application/json'],
+      },
+      openWhenHidden: true,
+      body: JSON.stringify({
+        user_id: userId,
+        ...sendData,
+      }),
+      signal: ctrl.signal,
+      onopen(e: any) {
+        console.log('open', e);
+        // 模型配置添加进去
+        chatInfoClass.addChatSetting(chatSettingFormActive.value);
+        addAnswer(q);
+        if (e.ok && e.headers.get('content-type') === 'text/event-stream') {
+          // addAnswer(question.value);
+          // question.value = '';
+          typewriter.start();
+        }
+        // else if (e.headers.get('content-type') === 'application/json') {
+        //
+        //   console.log('非流式');
+        // }
+      },
+      onmessage(msg: { data: string }) {
+        console.log('message', msg);
+        const res: any = JSON.parse(msg.data);
+        if (res?.code == 200 && res?.response && res.msg === 'success') {
+          // 中间的回答
+          // QA_List.value[QA_List.value.length - 1].answer += res.result.response;
+          // typewriter.add(res?.response.replaceAll('\n', '<br/>'));
+          typewriter.add(res?.response);
+          scrollBottom();
+        } else {
+          // 最后一次回答
+          const timeObj = res.time_record.time_usage;
+          delete timeObj['retriever_search_by_milvus'];
+          chatInfoClass.addTime(res.time_record.time_usage);
+          chatInfoClass.addToken(res.time_record.token_usage);
+          chatInfoClass.addDate(Date.now());
+        }
+
+        if (res?.source_documents?.length) {
+          QA_List.value[QA_List.value.length - 1].source = res?.source_documents;
+        }
+      },
+      onclose(e: any) {
+        console.log('close', e);
+        typewriter.done();
+        ctrl.abort();
+        showLoading.value = false;
+        QA_List.value[QA_List.value.length - 1].showTools = true;
+        // 将chat info添加进回答中
+        QA_List.value.at(-1).itemInfo = chatInfoClass.getChatInfo();
+        // 更新最大的chatList
+        addChatList(chatId.value, QA_List.value);
+        nextTick(() => {
+          scrollBottom();
+        });
+        console.log(QA_List.value);
+      },
+      onerror(err: any) {
+        console.log('error', err);
+        typewriter?.done();
+        ctrl?.abort();
+        showLoading.value = false;
+        QA_List.value[QA_List.value.length - 1].showTools = true;
+        message.error(err.msg || '出错了');
+        // 更新最大的chatList
+        addChatList(chatId.value, QA_List.value);
+        nextTick(() => {
+          scrollBottom();
+        });
+        throw err;
+      },
+    });
+  }
 };
 
 const reAnswer = (item: IChatItem) => {
@@ -772,7 +770,6 @@ function getB64Type(suffix) {
 }
 
 onBeforeUnmount(() => {
-  console.log('unmounted');
   kbIdCopy.value = kbId.value;
   kbId.value = '';
 });
@@ -1053,7 +1050,7 @@ onBeforeUnmount(() => {
     .scroll-btn-div {
       position: absolute;
       top: -40px;
-      right: -25px;
+      right: -40px;
 
       svg {
         width: 20px;

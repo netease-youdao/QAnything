@@ -44,7 +44,6 @@ const handleCancel = () => {
 };
 
 const handleOk = async (fn?: Function) => {
-  console.log('asdad', chatSettingFormRef.value);
   const checkRes = await chatSettingFormRef.value.onCheck();
   if (!Object.hasOwn(checkRes, 'errorFields')) {
     fn && fn(checkRes);

@@ -59,7 +59,6 @@ interface IProps {
 
 const props = defineProps<IProps>();
 const { cardData } = toRefs(props);
-console.log('cardData.value', cardData.value);
 
 // 管理知识库
 const manage = (item: IKnowledgeItem) => {

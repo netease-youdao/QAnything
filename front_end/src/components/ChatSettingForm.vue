@@ -433,7 +433,6 @@ function transformCheckbox(type: 0 | 1) {
 // 初始化表单项，将active = true的表单项作为默认
 const initForm = () => {
   const activeForm = chatSettingConfigured.value.find(item => item.active === true);
-  console.log(activeForm, 'aaa');
   // 如果是openai，就设置最大值
   if (activeForm.modelType === 'openAI' && openAISettingMap.has(activeForm.apiModelName as any)) {
     openAIModelSelect(activeForm.apiModelName);

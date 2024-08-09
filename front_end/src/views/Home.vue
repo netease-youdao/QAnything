@@ -10,6 +10,7 @@
 <template>
   <div class="page">
     <div class="container">
+      <div v-if="showDefault === pageStatus.initing" class="initing"></div>
       <DefaultPage v-if="showDefault === pageStatus.default" @change="change" />
       <Chat v-else-if="showDefault === pageStatus.normal" />
       <OptionList v-else-if="showDefault === pageStatus.optionlist" />
@@ -43,7 +44,6 @@ onMounted(() => {
 .page {
   width: 100%;
   height: 100%;
-  background: #f3f6fd;
 }
 
 .container {
@@ -51,5 +51,12 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   background-color: #26293b;
+
+  .initing {
+    width: 100%;
+    height: 100%;
+    background: #f3f6fd;
+    border-radius: 12px 0 0 0;
+  }
 }
 </style>

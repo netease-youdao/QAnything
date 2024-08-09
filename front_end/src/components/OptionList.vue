@@ -554,6 +554,7 @@ onBeforeUnmount(() => {
   clearTimeout(timer.value);
   clearTimeout(faqTimer.value);
   setCurrentId('');
+  setKbPageNum(0);
 });
 </script>
 
