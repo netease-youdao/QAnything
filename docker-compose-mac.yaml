@@ -61,7 +61,7 @@ services:
 
   standalone:
     container_name: milvus-standalone-local
-    image: milvusdb/milvus:v2.4.5
+    image: milvusdb/milvus:v2.4.6
     logging:
       driver: "json-file"
       options:
