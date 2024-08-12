@@ -24,9 +24,9 @@ function errorHandler(e) {
 // .docx-wrapper {
 //   padding: 0 !important;
 // }
-.pdf-view-comp {
-  width: fit-content;
-}
+//.pdf-view-comp {
+//  width: 100%;
+//}
 .vue-office-pdf-wrapper {
   width: 720px !important;
   background-color: white !important;

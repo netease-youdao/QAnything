@@ -181,7 +181,7 @@
       </div>
     </div>
   </div>
-  <ChunkViewDialog :kb-id="currentId" :doc-id="docId" />
+  <ChunkViewDialog :kb-id="currentId" :file-id="fileId" :file-name="fileIdName" />
   <FileUploadDialog :dialog-type="0" />
 </template>
 <script lang="ts" setup>
@@ -203,7 +203,6 @@ const { setDefault, setCurrentId, setNewKbId } = useKnowledgeBase();
 const { currentKbName, currentId, newKbId } = storeToRefs(useKnowledgeBase());
 const { setModalVisible, setUrlModalVisible, setModalTitle } = useKnowledgeModal();
 const { showChunkModel } = storeToRefs(useChunkView());
-
 const {
   getDetails,
   setEditQaSet,
@@ -354,9 +353,12 @@ const deleteItem = item => {
 };
 
 // 预览chunks
-const docId = ref('');
+const fileId = ref('');
+const fileIdName = ref('');
 const viewItem = async item => {
-  docId.value = item.fileId;
+  console.log('item', item);
+  fileId.value = item.fileId;
+  fileIdName.value = item.fileIdName;
   // 打开弹窗
   showChunkModel.value = true;
 };
