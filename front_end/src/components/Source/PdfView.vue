@@ -29,5 +29,6 @@ function errorHandler(e) {
 }
 .vue-office-pdf-wrapper {
   width: 720px !important;
+  background-color: white !important;
 }
 </style>

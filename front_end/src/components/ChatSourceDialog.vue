@@ -2,6 +2,7 @@
   <Teleport to="body">
     <a-modal
       v-model:open="chatSourceVisible"
+      centered
       :title="common.dataSource"
       wrap-class-name="chat-source-modal"
       :footer="null"
@@ -13,11 +14,12 @@
         <a-image
           v-if="imageArr.includes(sourceType) && sourceUrl"
           :src="sourceUrl"
-          :previewMask="false"
+          :preview-mask="false"
         />
         <div v-if="sourceType === 'txt'" class="txt" style="white-space: pre-wrap">
           {{ textContent }}
         </div>
+        <HighLightMarkDown v-if="sourceType === 'md'" class="txt" :content="textContent" />
       </div>
     </a-modal>
   </Teleport>
@@ -28,6 +30,7 @@ import PdfView from './Source/PdfView.vue';
 import DocxView from './Source/DocxView.vue';
 import ExcelView from './Source/ExcelView.vue';
 import { getLanguage } from '@/language/index';
+import HighLightMarkDown from '@/components/HighLightMarkDown.vue';
 
 const common = getLanguage().common;
 
@@ -43,10 +46,13 @@ let imageArr = ['jpg', 'png', 'jpeg'];
   overflow-y: scroll;
   border-radius: 8px;
   display: flex;
+
   .txt {
     width: 680px;
-    padding: 5px 10px;
+    height: auto;
+    padding: 15px 20px 30px 20px;
   }
+
   :deep(.ant-image) {
     margin: 5px auto;
     max-width: 100%;

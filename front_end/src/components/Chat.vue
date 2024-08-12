@@ -30,7 +30,7 @@
                       item.showTools ? '' : 'flashing',
                     ]"
                   >
-                    <HighLightMarkDown :content="item.answer" />
+                    <HighLightMarkDown :content="item.answer.toString()" />
                     <ChatInfoPanel
                       v-if="Object.keys(item?.itemInfo?.tokenInfo || {}).length"
                       :chat-item-info="item.itemInfo"
@@ -438,7 +438,7 @@ function checkKbSelect() {
 
 const stopChat = () => {
   if (ctrl) {
-    ctrl.abort();
+    ctrl.abort('停止对话');
   }
   typewriter.done();
   showLoading.value = false;
@@ -522,7 +522,9 @@ const send = async () => {
     chatInfoClass.addChatSetting(chatSettingFormActive.value);
     addAnswer(q);
     try {
-      const res: any = await resultControl(await urlResquest.sendQuestion(sendData));
+      const res: any = await resultControl(
+        await urlResquest.sendQuestion(sendData, { signal: ctrl.signal })
+      );
       if (res.code === 200) {
         QA_List.value[QA_List.value.length - 1].answer = res?.source_documents.length
           ? common.searchCompleted
@@ -530,8 +532,9 @@ const send = async () => {
         QA_List.value[QA_List.value.length - 1].source = res?.source_documents;
       }
     } catch (e) {
-      message.error(e.msg || '出错了');
-      QA_List.value[QA_List.value.length - 1].answer = e || 'error';
+      console.log('出错', e);
+      // message.error(e.msg || '出错了');
+      QA_List.value[QA_List.value.length - 1].answer = e.msg || 'error';
     }
     // 无论成不成功,结束后的操作
     showLoading.value = false;
@@ -598,7 +601,6 @@ const send = async () => {
         nextTick(() => {
           scrollBottom();
         });
-        console.log(QA_List.value);
       },
       onerror(err: any) {
         console.log('error', err);
@@ -709,16 +711,11 @@ const handleModalChange = newVal => {
 // 模型配置是否正确
 const chatSettingForDialogRef = ref<InstanceType<typeof ChatSettingDialog>>();
 const checkChatSetting = () => {
-  // return !!(
-  //   chatSettingFormActive.value.apiKey &&
-  //   chatSettingFormActive.value.apiBase &&
-  //   chatSettingFormActive.value.apiModelName
-  // );
   return chatSettingForDialogRef.value.handleOk();
 };
 
 // 检查信息来源的文件是否支持窗口化渲染
-let supportSourceTypes = ['pdf', 'docx', 'xlsx', 'txt', 'jpg', 'png', 'jpeg'];
+let supportSourceTypes = ['pdf', 'docx', 'xlsx', 'txt', 'md', 'jpg', 'png', 'jpeg'];
 const checkFileType = filename => {
   if (!filename) {
     return false;
@@ -745,27 +742,27 @@ const handleChatSource = file => {
 };
 
 async function queryFile(file) {
-  try {
-    setSourceUrl(null);
-    const res: any = await resultControl(await urlResquest.getFile({ file_id: file.file_id }));
-    console.log('queryFile', res);
-    const suffix = file.file_name.split('.').pop();
-    const b64Type = getB64Type(suffix);
-    console.log('b64Type', b64Type);
-    setSourceType(suffix);
-    setSourceUrl(`data:${b64Type};base64,${res.base64_content}`);
-    if (suffix === 'txt') {
-      const decodedTxt = atob(res.base64_content);
-      const correctStr = decodeURIComponent(escape(decodedTxt));
-      console.log('decodedTxt', correctStr);
-      setTextContent(correctStr);
-      setChatSourceVisible(true);
-    } else {
-      setChatSourceVisible(true);
-    }
-  } catch (e) {
-    message.error(e.msg || '获取文件失败');
+  // try {
+  setSourceUrl(null);
+  const res: any = await resultControl(await urlResquest.getFile({ file_id: file.file_id }));
+  console.log('queryFile', res);
+  const suffix = file.file_name.split('.').pop();
+  const b64Type = getB64Type(suffix);
+  console.log('b64Type', b64Type);
+  setSourceType(suffix);
+  setSourceUrl(`data:${b64Type};base64,${res.file_base64}`);
+  if (suffix === 'txt' || suffix === 'md') {
+    const decodedTxt = atob(res.file_base64);
+    const correctStr = decodeURIComponent(escape(decodedTxt));
+    console.log('decodedTxt', correctStr);
+    setTextContent(correctStr);
+    setChatSourceVisible(true);
+  } else {
+    setChatSourceVisible(true);
   }
+  // } catch (e) {
+  //   message.error(e.msg || '获取文件失败');
+  // }
 }
 
 let b64Types = [
@@ -773,6 +770,7 @@ let b64Types = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'text/plain',
+  'text/markdown',
   'image/jpeg',
   'image/png',
   'image/jpeg',

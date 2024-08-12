@@ -709,7 +709,7 @@ const checkChatSetting = () => {
 };
 
 // 检查信息来源的文件是否支持窗口化渲染
-let supportSourceTypes = ['pdf', 'docx', 'xlsx', 'txt', 'jpg', 'png', 'jpeg'];
+let supportSourceTypes = ['pdf', 'docx', 'xlsx', 'txt', 'md', 'jpg', 'png', 'jpeg'];
 const checkFileType = filename => {
   if (!filename) {
     return false;
@@ -737,9 +737,9 @@ async function queryFile(file) {
     const suffix = file.file_name.split('.').pop();
     const b64Type = getB64Type(suffix);
     setSourceType(suffix);
-    setSourceUrl(`data:${b64Type};base64,${res.base64_content}`);
+    setSourceUrl(`data:${b64Type};base64,${res.file_base64}`);
     if (suffix === 'txt') {
-      const decodedTxt = atob(res.base64_content);
+      const decodedTxt = atob(res.file_base64);
       const correctStr = decodeURIComponent(escape(decodedTxt));
       setTextContent(correctStr);
       setChatSourceVisible(true);
@@ -756,6 +756,7 @@ let b64Types = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'text/plain',
+  'text/markdown',
   'image/jpeg',
   'image/png',
   'image/jpeg',
