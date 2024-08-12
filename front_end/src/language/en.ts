@@ -120,6 +120,8 @@ export default {
     modelInfoToken: 'Token Information',
     modelInfoSetting: 'Model Information',
     note: 'Note',
+    searchCompleted: 'Search Completed',
+    searchNotFound: 'Information source not found',
   },
   home: {
     newConversation: 'New Conversation',

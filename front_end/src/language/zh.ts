@@ -110,6 +110,8 @@ export default {
     modelInfoToken: 'Token信息',
     modelInfoSetting: '模型信息',
     note: '注',
+    searchCompleted: '检索完成',
+    searchNotFound: '未找到信息来源',
   },
   home: {
     newConversation: '新建对话窗口',

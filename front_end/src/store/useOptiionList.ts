@@ -139,7 +139,6 @@ export const useOptiionList = defineStore(
           bytes: formatFileSize(item?.bytes || 0),
           createtime: formatDate(item?.timestamp),
           remark: item?.status === 'gray' ? '' : computedRemark(item?.msg, item?.status),
-          // remark: item?.status === 'gray' ? '' : item?.msg,
         });
       });
 
@@ -154,11 +153,38 @@ export const useOptiionList = defineStore(
           getDetails();
         }, 5000);
       } else {
-        console.log('全部解析完成');
+        console.log('当页全部解析完成');
+        getProgressDetails();
       }
-      // } catch (error) {
-      //   message.error(error.msg || '获取知识库详情失败');
-      // }
+    };
+
+    // 进度条
+    const getProgressDetails = () => {
+      let timer = null;
+      timer = setInterval(async () => {
+        const res: any = await resultControl(
+          // 接口的page_offset为页码，page_limit为一页几个
+          await urlResquest.fileList({
+            kb_id: currentId.value,
+            page_offset: 1,
+            page_limit: kbPageSize.value,
+          })
+        );
+        // 初始化状态计数
+        Object.keys(totalStatus.value).forEach(key => {
+          totalStatus.value[key] = 0;
+        });
+
+        // 更新状态计数
+        Object.assign(totalStatus.value, res.status_count);
+
+        // 设置一共几个文件
+        setKbTotal(res.total);
+
+        if (totalStatus.value.gray === 0 && totalStatus.value.yellow === 0) {
+          clearInterval(timer);
+        }
+      }, 5000);
     };
 
     const faqTimer = ref(null);

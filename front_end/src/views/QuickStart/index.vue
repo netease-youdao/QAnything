@@ -77,8 +77,8 @@
                         <p v-show="sourceItem.file_name" class="control">
                           <span class="tips">{{ common.dataSource }}{{ sourceIndex + 1 }}:</span>
                           <a
-                            v-if="sourceItem.file_id.startsWith('http')"
-                            :href="sourceItem.file_id"
+                            v-if="sourceItem.file_url.startsWith('http')"
+                            :href="sourceItem.file_url"
                             target="_blank"
                           >
                             {{ sourceItem.file_name }}
@@ -516,16 +516,22 @@ const send = async () => {
     temperature: chatSettingFormActive.value.temperature,
   };
 
+  // 如果是仅检索
   if (chatSettingFormActive.value.capabilities.onlySearch) {
     // 模型配置添加进去
     chatInfoClass.addChatSetting(chatSettingFormActive.value);
     addAnswer(q);
-    const res: any = await resultControl(await urlResquest.sendQuestion(sendData));
-    if (res.code === 200) {
-      QA_List.value[QA_List.value.length - 1].answer = res?.source_documents.length
-        ? '检索完成'
-        : '未找到信息来源';
-      QA_List.value[QA_List.value.length - 1].source = res?.source_documents;
+    try {
+      const res: any = await resultControl(await urlResquest.sendQuestion(sendData));
+      if (res.code === 200) {
+        QA_List.value[QA_List.value.length - 1].answer = res?.source_documents.length
+          ? common.searchCompleted
+          : common.searchNotFound;
+        QA_List.value[QA_List.value.length - 1].source = res?.source_documents;
+      }
+    } catch (e) {
+      message.error(e.msg || '出错了');
+      QA_List.value[QA_List.value.length - 1].answer = e || 'error';
     }
     // 无论成不成功,结束后的操作
     showLoading.value = false;

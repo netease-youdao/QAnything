@@ -89,7 +89,7 @@ import { useUploadFiles } from '@/store/useUploadFiles';
 // const router = useRouter();
 // const { getList, setCurrentId, setCurrentKbName, setDefault } = useKnowledgeBase();
 // const { knowledgeBaseList, selectList } = storeToRefs(useKnowledgeBase());
-const { knowledgeBaseList } = storeToRefs(useKnowledgeBase());
+const { knowledgeBaseList, currentKbName } = storeToRefs(useKnowledgeBase());
 const { historyList, showLoading, chatId, QA_List, kbId } = storeToRefs(useQuickStart());
 const { getChatById, addHistoryList, updateHistoryList, addChatList, addFileToBeSendList } =
   useQuickStart();
@@ -156,6 +156,7 @@ const quickClickHandle = async (type: 0 | 1, cardData?: IHistoryList) => {
     chatId.value = cardData.historyId;
     QA_List.value = [];
     kbId.value = cardData.kbId;
+    currentKbName.value = cardData.title;
     const chat = getChatById(chatId.value);
     chat.list.forEach(item => {
       if (item.type === 'user') {

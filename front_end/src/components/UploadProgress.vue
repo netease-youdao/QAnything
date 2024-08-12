@@ -37,7 +37,9 @@
           </div>
         </div>
         <div class="percent">
-          <div class="percent-text">{{ progressPercent.green + progressPercent.red }}%</div>
+          <div class="percent-text">
+            {{ (progressPercent.green + progressPercent.red).toFixed(2) }}%
+          </div>
         </div>
       </div>
     </a-tooltip>

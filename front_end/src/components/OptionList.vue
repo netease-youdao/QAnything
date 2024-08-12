@@ -84,12 +84,6 @@
                 </template>
                 <span>{{ record.fileIdName }}</span>
               </a-tooltip>
-              <!--              <a-popover>-->
-              <!--                <template #title>-->
-              <!--                  {{ record.fileIdName }}-->
-              <!--                </template>-->
-              <!--                <span>{{ record.fileIdName }}</span>-->
-              <!--              </a-popover>-->
             </template>
             <template v-else-if="column.key === 'status'">
               <div class="status-box">
@@ -137,7 +131,7 @@
               <a-button
                 type="text"
                 class="view-item"
-                :disabled="record.status == 'gray' || record.status === 'yellow'"
+                :disabled="!(record.status === 'green')"
                 @click="viewItem(record)"
               >
                 {{ common.view }}

@@ -144,9 +144,7 @@ export const useQuickStart = defineStore(
 
     // 当前知识库的Id，对应历史记录的kbId
     const kbId = ref('');
-    const setKbId = value => {
-      kbId.value = value;
-    };
+
     watch(
       () => kbId.value,
       () => {
@@ -190,7 +188,6 @@ export const useQuickStart = defineStore(
       setChatId,
       kbId,
       kbIdCopy,
-      setKbId,
       deleteChatId,
     };
   },
