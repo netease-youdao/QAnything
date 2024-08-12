@@ -465,7 +465,8 @@ class LocalDocQA:
         est_prompt_tokens = num_tokens(prompt) + num_tokens(str(chat_history))
         async for answer_result in custom_llm.generatorAnswer(prompt=prompt, history=chat_history, streaming=streaming):
             resp = answer_result.llm_output["answer"]
-            acc_resp += resp
+            if 'answer' in resp:
+                acc_resp += json.loads(resp[6:])['answer']
             prompt = answer_result.prompt
             history = answer_result.history
             total_tokens = answer_result.total_tokens
