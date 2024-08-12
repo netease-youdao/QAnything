@@ -5,8 +5,9 @@ from transformers import AutoTokenizer
 from qanything_kernel.connector.llm.base import AnswerResult
 from qanything_kernel.utils.custom_log import debug_logger
 from qanything_kernel.configs.model_config import TOKENIZER_PATH
+import tiktoken
 
-tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_PATH, local_files_only=True)
+# tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_PATH, local_files_only=True)
 
 
 class OpenAILLM:
@@ -27,6 +28,14 @@ class OpenAILLM:
             self.top_p = top_p
         if temperature is not None:
             self.temperature = temperature
+        self.use_cl100k_base = False
+        try:
+            self.tokenizer = tiktoken.encoding_for_model(model)
+        except Exception as e:
+            debug_logger.warning(f"{model} not found in tiktoken, using cl100k_base!")
+            self.tokenizer = tiktoken.get_encoding("cl100k_base")
+            self.use_cl100k_base = True
+
 
         self.client = OpenAI(base_url=base_url, api_key=api_key)
         debug_logger.info(f"OPENAI_API_KEY = {api_key}")
@@ -50,24 +59,27 @@ class OpenAILLM:
                 for key, value in message.items():
                     total_tokens += 3  # role的开销(key的开销)
                     if isinstance(value, str):
-                        tokens = tokenizer.encode(value, add_special_tokens=False)
+                        tokens = self.tokenizer.encode(value, disallowed_special=())
                         total_tokens += len(tokens)
             elif isinstance(message, str):
                 # 对于字符串类型的消息，直接编码
-                tokens = tokenizer.encode(message, add_special_tokens=False)
+                tokens = self.tokenizer.encode(message, disallowed_special=())
                 total_tokens += len(tokens)
             else:
                 raise ValueError(f"Unsupported message type: {type(message)}")
-
+        if self.use_cl100k_base:
+            total_tokens *= 1.2
         return total_tokens
 
     def num_tokens_from_docs(self, docs):
         total_tokens = 0
         for doc in docs:
             # 对每个文本进行分词
-            tokens = tokenizer.encode(doc.page_content, add_special_tokens=True)
+            tokens = self.tokenizer.encode(doc.page_content, disallowed_special=())
             # 累加tokens数量
             total_tokens += len(tokens)
+        if self.use_cl100k_base:
+            total_tokens *= 1.2
         return total_tokens
 
     async def _call(self, messages: List[dict], streaming: bool = False) -> str:
