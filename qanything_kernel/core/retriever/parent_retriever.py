@@ -113,18 +113,25 @@ class SelfParentRetriever(ParentDocumentRetriever):
             full_docs.append((_id, doc))
         insert_logger.info(f"Inserting {len(docs)} child documents, metadata: {docs[0].metadata}, page_content: {docs[0].page_content[:100]}...")
         time_record = {"split_time": round(time.perf_counter() - split_start, 2)}
-        res = await self.vectorstore.aadd_documents(docs, time_record=time_record)
+
+        embed_docs = copy.deepcopy(docs)
+        # 补充metadata信息
+        for idx, doc in enumerate(embed_docs):
+            del doc.metadata['title_lst']
+            del doc.metadata['has_table']
+            del doc.metadata['images_number']
+            del doc.metadata['file_name']
+            del doc.metadata['nos_key']
+            del doc.metadata['faq_dict']
+
+        res = await self.vectorstore.aadd_documents(embed_docs, time_record=time_record)
         insert_logger.info(f'vectorstore insert number: {len(res)}, {res[0]}')
-        if backup_vectorstore is not None:
-            backup_res = await backup_vectorstore.aadd_documents(docs)
-            insert_logger.info(
-                f'backup vectorstore insert number: {len(backup_res)}, {backup_res[0]}')
         if es_store is not None:
             try:
                 es_start = time.perf_counter()
                 # docs的doc_id是file_id + '_' + i
-                docs_ids = [doc.metadata['file_id'] + '_' + str(i) for i, doc in enumerate(docs)]
-                es_res = await es_store.aadd_documents(docs, ids=docs_ids)
+                docs_ids = [doc.metadata['file_id'] + '_' + str(i) for i, doc in enumerate(embed_docs)]
+                es_res = await es_store.aadd_documents(embed_docs, ids=docs_ids)
                 time_record['es_time'] = round(time.perf_counter() - es_start, 2)
                 insert_logger.info(f'es_store insert number: {len(es_res)}, {es_res[0]}')
             except Exception as e:
@@ -178,18 +185,8 @@ class ParentRetriever:
                 length_function=num_tokens_embed)
 
         # insert_logger.info(f'insert documents: {len(docs)}')
-        embed_docs = copy.deepcopy(docs)
-        # 补充metadata信息
-        for idx, doc in enumerate(embed_docs):
-            del doc.metadata['title_lst']
-            del doc.metadata['has_table']
-            del doc.metadata['images_number']
-            del doc.metadata['file_name']
-            del doc.metadata['nos_key']
-            del doc.metadata['faq_dict']
-
-        ids = None if not single_parent else [doc.metadata['doc_id'] for doc in embed_docs]
-        return await self.retriever.aadd_documents(embed_docs, backup_vectorstore=self.backup_vectorstore,
+        ids = None if not single_parent else [doc.metadata['doc_id'] for doc in docs]
+        return await self.retriever.aadd_documents(docs, backup_vectorstore=self.backup_vectorstore,
                                                    es_store=self.es_store, ids=ids, single_parent=single_parent)
 
     async def get_retrieved_documents(self, query: str, partition_keys: List[str], time_record: dict, hybrid_search: bool):
