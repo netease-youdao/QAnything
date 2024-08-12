@@ -183,15 +183,16 @@ class LocalDocQA:
                         context += '</reference>\n'
                     not_repeated_file_ids.append(file_id)
                     if 'headers' in doc.metadata:
-                        headers = f"headers={doc.metadata['headers']}>"
-                        context += f"<reference {headers}>[{len(not_repeated_file_ids)}]" + doc.page_content + '\n'
+                        headers = f"headers={doc.metadata['headers']}"
+                        context += f"<reference {headers}>[{len(not_repeated_file_ids)}]" + '\n' + doc.page_content + '\n'
                     else:
-                        context += f"<reference>[{len(not_repeated_file_ids)}]" + doc.page_content + '\n'
+                        context += f"<reference>[{len(not_repeated_file_ids)}]" + '\n' + doc.page_content + '\n'
                 else:
                     context += doc.page_content + '\n'
             context += '</reference>\n'
 
-            prompt = prompt_template.format(context=context).replace("{{question}}", query)
+            # prompt = prompt_template.format(context=context).replace("{{question}}", query)
+            prompt = prompt_template.replace("{{context}}", context).replace("{{question}}", query)
         else:
             prompt = prompt_template.replace("{{question}}", query)
         return prompt
@@ -419,20 +420,27 @@ class LocalDocQA:
         t1 = time.perf_counter()
         if source_documents:
             if custom_prompt:
-                escaped_custom_prompt = custom_prompt.replace('{', '{{').replace('}', '}}')
-                prompt_template = CUSTOM_PROMPT_TEMPLATE.format(custom_prompt=escaped_custom_prompt)
+                # escaped_custom_prompt = custom_prompt.replace('{', '{{').replace('}', '}}')
+                # prompt_template = CUSTOM_PROMPT_TEMPLATE.format(custom_prompt=escaped_custom_prompt)
+                prompt_template = CUSTOM_PROMPT_TEMPLATE.replace("{{custom_prompt}}", custom_prompt)
             else:
-                system_prompt = SYSTEM.format(today_date=today, current_time=now)
-                prompt_template = PROMPT_TEMPLATE.format(system=system_prompt, instructions=INSTRUCTIONS)
+                # system_prompt = SYSTEM.format(today_date=today, current_time=now)
+                system_prompt = SYSTEM.replace("{{today_date}}", today).replace("{{current_time}}", now)
+                # prompt_template = PROMPT_TEMPLATE.format(system=system_prompt, instructions=INSTRUCTIONS)
+                prompt_template = PROMPT_TEMPLATE.replace("{{system}}", system_prompt).replace("{{instructions}}", INSTRUCTIONS)
         else:
             if custom_prompt:
-                escaped_custom_prompt = custom_prompt.replace('{', '{{').replace('}', '}}')
-                prompt_template = SIMPLE_PROMPT_TEMPLATE.format(today=today, now=now, custom_prompt=escaped_custom_prompt)
+                # escaped_custom_prompt = custom_prompt.replace('{', '{{').replace('}', '}}')
+                # prompt_template = SIMPLE_PROMPT_TEMPLATE.format(today=today, now=now, custom_prompt=escaped_custom_prompt)
+                prompt_template = SIMPLE_PROMPT_TEMPLATE.replace("{{today}}", today).replace("{{now}}", now).replace(
+                    "{{custom_prompt}}", custom_prompt)
             else:
                 simple_custom_prompt = """
                 - If you cannot answer based on the given information, you will return the sentence \"抱歉，已知的信息不足，因此无法回答。\". 
                 """
-                prompt_template = SIMPLE_PROMPT_TEMPLATE.format(today=today, now=now, custom_prompt=simple_custom_prompt)
+                # prompt_template = SIMPLE_PROMPT_TEMPLATE.format(today=today, now=now, custom_prompt=simple_custom_prompt)
+                prompt_template = SIMPLE_PROMPT_TEMPLATE.replace("{{today}}", today).replace("{{now}}", now).replace(
+                    "{{custom_prompt}}", simple_custom_prompt)
 
         source_documents, retrieval_documents = await self.prepare_source_documents(query, custom_llm, source_documents,
                                                                                     chat_history,
@@ -453,6 +461,7 @@ class LocalDocQA:
         prompt = self.generate_prompt(query=query,
                                       source_docs=source_documents,
                                       prompt_template=prompt_template)
+        debug_logger.info(f"prompt: {prompt}")
         est_prompt_tokens = num_tokens(prompt) + num_tokens(str(chat_history))
         async for answer_result in custom_llm.generatorAnswer(prompt=prompt, history=chat_history, streaming=streaming):
             resp = answer_result.llm_output["answer"]

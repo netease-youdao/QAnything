@@ -23,7 +23,7 @@ STREAMING = True
 SYSTEM = """
 You are a helpful assistant. 
 You are always a reliable assistant that can answer questions with the help of external documents.
-Today's date is {today_date}. The current time is {current_time}.
+Today's date is {{today_date}}. The current time is {{current_time}}.
 """
 
 INSTRUCTIONS = """
@@ -37,29 +37,29 @@ INSTRUCTIONS = """
 
 PROMPT_TEMPLATE = """
 <SYSTEM>
-{system}
+{{system}}
 </SYSTEM>
 
 <INSTRUCTIONS>
-{instructions}
+{{instructions}}
 </INSTRUCTIONS>
 
 <DOCUMENTS>
-{context}
+{{context}}
 </DOCUMENTS>
 
 <INSTRUCTIONS>
-{instructions}
+{{instructions}}
 </INSTRUCTIONS>
 """
 
 CUSTOM_PROMPT_TEMPLATE = """
 <USER_INSTRUCTIONS>
-{custom_prompt}
+{{custom_prompt}}
 </USER_INSTRUCTIONS>
 
 <DOCUMENTS>
-{context}
+{{context}}
 </DOCUMENTS>
 
 <INSTRUCTIONS>
@@ -72,8 +72,8 @@ CUSTOM_PROMPT_TEMPLATE = """
 
 SIMPLE_PROMPT_TEMPLATE = """
 - You are a helpful assistant. You can help me by answering my questions. You can also ask me questions.
-- Today's date is {today}. The current time is {now}.
-- User's custom instructions: {custom_prompt}
+- Today's date is {{today}}. The current time is {{now}}.
+- User's custom instructions: {{custom_prompt}}
 - Before answering, confirm the number of key points or pieces of information required, ensuring nothing is overlooked.
 - Now, answer the following question:
 {{question}}
