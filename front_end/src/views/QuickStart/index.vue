@@ -161,13 +161,6 @@
       </div>
       <div class="question-box">
         <div class="question">
-          <div class="scroll-btn-div">
-            <a-button type="primary" shape="circle" size="large" @click="scrollBottom">
-              <template #icon>
-                <SvgIcon name="scroll" />
-              </template>
-            </a-button>
-          </div>
           <div v-if="fileBlockArr.length" class="file-list-box">
             <FileBlock
               v-for="file of fileBlockArr"
@@ -180,6 +173,13 @@
             />
           </div>
           <div class="send-box">
+            <div class="scroll-btn-div">
+              <a-button type="primary" shape="circle" size="large" @click="scrollBottom">
+                <template #icon>
+                  <SvgIcon name="scroll" />
+                </template>
+              </a-button>
+            </div>
             <a-textarea
               v-model:value="question"
               class="send-textarea"
@@ -1040,25 +1040,12 @@ onBeforeUnmount(() => {
   margin-bottom: 30px;
 
   .question {
-    position: relative;
     width: 40%;
     min-width: 550px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
     align-items: center;
-
-    .scroll-btn-div {
-      position: absolute;
-      top: -40px;
-      right: -40px;
-
-      svg {
-        width: 20px;
-        height: 20px;
-        margin-top: 5px;
-      }
-    }
 
     :deep(.ant-input-affix-wrapper) {
       width: 100%;
@@ -1093,6 +1080,18 @@ onBeforeUnmount(() => {
       background-color: #fff;
       border: 1px solid #d9d9d9;
       border-radius: 18px;
+
+      .scroll-btn-div {
+        position: absolute;
+        top: -40px;
+        right: -40px;
+
+        svg {
+          width: 20px;
+          height: 20px;
+          margin-top: 5px;
+        }
+      }
 
       &:hover {
         border-color: $baseColor;
