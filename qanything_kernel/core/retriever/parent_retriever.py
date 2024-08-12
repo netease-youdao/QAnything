@@ -132,7 +132,7 @@ class SelfParentRetriever(ParentDocumentRetriever):
                 # docs的doc_id是file_id + '_' + i
                 docs_ids = [doc.metadata['file_id'] + '_' + str(i) for i, doc in enumerate(embed_docs)]
                 es_res = await es_store.aadd_documents(embed_docs, ids=docs_ids)
-                time_record['es_time'] = round(time.perf_counter() - es_start, 2)
+                time_record['es_insert_time'] = round(time.perf_counter() - es_start, 2)
                 insert_logger.info(f'es_store insert number: {len(es_res)}, {es_res[0]}')
             except Exception as e:
                 insert_logger.error(f"Error in aadd_documents on es_store: {traceback.format_exc()}")
