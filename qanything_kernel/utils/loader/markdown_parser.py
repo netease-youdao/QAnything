@@ -236,22 +236,46 @@ def _convert_to_node_lists_dfs(parsing_json):
 
 
 def convert_node_to_document(node_lists):
+    def update_child_titles(child_id_list, title):
+        for k, v in node_lists.items():
+            for idx, item in enumerate(v):
+                if item['node_id'] in child_id_list:
+                    item['title'] = title + ['文字内容']
+
+    # 处理没有子节点的node，把下一个节点当成子节点给它
+    for k, v in node_lists.items():
+        for idx, item in enumerate(v):
+            if item['node_type'].startswith('Level'):
+                if len(item['child_id_list']) == 0:  # 是一个单独的标题，并且没有子节点，可能是markdown解析出现了问题
+                    if idx + 1 < len(v) and v[idx + 1]['node_type'] == item['node_type']:
+                        item['child_id_list'].append(v[idx + 1]['node_id'])
+                        tail = v[idx + 1]['title'].pop(-1)
+                        for title in item['title']:
+                            if title not in v[idx + 1]['title']:
+                                v[idx + 1]['title'].append(title)
+                        v[idx + 1]['title'].append(tail)
+                        update_child_titles(v[idx + 1]['child_id_list'], v[idx + 1]['title'])
+    print("node_lists:", node_lists)
     doc_lst = []
     for k, v in node_lists.items():
-        for item in v:
+        for idx, item in enumerate(v):
             if item['node_type'].startswith('Level'):
                 if len(item['child_id_list']) == 0:  #是一个单独的标题，并且没有子节点，可能是markdown解析出现了问题
-                    title_lst = []
+                    # title_lst = []
+                    # for index, title in enumerate(item['title']):
+                    #     title_lst.append('#' * (index + 1) + ' ' + title)
+                    # doc = Document(page_content='', metadata={'title_lst': title_lst, 'has_table': False})
+                    tmp_content = ''
                     for index, title in enumerate(item['title']):
-                        title_lst.append('#' * (index + 1) + ' ' + title)
-                    doc = Document(page_content='', metadata={'title_lst': title_lst, 'has_table': False})
+                        tmp_content += '#' * (index + 1) + ' ' + title + '\n'
+                    doc = Document(page_content=tmp_content, metadata={'title_lst': [], 'has_table': False, 'page_id': k})
                     doc_lst.append(doc)
             if item['node_type'] == 'ContentNode':
                 title_lst = []
                 for index, title in enumerate(item['title'][:-1]):
                     title_lst.append('#' * (index + 1) + ' ' + title)
                 has_table = contains_table(item['content'])
-                doc = Document(page_content=item['content'], metadata={'title_lst': title_lst, 'has_table': has_table})
+                doc = Document(page_content=item['content'], metadata={'title_lst': title_lst, 'has_table': has_table, 'page_id': k})
                 doc_lst.append(doc)
     return doc_lst
 
@@ -259,6 +283,7 @@ def convert_node_to_document(node_lists):
 def convert_markdown_to_langchaindoc(md_file):
     doc_json = parse_markdown_mistune(md_file)
     node_lists = _convert_to_node_lists_dfs([doc_json])
+    # print("node_lists:", node_lists)
     doc_lst = convert_node_to_document(node_lists)
     return doc_lst
 

@@ -1,6 +1,6 @@
 from qanything_kernel.utils.general_utils import get_time, get_table_infos, num_tokens_embed, get_all_subpages, html_to_markdown
 from typing import List, Optional
-from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, LOCAL_OCR_SERVICE_URL, DEFAULT_PARENT_CHUNK_SIZE
+from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, LOCAL_OCR_SERVICE_URL, DEFAULT_PARENT_CHUNK_SIZE, DEFAULT_CHILD_CHUNK_SIZE
 from langchain.docstore.document import Document
 from qanything_kernel.utils.loader.my_recursive_url_loader import MyRecursiveUrlLoader
 from qanything_kernel.utils.custom_log import insert_logger
@@ -24,7 +24,6 @@ import requests
 import threading
 import re
 import newspaper
-import shutil
 import uuid
 import traceback
 
@@ -154,15 +153,6 @@ class LocalFileForInsert:
     def markdown_process(self, docs: List[Document]):
         new_docs = []
         for doc in docs:
-            if 'coord_lst' in doc.metadata:
-                content_list = [para for para in doc.metadata['coord_lst'] if para[2] == 'content']
-                if content_list:
-                    doc.metadata['page_id'] = content_list[0][0]
-                    doc.metadata['bbox'] = content_list[0][1]  # (x,y,w,h)
-                else:
-                    doc.metadata['page_id'] = doc.metadata['coord_lst'][0][0]
-                    doc.metadata['bbox'] = doc.metadata['coord_lst'][0][1]  # (x,y,w,h)
-
             title_lst = doc.metadata['title_lst']
             # 删除所有仅有多个#的title
             title_lst = [t for t in title_lst if t.replace('#', '') != '']
@@ -175,26 +165,15 @@ class LocalFileForInsert:
                 if table_docs:
                     new_docs.extend(table_docs)
                     continue
-            if doc.page_content is "":  # page_content为空时把title_lst当做正文
-                if len(doc.metadata['title_lst']) > 1:
-                    cleaned_list = [re.sub(r'^#+\s*', '', item) for item in title_lst[1:]]
-                    doc.page_content = '\n'.join(cleaned_list)
-                    doc.metadata['title_lst'] = [title_lst[0]]
-                else:
-                    doc.page_content = re.sub(r'^#+\s*', '', title_lst[0])
-                    doc.metadata['title_lst'] = []
-                slices = self.markdown_text_splitter.split_documents([doc])
-                new_docs.extend(slices)
+            slices = self.markdown_text_splitter.split_documents([doc])
+            # insert_logger.info(f"markdown_text_splitter: {len(slices)}")
+            if len(slices) == 1:
+                slices[0].page_content = '\n\n'.join(title_lst) + '\n\n' + slices[0].page_content
             else:
-                slices = self.markdown_text_splitter.split_documents([doc])
-                # insert_logger.info(f"markdown_text_splitter: {len(slices)}")
-                if len(slices) == 1:
-                    slices[0].page_content = '\n\n'.join(title_lst) + '\n\n' + slices[0].page_content
-                else:
-                    for idx, slice in enumerate(slices):
-                        slice.page_content = '\n\n'.join(
-                            title_lst) + f'\n\n###### 第{idx + 1}段内容如下：\n' + slice.page_content
-                new_docs.extend(slices)
+                for idx, slice in enumerate(slices):
+                    slice.page_content = '\n\n'.join(
+                        title_lst) + f'\n\n###### 第{idx + 1}段内容如下：\n' + slice.page_content
+            new_docs.extend(slices)
         return new_docs
 
     def set_file_images(self, docs):
@@ -345,6 +324,12 @@ class LocalFileForInsert:
             raise TypeError("文件类型不支持，目前仅支持：[md,txt,pdf,jpg,png,jpeg,docx,xlsx,pptx,eml,csv]")
         self.inject_metadata(docs)
 
+    @staticmethod
+    def remove_substring_after_first(main_string, substring):
+        # 使用正则表达式, 删除第一个子串之外的所有子串：DEL "Hello" for "Hello Hello Hello World" -> "Hello World"
+        pattern = f'({re.escape(substring)}).*?(?={re.escape(substring)}|$)'
+        return re.sub(pattern, r'\1', main_string)
+
     def inject_metadata(self, docs: List[Document]):
         # 这里给每个docs片段的metadata里注入file_id
         new_docs = []
@@ -373,4 +358,29 @@ class LocalFileForInsert:
             insert_logger.info('langchain analysis content head: %s', new_docs[0].page_content[:100])
         else:
             insert_logger.info('langchain analysis docs is empty!')
-        self.docs = new_docs
+
+        # merge short docs
+        insert_logger.info(f"before merge doc lens: {len(new_docs)}")
+        child_chunk_size = min(DEFAULT_CHILD_CHUNK_SIZE, int(self.chunk_size / 2))
+        merged_docs = []
+        for doc in new_docs:
+            if not merged_docs:
+                merged_docs.append(doc)
+            else:
+                last_doc = merged_docs[-1]
+                if num_tokens_embed(last_doc.page_content) + num_tokens_embed(doc.page_content) <= child_chunk_size:
+                    tmp_content = doc.page_content
+                    print(last_doc.metadata['title_lst'], tmp_content)
+                    for title in last_doc.metadata['title_lst']:
+                        tmp_content = tmp_content.replace(title, '')
+                    last_doc.page_content += '\n\n' + tmp_content
+                    # for title in last_doc.metadata['title_lst']:
+                    #     last_doc.page_content = self.remove_substring_after_first(last_doc.page_content, '![figure]')
+                    last_doc.metadata['title_lst'] += doc.metadata.get('title_lst', [])
+                    last_doc.metadata['has_table'] = last_doc.metadata.get('has_table', False) or doc.metadata.get(
+                        'has_table', False)
+                    last_doc.metadata['images_number'] += doc.metadata.get('images_number', 0)
+                else:
+                    merged_docs.append(doc)
+        insert_logger.info(f"after merge doc lens: {len(merged_docs)}")
+        self.docs = merged_docs

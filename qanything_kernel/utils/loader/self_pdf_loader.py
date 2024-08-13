@@ -111,7 +111,7 @@ class PdfLoader(PdfParser):
                 tbl_no = tbl[0][1]
                 new_sections[tbl_no] = {'text': tbl[0][0], 'type': tbl[0][1]}
 
-        json.dump(new_sections, open(self.json_dir, 'w'))
+        json.dump(new_sections, open(self.json_dir, 'w'), ensure_ascii=False, indent=4)
         markdown_str = json2markdown(self.json_dir, self.markdown_dir)
         debug_logger.info("PDF Parse finished in %s seconds" % (timer() - start))
         # print(new_sections, flush=True)
