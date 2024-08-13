@@ -20,7 +20,6 @@ from qanything_kernel.core.retriever.elasticsearchstore import StoreElasticSearc
 from qanything_kernel.core.retriever.parent_retriever import ParentRetriever
 from qanything_kernel.configs.model_config import MYSQL_HOST_LOCAL, MYSQL_PORT_LOCAL, \
     MYSQL_USER_LOCAL, MYSQL_PASSWORD_LOCAL, MYSQL_DATABASE_LOCAL
-from concurrent.futures import ThreadPoolExecutor
 from sanic.worker.manager import WorkerManager
 import asyncio
 import traceback
@@ -179,7 +178,7 @@ async def check_and_process(pool):
                 async with conn.cursor() as cur:  # 创建游标
                     query = f"""
                         SELECT id, timestamp, file_id, file_name FROM File
-                        WHERE status = 'gray' AND MOD(id, %s) = %s
+                        WHERE status = 'gray' AND MOD(id, %s) = %s AND deleted = 0
                         ORDER BY timestamp ASC LIMIT 1;
                     """
 
