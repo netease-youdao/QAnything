@@ -112,19 +112,14 @@
             <template v-else-if="column.key === 'options'">
               <a-popconfirm
                 overlay-class-name="del-pop"
-                :disabled="record.status == 'gray' || record.status === 'yellow'"
                 placement="topRight"
                 :title="common.deleteTitle"
                 :ok-text="common.confirm"
                 :cancel-text="common.cancel"
                 @confirm="confirm"
               >
-                <a-button
-                  type="text"
-                  :disabled="record.status == 'gray' || record.status === 'yellow'"
-                  class="delete-item"
-                  @click="deleteItem(record)"
-                >
+                <!-- :disabled="record.status == 'gray' || record.status === 'yellow'" -->
+                <a-button type="text" class="delete-item" @click="deleteItem(record)">
                   {{ common.delete }}
                 </a-button>
               </a-popconfirm>
@@ -219,6 +214,7 @@ const {
   faqTimer,
   total,
   pageNum,
+  pageSize,
   loading,
   kbTotal,
   kbPageNum,
@@ -340,7 +336,7 @@ const kbPaginationConfig = computed(() => ({
 // faq的分页参数
 const paginationConfig = computed(() => ({
   current: pageNum.value, // 当前页码
-  pageSize: 10, // 每页条数
+  pageSize: pageSize.value, // 每页条数
   total: total.value, // 数据总数
   showSizeChanger: false,
   showTotal: total => `共 ${total} 条`,
@@ -370,6 +366,10 @@ const confirm = async () => {
     );
     message.success('删除成功');
     await getDetails();
+    if (kbPageNum.value !== 1 && dataSource.value.length === 0) {
+      kbPageNum.value -= 1;
+      await getDetails();
+    }
   } catch (e) {
     message.error(e.msg || '删除失败');
   }
@@ -390,7 +390,11 @@ const qaConfirm = async () => {
       })
     );
     message.success('删除成功');
-    getFaqList();
+    await getFaqList();
+    if (pageNum.value !== 1 && faqList.value.length === 0) {
+      pageNum.value -= 1;
+      await getFaqList();
+    }
   } catch (e) {
     message.error(e.msg || '删除失败');
   }
@@ -528,6 +532,7 @@ const navClick = value => {
 const onChange = pagination => {
   const { current } = pagination;
   setPageNum(current);
+  getFaqList();
 };
 
 const kbOnChange = pagination => {
@@ -540,6 +545,7 @@ watch(
   () => {
     navIndex.value = 0;
     setKbPageNum(1);
+    setPageNum(1);
     getDetails();
   },
   {
@@ -551,10 +557,10 @@ onBeforeUnmount(() => {
   clearTimeout(timer.value);
   clearTimeout(faqTimer.value);
   // 不加这个判断的话，new的知识库跳转后kb会为''
-  console.log(newKbId.value);
   !newKbId.value && setCurrentId('');
   setNewKbId('');
   setKbPageNum(1);
+  setPageNum(1);
 });
 </script>
 

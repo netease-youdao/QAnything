@@ -72,6 +72,9 @@ export const useOptiionList = defineStore(
       pageNum.value = value;
     };
 
+    // faq一页几个
+    const pageSize = ref(10);
+
     // faq table loading
     const loading = ref(false);
     const setLoading = value => {
@@ -190,13 +193,18 @@ export const useOptiionList = defineStore(
     const faqTimer = ref(null);
 
     const getFaqList = async () => {
+      console.log('getgfqaqw');
       try {
         if (faqTimer.value) {
           clearTimeout(faqTimer.value);
         }
         setLoading(true);
         const res: any = await resultControl(
-          await urlResquest.fileList({ kb_id: currentId.value + '_FAQ' })
+          await urlResquest.fileList({
+            kb_id: currentId.value + '_FAQ',
+            page_offset: pageNum.value,
+            page_limit: pageSize.value,
+          })
         );
 
         setFaqList([]);
@@ -204,6 +212,8 @@ export const useOptiionList = defineStore(
           setTotal(0);
           setLoading(false);
           return;
+        } else {
+          setTotal(res.total);
         }
         for (const item of res?.details) {
           const i = res?.details.indexOf(item);
@@ -296,6 +306,7 @@ export const useOptiionList = defineStore(
       faqType,
       setFaqType,
       total,
+      pageSize,
       setTotal,
       pageNum,
       setPageNum,
