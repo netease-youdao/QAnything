@@ -8,13 +8,17 @@
  -->
 <template>
   <div class="contain">
-    <div class="file-icon">
+    <div class="file-icon" @click="previewHandle">
       <SvgIcon :name="fileIcon" />
+      <div :class="isLoading || fileStatus === 'yellow' ? 'mask' : ''" />
       <div v-if="isLoading" class="loading">
         <LoadingImg />
       </div>
+      <div v-if="fileStatus === 'yellow'" class="progress">
+        <a-progress type="circle" :percent="fileProgress" :size="25" />
+      </div>
     </div>
-    <div class="file-info">
+    <div class="file-info" @click="previewHandle">
       <span class="file-name">{{ fileInfo.fileName }}</span>
       <span v-if="fileStatus === 'green'" class="file-extension">
         {{ fileInfo.fileExtension.toUpperCase() }}, {{ formatFileSize(fileData.bytes) || 0 }}
@@ -35,6 +39,10 @@ import SvgIcon from '@/components/SvgIcon.vue';
 import { formatFileSize, parseFileName, resultControl } from '@/utils/utils';
 import LoadingImg from '@/components/LoadingImg.vue';
 import urlResquest from '@/services/urlConfig';
+import { useChatSource } from '@/store/useChatSource';
+import message from 'ant-design-vue/es/message';
+
+const { setChatSourceVisible, setSourceType, setSourceUrl, setTextContent } = useChatSource();
 
 interface IProps {
   fileData: IFileListItem;
@@ -49,7 +57,7 @@ const props = defineProps<IProps>();
 const { fileData, kbId } = toRefs(props);
 
 const isLoading = computed(() => {
-  return fileStatus.value !== 'green' && fileStatus.value !== 'red';
+  return fileStatus.value === 'gray';
 });
 
 const fileInfo = computed(() => {
@@ -96,6 +104,8 @@ const fileStatusMap = new Map([
   ['red', '解析失败'],
 ]);
 
+const fileProgress = ref(0);
+
 const getDetail = () => {
   let timer = ref(null);
   timer.value = setInterval(async () => {
@@ -113,10 +123,12 @@ const getDetail = () => {
           file_id: fileData.value.file_id,
         })
       )) as any;
-      console.log(res);
       fileData.value.status = res.details[0]?.status || 'red';
+      if (res.details[0]?.status === 'yellow') {
+        fileProgress.value = parseInt(res.details[0]?.msg.match(/\d+/)[0], 10);
+      }
     }
-  }, 2000);
+  }, 1000);
 };
 
 const cancelFile = async () => {
@@ -126,8 +138,76 @@ const cancelFile = async () => {
 onMounted(() => {
   getDetail();
 });
+
+// 预览
+const previewHandle = () => {
+  if (fileStatus.value === 'yellow' || fileStatus.value === 'green') {
+    handleChatSource(fileData.value);
+  } else {
+    message.warn('解析中、解析完成才可以预览');
+  }
+};
+
+// 检查信息来源的文件是否支持窗口化渲染
+let supportSourceTypes = ['pdf', 'docx', 'xlsx', 'txt', 'md', 'jpg', 'png', 'jpeg'];
+const checkFileType = filename => {
+  if (!filename) {
+    return false;
+  }
+  const arr = filename.split('.');
+  if (arr.length) {
+    const suffix = arr.pop();
+    return supportSourceTypes.includes(suffix);
+  } else {
+    return false;
+  }
+};
+
+const handleChatSource = file => {
+  const isSupport = checkFileType(file.file_name);
+  if (isSupport) {
+    queryFile(file);
+  }
+};
+
+async function queryFile(file) {
+  try {
+    setSourceUrl(null);
+    const res: any = await resultControl(await urlResquest.getFile({ file_id: file.file_id }));
+    const suffix = file.file_name.split('.').pop();
+    const b64Type = getB64Type(suffix);
+    setSourceType(suffix);
+    setSourceUrl(`data:${b64Type};base64,${res.file_base64}`);
+    if (suffix === 'txt' || suffix === 'md') {
+      const decodedTxt = atob(res.file_base64);
+      const correctStr = decodeURIComponent(escape(decodedTxt));
+      setTextContent(correctStr);
+      setChatSourceVisible(true);
+    } else {
+      setChatSourceVisible(true);
+    }
+  } catch (e) {
+    message.error(e.msg || '获取文件失败');
+  }
+}
+
+let b64Types = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/plain',
+  'text/markdown',
+  'image/jpeg',
+  'image/png',
+  'image/jpeg',
+];
+
+function getB64Type(suffix) {
+  const index = supportSourceTypes.indexOf(suffix);
+  return b64Types[index];
+}
 </script>
-z
+
 <style lang="scss" scoped>
 .contain {
   position: relative;
@@ -140,8 +220,11 @@ z
   border-radius: 12px;
   background-color: #fff;
   box-shadow: 0 8px 16px 0 #0000000d;
+  cursor: pointer;
+  z-index: 100;
 
   .file-icon {
+    position: relative;
     display: flex;
     align-items: center;
 
@@ -152,9 +235,23 @@ z
 
     .loading {
       position: absolute;
-      left: 9px;
+      left: 6px;
       width: 20px;
       height: 20px;
+    }
+
+    .progress {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .mask {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background-color: rgba(255, 255, 255, 0.7);
     }
   }
 
@@ -187,6 +284,7 @@ z
     right: 0;
     transform: translate(20%, -20%);
     cursor: pointer;
+    z-index: 101;
 
     svg {
       width: 16px;

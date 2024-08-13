@@ -52,7 +52,7 @@ export default {
     errorTip:
       'Note: files that failed to be uploaded will not be displayed on the management page.',
     deleteTitle: 'Delete the document?',
-    dataSource: 'data source',
+    dataSource: 'Data Source',
     correlation: 'correlation:',
     copySuccess: 'Copied Successfully',
     copyFailed: 'Copy Failed',
