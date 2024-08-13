@@ -46,8 +46,11 @@ const confirmLoading = ref<boolean>(false);
 const handleOk = async () => {
   confirmLoading.value = true;
   try {
-    const res = await urlResquest.deleteKB({ kb_ids: [currentId.value] });
-    if (+res.code === 200) {
+    const res = await Promise.race([
+      await urlResquest.deleteKB({ kb_ids: [currentId.value] }),
+      await urlResquest.deleteKB({ kb_ids: [currentId.value + '_FAQ'] }),
+    ]);
+    if (res.code === 200) {
       const index = selectList.value.findIndex(item => {
         return item === currentId.value;
       });
@@ -59,7 +62,7 @@ const handleOk = async () => {
       message.success('删除成功');
       clearChatList(deleteChatId.value);
       deleteChatId.value = null;
-      getList();
+      await getList();
     } else {
       confirmLoading.value = false;
       message.error('删除失败');

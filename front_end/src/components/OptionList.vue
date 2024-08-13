@@ -16,7 +16,9 @@
         </div>
         <p class="kb-name">
           <span class="name">{{ currentKbName }}</span>
-          <span class="id">{{ home.knowledgeID }} {{ currentId }}</span>
+          <span class="id">
+            {{ home.knowledgeID }} {{ currentId }}{{ navIndex === 1 ? '_FAQ' : '' }}
+          </span>
         </p>
       </div>
       <div class="nav-info">
@@ -145,7 +147,20 @@
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'status'">
-              <div>{{ parseFaqStatus(record.status) }}</div>
+              <div class="status-box">
+                <span class="icon-file-status">
+                  <LoadingImg
+                    v-if="record.status === 'gray' || record.status === 'yellow'"
+                    class="file-status"
+                  />
+                  <SvgIcon
+                    v-else
+                    class="file-status"
+                    :name="record.status === 'green' ? 'success' : 'error'"
+                  />
+                </span>
+                <span> {{ parseFaqStatus(record.status) }}</span>
+              </div>
             </template>
             <template v-else-if="column.key === 'options'">
               <div class="options">
@@ -506,6 +521,7 @@ const addKnowledge = async () => {
       await urlResquest.createKb({
         kb_name: `${currentKbName.value}_FAQ`,
         kb_id: `${currentId.value}_FAQ`,
+        // faq: true,
       })
     );
   } catch (e) {
@@ -707,12 +723,15 @@ onBeforeUnmount(() => {
 }
 
 .table {
-  // margin-top: 32px;
-  margin-bottom: 32px;
   height: calc(100% - 120px);
+  margin-bottom: 32px;
   overflow: auto;
   border-radius: 12px;
   background-color: #fff;
+
+  &::-webkit-scrollbar {
+    width: 0;
+  }
 
   .options {
     width: 80px;

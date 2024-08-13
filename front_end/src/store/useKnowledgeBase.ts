@@ -71,7 +71,7 @@ export const useKnowledgeBase = defineStore('knowledgeBase', () => {
           setDefault(pageStatus.normal);
 
           if (!selectList.value.length) {
-            selectList.value.push(list[0].kb_id);
+            selectList.value.push(list[0]?.kb_id);
           }
         } else {
           setDefault(pageStatus.default);
