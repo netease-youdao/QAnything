@@ -31,6 +31,7 @@ current_time = time.strftime("%Y%m%d_%H%M%S")
 debug_log_folder = './logs/debug_logs'
 qa_log_folder = './logs/qa_logs'
 rerank_log_folder = './logs/rerank_logs'
+embed_log_folder = './logs/embed_logs'
 insert_log_folder = './logs/insert_logs'
 # 确保日志文件夹存在
 if not os.path.exists(debug_log_folder):
@@ -39,6 +40,8 @@ if not os.path.exists(qa_log_folder):
     os.makedirs(qa_log_folder)
 if not os.path.exists(rerank_log_folder):
     os.makedirs(rerank_log_folder)
+if not os.path.exists(embed_log_folder):
+    os.makedirs(embed_log_folder)
 if not os.path.exists(insert_log_folder):
     os.makedirs(insert_log_folder)
 # 定义日志文件的完整路径，包括文件夹和文件名
@@ -48,11 +51,13 @@ if not os.path.exists(insert_log_folder):
 qa_logger = logging.getLogger('qa_logger')
 debug_logger = logging.getLogger('debug_logger')
 rerank_logger = logging.getLogger('rerank_logger')
+embed_logger = logging.getLogger('embed_logger')
 insert_logger = logging.getLogger('insert_logger')
 # 设置 logger 的日志级别为 INFO，即只记录 INFO 及以上级别的日志信息
 qa_logger.setLevel(logging.INFO)
 debug_logger.setLevel(logging.INFO)
 rerank_logger.setLevel(logging.INFO)
+embed_logger.setLevel(logging.INFO)
 insert_logger.setLevel(logging.INFO)
 
 debug_handler = ConcurrentRotatingFileHandler(os.path.join(debug_log_folder, "debug.log"), "a", 64 * 1024 * 1024, 256)
@@ -89,6 +94,16 @@ rerank_handler.setFormatter(formatter)
 # 将 handler 添加到 logger 中，这样 logger 就可以使用这个 handler 来记录日志了
 rerank_logger.addHandler(rerank_handler)
 
+
+embed_handler = ConcurrentRotatingFileHandler(os.path.join(embed_log_folder, "embed.log"), "a", 64 * 1024 * 1024, 256)
+# 定义日志格式
+formatter = logging.Formatter("%(asctime)s %(message)s")
+# 设置日志格式
+embed_handler.setFormatter(formatter)
+
+# 将 handler 添加到 logger 中，这样 logger 就可以使用这个 handler 来记录日志了
+embed_logger.addHandler(embed_handler)
+
 insert_handler = ConcurrentRotatingFileHandler(os.path.join(insert_log_folder, "insert.log"), "a", 64 * 1024 * 1024, 256)
 # 定义日志格式
 formatter = logging.Formatter(f"%(asctime)s - [PID: %(process)d][{process_type}] - [Function: %(funcName)s] - %(levelname)s - %(message)s")
@@ -98,9 +113,10 @@ insert_handler.setFormatter(formatter)
 # 将 handler 添加到 logger 中，这样 logger 就可以使用这个 handler 来记录日志了
 insert_logger.addHandler(insert_handler)
 
-print(debug_logger, qa_logger, rerank_logger, insert_logger)
+print(debug_logger, qa_logger, rerank_logger, embed_logger, insert_logger)
 
 qa_logger.propagate = False  # 关闭日志传播
 debug_logger.propagate = False  # 关闭日志传播
 rerank_logger.propagate = False  # 关闭日志传播
+embed_logger.propagate = False  # 关闭日志传播
 insert_logger.propagate = False  # 关闭日志传播

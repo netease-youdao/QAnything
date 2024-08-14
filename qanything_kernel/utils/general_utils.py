@@ -1,6 +1,6 @@
 from sanic.request import Request
 from sanic.exceptions import BadRequest
-from qanything_kernel.utils.custom_log import debug_logger, insert_logger, qa_logger
+from qanything_kernel.utils.custom_log import debug_logger, embed_logger, rerank_logger
 from qanything_kernel.configs.model_config import (KB_SUFFIX, UPLOAD_ROOT_PATH, LOCAL_EMBED_PATH, LOCAL_RERANK_PATH)
 from transformers import AutoTokenizer
 import pandas as pd
@@ -141,27 +141,37 @@ def truncate_filename(filename, max_length=200):
 
 # 同步执行环境下的耗时统计装饰器
 def get_time(func):
-    def inner(*arg, **kwargs):
+    def get_time_inner(*arg, **kwargs):
         s_time = time.time()
         res = func(*arg, **kwargs)
         e_time = time.time()
-        debug_logger.info('函数 {} 执行耗时: {:.2f} 毫秒'.format(func.__name__, (e_time - s_time) * 1000))
+        if 'embed' in func.__name__:
+            embed_logger.info('函数 {} 执行耗时: {:.2f} 秒'.format(func.__name__, e_time - s_time))
+        elif 'rerank' in func.__name__:
+            rerank_logger.info('函数 {} 执行耗时: {:.2f} 秒'.format(func.__name__, e_time - s_time))
+        else:
+            debug_logger.info('函数 {} 执行耗时: {:.2f} 毫秒'.format(func.__name__, (e_time - s_time) * 1000))
         return res
 
-    return inner
+    return get_time_inner
 
 
 # 异步执行环境下的耗时统计装饰器
 def get_time_async(func):
     @wraps(func)
-    async def inner(*args, **kwargs):
+    async def get_time_async_inner(*args, **kwargs):
         s_time = time.perf_counter()
         res = await func(*args, **kwargs)  # 注意这里使用 await 来调用异步函数
         e_time = time.perf_counter()
-        debug_logger.info('函数 {} 执行耗时: {:.2f} 毫秒'.format(func.__name__, (e_time - s_time) * 1000))
+        if 'embed' in func.__name__:
+            embed_logger.info('函数 {} 执行耗时: {:.2f} 秒'.format(func.__name__, e_time - s_time))
+        elif 'rerank' in func.__name__:
+            rerank_logger.info('函数 {} 执行耗时: {:.2f} 秒'.format(func.__name__, e_time - s_time))
+        else:
+            debug_logger.info('函数 {} 执行耗时: {:.2f} 毫秒'.format(func.__name__, (e_time - s_time) * 1000))
         return res
 
-    return inner
+    return get_time_async_inner
 
 
 def read_files_with_extensions():

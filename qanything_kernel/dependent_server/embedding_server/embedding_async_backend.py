@@ -4,9 +4,9 @@ import numpy as np
 from onnxruntime import SessionOptions, GraphOptimizationLevel, InferenceSession
 from concurrent.futures import ThreadPoolExecutor
 from transformers import AutoTokenizer
-from qanything_kernel.utils.custom_log import debug_logger
+from qanything_kernel.utils.custom_log import embed_logger
 from qanything_kernel.configs.model_config import LOCAL_EMBED_MAX_LENGTH, LOCAL_EMBED_PATH, LOCAL_EMBED_BATCH
-from qanything_kernel.utils.general_utils import get_time
+from qanything_kernel.utils.general_utils import get_time, get_time_async
 
 
 class EmbeddingAsyncBackend:
@@ -31,6 +31,7 @@ class EmbeddingAsyncBackend:
         self.queue = asyncio.Queue()
         asyncio.create_task(self.process_queue())
 
+    @get_time_async
     async def embed_documents_async(self, texts):
         futures = []
         # 设置mini_batch=1，每次处理1个文本
@@ -55,7 +56,7 @@ class EmbeddingAsyncBackend:
         # debug_logger.info(f"onnx infer time: {time.time() - start_time}")
 
         embedding = outputs_onnx[0][:, 0]
-        debug_logger.info(f'embedding shape: {embedding.shape}')
+        embed_logger.info(f'embedding shape: {embedding.shape}')
 
         norm_arr = np.linalg.norm(embedding, axis=1, keepdims=True)
         embeddings_normalized = embedding / norm_arr

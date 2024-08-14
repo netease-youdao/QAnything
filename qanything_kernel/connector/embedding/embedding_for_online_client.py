@@ -1,6 +1,6 @@
 """Wrapper around YouDao embedding models."""
 from typing import List
-from qanything_kernel.utils.custom_log import debug_logger, qa_logger
+from qanything_kernel.utils.custom_log import debug_logger, embed_logger
 from qanything_kernel.utils.general_utils import get_time_async, get_time
 from langchain_core.embeddings import Embeddings
 from qanything_kernel.configs.model_config import LOCAL_EMBED_SERVICE_URL, LOCAL_RERANK_BATCH
@@ -31,6 +31,8 @@ class YouDaoEmbeddings(Embeddings):
     @get_time_async
     async def aembed_documents(self, texts: List[str]) -> List[List[float]]:
         batch_size = LOCAL_RERANK_BATCH  # 增大客户端批处理大小
+        # 向上取整
+        embed_logger.info(f'embedding texts number: {len(texts) / batch_size}')
         all_embeddings = []
         async with aiohttp.ClientSession() as session:
             tasks = [self._get_embedding_async(session, texts[i:i + batch_size])

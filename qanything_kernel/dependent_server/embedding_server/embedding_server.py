@@ -25,7 +25,7 @@ app = Sanic("embedding_server")
 async def embedding(request):
     data = request.json
     texts = data.get('texts')
-    print("local embedding texts number:", len(texts), flush=True)
+    # print("local embedding texts number:", len(texts), flush=True)
 
     onnx_backend: EmbeddingAsyncBackend = request.app.ctx.onnx_backend
     result_data = await onnx_backend.embed_documents_async(texts)

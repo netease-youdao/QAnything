@@ -4,10 +4,10 @@ from typing import List
 import asyncio
 from qanything_kernel.configs.model_config import LOCAL_RERANK_MAX_LENGTH, \
     LOCAL_RERANK_BATCH, LOCAL_RERANK_PATH
-from qanything_kernel.utils.general_utils import get_time
+from qanything_kernel.utils.general_utils import get_time, get_time_async
 from onnxruntime import SessionOptions, GraphOptimizationLevel, InferenceSession
 from concurrent.futures import ThreadPoolExecutor
-from qanything_kernel.utils.custom_log import debug_logger
+from qanything_kernel.utils.custom_log import rerank_logger
 import numpy as np
 
 
@@ -38,8 +38,8 @@ class RerankAsyncBackend:
         asyncio.create_task(self.process_queue())
 
     @get_time
-    def inference(self, batch):
-        debug_logger.info(f"rerank shape: {batch['attention_mask'].shape}")
+    def rerank_inference(self, batch):
+        rerank_logger.info(f"rerank shape: {batch['attention_mask'].shape}")
         # 准备输入数据
         inputs = {self.session.get_inputs()[i].name: batch[name]
                   for i, name in enumerate(['input_ids', 'attention_mask', 'token_type_ids'])
@@ -95,6 +95,7 @@ class RerankAsyncBackend:
 
         return merge_inputs, merge_inputs_idxs
 
+    @get_time_async
     async def get_rerank_async(self, query: str, passages: List[str]):
         tot_batches, merge_inputs_idxs_sort = self.tokenize_preproc(query, passages)
 
@@ -136,7 +137,7 @@ class RerankAsyncBackend:
                     pad_to_multiple_of=None,
                     return_tensors=self.return_tensors
                 )
-                result = await loop.run_in_executor(self.executor, self.inference, input_batch)
+                result = await loop.run_in_executor(self.executor, self.rerank_inference, input_batch)
 
                 start = 0
                 for future, item_count in futures:
