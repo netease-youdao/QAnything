@@ -75,10 +75,23 @@ class SelfParentRetriever(ParentDocumentRetriever):
             es_store: Optional[ElasticsearchStore] = None,
             single_parent: bool = False,
     ) -> Tuple[int, Dict]:
-        insert_logger.info(f"Inserting {len(documents)} complete documents, single_parent: {single_parent}")
+        # insert_logger.info(f"Inserting {len(documents)} complete documents, single_parent: {single_parent}")
         split_start = time.perf_counter()
         if self.parent_splitter is not None and not single_parent:
-            documents = self.parent_splitter.split_documents(documents)
+            # documents = self.parent_splitter.split_documents(documents)
+            split_documents = []
+            need_split_docs = []
+            for doc in documents:
+                if doc.metadata['has_table']:
+                    if need_split_docs:
+                        split_documents.extend(self.parent_splitter.split_documents(need_split_docs))
+                        need_split_docs = []
+                    split_documents.append(doc)
+                else:
+                    need_split_docs.append(doc)
+            if need_split_docs:
+                split_documents.extend(self.parent_splitter.split_documents(need_split_docs))
+            documents = split_documents
         insert_logger.info(f"Inserting {len(documents)} parent documents")
         if ids is None:
             file_id = documents[0].metadata['file_id']
@@ -146,6 +159,7 @@ class SelfParentRetriever(ParentDocumentRetriever):
 class ParentRetriever:
     def __init__(self, vectorstore_client: VectorStoreMilvusClient, mysql_client: KnowledgeBaseManager, es_client: StoreElasticSearchClient):
         self.mysql_client = mysql_client
+        self.vectorstore_client = vectorstore_client
         # This text splitter is used to create the parent documents
         init_parent_splitter = RecursiveCharacterTextSplitter(
             separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
@@ -162,8 +176,8 @@ class ParentRetriever:
         self.retriever = SelfParentRetriever(
             vectorstore=vectorstore_client.local_vectorstore,
             docstore=MysqlStore(mysql_client),
-            child_splitter=init_parent_splitter,
-            parent_splitter=init_child_splitter,
+            child_splitter=init_child_splitter,
+            parent_splitter=init_parent_splitter,
         )
         self.backup_vectorstore: Optional[Milvus] = None
         self.es_store = es_client.es_store
@@ -171,20 +185,26 @@ class ParentRetriever:
 
     @get_time_async
     async def insert_documents(self, docs, parent_chunk_size, single_parent=False):
+        insert_logger.info(f"Inserting {len(docs)} documents, parent_chunk_size: {parent_chunk_size}, single_parent: {single_parent}")
         if parent_chunk_size != self.parent_chunk_size:
             self.parent_chunk_size = parent_chunk_size
-            self.retriever.parent_splitter = RecursiveCharacterTextSplitter(
+            parent_splitter = RecursiveCharacterTextSplitter(
                 separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
                 chunk_size=parent_chunk_size,
                 chunk_overlap=0,
                 length_function=num_tokens_embed)
             child_chunk_size = min(DEFAULT_CHILD_CHUNK_SIZE, int(parent_chunk_size / 2))
-            self.retriever.child_splitter = RecursiveCharacterTextSplitter(
+            child_splitter = RecursiveCharacterTextSplitter(
                 separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
                 chunk_size=child_chunk_size,
                 chunk_overlap=int(child_chunk_size / 4),
                 length_function=num_tokens_embed)
-
+            self.retriever = SelfParentRetriever(
+                vectorstore=self.vectorstore_client.local_vectorstore,
+                docstore=MysqlStore(self.mysql_client),
+                child_splitter=child_splitter,
+                parent_splitter=parent_splitter
+            )
         # insert_logger.info(f'insert documents: {len(docs)}')
         ids = None if not single_parent else [doc.metadata['doc_id'] for doc in docs]
         return await self.retriever.aadd_documents(docs, backup_vectorstore=self.backup_vectorstore,

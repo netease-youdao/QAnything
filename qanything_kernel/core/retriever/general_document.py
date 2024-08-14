@@ -26,6 +26,7 @@ import re
 import newspaper
 import uuid
 import traceback
+import openpyxl
 
 
 def get_ocr_result_sync(image_data):
@@ -111,27 +112,38 @@ class LocalFileForInsert:
             head_line = table_infos['head_line']
             end_line = table_infos['end_line']
             table_head = table_infos['head']
+
+            # 处理表格前的内容
             if head_line != 0:
                 tmp_doc = Document(
                     page_content='\n'.join(title_lst) + '\n' + '\n'.join(table_infos['lines'][:head_line]),
                     metadata=doc.metadata)
                 new_docs.append(tmp_doc)
-            # 将head_line + 2:end_line的表格切分，每PARENT_CHUNK_SIZE的长度切分一个doc
-            tmp_doc = '\n'.join(title_lst) + '\n' + table_head
+
+            # 处理表格内容
+            table_content = '\n'.join(title_lst) + '\n' + table_head
             for line in table_infos['lines'][head_line + 2:end_line + 1]:
-                tmp_doc += '\n' + line
-                if num_tokens_embed(tmp_doc) + num_tokens_embed(line) > self.chunk_size:
-                    tmp_doc = Document(page_content=tmp_doc, metadata=doc.metadata)
+                if num_tokens_embed(table_content + '\n' + line) > self.chunk_size:
+                    # 如果添加新行会超出chunk_size，先保存当前内容
+                    tmp_doc = Document(page_content=table_content, metadata=doc.metadata)
                     new_docs.append(tmp_doc)
-                    tmp_doc = '\n'.join(title_lst) + '\n' + table_head
-            if tmp_doc != '\n'.join(title_lst) + '\n' + table_head:
-                tmp_doc = Document(page_content=tmp_doc, metadata=doc.metadata)
+                    # 重新开始一个新的chunk，包含标题和表头
+                    table_content = '\n'.join(title_lst) + '\n' + table_head + '\n' + line
+                else:
+                    table_content += '\n' + line
+
+            # 保存最后一个chunk
+            if table_content != '\n'.join(title_lst) + '\n' + table_head:
+                tmp_doc = Document(page_content=table_content, metadata=doc.metadata)
                 new_docs.append(tmp_doc)
+
+            # 处理表格后的内容
             if end_line != len(table_infos['lines']) - 1:
                 tmp_doc = Document(
                     page_content='\n'.join(title_lst) + '\n' + '\n'.join(table_infos['lines'][end_line:]),
                     metadata=doc.metadata)
                 new_docs.append(tmp_doc)
+
             insert_logger.info(f"TABLE SLICES: {new_docs[:2]}")
         else:
             return None
@@ -232,6 +244,37 @@ class LocalFileForInsert:
         return None
 
     @staticmethod
+    def excel_to_markdown(file_path, markdown_path):
+        basename = os.path.basename(file_path)
+        markdown_file = os.path.join(markdown_path, basename.split('.')[0] + '.md')
+        # 打开 Excel 文件
+        workbook = openpyxl.load_workbook(file_path)
+
+        with open(markdown_file, 'w', encoding='utf-8') as md_file:
+            # 遍历所有的工作表
+            for sheet_name in workbook.sheetnames:
+                sheet = workbook[sheet_name]
+
+                # 添加 sheet 名称作为标题
+                md_file.write(f"# {sheet_name}\n\n")
+
+                for row_index, row in enumerate(sheet.iter_rows(values_only=True)):
+                    # 将每行转换为 Markdown 表格行
+                    markdown_row = '| ' + ' | '.join(str(cell) if cell is not None else '' for cell in row) + ' |'
+                    md_file.write(markdown_row + '\n')
+
+                    # 在第一行后添加分隔符
+                    if row_index == 0:
+                        separator = '|' + '|'.join(['---' for _ in row]) + '|'
+                        md_file.write(separator + '\n')
+
+                # 在每个表格后添加空行，以便更好地分隔
+                md_file.write('\n\n')
+
+        insert_logger.info(f"转换完成。Markdown 文件已保存为 {markdown_file}")
+        return markdown_file
+
+    @staticmethod
     def load_text(file_path):
         encodings = ['utf-8', 'iso-8859-1', 'windows-1252']
 
@@ -278,8 +321,8 @@ class LocalFileForInsert:
         elif self.file_path.lower().endswith(".pdf"):
             try:
                 loader = PdfLoader(filename=self.file_path, save_dir=os.path.dirname(self.file_path))
-                markdown_dir = loader.load_to_markdown()
-                docs = convert_markdown_to_langchaindoc(markdown_dir)
+                markdown_file = loader.load_to_markdown()
+                docs = convert_markdown_to_langchaindoc(markdown_file)
                 docs = self.markdown_process(docs)
             except Exception as e:
                 insert_logger.warning(
@@ -300,17 +343,23 @@ class LocalFileForInsert:
                 text = docx2txt.process(self.file_path)
                 docs = [Document(page_content=text)]
         elif self.file_path.lower().endswith(".xlsx"):
-            docs = []
-            excel_file = pd.ExcelFile(self.file_path)
-            sheet_names = excel_file.sheet_names
-            for idx, sheet_name in enumerate(sheet_names):
-                xlsx = pd.read_excel(self.file_path, sheet_name=sheet_name, engine='openpyxl')
-                csv_file_path = self.file_path[:-5] + f'_{idx}.csv'
-                xlsx.to_csv(csv_file_path, index=False)
-                insert_logger.info('xlsx2csv: %s', csv_file_path)
-                loader = CSVLoader(csv_file_path, autodetect_encoding=True,
-                                   csv_args={"delimiter": ",", "quotechar": '"'})
-                docs.extend(loader.load())
+            try:
+                markdown_file = self.excel_to_markdown(self.file_path, os.path.dirname(self.file_path))
+                docs = convert_markdown_to_langchaindoc(markdown_file)
+                docs = self.markdown_process(docs)
+            except Exception as e:
+                insert_logger.warning('Error in Powerful Excel parsing, use openpyxl instead.')
+                docs = []
+                excel_file = pd.ExcelFile(self.file_path)
+                sheet_names = excel_file.sheet_names
+                for idx, sheet_name in enumerate(sheet_names):
+                    xlsx = pd.read_excel(self.file_path, sheet_name=sheet_name, engine='openpyxl')
+                    csv_file_path = self.file_path[:-5] + f'_{idx}.csv'
+                    xlsx.to_csv(csv_file_path, index=False)
+                    insert_logger.info('xlsx2csv: %s', csv_file_path)
+                    loader = CSVLoader(csv_file_path, autodetect_encoding=True,
+                                       csv_args={"delimiter": ",", "quotechar": '"'})
+                    docs.extend(loader.load())
         elif self.file_path.lower().endswith(".pptx"):
             loader = UnstructuredPowerPointLoader(self.file_path, strategy="fast")
             docs = loader.load()

@@ -255,7 +255,7 @@ def convert_node_to_document(node_lists):
                                 v[idx + 1]['title'].append(title)
                         v[idx + 1]['title'].append(tail)
                         update_child_titles(v[idx + 1]['child_id_list'], v[idx + 1]['title'])
-    print("node_lists:", node_lists)
+    # print("node_lists:", node_lists)
     doc_lst = []
     for k, v in node_lists.items():
         for idx, item in enumerate(v):
