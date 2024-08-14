@@ -17,7 +17,7 @@
     >
       <div class="file">
         <div class="box">
-          <div class="before-upload-box" :class="showUploadList ? 'uploading' : ''">
+          <div class="before-upload-box">
             <input
               class="hide input"
               type="file"
@@ -36,39 +36,39 @@
                   </span>
                 </p>
               </div>
-              <p v-if="!showUploadList" class="desc">
+              <p class="desc">
                 {{ common.updesc1 }}
               </p>
             </div>
           </div>
-          <div
-            v-show="showUploadList && props.dialogType !== 1"
-            class="upload-box"
-            :class="showUploadList ? 'upload-list' : ''"
-          >
-            <UploadList>
-              <template #default>
-                <ul class="list">
-                  <li v-for="(item, index) in uploadFileList" :key="index">
-                    <span class="name">{{ item.file_name }}</span>
-                    <div class="status-box">
-                      <SvgIcon v-if="item.status != 'loading'" :name="item.status" />
-                      <img
-                        v-else
-                        class="loading"
-                        src="../assets/home/icon-loading.png"
-                        alt="loading"
-                      />
-                      <span class="status">{{
-                        item.status == 'loading' ? item.text : item.errorText
-                      }}</span>
-                    </div>
-                  </li>
-                </ul>
-              </template>
-            </UploadList>
-            <!--            <div class="note">{{ common.errorTip }}</div>-->
-          </div>
+          <!--          <div-->
+          <!--            v-show="showUploadList && props.dialogType !== 1"-->
+          <!--            class="upload-box"-->
+          <!--            :class="showUploadList ? 'upload-list' : ''"-->
+          <!--          >-->
+          <!--            <UploadList>-->
+          <!--              <template #default>-->
+          <!--                <ul class="list">-->
+          <!--                  <li v-for="(item, index) in uploadFileList" :key="index">-->
+          <!--                    <span class="name">{{ item.file_name }}</span>-->
+          <!--                    <div class="status-box">-->
+          <!--                      <SvgIcon v-if="item.status != 'loading'" :name="item.status" />-->
+          <!--                      <img-->
+          <!--                        v-else-->
+          <!--                        class="loading"-->
+          <!--                        src="../assets/home/icon-loading.png"-->
+          <!--                        alt="loading"-->
+          <!--                      />-->
+          <!--                      <span class="status">{{-->
+          <!--                        item.status == 'loading' ? item.text : item.errorText-->
+          <!--                      }}</span>-->
+          <!--                    </div>-->
+          <!--                  </li>-->
+          <!--                </ul>-->
+          <!--              </template>-->
+          <!--            </UploadList>-->
+          <!--            &lt;!&ndash;            <div class="note">{{ common.errorTip }}</div>&ndash;&gt;-->
+          <!--          </div>-->
         </div>
       </div>
       <template #footer>
@@ -101,7 +101,7 @@ import { useKnowledgeModal } from '@/store/useKnowledgeModal';
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
 import { useOptiionList } from '@/store/useOptiionList';
 import SvgIcon from './SvgIcon.vue';
-import UploadList from '@/components/UploadList.vue';
+// import UploadList from '@/components/UploadList.vue';
 import { pageStatus } from '@/utils/enum';
 import { IFileListItem } from '@/utils/types';
 import { message } from 'ant-design-vue';
@@ -147,8 +147,9 @@ const canSubmit = computed(() => {
 watch(
   () => modalVisible.value,
   () => {
+    console.log('curid', currentId.value);
     setKnowledgeName(currentKbName.value);
-    showUploadList.value = !!uploadFileList.value.length;
+    // showUploadList.value = !!uploadFileList.value.length;
     // 如果是快速开始的便捷上传，将quick的引用给uploadFileList，因为便捷上传和知识库上传用两个data
     if (props.dialogType === 1) {
       uploadFileList.value = uploadFileListQuick.value;
@@ -160,7 +161,7 @@ watch(
 );
 
 //是否显示上传文件列表 默认不显示
-const showUploadList = ref(false);
+// const showUploadList = ref(false);
 
 //允许上传的文件格式
 const acceptList = [
@@ -245,11 +246,9 @@ const fileChange = e => {
 };
 
 const uplolad = async () => {
-  if (props.dialogType === 0) {
-    showUploadList.value = true;
-  } else if (props.dialogType === 1) {
-    handleCancel();
-  }
+  // if (props.dialogType === 1) {
+  handleCancel();
+  // }
   const list = [];
   uploadFileList.value.forEach((file: IFileListItem) => {
     if (file.status == 'loading') {

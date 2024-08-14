@@ -8,7 +8,12 @@
       :src="sourceUrl"
       :preview-mask="false"
     />
-    <div v-if="sourceType === 'txt'" class="txt" style="white-space: pre-wrap">
+    <!--    <CsvView v-if="sourceType === 'csv' && sourceUrl" :source-url="sourceUrl" />-->
+    <div
+      v-if="sourceType === 'txt' || sourceType === 'csv' || sourceType === 'eml'"
+      class="txt"
+      style="white-space: pre-wrap"
+    >
       {{ textContent }}
     </div>
     <HighLightMarkDown v-if="sourceType === 'md'" class="txt" :content="textContent" />
