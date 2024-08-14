@@ -38,9 +38,11 @@
         <span :class="[language === 'en' ? 'active' : '']" @click="changLanguage('en')">En</span>
       </li>
       <li>
-        <a-popover placement="bottomRight" overlay-class-name="cooperate">
+        <a-popover placement="bottomRight">
           <template #content>
-            <p>Aldoud_Business@corp.youdao.com</p>
+            <p>010-82558901（商务）</p>
+            <p>qanything@rd.netease.com（技术）</p>
+            <p>Aldoud_Business@corp.youdao.com（商务）</p>
           </template>
           <template #title>
             <span>{{ header.cooperationMore }}</span>
@@ -52,9 +54,9 @@
         </a-popover>
       </li>
     </ul>
-    <!--    <div class="user">-->
-    <!--      <img src="../assets/home/avatar.png" alt="头像" />-->
-    <!--    </div>-->
+    <div class="user">
+      <img src="../assets/home/avatar.png" alt="头像" />
+    </div>
   </div>
 </template>
 <script lang="ts" setup>
