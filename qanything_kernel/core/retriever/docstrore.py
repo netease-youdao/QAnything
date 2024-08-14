@@ -37,7 +37,10 @@ class MysqlStore(InMemoryStore):
         doc_ids = [doc_id for doc_id, _ in key_value_pairs]
         insert_logger.info(f"add documents: {len(doc_ids)}")
         for doc_id, doc in tqdm(key_value_pairs):
-            self.mysql_client.add_document(doc_id, doc.to_json())
+            doc_json = doc.to_json()
+            if doc_json['kwargs'].get('metadata') is None:
+                doc_json['kwargs']['metadata'] = doc.metadata
+            self.mysql_client.add_document(doc_id, doc_json)
 
     def mget(self, keys: Sequence[str]) -> List[Optional[V]]:
         """Get the values associated with the given keys.
