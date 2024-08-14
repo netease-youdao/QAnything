@@ -1,6 +1,8 @@
-from qanything_kernel.utils.general_utils import get_time, get_table_infos, num_tokens_embed, get_all_subpages, html_to_markdown
+from qanything_kernel.utils.general_utils import get_time, get_table_infos, num_tokens_embed, get_all_subpages, \
+    html_to_markdown
 from typing import List, Optional
-from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, LOCAL_OCR_SERVICE_URL, DEFAULT_PARENT_CHUNK_SIZE, DEFAULT_CHILD_CHUNK_SIZE
+from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, LOCAL_OCR_SERVICE_URL, DEFAULT_PARENT_CHUNK_SIZE, \
+    DEFAULT_CHILD_CHUNK_SIZE
 from langchain.docstore.document import Document
 from qanything_kernel.utils.loader.my_recursive_url_loader import MyRecursiveUrlLoader
 from qanything_kernel.utils.custom_log import insert_logger
@@ -418,7 +420,8 @@ class LocalFileForInsert:
                 merged_docs.append(doc)
             else:
                 last_doc = merged_docs[-1]
-                if num_tokens_embed(last_doc.page_content) + num_tokens_embed(doc.page_content) <= child_chunk_size:
+                if num_tokens_embed(last_doc.page_content) + num_tokens_embed(doc.page_content) <= child_chunk_size or \
+                        num_tokens_embed(doc.page_content) < child_chunk_size / 4:
                     tmp_content = doc.page_content
                     print(last_doc.metadata['title_lst'], tmp_content)
                     for title in last_doc.metadata['title_lst']:
