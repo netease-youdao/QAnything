@@ -148,6 +148,7 @@ export const useQuickStart = defineStore(
     watch(
       () => kbId.value,
       () => {
+        console.log('kbIdbianle', kbId.value);
         currentId.value = kbId.value;
       }
     );

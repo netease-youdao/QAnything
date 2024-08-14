@@ -267,19 +267,7 @@ watch(
 );
 
 // 检查信息来源的文件是否支持窗口化渲染
-let supportSourceTypes = [
-  'pdf',
-  'docx',
-  'xlsx',
-  'txt',
-  'md',
-  'jpg',
-  'png',
-  'jpeg',
-  'csv',
-  'eml',
-  'pptx',
-];
+let supportSourceTypes = ['pdf', 'docx', 'xlsx', 'txt', 'md', 'jpg', 'png', 'jpeg', 'csv', 'eml'];
 const checkFileType = filename => {
   if (!filename) {
     return false;

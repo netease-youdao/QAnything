@@ -710,7 +710,7 @@ const checkChatSetting = () => {
 };
 
 // 检查信息来源的文件是否支持窗口化渲染
-let supportSourceTypes = ['pdf', 'docx', 'xlsx', 'txt', 'md', 'jpg', 'png', 'jpeg'];
+let supportSourceTypes = ['pdf', 'docx', 'xlsx', 'txt', 'md', 'jpg', 'png', 'jpeg', 'csv', 'eml'];
 const checkFileType = filename => {
   if (!filename) {
     return false;
@@ -739,7 +739,7 @@ async function queryFile(file) {
     const b64Type = getB64Type(suffix);
     setSourceType(suffix);
     setSourceUrl(`data:${b64Type};base64,${res.file_base64}`);
-    if (suffix === 'txt') {
+    if (suffix === 'txt' || suffix === 'md' || suffix === 'csv' || suffix === 'eml') {
       const decodedTxt = atob(res.file_base64);
       const correctStr = decodeURIComponent(escape(decodedTxt));
       setTextContent(correctStr);
@@ -761,6 +761,9 @@ let b64Types = [
   'image/jpeg',
   'image/png',
   'image/jpeg',
+  'text/csv',
+  'message/rfc822',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
 ];
 
 function getB64Type(suffix) {
@@ -796,8 +799,15 @@ $avatar-width: 96px;
   overflow: hidden;
 }
 
+@media (min-width: 768px) {
+  .chat {
+    max-width: 816px; /* 在屏幕宽度大于 768px 时，设置最大宽度 */
+  }
+}
+
 .chat {
   margin: 0 auto;
+  width: 100%;
   max-width: 816px;
   //min-width: 500px;
   padding: 28px 0 0 0;
