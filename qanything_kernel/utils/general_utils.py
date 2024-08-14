@@ -22,11 +22,19 @@ from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import html2text
+import os
+import csv
+import docx2txt
+import fitz  # PyMuPDF
+import openpyxl
+from pptx import Presentation
+import email
+import chardet
 
 __all__ = ['isURL', 'get_time', 'get_time_async', 'format_source_documents', 'safe_get', 'truncate_filename',
            'shorten_data', 'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens',
            'clear_string', 'simplify_filename', 'string_bytes_length', 'correct_kb_id', 'clear_kb_id',
-           'clear_string_is_equal', 'export_qalogs_to_excel', 'deduplicate_documents',
+           'clear_string_is_equal', 'export_qalogs_to_excel', 'deduplicate_documents', 'fast_estimate_file_char_count',
            'check_user_id_and_user_info', 'get_table_infos', 'format_time_record', 'get_time_range',
            'html_to_markdown', "num_tokens_embed", "num_tokens_rerank", "get_all_subpages"]
 
@@ -473,3 +481,56 @@ def html_to_markdown(html_content):
     # markdown = re.sub(r'^(?!\|)\s*[-*]\s+', '', markdown, flags=re.MULTILINE)
 
     return markdown.strip()
+
+
+def fast_estimate_file_char_count(file_path):
+    """
+    快速估算文件的字符数，如果超过max_chars则返回False，否则返回True
+    """
+    file_extension = os.path.splitext(file_path)[1].lower()
+
+    try:
+        if file_extension in ['.md', '.txt', '.csv']:
+            with open(file_path, 'rb') as file:
+                raw = file.read(1024)
+                encoding = chardet.detect(raw)['encoding']
+            with open(file_path, 'r', encoding=encoding) as file:
+                char_count = sum(len(line) for line in file)
+
+        elif file_extension == '.pdf':
+            doc = fitz.open(file_path)
+            char_count = sum(len(page.get_text()) for page in doc)
+            doc.close()
+
+        elif file_extension in ['.jpg', '.png', '.jpeg']:
+            # 图片文件无法准确估算字符数，返回True让后续OCR处理
+            return True
+
+        elif file_extension == '.docx':
+            text = docx2txt.process(file_path)
+            char_count = len(text)
+
+        elif file_extension == '.xlsx':
+            wb = openpyxl.load_workbook(file_path, read_only=True)
+            char_count = sum(len(str(cell.value or '')) for sheet in wb for row in sheet.iter_rows() for cell in row)
+            wb.close()
+
+        elif file_extension == '.pptx':
+            prs = Presentation(file_path)
+            char_count = sum(
+                len(shape.text) for slide in prs.slides for shape in slide.shapes if hasattr(shape, 'text'))
+
+        elif file_extension == '.eml':
+            with open(file_path, 'r', encoding='utf-8') as file:
+                msg = email.message_from_file(file)
+                char_count = len(str(msg))
+
+        else:
+            # 不支持的文件类型
+            return False
+
+        return char_count
+
+    except Exception as e:
+        print(f"Error processing file {file_path}: {str(e)}")
+        return None

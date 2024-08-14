@@ -130,6 +130,7 @@ TOKENIZER_PATH = os.path.join(root_path, 'qanything_kernel/connector/llm/tokeniz
 
 DEFAULT_CHILD_CHUNK_SIZE = 400
 DEFAULT_PARENT_CHUNK_SIZE = 800
+MAX_CHARS = 1000000  # 单个文件最大字符数，超过此字符数将上传失败，改大可能会导致解析超时
 
 # llm_config = {
 #     # 回答的最大token数，一般来说对于国内模型一个中文不到1个token，国外模型一个中文1.5-2个token

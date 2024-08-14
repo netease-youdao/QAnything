@@ -1,7 +1,8 @@
 from qanything_kernel.core.local_file import LocalFile
 from qanything_kernel.core.local_doc_qa import LocalDocQA
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger
-from qanything_kernel.configs.model_config import BOT_DESC, BOT_IMAGE, BOT_PROMPT, BOT_WELCOME, DEFAULT_PARENT_CHUNK_SIZE
+from qanything_kernel.configs.model_config import (BOT_DESC, BOT_IMAGE, BOT_PROMPT, BOT_WELCOME,
+                                                   DEFAULT_PARENT_CHUNK_SIZE, MAX_CHARS)
 from qanything_kernel.utils.general_utils import *
 from langchain.schema import Document
 from sanic.response import ResponseStream
@@ -236,10 +237,17 @@ async def upload_files(req: request):
     now = datetime.now()
     timestamp = now.strftime("%Y%m%d%H%M")
 
+    failed_files = []
     for file, file_name in zip(files, file_names):
         if file_name in exist_file_names:
             continue
         local_file = LocalFile(user_id, kb_id, file, file_name)
+        chars = fast_estimate_file_char_count(local_file.file_location)
+        if chars > MAX_CHARS:
+            debug_logger.warning(f"fail, file {file_name} chars is {chars}, max length is {MAX_CHARS}.")
+            # return sanic_json({"code": 2003, "msg": f"fail, file {file_name} chars is too much, max length is {MAX_CHARS}."})
+            failed_files.append(file_name)
+            continue
         file_id = local_file.file_id
         file_size = len(local_file.file_content)
         file_location = local_file.file_location
@@ -249,11 +257,13 @@ async def upload_files(req: request):
         debug_logger.info(f"{file_name}, {file_id}, {msg}")
         data.append(
             {"file_id": file_id, "file_name": file_name, "status": "gray", "bytes": len(local_file.file_content),
-             "timestamp": timestamp})
+             "timestamp": timestamp, "estimated_chars": chars})
 
     # asyncio.create_task(local_doc_qa.insert_files_to_milvus(user_id, kb_id, local_files))
     if exist_file_names:
         msg = f'warning，当前的mode是soft，无法上传同名文件{exist_file_names}，如果想强制上传同名文件，请设置mode：strong'
+    elif failed_files:
+        msg = f"warning, {failed_files} chars is too much, max characters length is {MAX_CHARS}, skip upload."
     else:
         msg = "success，后台正在飞速上传文件，请耐心等待"
     return sanic_json({"code": 200, "msg": msg, "data": data})
