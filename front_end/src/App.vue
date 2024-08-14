@@ -38,7 +38,7 @@ export default {
 .page-app {
   background: #fff;
   height: 100vh;
-  min-width: 1200px;
+  //min-width: 1200px;
   overflow-y: hidden;
   overflow-x: auto;
 }

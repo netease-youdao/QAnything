@@ -157,13 +157,22 @@ const quickClickHandle = async (type: 0 | 1, cardData?: IHistoryList) => {
     QA_List.value = [];
     kbId.value = cardData.kbId;
     currentKbName.value = cardData.title;
-    const chat = getChatById(chatId.value);
-    chat.list.forEach(item => {
-      if (item.type === 'user') {
-        addQuestion(item.question, item.fileDataList);
-      } else if (item.type === 'ai') {
-        addAnswer(item.question, item.itemInfo, item.answer, item.picList, item.qaId, item.source);
-      }
+    nextTick(() => {
+      const chat = getChatById(chatId.value);
+      chat.list.forEach(item => {
+        if (item.type === 'user') {
+          addQuestion(item.question, item.fileDataList);
+        } else if (item.type === 'ai') {
+          addAnswer(
+            item.question,
+            item.itemInfo,
+            item.answer,
+            item.picList,
+            item.qaId,
+            item.source
+          );
+        }
+      });
     });
   }
 };

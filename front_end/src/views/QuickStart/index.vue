@@ -173,20 +173,13 @@
             />
           </div>
           <div class="send-box">
-            <div class="scroll-btn-div">
-              <a-button type="primary" shape="circle" size="large" @click="scrollBottom">
-                <template #icon>
-                  <SvgIcon name="scroll" />
-                </template>
-              </a-button>
-            </div>
             <a-textarea
               v-model:value="question"
               class="send-textarea"
               max-length="200"
               :bordered="false"
               :placeholder="common.problemPlaceholder"
-              :auto-size="{ minRows: 4, maxRows: 8 }"
+              :auto-size="{ minRows: 1, maxRows: 8 }"
               @keydown="textKeydownHandle"
             />
             <div class="send-action">
@@ -223,6 +216,14 @@
           </div>
         </div>
       </div>
+    </div>
+    <div class="scroll-btn-div">
+      <img
+        class="avatar"
+        src="@/assets/home/scroll-down.png"
+        alt="滑到底部"
+        @click="scrollBottom"
+      />
     </div>
   </div>
   <ChatSettingDialog ref="chatSettingForDialogRef" />
@@ -416,7 +417,7 @@ const addQuestion = q => {
   QA_List.value.push({
     question: q,
     type: 'user',
-    fileDataList: [...fileBlockArr.value],
+    fileDataList: [...fileBlockArr.value.filter(item => item.status !== 'red')],
   });
   scrollBottom();
 };
@@ -774,7 +775,10 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss" scoped>
+$avatar-width: 96px;
+
 .container {
+  position: relative;
   width: 100%;
   height: calc(100vh - 64px);
   background-color: #26293b;
@@ -784,6 +788,7 @@ onBeforeUnmount(() => {
   position: relative;
   height: 100%;
   margin: 0 auto;
+  padding: 28px 28px 0 28px;
   border-radius: 12px 0 0 0;
   display: flex;
   flex-direction: column;
@@ -793,14 +798,16 @@ onBeforeUnmount(() => {
 
 .chat {
   margin: 0 auto;
-  width: 35%;
-  min-width: 500px;
+  max-width: 816px;
+  //min-width: 500px;
   padding: 28px 0 0 0;
   flex: 1;
   overflow-y: auto;
 
   #chat-ul {
-    padding-bottom: 20px;
+    //padding-bottom: 20px;
+    display: flex;
+    flex-direction: column;
     background: #f3f6fd;
     overflow: hidden;
   }
@@ -1037,11 +1044,12 @@ onBeforeUnmount(() => {
 
 .question-box {
   width: 100%;
-  margin-bottom: 30px;
+  margin: 32px 0;
 
   .question {
-    width: 40%;
-    min-width: 550px;
+    //width: 40%;
+    max-width: calc(816px - $avatar-width);
+    //min-width: 550px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
@@ -1080,18 +1088,6 @@ onBeforeUnmount(() => {
       background-color: #fff;
       border: 1px solid #d9d9d9;
       border-radius: 18px;
-
-      .scroll-btn-div {
-        position: absolute;
-        top: -40px;
-        right: -40px;
-
-        svg {
-          width: 20px;
-          height: 20px;
-          margin-top: 5px;
-        }
-      }
 
       &:hover {
         border-color: $baseColor;
@@ -1158,8 +1154,9 @@ onBeforeUnmount(() => {
 
       :deep(.ant-btn-primary) {
         width: 36px;
-        height: 36px;
-        padding: 8px;
+        height: 26px;
+        padding: 8px 10px 8px 8px;
+        border-radius: 18px;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -1167,7 +1164,7 @@ onBeforeUnmount(() => {
       }
 
       :deep(.ant-btn-primary:disabled) {
-        height: 36px;
+        //height: 36px;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -1181,6 +1178,18 @@ onBeforeUnmount(() => {
         height: 24px;
       }
     }
+  }
+}
+
+.scroll-btn-div {
+  position: absolute;
+  bottom: 120px;
+  right: 32px;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    margin-top: 5px;
   }
 }
 

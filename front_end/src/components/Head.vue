@@ -24,7 +24,7 @@
       >
         <!--        <div :class="['item-icon', item.value === 0 ? 'knowledge-icon' : 'bot-icon']"></div>-->
         <div :class="['item-icon', getIcon(item.value)]"></div>
-        {{ item.name }}
+        <span>{{ item.name }}</span>
       </div>
     </div>
     <ul>
@@ -46,16 +46,15 @@
             <span>{{ header.cooperationMore }}</span>
           </template>
           <div class="myspan">
-            <img src="../assets/home/icon-email.png" alt="合作咨询" /><span>{{
-              header.cooperation
-            }}</span>
+            <img src="../assets/home/icon-email.png" alt="合作咨询" />
+            <span>{{ header.cooperation }}</span>
           </div>
         </a-popover>
       </li>
     </ul>
-    <div class="user">
-      <img src="../assets/home/avatar.png" alt="头像" />
-    </div>
+    <!--    <div class="user">-->
+    <!--      <img src="../assets/home/avatar.png" alt="头像" />-->
+    <!--    </div>-->
   </div>
 </template>
 <script lang="ts" setup>
@@ -125,7 +124,7 @@ const getIcon = itemValue => {
 <style lang="scss" scoped>
 .header {
   width: 100vw;
-  min-width: 1200px;
+  //min-width: 1200px;
   height: 64px;
   display: flex;
   align-items: center;
@@ -137,16 +136,21 @@ const getIcon = itemValue => {
     margin-left: 58px;
     display: flex;
     flex: 1;
-    //justify-content: space-between;
+    align-items: center;
+
     .nav-item {
-      //width: 80px;
-      height: 50px;
+      //width: 100px;
+      height: 20px;
       margin-right: 40px;
-      color: #999999;
-      font-size: 18px;
       display: flex;
       align-items: center;
+      font-size: 1rem;
       cursor: pointer;
+      color: #999999;
+
+      span {
+        white-space: nowrap;
+      }
 
       img {
         width: 20px;
@@ -193,7 +197,7 @@ const getIcon = itemValue => {
   }
 
   .logo {
-    width: 280px;
+    min-width: 280px;
     height: 64px;
     cursor: pointer;
     display: flex;
@@ -249,6 +253,10 @@ const getIcon = itemValue => {
     .myspan {
       display: flex !important;
       align-items: center;
+
+      span {
+        white-space: nowrap;
+      }
     }
   }
 
