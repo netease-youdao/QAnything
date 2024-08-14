@@ -55,6 +55,7 @@ def format_source_documents(ori_source_documents):
                        'doc_id': doc.metadata.get('doc_id', ''),
                        'retrieval_source': doc.metadata.get('retrieval_source', ''),
                        'headers': doc.metadata.get('headers', {}),
+                       'page_id': doc.metadata.get('page_id', 0),
                        }
         source_documents.append(source_info)
     return source_documents

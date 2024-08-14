@@ -461,7 +461,7 @@ class LocalDocQA:
         prompt = self.generate_prompt(query=query,
                                       source_docs=source_documents,
                                       prompt_template=prompt_template)
-        debug_logger.info(f"prompt: {prompt}")
+        # debug_logger.info(f"prompt: {prompt}")
         est_prompt_tokens = num_tokens(prompt) + num_tokens(str(chat_history))
         async for answer_result in custom_llm.generatorAnswer(prompt=prompt, history=chat_history, streaming=streaming):
             resp = answer_result.llm_output["answer"]
@@ -503,22 +503,27 @@ class LocalDocQA:
             doc = Document(page_content=doc_json['kwargs']['page_content'], metadata=doc_json['kwargs']['metadata'])
             # rerank之后删除headers，只保留文本内容，用于后续处理
             doc.page_content = re.sub(r'^\[headers]\(.*?\)\n', '', doc.page_content)
-            if 'title_lst' in doc.metadata:
-                title_lst = doc.metadata['title_lst']
-                title_lst = [t for t in title_lst if t.replace('#', '') != '']
-                first_appearance_titles = []
-                for title in title_lst:
-                    if title in existing_titles:
-                        continue
-                    first_appearance_titles.append(title)
-                existing_titles += first_appearance_titles
-                # 删除所有仅有多个#的title
-                if doc.page_content == "":  # page_content为空时把first_appearance_titles当做正文
-                    cleaned_list = [re.sub(r'^#+\s*', '', item) for item in first_appearance_titles]
-                    doc.page_content = '\n'.join(cleaned_list)
-                else:
-                    doc.page_content = '\n'.join(first_appearance_titles) + '\n' + doc.page_content
-            completed_content += doc.page_content + '\n'
+            # if 'title_lst' in doc.metadata:
+            #     title_lst = doc.metadata['title_lst']
+            #     title_lst = [t for t in title_lst if t.replace('#', '') != '']
+            #     for title in title_lst:
+            #         if title in existing_titles:
+            #             continue
+            #         existing_titles.append(title)
+            #     # doc.page_content = '\n\n'.join(doc.page_content.split('\n\n')[len(title_lst):])  # TODO 删除方式不对，因为有merge short之后title也会合并
+            #     first_appearance_titles = []
+            #     for title in title_lst:
+            #         if title in existing_titles:
+            #             continue
+            #         first_appearance_titles.append(title)
+            #     existing_titles += first_appearance_titles
+            #     # 删除所有仅有多个#的title
+            #     if doc.page_content == "":  # page_content为空时把first_appearance_titles当做正文
+            #         cleaned_list = [re.sub(r'^#+\s*', '', item) for item in first_appearance_titles]
+            #         doc.page_content = '\n'.join(cleaned_list)
+            #     else:
+            #         doc.page_content = '\n'.join(first_appearance_titles) + '\n' + doc.page_content
+            completed_content += doc.page_content + '\n\n'
         completed_doc = Document(page_content=completed_content, metadata=sorted_json_datas[0]['kwargs']['metadata'])
         return completed_doc
 

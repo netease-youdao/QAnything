@@ -123,6 +123,7 @@ class SelfParentRetriever(ParentDocumentRetriever):
             del doc.metadata['file_name']
             del doc.metadata['nos_key']
             del doc.metadata['faq_dict']
+            del doc.metadata['page_id']
 
         res = await self.vectorstore.aadd_documents(embed_docs, time_record=time_record)
         insert_logger.info(f'vectorstore insert number: {len(res)}, {res[0]}')

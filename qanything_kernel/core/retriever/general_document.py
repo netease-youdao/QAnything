@@ -345,6 +345,7 @@ class LocalFileForInsert:
             new_doc.metadata["title_lst"] = doc.metadata.get("title_lst", [])
             new_doc.metadata["has_table"] = doc.metadata.get("has_table", False)
             new_doc.metadata["images_number"] = doc.metadata.get("images_number", 0)
+            new_doc.metadata["page_id"] = doc.metadata.get("page_id", 0)
             kb_name = self.mysql_client.get_knowledge_base_name([self.kb_id])[0][2]
             metadata_infos = {"知识库名": kb_name, '文件名': self.file_name}
             new_doc.metadata['headers'] = metadata_infos
