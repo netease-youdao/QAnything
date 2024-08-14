@@ -1,9 +1,9 @@
 /*
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2024-01-09 15:28:56
- * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2024-01-11 10:45:35
- * @FilePath: /QAnything/front_end/src/store/useKnowledgeBase.ts
+ * @LastEditors: Ianarua 306781523@qq.com
+ * @LastEditTime: 2024-08-02 16:02:06
+ * @FilePath: front_end/src/store/useKnowledgeBase.ts
  * @Description:
  */
 
@@ -17,78 +17,101 @@ import { getLanguage } from '@/language/index';
 
 const common = getLanguage().common;
 
-export const useKnowledgeBase = defineStore('knowledgeBase', () => {
-  // 当前操作的知识库id
-  const currentId = ref('');
-  const setCurrentId = (id: string) => {
-    currentId.value = id;
-  };
+export const useKnowledgeBase = defineStore(
+  'knowledgeBase',
+  () => {
+    // 当前操作的知识库id
+    const currentId = ref('');
+    const setCurrentId = (id: string) => {
+      currentId.value = id;
+    };
 
-  //选中的知识库id
-  const selectList = ref([]);
-  const setSelectList = list => {
-    selectList.value = list;
-  };
-
-  // 当前操作的知识库名字
-  const currentKbName = ref('');
-  const setCurrentKbName = (id: string) => {
-    currentKbName.value = id;
-  };
-
-  //获取到的知识库列表
-  const knowledgeBaseList = ref<Array<IKnowledgeItem>>([]);
-  const setKnowledgeBaseList = list => {
-    knowledgeBaseList.value = list;
-  };
-
-  //需要判断是否有知识库 如果没有知识库 展示default内容
-  const showDefault = ref(pageStatus.initing);
-  const setDefault = str => {
-    showDefault.value = str;
-  };
-
-  //是否展示删除弹窗
-  const showDeleteModal = ref(false);
-  const setShowDeleteModal = (flag: boolean) => {
-    showDeleteModal.value = flag;
-  };
-
-  //获取知识库列表
-  const getList = async () => {
-    try {
-      const res: any = await urlResquest.kbList();
-      if (+res.code === 200) {
-        if (res?.data?.length > 0) {
-          const list = res.data.filter(item => !/.*_FAQ$/.test(item.kb_name));
-          setKnowledgeBaseList(list);
-          setDefault(pageStatus.normal);
-
-          if (!selectList.value.length) {
-            selectList.value.push(list[0].kb_id);
-          }
-        } else {
-          setDefault(pageStatus.default);
-        }
+    watch(
+      () => currentId.value,
+      () => {
+        console.log('current', currentId.value);
       }
-    } catch (e) {
-      message.error(e.msg || common.error);
-    }
-  };
+    );
 
-  return {
-    currentId,
-    setCurrentId,
-    knowledgeBaseList,
-    setKnowledgeBaseList,
-    showDeleteModal,
-    setShowDeleteModal,
-    showDefault,
-    setDefault,
-    getList,
-    currentKbName,
-    setCurrentKbName,
-    selectList,
-    setSelectList,
-  };
-});
+    // 新建的知识库暂存
+    const newKbId = ref('');
+    const setNewKbId = (id: string) => {
+      newKbId.value = id;
+    };
+
+    //选中的知识库id
+    const selectList = ref<string[]>([]);
+    const setSelectList = list => {
+      selectList.value = list;
+    };
+
+    // 当前操作的知识库名字
+    const currentKbName = ref('');
+    const setCurrentKbName = (id: string) => {
+      currentKbName.value = id;
+    };
+
+    //获取到的知识库列表
+    const knowledgeBaseList = ref<Array<IKnowledgeItem>>([]);
+    const setKnowledgeBaseList = list => {
+      knowledgeBaseList.value = list;
+    };
+
+    //需要判断是否有知识库 如果没有知识库 展示default内容
+    const showDefault = ref(pageStatus.initing);
+    const setDefault = str => {
+      showDefault.value = str;
+    };
+
+    //是否展示删除弹窗
+    const showDeleteModal = ref(false);
+    const setShowDeleteModal = (flag: boolean) => {
+      showDeleteModal.value = flag;
+    };
+
+    //获取知识库列表
+    const getList = async () => {
+      try {
+        const res: any = await urlResquest.kbList();
+        if (+res.code === 200) {
+          if (res?.data?.length > 0) {
+            const list = res.data.filter(item => !/.*_FAQ$/.test(item.kb_name));
+            setKnowledgeBaseList(list);
+            setDefault(pageStatus.normal);
+
+            if (!selectList.value.length) {
+              selectList.value.push(list[0]?.kb_id);
+            }
+          } else {
+            setDefault(pageStatus.default);
+          }
+        }
+      } catch (e) {
+        message.error(e.msg || common.error);
+      }
+    };
+
+    return {
+      currentId,
+      newKbId,
+      setNewKbId,
+      setCurrentId,
+      knowledgeBaseList,
+      setKnowledgeBaseList,
+      showDeleteModal,
+      setShowDeleteModal,
+      showDefault,
+      setDefault,
+      getList,
+      currentKbName,
+      setCurrentKbName,
+      selectList,
+      setSelectList,
+    };
+  },
+  {
+    persist: {
+      storage: localStorage,
+    },
+  }
+);

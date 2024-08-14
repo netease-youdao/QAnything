@@ -1,9 +1,9 @@
 <!--
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-07 19:32:26
- * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2024-01-08 15:09:48
- * @FilePath: /qanything-open-source/src/components/FileUploadDialog.vue
+ * @LastEditors: Ianarua 306781523@qq.com
+ * @LastEditTime: 2024-08-05 17:48:27
+ * @FilePath: front_end/src/components/FileUploadDialog.vue
  * @Description:
 -->
 <template>
@@ -14,11 +14,10 @@
       centered
       width="480px"
       wrap-class-name="upload-file-modal"
-      @ok="handleOk"
     >
       <div class="file">
         <div class="box">
-          <div class="before-upload-box" :class="showUploadList ? 'uploading' : ''">
+          <div class="before-upload-box">
             <input
               class="hide input"
               type="file"
@@ -30,54 +29,51 @@
             <div class="before-upload">
               <div class="upload-text-box">
                 <SvgIcon name="upload" />
-                <p v-if="language === 'zh'">
-                  <span class="upload-text"
-                    >{{ common.dragUrl }}<span class="blue">{{ common.click }}</span></span
-                  >
-                </p>
-                <p v-else>
-                  <span class="upload-text"
-                    ><span class="blue">{{ common.click }}&nbsp;</span>{{ common.dragUrl }}</span
-                  >
+                <p>
+                  <span class="upload-text">
+                    {{ common.dragUrl }}
+                    <span class="blue">{{ common.click }}</span>
+                  </span>
                 </p>
               </div>
-              <p v-if="!showUploadList" class="desc">
+              <p class="desc">
                 {{ common.updesc1 }}
               </p>
             </div>
           </div>
-          <div
-            v-show="showUploadList"
-            class="upload-box"
-            :class="showUploadList ? 'upload-list' : ''"
-          >
-            <UploadList>
-              <template #default>
-                <ul class="list">
-                  <li v-for="(item, index) in uploadFileList" :key="index">
-                    <span class="name">{{ item.file_name }}</span>
-                    <div class="status-box">
-                      <SvgIcon v-if="item.status != 'loading'" :name="item.status" />
-                      <img
-                        v-else
-                        class="loading"
-                        src="../assets/home/icon-loading.png"
-                        alt="loading"
-                      />
-                      <span class="status">{{
-                        item.status == 'loading' ? item.text : item.errorText
-                      }}</span>
-                    </div>
-                  </li>
-                </ul>
-              </template>
-            </UploadList>
-            <div class="note">{{ common.errorTip }}</div>
-          </div>
+          <!--          <div-->
+          <!--            v-show="showUploadList && props.dialogType !== 1"-->
+          <!--            class="upload-box"-->
+          <!--            :class="showUploadList ? 'upload-list' : ''"-->
+          <!--          >-->
+          <!--            <UploadList>-->
+          <!--              <template #default>-->
+          <!--                <ul class="list">-->
+          <!--                  <li v-for="(item, index) in uploadFileList" :key="index">-->
+          <!--                    <span class="name">{{ item.file_name }}</span>-->
+          <!--                    <div class="status-box">-->
+          <!--                      <SvgIcon v-if="item.status != 'loading'" :name="item.status" />-->
+          <!--                      <img-->
+          <!--                        v-else-->
+          <!--                        class="loading"-->
+          <!--                        src="../assets/home/icon-loading.png"-->
+          <!--                        alt="loading"-->
+          <!--                      />-->
+          <!--                      <span class="status">{{-->
+          <!--                        item.status == 'loading' ? item.text : item.errorText-->
+          <!--                      }}</span>-->
+          <!--                    </div>-->
+          <!--                  </li>-->
+          <!--                </ul>-->
+          <!--              </template>-->
+          <!--            </UploadList>-->
+          <!--            &lt;!&ndash;            <div class="note">{{ common.errorTip }}</div>&ndash;&gt;-->
+          <!--          </div>-->
         </div>
       </div>
       <template #footer>
         <a-button
+          v-if="props.dialogType === 0"
           key="submit"
           type="primary"
           class="upload-btn"
@@ -85,6 +81,15 @@
           @click="handleOk"
         >
           {{ common.confirm }}
+        </a-button>
+        <a-button
+          v-if="props.dialogType === 1"
+          key="submit"
+          type="primary"
+          class="upload-btn"
+          @click="handleCancel"
+        >
+          {{ common.cancel }}
         </a-button>
       </template>
     </a-modal>
@@ -96,25 +101,39 @@ import { useKnowledgeModal } from '@/store/useKnowledgeModal';
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
 import { useOptiionList } from '@/store/useOptiionList';
 import SvgIcon from './SvgIcon.vue';
-import UploadList from '@/components/UploadList.vue';
+// import UploadList from '@/components/UploadList.vue';
 import { pageStatus } from '@/utils/enum';
 import { IFileListItem } from '@/utils/types';
 import { message } from 'ant-design-vue';
 import { userId } from '@/services/urlConfig';
 import { getLanguage } from '@/language/index';
-import { useLanguage } from '@/store/useLanguage';
+import { useUploadFiles } from '@/store/useUploadFiles';
+import { useChatSetting } from '@/store/useChatSetting';
+// import { useLanguage } from '@/store/useLanguage';
 
-const { language } = storeToRefs(useLanguage());
+// const { language } = storeToRefs(useLanguage());
 const common = getLanguage().common;
 const { setKnowledgeName, setModalVisible } = useKnowledgeModal();
 const { setDefault } = useKnowledgeBase();
 const { getDetails } = useOptiionList();
 const { modalVisible, modalTitle } = storeToRefs(useKnowledgeModal());
 const { currentId, currentKbName } = storeToRefs(useKnowledgeBase());
+const { uploadFileList, uploadFileListQuick } = storeToRefs(useUploadFiles()); // 上传的文件列表
+const { initUploadFileList } = useUploadFiles();
+const { chatSettingFormActive } = storeToRefs(useChatSetting());
+
+const props = defineProps({
+  // 0为知识库上传，1为快速开始上传
+  dialogType: {
+    type: Number,
+    require: false,
+    default: 0,
+  },
+});
 
 const timer = ref();
 
-const uploadFileList = ref([]); // 本次上传文件列表
+// const uploadFileList = ref([]); // 本次上传文件列表
 
 //控制确认按钮 是否能提交
 const canSubmit = computed(() => {
@@ -128,20 +147,21 @@ const canSubmit = computed(() => {
 watch(
   () => modalVisible.value,
   () => {
+    console.log('curid', currentId.value);
     setKnowledgeName(currentKbName.value);
-    if (uploadFileList.value.length) {
-      showUploadList.value = true;
-    } else {
-      showUploadList.value = false;
+    // showUploadList.value = !!uploadFileList.value.length;
+    // 如果是快速开始的便捷上传，将quick的引用给uploadFileList，因为便捷上传和知识库上传用两个data
+    if (props.dialogType === 1) {
+      uploadFileList.value = uploadFileListQuick.value;
     }
-    if (!modalVisible.value) {
-      uploadFileList.value = [];
+    if (!modalVisible.value && props.dialogType === 0) {
+      initUploadFileList();
     }
   }
 );
 
 //是否显示上传文件列表 默认不显示
-const showUploadList = ref(false);
+// const showUploadList = ref(false);
 
 //允许上传的文件格式
 const acceptList = [
@@ -156,14 +176,34 @@ const acceptList = [
   '.pptx',
   '.eml',
   '.csv',
-  '.mp3',
-  '.wav',
+  // '.mp3',
+  // '.wav',
 ];
+
+// 文件大小限制
+const fileSizeLimit = {
+  document: 30 * 1024 * 1024, // 单个文档小于30M
+  image: 5 * 1024 * 1024, // 单张图片小于5M
+};
+
+// 文件总大小限制
+const totalSizeLimit = 125 * 1024 * 1024; // 文件总大小不超过125MB
 
 //上传前校验
 const beforeFileUpload = async (file, index) => {
   return new Promise((resolve, reject) => {
+    // 检查文件扩展名是否被接受
     if (file.name && acceptList.includes('.' + file.name.split('.').pop().toLowerCase())) {
+      // 根据文件类型设置大小限制
+      const limit = file.type.startsWith('image/') ? fileSizeLimit.image : fileSizeLimit.document;
+
+      // 检查文件大小是否超过限制
+      if (file.size > limit) {
+        reject(`文件太大，不能超过 ${limit / 1024 / 1024} MB`);
+        return;
+      }
+
+      // 如果文件通过所有检查，将其添加到上传列表
       uploadFileList.value.push({
         file_name: file.name,
         file: file,
@@ -171,29 +211,33 @@ const beforeFileUpload = async (file, index) => {
         text: common.uploading,
         file_id: '',
         order: uploadFileList.value.length,
+        bytes: 0,
       });
       resolve(index);
     } else {
-      reject(file.name);
+      reject(`${file.name}的文件格式不符`);
     }
   });
 };
 
 //input上传
 const fileChange = e => {
-  const files = e.target.files;
+  const files: FileList = e.target.files;
+  // 先检查文件总大小
+  let totalFilesSize = 0;
+  Array.from(files).forEach(file => {
+    totalFilesSize += file.size;
+    // 检查文件总大小是否超过限制
+    if (totalFilesSize >= totalSizeLimit) {
+      message.error('文件总大小超过125MB');
+      return;
+    }
+  });
   Array.from(files).forEach(async (file: any, index) => {
     try {
       await beforeFileUpload(file, index);
     } catch (e) {
-      message.error(`${e}的文件格式不符`);
-      // uploadFileList.value.push({
-      //   file_name: file.name,
-      //   file: file,
-      //   status: 'error',
-      //   text: '文件格式不符',
-      //   file_id: '',
-      // });
+      message.error(e);
     }
   });
   setTimeout(() => {
@@ -201,38 +245,11 @@ const fileChange = e => {
   });
 };
 
-// const uplolad = () => {
-//   showUploadList.value = true;
-//   uploadFileList.value.forEach(async (file: IFileListItem, index) => {
-//     if (file.status == 'loading') {
-//       try {
-//         // 上传模式，soft：文件名重复的文件不再上传，strong：文件名重复的文件强制上传
-//         const param = { files: file.file, kb_id: newId.value, mode: 'strong' };
-//         console.log(param);
-//         const res = await urlResquest.uploadFile(param, {
-//           headers: {
-//             'Content-Type': 'multipart/form-data',
-//           },
-//         });
-//         if (+res.code === 200 && res.data[0].status !== 'red' && res.data[0].status !== 'yellow') {
-//           uploadFileList.value[index].status = 'success';
-//           uploadFileList.value[index].text = '上传成功';
-//           uploadFileList.value[index].file_id = res.data[0].file_id;
-//         } else {
-//           uploadFileList.value[index].status = 'error';
-//           uploadFileList.value[index].text = '上传失败';
-//         }
-//       } catch (e) {
-//         uploadFileList.value[index].status = 'error';
-//         uploadFileList.value[index].text = '上传失败';
-//       }
-//     }
-//   });
-// };
-
 const uplolad = async () => {
+  // if (props.dialogType === 1) {
+  handleCancel();
+  // }
   const list = [];
-  showUploadList.value = true;
   uploadFileList.value.forEach((file: IFileListItem) => {
     if (file.status == 'loading') {
       list.push(file);
@@ -244,9 +261,9 @@ const uplolad = async () => {
   }
   formData.append('kb_id', currentId.value);
   formData.append('user_id', userId);
+  formData.append('chunk_size', chatSettingFormActive.value.chunkSize.toString());
   // 上传模式，soft：文件名重复的文件不再上传，strong：文件名重复的文件强制上传
-  formData.append('mode', 'strong');
-
+  formData.append('mode', 'soft');
   fetch(apiBase + '/local_doc_qa/upload_files', {
     method: 'POST',
     body: formData,
@@ -261,6 +278,16 @@ const uplolad = async () => {
     .then(data => {
       // 在此处对接口返回的数据进行处理
       if (data.code === 200) {
+        if (data.data.length === 0) {
+          // 上传相同文件
+          message.warn(data.msg || '出错了');
+          handleCancel();
+          list.forEach(item => {
+            uploadFileList.value[item.order].status = 'error';
+            uploadFileList.value[item.order].errorText = data?.msg || common.upFailed;
+          });
+          return;
+        }
         list.forEach((item, index) => {
           let status = data.data[index].status;
           if (status == 'green' || status == 'gray') {
@@ -269,6 +296,8 @@ const uplolad = async () => {
             status = 'error';
           }
           uploadFileList.value[item.order].status = status;
+          uploadFileList.value[item.order].file_id = data.data[index].file_id;
+          uploadFileList.value[item.order].bytes = data.data[index].bytes;
           uploadFileList.value[item.order].errorText = common.upSucceeded;
         });
       } else {
@@ -279,19 +308,19 @@ const uplolad = async () => {
         });
       }
     })
-    .catch(error => {
-      list.forEach(item => {
-        uploadFileList.value[item.order].status = 'error';
-        uploadFileList.value[item.order].errorText = error?.msg || common.upFailed;
-      });
-      message.error(JSON.stringify(error?.msg) || '出错了');
+    .finally(() => {
+      getDetails();
     });
 };
 
 const handleOk = async () => {
-  setDefault(pageStatus.optionlist);
   setModalVisible(false);
-  getDetails();
+  setDefault(pageStatus.optionlist);
+  await getDetails();
+};
+
+const handleCancel = () => {
+  setModalVisible(false);
 };
 
 onBeforeUnmount(() => {
@@ -304,6 +333,7 @@ onBeforeUnmount(() => {
 .file {
   margin-top: 16px;
   display: flex;
+
   .box {
     flex: 1;
     height: 248px;
@@ -366,6 +396,7 @@ onBeforeUnmount(() => {
     height: 100%;
     z-index: 100;
   }
+
   .before-upload {
     width: 100%;
     position: absolute;
@@ -373,6 +404,7 @@ onBeforeUnmount(() => {
     top: 50%;
     transform: translate(-50%, -50%);
   }
+
   .upload-text-box {
     display: flex;
     align-items: center;
@@ -426,6 +458,7 @@ onBeforeUnmount(() => {
       &:first-child {
         margin-top: 20px;
       }
+
       svg {
         width: 16px;
         height: 16px;
@@ -440,6 +473,7 @@ onBeforeUnmount(() => {
         text-overflow: ellipsis;
         white-space: nowrap;
       }
+
       .status-box {
         display: flex;
         width: auto;
@@ -453,6 +487,7 @@ onBeforeUnmount(() => {
           margin-right: 4px;
           animation: 2s linear infinite loading;
         }
+
         .status {
           width: 60px;
           font-size: 14px;

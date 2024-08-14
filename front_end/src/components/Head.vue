@@ -1,9 +1,9 @@
 <!--
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-10 15:02:33
- * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2023-12-26 11:36:00
- * @FilePath: /qanything-open-source/src/components/Head.vue
+ * @LastEditors: Ianarua 306781523@qq.com
+ * @LastEditTime: 2024-07-24 10:19:43
+ * @FilePath: front_end/src/components/Head.vue
  * @Description: 
 -->
 <template>
@@ -18,12 +18,13 @@
     <div class="header-navs">
       <div
         v-for="item in navList"
-        :class="['nav-item', navIndex === item.value ? 'nav-item-active' : '']"
         :key="item.name"
+        :class="['nav-item', navIndex === item.value ? 'nav-item-active' : '']"
         @click="setNavIdx(item.value)"
       >
-        <div :class="['item-icon', item.value === 0 ? 'knowledge-icon' : 'bot-icon']"></div>
-        {{ item.name }}
+        <!--        <div :class="['item-icon', item.value === 0 ? 'knowledge-icon' : 'bot-icon']"></div>-->
+        <div :class="['item-icon', getIcon(item.value)]"></div>
+        <span>{{ item.name }}</span>
       </div>
     </div>
     <ul>
@@ -37,17 +38,18 @@
         <span :class="[language === 'en' ? 'active' : '']" @click="changLanguage('en')">En</span>
       </li>
       <li>
-        <a-popover placement="bottomRight" overlay-class-name="cooperate">
+        <a-popover placement="bottomRight">
           <template #content>
-            <p>Aldoud_Business@corp.youdao.com</p>
+            <p>010-82558901（商务）</p>
+            <p>qanything@rd.netease.com（技术）</p>
+            <p>Aldoud_Business@corp.youdao.com（商务）</p>
           </template>
           <template #title>
             <span>{{ header.cooperationMore }}</span>
           </template>
           <div class="myspan">
-            <img src="../assets/home/icon-email.png" alt="合作咨询" /><span>{{
-              header.cooperation
-            }}</span>
+            <img src="../assets/home/icon-email.png" alt="合作咨询" />
+            <span>{{ header.cooperation }}</span>
           </div>
         </a-popover>
       </li>
@@ -74,7 +76,11 @@ const { changePage } = routeController();
 
 const navList = [
   {
-    name: '知识库',
+    name: getLanguage().header.quickStart,
+    value: 2,
+  },
+  {
+    name: getLanguage().header.knowledge,
     value: 0,
   },
   {
@@ -100,38 +106,60 @@ const setNavIdx = value => {
   setNavIndex(value);
   if (value === 0) {
     changePage('/home');
-  } else {
+  } else if (value === 1) {
     changePage('/bots');
+  } else if (value === 2) {
+    changePage('/quickstart');
   }
+};
+
+// header的item-icon选择
+const iconMap = new Map([
+  [0, 'knowledge-icon'],
+  [1, 'bot-icon'],
+  [2, 'quick-icon'],
+]);
+const getIcon = itemValue => {
+  return iconMap.get(itemValue);
 };
 </script>
 <style lang="scss" scoped>
 .header {
   width: 100vw;
-  min-width: 1200px;
+  //min-width: 1200px;
   height: 64px;
   display: flex;
   align-items: center;
   background: #26293b;
+
   .header-navs {
-    width: 234px;
+    //width: 234px;
     height: 50px;
-    margin-left: 158px;
+    margin-left: 58px;
     display: flex;
-    justify-content: space-between;
+    flex: 1;
+    align-items: center;
+
     .nav-item {
-      width: 80px;
-      height: 50px;
-      color: #999999;
-      font-size: 18px;
+      //width: 100px;
+      height: 20px;
+      margin-right: 40px;
       display: flex;
       align-items: center;
+      font-size: 1rem;
       cursor: pointer;
+      color: #999999;
+
+      span {
+        white-space: nowrap;
+      }
+
       img {
         width: 20px;
         height: 20px;
         margin-right: 4px;
       }
+
       .item-icon {
         width: 20px;
         height: 20px;
@@ -139,45 +167,64 @@ const setNavIdx = value => {
         background-size: cover;
         background-repeat: no-repeat;
       }
+
       .bot-icon {
         background-image: url('@/assets/header/bots-icon.png');
       }
+
       .knowledge-icon {
         background-image: url('@/assets/header/knowledge-icon.png');
       }
+
+      .quick-icon {
+        background-image: url('@/assets/header/quick-icon.png');
+      }
     }
+
     .nav-item-active {
       color: #fff;
+
       .bot-icon {
         background-image: url('@/assets/header/bots-active-icon.png');
       }
+
       .knowledge-icon {
         background-image: url('@/assets/header/knowledge-active-icon.png');
+      }
+
+      .quick-icon {
+        background-image: url('@/assets/header/quick-active-icon.png');
       }
     }
   }
 
   .logo {
-    width: 146px;
-    height: 28px;
-    margin-left: 32px;
+    min-width: 280px;
+    height: 64px;
     cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 
     img {
-      width: 100%;
-      height: 100%;
+      width: 146px;
+      height: 28px;
+      margin-top: 14px;
     }
   }
+
   .toggle-button {
     font-size: 14px;
     font-weight: 300;
     line-height: 22px;
     color: #cccccc;
     cursor: pointer;
+
     .active {
       color: #ffffff;
       font-weight: 500;
     }
+
     .line {
       width: 1px;
       height: 14px;
@@ -185,6 +232,7 @@ const setNavIdx = value => {
       margin: 0px 8px;
     }
   }
+
   ul {
     display: flex;
     margin-left: auto;
@@ -207,6 +255,10 @@ const setNavIdx = value => {
     .myspan {
       display: flex !important;
       align-items: center;
+
+      span {
+        white-space: nowrap;
+      }
     }
   }
 

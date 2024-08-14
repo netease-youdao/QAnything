@@ -1,16 +1,19 @@
 <!--
  * @Author: 祝占朋 wb.zhuzp01@rd.netease.com
  * @Date: 2023-11-01 10:59:31
- * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2024-01-02 11:22:55
- * @FilePath: /qanything-open-source/src/components/SiderCard.vue
+ * @LastEditors: Ianarua 306781523@qq.com
+ * @LastEditTime: 2024-07-23 18:11:39
+ * @FilePath: front_end/src/components/SiderCard.vue
  * @Description: 
 -->
 <template>
   <div
-    v-for="(item, index) in props.list"
+    v-for="(item, index) in list"
     :key="index"
-    :class="{ active: selectList.includes(item.kb_id) }"
+    :class="{
+      active: selectList.includes(item.kb_id),
+      'card-option-active': currentId === item.kb_id,
+    }"
     class="card"
     :style="props.style"
     @click="selectKnowledgeBase(item)"
@@ -50,7 +53,7 @@
             </span>
           </div>
         </div>
-        <div class="time">{{ item.createTime }}</div>
+        <!--        <div class="time">{{ item.createTime }}</div>-->
       </div>
     </a-popover>
   </div>
@@ -67,7 +70,7 @@ import { getLanguage } from '@/language/index';
 const common = getLanguage().common;
 // import { useDebounceFn } from '@vueuse/core';
 const { setShowDeleteModal, setCurrentId, setCurrentKbName, setDefault } = useKnowledgeBase();
-const { showDeleteModal, selectList } = storeToRefs(useKnowledgeBase());
+const { showDeleteModal, selectList, currentId } = storeToRefs(useKnowledgeBase());
 
 const props = defineProps({
   list: {
@@ -151,14 +154,22 @@ const close = (item: IKnowledgeItem) => {
   oldValue.value = '';
   item.edit = !item.edit;
 };
+
+// 筛出不含_QUICK的list
+const list = computed(() => {
+  return props.list.map(item => {
+    if (!item.kb_id.includes('_QUICK')) {
+      return item;
+    }
+  });
+});
 </script>
 <style lang="scss" scoped>
 .card {
   overflow: hidden;
   position: relative;
-  height: 72px;
-  margin: 0 auto;
-  margin-bottom: 16px;
+  height: 48px;
+  margin: 0 auto 16px;
   border-radius: 8px;
   background: #333647;
   cursor: pointer;
@@ -172,7 +183,7 @@ const close = (item: IKnowledgeItem) => {
     font-size: 14px;
     height: 22px;
     line-height: 22px;
-    margin: 14px 1px 0px 12px;
+    margin: 12px 1px 0px 12px;
 
     .normal {
       .title-text {
@@ -187,6 +198,7 @@ const close = (item: IKnowledgeItem) => {
     .editing {
       display: flex;
       align-items: center;
+
       .title-text {
         width: 160px;
         height: 28px;
@@ -199,6 +211,7 @@ const close = (item: IKnowledgeItem) => {
 
       .icon-box {
         color: #fff;
+        display: flex;
 
         .edit,
         .delete {
@@ -230,8 +243,14 @@ const close = (item: IKnowledgeItem) => {
     line-height: 20px;
   }
 }
+
 .active {
-  background: #7261e9;
+  background: linear-gradient(284deg, #7b5ef2 -1%, #c383fe 97%);
+}
+
+// 切到这个知识库管理
+.card-option-active {
+  border: 2px solid #d9d9d9;
 }
 
 .fade-enter-active {
@@ -253,14 +272,18 @@ const close = (item: IKnowledgeItem) => {
   height: 100%;
   overflow: hidden;
 }
+
 .tools-box {
   background: #333647;
+
   ul {
     width: 100%;
+
     li {
       cursor: pointer;
       display: flex;
       width: 80px;
+      padding: 0 2px;
       margin-bottom: 3px;
       box-sizing: content-box;
       height: 28px;
@@ -275,7 +298,7 @@ const close = (item: IKnowledgeItem) => {
       }
 
       svg {
-        margin: 0 6px 0 8px;
+        margin: 0 6px 0 4px;
         width: 16px;
         height: 16px;
       }
@@ -283,6 +306,7 @@ const close = (item: IKnowledgeItem) => {
       &:hover {
         background: #1e212f;
         color: #fff;
+        border-radius: 12px;
 
         .tool-name {
           color: #fff;
@@ -291,16 +315,18 @@ const close = (item: IKnowledgeItem) => {
     }
   }
 }
+
 .card-hover {
   .ant-popover-arrow {
     display: none;
   }
+
   .ant-popover-content {
     .ant-popover-inner {
       transform: translateY(10px);
       background: #333647;
       box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.2);
-      padding: 4px;
+      padding: 10px;
     }
   }
 }

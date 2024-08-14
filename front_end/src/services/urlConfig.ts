@@ -1,9 +1,9 @@
 /*
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2024-01-09 15:28:56
- * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2024-01-11 10:40:28
- * @FilePath: /QAnything/front_end/src/services/urlConfig.ts
+ * @LastEditors: Ianarua 306781523@qq.com
+ * @LastEditTime: 2024-07-31 20:21:13
+ * @FilePath: front_end/src/services/urlConfig.ts
  * @Description:
  */
 
@@ -11,6 +11,30 @@ enum EUrlType {
   POST = 'post',
   GET = 'get',
 }
+
+enum EUrlKey {
+  checkLogin = 'checkLogin',
+  getLoginInfo = 'getLoginInfo',
+  kbList = 'kbList',
+  createKb = 'createKb',
+  uploadFile = 'uploadFile',
+  deleteKB = 'deleteKB',
+  deleteFile = 'deleteFile',
+  uploadUrl = 'uploadUrl',
+  kbConfig = 'kbConfig',
+  fileList = 'fileList',
+  createBot = 'createBot',
+  updateBot = 'updateBot',
+  queryBotInfo = 'queryBotInfo',
+  deleteBot = 'deleteBot',
+  uploadFaqs = 'uploadFaqs',
+  getFile = 'getFile',
+  getDocCompleted = 'getDocCompleted',
+  updateDocCompleted = 'updateDocCompleted',
+  clearUpload = 'clearUpload',
+  sendQuestion = 'sendQuestion',
+}
+
 interface IUrlValueConfig {
   type: EUrlType;
   url: string;
@@ -20,11 +44,12 @@ interface IUrlValueConfig {
   cancelRepeat?: boolean;
   sign?: boolean; // 是否开启签名
   param?: any;
+
   [key: string]: any;
 }
-interface IUrlConfig {
-  [key: string]: IUrlValueConfig;
-}
+
+type IUrlConfig = Record<EUrlKey, IUrlValueConfig>;
+
 import services from '.';
 
 export const userId = 'zzp';
@@ -159,8 +184,46 @@ const urlConfig: IUrlConfig = {
       user_id: userId,
     },
   },
+  // 获取文档解析内容（chunk）
+  getDocCompleted: {
+    type: EUrlType.POST,
+    url: '/local_doc_qa/get_doc_completed',
+    param: {
+      user_id: userId,
+    },
+  },
+  // 修改文档解析内容（chunk）
+  updateDocCompleted: {
+    type: EUrlType.POST,
+    url: '/local_doc_qa/update_chunks',
+    param: {
+      user_id: userId,
+    },
+  },
+  // 取消知识库所有文件上传
+  clearUpload: {
+    type: EUrlType.POST,
+    url: '/local_doc_qa/clean_files_by_status',
+    param: {
+      user_id: userId,
+    },
+  },
+  // 发送问题，非流式需要用这个
+  sendQuestion: {
+    type: EUrlType.POST,
+    url: '/local_doc_qa/local_doc_chat',
+    param: {
+      user_id: userId,
+    },
+  },
 };
-const urlResquest: any = {};
+
+// 使用映射类型来创建一个类型，该类型将urlConfig中的每个键映射到IRequestMethod类型
+type UrlRequestMethods = {
+  [K in keyof typeof urlConfig]: any;
+};
+
+const urlResquest: UrlRequestMethods = {} as UrlRequestMethods;
 Object.keys(urlConfig).forEach(key => {
   urlResquest[key] = (params: any, option: any = {}) => {
     const { type, url, param, ...other } = urlConfig[key];

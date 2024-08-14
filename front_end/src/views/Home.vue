@@ -1,17 +1,20 @@
 <!--
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2024-01-09 15:28:56
- * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2024-01-11 10:47:03
- * @FilePath: /QAnything/front_end/src/views/Home.vue
+ * @LastEditors: Ianarua 306781523@qq.com
+ * @LastEditTime: 2024-08-02 15:15:50
+ * @FilePath: front_end/src/views/Home.vue
  * @Description: 
 -->
 
 <template>
   <div class="page">
-    <DefaultPage v-if="showDefault === pageStatus.default" @change="change" />
-    <Chat v-else-if="showDefault === pageStatus.normal" />
-    <OptionList v-else-if="showDefault === pageStatus.optionlist" />
+    <div class="container">
+      <div v-if="showDefault === pageStatus.initing" class="initing"></div>
+      <DefaultPage v-if="showDefault === pageStatus.default" @change="change" />
+      <Chat v-else-if="showDefault === pageStatus.normal" />
+      <OptionList v-else-if="showDefault === pageStatus.optionlist" />
+    </div>
   </div>
 </template>
 <script lang="ts" setup>
@@ -41,6 +44,19 @@ onMounted(() => {
 .page {
   width: 100%;
   height: 100%;
-  background: #f3f6fd;
+}
+
+.container {
+  //padding-top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #26293b;
+
+  .initing {
+    width: 100%;
+    height: 100%;
+    background: #f3f6fd;
+    border-radius: 12px 0 0 0;
+  }
 }
 </style>

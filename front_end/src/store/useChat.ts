@@ -1,29 +1,23 @@
 /*
  * @Author: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
  * @Date: 2024-01-09 15:28:56
- * @LastEditors: 祝占朋 wb.zhuzhanpeng01@mesg.corp.netease.com
- * @LastEditTime: 2024-01-11 10:45:28
+ * @LastEditors: 李浩坤 lihaokun@corp.netease.com
+ * @LastEditTime: 2024-07-18 18:00:00
  * @FilePath: /QAnything/front_end/src/store/useChat.ts
- * @Description:
+ * @Description: 注意，修改这里的配置参数时一定要清除localStorage缓存
  */
-
-import { IChatItem } from '@/utils/types';
 
 export const useChat = defineStore(
   'useChat',
   () => {
-    //对话列表
-    const QA_List = ref<Array<IChatItem>>([]);
-    const clearQAList = () => {
-      QA_List.value = [];
-    };
-
     const showModal = ref(false);
 
+    // 模型配置弹窗
+    const showSettingModal = ref(false);
+
     return {
-      QA_List,
-      clearQAList,
       showModal,
+      showSettingModal,
     };
   },
   {

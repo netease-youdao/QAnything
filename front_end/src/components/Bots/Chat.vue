@@ -22,13 +22,20 @@
               <div class="content">
                 <img class="avatar" src="@/assets/home/ai-avatar.png" alt="头像" />
                 <p
+                  v-if="!item.onlySearch"
                   class="question-text"
                   :class="[
                     !item.source.length && !item?.picList?.length ? 'change-radius' : '',
                     item.showTools ? '' : 'flashing',
                   ]"
-                  v-html="item.answer"
-                ></p>
+                >
+                  <HighLightMarkDown v-if="item.answer" :content="item.answer" />
+                  <span v-else>{{ item.answer }}</span>
+                  <ChatInfoPanel
+                    v-if="Object.keys(item?.itemInfo?.tokenInfo || {}).length"
+                    :chat-item-info="item.itemInfo"
+                  />
+                </p>
               </div>
               <template v-if="item?.picList?.length">
                 <div
@@ -147,32 +154,33 @@
           <div v-show="showLoading" ref="stopBtn" class="stop-btn">
             <a-button @click="stopChat">
               <template #icon>
-                <SvgIcon name="stop" :class="showLoading ? 'loading' : ''"></SvgIcon> </template
-              >{{ common.stop }}</a-button
-            >
+                <SvgIcon name="stop" :class="showLoading ? 'loading' : ''"></SvgIcon>
+              </template>
+              {{ common.stop }}
+            </a-button>
           </div>
         </ul>
       </div>
       <div class="question-box">
         <div class="question">
-          <a-popover placement="topLeft">
-            <template #content>
-              <p v-if="network">退出联网检索</p>
-              <p v-else>开启联网检索</p>
-            </template>
-            <span :class="['network', `network-${network}`]">
-              <SvgIcon name="network" @click="networkChat" />
-            </span>
-          </a-popover>
-          <a-popover v-if="chatType === 'share'" placement="topLeft">
-            <template #content>
-              <p v-if="control">{{ bots.multiTurnConversation2 }}</p>
-              <p v-else>{{ bots.multiTurnConversation1 }}</p>
-            </template>
-            <span :class="['control', `control-${control}`]">
-              <SvgIcon name="chat-control" @click="controlChat" />
-            </span>
-          </a-popover>
+          <!--          <a-popover placement="topLeft">-->
+          <!--            <template #content>-->
+          <!--              <p v-if="network">退出联网检索</p>-->
+          <!--              <p v-else>开启联网检索</p>-->
+          <!--            </template>-->
+          <!--            <span :class="['network', `network-${network}`]">-->
+          <!--              <SvgIcon name="network" @click="networkChat" />-->
+          <!--            </span>-->
+          <!--          </a-popover>-->
+          <!--          <a-popover v-if="chatType === 'share'" placement="topLeft">-->
+          <!--            <template #content>-->
+          <!--              <p v-if="control">{{ bots.multiTurnConversation2 }}</p>-->
+          <!--              <p v-else>{{ bots.multiTurnConversation1 }}</p>-->
+          <!--            </template>-->
+          <!--            <span :class="['control', `control-${control}`]">-->
+          <!--              <SvgIcon name="chat-control" @click="controlChat" />-->
+          <!--            </span>-->
+          <!--          </a-popover>-->
 
           <span v-if="chatType === 'share'" class="download" @click="downloadChat">
             <SvgIcon name="chat-download" />
@@ -219,7 +227,10 @@ import { getLanguage } from '@/language/index';
 import { useLanguage } from '@/store/useLanguage';
 import { userId } from '@/services/urlConfig';
 import urlResquest from '@/services/urlConfig';
-import { resultControl } from '@/utils/utils';
+import { ChatInfoClass, resultControl } from '@/utils/utils';
+import { useChatSetting } from '@/store/useChatSetting';
+import ChatInfoPanel from '@/components/ChatInfoPanel.vue';
+import HighLightMarkDown from '@/components/HighLightMarkDown.vue';
 
 const props = defineProps({
   chatType: {
@@ -242,20 +253,22 @@ const typewriter = new Typewriter((str: string) => {
 });
 
 const { QA_List } = storeToRefs(useBotsChat());
+const { chatSettingFormActive } = storeToRefs(useChatSetting());
 const { copy } = useClipboard();
 const { setChatSourceVisible, setSourceType, setSourceUrl, setTextContent } = useChatSource();
 const { language } = storeToRefs(useLanguage());
-//当前是否多轮对话
-const control = ref(true);
-
-//当前是否开启链网检索
-const network = ref(false);
 
 //当前问的问题
 const question = ref('');
 
 //问答的上下文
-const history = ref([]);
+const history = computed(() => {
+  const context = chatSettingFormActive.value.context;
+  if (context === 0) return [];
+  const usefulChat = QA_List.value.filter(item => item.type === 'ai');
+  const historyChat = context === 11 ? usefulChat : usefulChat.slice(-context);
+  return historyChat.map(item => [item.question, item.answer]);
+});
 
 //当前是否回答中
 const showLoading = ref(false);
@@ -318,6 +331,7 @@ const addAnswer = (question: string) => {
   QA_List.value.push({
     answer: '',
     question,
+    onlySearch: chatSettingFormActive.value.capabilities.onlySearch,
     type: 'ai',
     copied: false,
     like: false,
@@ -327,6 +341,8 @@ const addAnswer = (question: string) => {
     showTools: false,
   });
 };
+
+const chatInfoClass = new ChatInfoClass();
 
 const stopChat = () => {
   if (ctrl) {
@@ -340,14 +356,19 @@ const stopChat = () => {
 //发送问答消息
 const send = () => {
   if (!question.value.length) {
+    message.warn('正在聊天中...请等待结束');
+    return;
+  }
+  if (!checkChatSetting()) {
+    message.error('模型设置错误，请先检查模型配置');
     return;
   }
   const q = question.value;
   question.value = '';
   addQuestion(q);
-  if (history.value.length >= 3) {
-    history.value = [];
-  }
+  // if (history.value.length >= 3) {
+  //   history.value = [];
+  // }
   showLoading.value = true;
   scrollDom.value?.scrollIntoView(true);
   ctrl = new AbortController();
@@ -366,15 +387,28 @@ const send = () => {
     body: JSON.stringify({
       user_id: userId,
       bot_id: props.botInfo.bot_id,
-      history: control.value ? history.value : [],
+      history: history.value,
       question: q,
-      streaming: true,
-      networking: network.value,
+      streaming: chatSettingFormActive.value.capabilities.onlySearch === false,
+      networking: chatSettingFormActive.value.capabilities.networkSearch,
       product_source: 'saas',
+      rerank: chatSettingFormActive.value.capabilities.rerank,
+      only_need_search_results: chatSettingFormActive.value.capabilities.onlySearch,
+      hybrid_search: chatSettingFormActive.value.capabilities.mixedSearch,
+      max_token: chatSettingFormActive.value.maxToken,
+      api_base: chatSettingFormActive.value.apiBase,
+      api_key: chatSettingFormActive.value.apiKey,
+      model: chatSettingFormActive.value.apiModelName,
+      api_context_length: chatSettingFormActive.value.apiContextLength,
+      chunk_size: chatSettingFormActive.value.chunkSize,
+      top_p: chatSettingFormActive.value.top_P,
+      temperature: chatSettingFormActive.value.temperature,
     }),
     signal: ctrl.signal,
     onopen(e: any) {
       console.log('open');
+      // 模型配置添加进去
+      chatInfoClass.addChatSetting(chatSettingFormActive.value);
       if (e.ok && e.headers.get('content-type') === 'text/event-stream') {
         console.log("everything's good");
         // addAnswer(question.value);
@@ -382,44 +416,50 @@ const send = () => {
         addAnswer(q);
         typewriter.start();
       } else if (e.headers.get('content-type') === 'application/json') {
-        showLoading.value = false;
-        return e
-          .json()
-          .then(data => {
-            console.log(data);
-            message.error(data?.msg || '出错了,请稍后刷新重试。');
-          })
-          .catch(e => {
-            console.log(e);
-            message.error('出错了,请稍后刷新重试。');
-          }); // 将响应解析为 JSON
+        // showLoading.value = false;
+        // return e
+        //   .json()
+        //   .then(data => {
+        //     message.error(data?.msg || '出错了,请稍后刷新重试。');
+        //   })
+        //   .catch(() => {
+        //     message.error('出错了,请稍后刷新重试。');
+        //   }); // 将响应解析为 JSON
+        addAnswer(q);
       }
     },
     onmessage(msg: { data: string }) {
       console.log('message');
       const res: any = JSON.parse(msg.data);
       console.log(res);
-      if (res?.code == 200 && res?.response) {
+      if (res?.code == 200 && res?.response && res.msg === 'success') {
         // QA_List.value[QA_List.value.length - 1].answer += res.result.response;
         typewriter.add(res?.response.replaceAll('\n', '<br/>'));
         scrollBottom();
+      } else {
+        const timeObj = res.time_record.time_usage;
+        delete timeObj['retriever_search_by_milvus'];
+        chatInfoClass.addTime(res.time_record.time_usage);
+        chatInfoClass.addToken(res.time_record.token_usage);
+        chatInfoClass.addDate(Date.now());
       }
 
       if (res?.source_documents?.length) {
         QA_List.value[QA_List.value.length - 1].source = res?.source_documents;
       }
 
-      if (res?.history.length) {
-        history.value = res?.history;
-      }
+      // if (res?.history.length) {
+      //   history.value = res?.history;
+      // }
     },
     onclose(e: any) {
-      console.log('close');
-      console.log(e);
+      console.log('close', e);
       typewriter.done();
       ctrl.abort();
       showLoading.value = false;
       QA_List.value[QA_List.value.length - 1].showTools = true;
+      // 将chat info添加进回答中
+      QA_List.value.at(-1).itemInfo = chatInfoClass.getChatInfo();
       nextTick(() => {
         scrollBottom();
       });
@@ -468,9 +508,9 @@ const { clearQAList } = useBotsChat();
 const confirmLoading = ref(false);
 const content = ref('');
 const type = ref('');
-const controlChat = () => {
-  control.value = !control.value;
-};
+// const controlChat = () => {
+//   // control.value = !control.value;
+// };
 
 const downloadChat = () => {
   type.value = 'download';
@@ -506,13 +546,22 @@ const confirm = async () => {
     }
   } else if (type.value === 'delete') {
     console.log('delete');
-    history.value = [];
+    // history.value = [];
     clearQAList();
   }
   type.value = '';
   content.value = '';
   confirmLoading.value = false;
   showModal.value = false;
+};
+
+// 模型配置是否正确
+const checkChatSetting = () => {
+  return !!(
+    chatSettingFormActive.value.apiKey &&
+    chatSettingFormActive.value.apiBase &&
+    chatSettingFormActive.value.apiModelName
+  );
 };
 
 // 检查信息来源的文件是否支持窗口化渲染
@@ -575,14 +624,15 @@ let b64Types = [
   'image/png',
   'image/jpeg',
 ];
+
 function getB64Type(suffix) {
   const index = supportSourceTypes.indexOf(suffix);
   return b64Types[index];
 }
 
-const networkChat = () => {
-  network.value = !network.value;
-};
+// const networkChat = () => {
+//   network.value = !network.value;
+// };
 
 scrollBottom();
 </script>
@@ -598,12 +648,14 @@ scrollBottom();
   position: relative;
   // background-color: #26293b;
 }
+
 .my-page {
   position: relative;
   margin: 0 auto;
   // border-radius: 12px 0 0 0;
   // background: #f3f6fd;
 }
+
 .header {
   width: 100%;
   height: 52px;
@@ -616,12 +668,14 @@ scrollBottom();
   align-items: center;
   justify-content: center;
   border-bottom: 1px solid #ededed;
+
   img {
     width: 32px;
     height: 32px;
     margin-right: 8px;
   }
 }
+
 .chat {
   margin: 0 auto;
   width: calc(90% - 52px);
@@ -654,13 +708,14 @@ scrollBottom();
       line-height: 22px;
       color: #222222;
       background: #e9e1ff;
-      border-radius: 0px 12px 12px 12px;
+      border-radius: 12px;
       word-wrap: break-word;
     }
   }
 
   .ai {
     margin: 16px 0 28px 0;
+
     .content {
       display: flex;
 
@@ -672,7 +727,7 @@ scrollBottom();
         line-height: 22px;
         color: $title1;
         background: #f9f9fc;
-        border-radius: 0px 12px 0px 0px;
+        border-radius: 12px 12px 0 0;
         word-wrap: break-word;
       }
 
@@ -687,7 +742,7 @@ scrollBottom();
       }
 
       .change-radius {
-        border-radius: 0px 12px 12px 12px;
+        border-radius: 12px;
       }
     }
 
@@ -697,17 +752,20 @@ scrollBottom();
       background: #f9f9fc;
       display: flex;
       align-items: center;
+
       span {
         margin-right: 5px;
       }
+
       svg {
         width: 16px !important;
         height: 16px !important;
         cursor: pointer !important;
       }
     }
+
     .source-total-last {
-      border-radius: 0px 12px 12px 12px;
+      border-radius: 0px 0 12px 12px;
     }
 
     .source-list {
@@ -729,12 +787,14 @@ scrollBottom();
       &:nth-first-of-type(1) {
         border-radius: 0px 12px 12px 12px;
       }
+
       .control {
         width: 100%;
         overflow-wrap: break-word;
         display: flex;
         align-items: center;
         flex-wrap: wrap;
+
         .file {
           max-width: 100%;
           word-wrap: break-word;
@@ -804,6 +864,7 @@ scrollBottom();
         align-items: center;
         margin-right: auto;
         color: #5a47e5;
+
         .reload-text {
           height: 22px;
           line-height: 22px;
@@ -837,6 +898,7 @@ scrollBottom();
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
+
   :deep(.ant-btn) {
     width: 92px;
     height: 32px;
@@ -846,6 +908,7 @@ scrollBottom();
     justify-content: center;
     align-items: center;
   }
+
   svg {
     width: 12px;
     height: 12px;
@@ -856,6 +919,7 @@ scrollBottom();
     animation: loading 3s infinite;
   }
 }
+
 .stop-placeholder {
   width: 100%;
   height: 52px;
@@ -898,10 +962,12 @@ scrollBottom();
         width: 24px;
         height: 24px;
       }
+
       &.network-true {
         border: 1px solid #5a47e5;
         color: #5a47e5;
       }
+
       &.network-false {
         border: 1px solid #e5e5e5;
         color: #666666;
@@ -916,11 +982,14 @@ scrollBottom();
       background: #5a47e5;
 
       :deep(.ant-btn-primary) {
-        background-color: #5a47e5 !important;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        background: linear-gradient(300deg, #7b5ef2 1%, #c383fe 97%);
       }
 
       :deep(.ant-btn-primary:disabled) {
-        background-color: #5a47e5 !important;
+        background: linear-gradient(300deg, #7b5ef2 1%, #c383fe 97%);
         color: #fff !important;
         border-color: transparent !important;
       }
@@ -936,6 +1005,7 @@ scrollBottom();
       max-width: 1108px;
       border-color: #e5e5e5;
       box-shadow: none !important;
+
       &:hover,
       &:focus,
       &:active {
@@ -947,9 +1017,11 @@ scrollBottom();
     :deep(.ant-input:hover) {
       border-color: $baseColor;
     }
-    :deep(.ant-input:focused) {
+
+    :deep(.ant-input:focus) {
       border-color: $baseColor;
     }
+
     :deep(.ant-input-affix-wrapper) {
       padding: 4px 4px 4px 11px;
     }
@@ -970,24 +1042,28 @@ scrollBottom();
   position: absolute;
   top: 0;
   left: 0;
+
   img {
     width: 40px;
     height: 40px;
     margin-bottom: 10px;
   }
+
   p {
     padding: 0 40px;
   }
 }
 
-.sourceitem-leave,   // 离开前,进入后透明度是1
+.sourceitem-leave, // 离开前,进入后透明度是1
 .sourceitem-enter-to {
   opacity: 1;
 }
+
 .sourceitem-leave-active,
 .sourceitem-enter-active {
   transition: opacity 0.5s; //过度是.5s秒
 }
+
 .sourceitem-leave-to,
 .sourceitem-enter {
   opacity: 0;

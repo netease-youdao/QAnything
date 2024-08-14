@@ -11,7 +11,7 @@
       <div class="copy-url-comp">
         <div class="title">{{ bots.UrlLink }}</div>
         <div class="copy-url">
-          <span>{{ webUrl }}</span>
+          <span class="copy-url-span">{{ webUrl }}</span>
           <!-- <a-button class="btn" @click="copyUrl">{{ bots.copy }}</a-button> -->
         </div>
         <div class="title">{{ bots.qrCode }}</div>
@@ -106,6 +106,9 @@ const saveQrCode = async () => {
     display: flex;
     align-items: center;
     user-select: text;
+    .copy-url-span {
+      width: 100%;
+    }
   }
   .qr-code-content {
     width: 100%;
