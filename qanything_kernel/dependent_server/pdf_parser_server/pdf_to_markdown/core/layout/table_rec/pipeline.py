@@ -3,7 +3,7 @@ import numpy as np
 import torch
 import cv2
 from .lib.utils.image import get_affine_transform, get_affine_transform_upper_left
-from .lib.models.decode import ctdet_decode, corner_decode, ctdet_4ps_decode
+from .lib.table_rec_models.decode import ctdet_decode, corner_decode, ctdet_4ps_decode
 from .lib.utils.post_process import ctdet_4ps_post_process_upper_left, ctdet_4ps_post_process, ctdet_corner_post_process
 import os
 from .table_recover import TableRecover
