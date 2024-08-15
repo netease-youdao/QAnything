@@ -96,7 +96,8 @@
                         </p>
                         <Transition name="sourceitem">
                           <div v-show="sourceItem.showDetailDataSource" class="source-content">
-                            <p v-html="sourceItem.content?.replaceAll('\n', '<br/>')"></p>
+                            <!--                            <p v-html="sourceItem.content?.replaceAll('\n', '<br/>')"></p>-->
+                            <HighLightMarkDown :content="sourceItem.content" />
                             <p class="score">
                               <span class="tips">{{ common.correlation }}</span>
                               {{ sourceItem.score }}
