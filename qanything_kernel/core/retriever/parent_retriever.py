@@ -132,7 +132,7 @@ class SelfParentRetriever(ParentDocumentRetriever):
         for idx, doc in enumerate(embed_docs):
             del doc.metadata['title_lst']
             del doc.metadata['has_table']
-            del doc.metadata['images_number']
+            del doc.metadata['images']
             del doc.metadata['file_name']
             del doc.metadata['nos_key']
             del doc.metadata['faq_dict']

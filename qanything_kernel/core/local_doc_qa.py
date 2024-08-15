@@ -1,7 +1,11 @@
 from qanything_kernel.configs.model_config import VECTOR_SEARCH_TOP_K, VECTOR_SEARCH_SCORE_THRESHOLD, \
-    PROMPT_TEMPLATE, STREAMING, SYSTEM, INSTRUCTIONS, SIMPLE_PROMPT_TEMPLATE, CUSTOM_PROMPT_TEMPLATE
-from typing import List, Tuple, Union
+    PROMPT_TEMPLATE, STREAMING, SYSTEM, INSTRUCTIONS, SIMPLE_PROMPT_TEMPLATE, CUSTOM_PROMPT_TEMPLATE, \
+    LOCAL_RERANK_MODEL_NAME, LOCAL_EMBED_MAX_LENGTH
+from typing import List, Tuple, Union, Dict
 import time
+from scipy.spatial import cKDTree
+from scipy.spatial.distance import cosine
+from scipy.stats import gmean
 from qanything_kernel.connector.embedding.embedding_for_online_client import YouDaoEmbeddings
 from qanything_kernel.connector.rerank.rerank_for_online_client import YouDaoRerank
 from qanything_kernel.connector.llm import OpenAILLM
@@ -14,13 +18,14 @@ from qanything_kernel.core.retriever.elasticsearchstore import StoreElasticSearc
 from qanything_kernel.core.retriever.parent_retriever import ParentRetriever
 from qanything_kernel.utils.general_utils import (get_time, clear_string, get_time_async, num_tokens,
                                                   cosine_similarity, clear_string_is_equal, num_tokens_embed,
-                                                  num_tokens_rerank, deduplicate_documents)
+                                                  num_tokens_rerank, deduplicate_documents, replace_image_references)
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger, rerank_logger
 from qanything_kernel.core.chains.condense_q_chain import RewriteQuestionChain
 from qanything_kernel.core.tools.web_search_tool import duckduckgo_search
-from transformers import AutoTokenizer
+import copy
 import requests
 import json
+import numpy as np
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 import traceback
@@ -41,6 +46,12 @@ class LocalDocQA:
         self.milvus_summary: KnowledgeBaseManager = None
         self.es_client: StoreElasticSearchClient = None
         self.session = self.create_retry_session(retries=3, backoff_factor=1)
+        self.doc_splitter = RecursiveCharacterTextSplitter(
+            separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
+            chunk_size=LOCAL_EMBED_MAX_LENGTH / 2,
+            chunk_overlap=0,
+            length_function=num_tokens_embed
+        )
 
     @staticmethod
     def create_retry_session(retries, backoff_factor):
@@ -243,10 +254,12 @@ class LocalDocQA:
                 doc.metadata['score'] = cosine_similarity(embed1, embed2)
             return docs
 
-
     async def prepare_source_documents(self, query: str, custom_llm: OpenAILLM, source_documents: List[Document],
                                        chat_history: List[str], prompt_template: str,
                                        need_web_search: bool = False):
+        # 删除文档中的图片
+        for doc in source_documents:
+            doc.page_content = re.sub(r'!\[figure]\(.*?\)', '', doc.page_content)
 
         retrieval_documents, limited_token_nums = self.reprocess_source_documents(custom_llm=custom_llm, query=query,
                                                                                   source_docs=source_documents,
@@ -279,6 +292,70 @@ class LocalDocQA:
 
         return source_documents, retrieval_documents
 
+    async def calculate_relevance_optimized(
+            self,
+            question: str,
+            llm_answer: str,
+            reference_docs: List[Document],
+            top_k: int = 5
+    ) -> List[Dict]:
+        # 获取问题的scores
+        question_scores = [doc.metadata['score'] for doc in reference_docs]
+        # 计算问题和LLM回答的embedding
+        question_embedding = await self.embeddings.aembed_query(question)
+        llm_answer_embedding = await self.embeddings.aembed_query(llm_answer)
+
+        # 计算所有引用文档分段的embeddings
+        all_segments_docs = self.doc_splitter.split_documents(reference_docs)
+        all_segments = [doc.page_content for doc in all_segments_docs]
+        reference_embeddings = await self.embeddings.aembed_documents(all_segments)
+
+        # 将嵌入向量转换为numpy数组以便使用scipy的cosine函数
+        question_embedding = np.array(question_embedding)
+        llm_answer_embedding = np.array(llm_answer_embedding)
+        reference_embeddings = np.array(reference_embeddings)
+
+        # 构建KD树
+        tree = cKDTree(reference_embeddings)
+
+        # 使用KD树找到最相似的分段
+        _, indices = tree.query(llm_answer_embedding.reshape(1, -1), k=top_k)
+        if isinstance(indices[0], np.int64):
+            indices = [indices]
+
+        def weighted_geometric_mean(scores, weights):
+            return gmean([score ** weight for score, weight in zip(scores, weights)])
+
+        # 计算相似度和综合得分
+        relevant_docs = []
+        for doc_index in indices[0]:
+            doc_id = doc_index // len(self.doc_splitter.split_documents([reference_docs[0]]))
+
+            # 使用1 - cosine距离来计算相似度
+            # similarity_llm = 1 - cosine(llm_answer_embedding, reference_embeddings[doc_index])
+            # similarity_question = 1 - cosine(question_embedding, reference_embeddings[doc_index])
+            # 综合得分：结合LLM回答相似度、问题相似度和原始问题得分
+            # combined_score = (similarity_llm + similarity_question + question_scores[doc_id]) / 3
+
+            similarity_llm = 1 - cosine(llm_answer_embedding, reference_embeddings[doc_index])
+            rerank_score = question_scores[doc_id]
+
+            # 设置rerank分数和LLM回答与文档余弦相似度的权重
+            weights = [0.5, 0.5]  # 分别对应similarity_llm和rerank_score
+            combined_score = weighted_geometric_mean([similarity_llm, rerank_score], weights)
+
+            relevant_docs.append({
+                'document': reference_docs[doc_id],
+                'segment': all_segments_docs[doc_index],
+                'similarity_llm': float(similarity_llm),
+                'question_score': question_scores[doc_id],
+                'combined_score': float(combined_score)
+            })
+
+        # 按综合得分降序排序
+        relevant_docs.sort(key=lambda x: x['combined_score'], reverse=True)
+
+        return relevant_docs
 
     async def get_knowledge_based_answer(self, model, max_token, kb_ids, query, retriever, custom_prompt, time_record,
                                          temperature, api_base, api_key, api_context_length, top_p, web_chunk_size,
@@ -427,7 +504,8 @@ class LocalDocQA:
                 # system_prompt = SYSTEM.format(today_date=today, current_time=now)
                 system_prompt = SYSTEM.replace("{{today_date}}", today).replace("{{current_time}}", now)
                 # prompt_template = PROMPT_TEMPLATE.format(system=system_prompt, instructions=INSTRUCTIONS)
-                prompt_template = PROMPT_TEMPLATE.replace("{{system}}", system_prompt).replace("{{instructions}}", INSTRUCTIONS)
+                prompt_template = PROMPT_TEMPLATE.replace("{{system}}", system_prompt).replace("{{instructions}}",
+                                                                                               INSTRUCTIONS)
         else:
             if custom_prompt:
                 # escaped_custom_prompt = custom_prompt.replace('{', '{{').replace('}', '}}')
@@ -442,6 +520,12 @@ class LocalDocQA:
                 prompt_template = SIMPLE_PROMPT_TEMPLATE.replace("{{today}}", today).replace("{{now}}", now).replace(
                     "{{custom_prompt}}", simple_custom_prompt)
 
+        source_documents_for_show = copy.deepcopy(source_documents)
+        total_images_number = 0
+        for doc in source_documents:
+            if 'images' in doc.metadata:
+                total_images_number += len(doc.metadata['images'])
+        debug_logger.info(f"total_images_number: {total_images_number}")
         source_documents, retrieval_documents = await self.prepare_source_documents(query, custom_llm, source_documents,
                                                                                     chat_history,
                                                                                     prompt_template,
@@ -478,7 +562,7 @@ class LocalDocQA:
                         "result": resp,
                         "condense_question": condense_question,
                         "retrieval_documents": retrieval_documents,
-                        "source_documents": source_documents}
+                        "source_documents": source_documents_for_show}
             time_record['prompt_tokens'] = prompt_tokens if prompt_tokens != 0 else est_prompt_tokens
             time_record['completion_tokens'] = completion_tokens if completion_tokens != 0 else num_tokens(acc_resp)
             time_record['total_tokens'] = total_tokens if total_tokens != 0 else time_record['prompt_tokens'] + \
@@ -491,9 +575,30 @@ class LocalDocQA:
                 last_return_time = time.perf_counter()
                 time_record['llm_completed'] = round(last_return_time - t1, 2) - time_record['llm_first_return']
                 history[-1][1] = acc_resp
+                if total_images_number != 0:  # 如果有图片，需要处理回答带图的情况
+                    relevant_docs = await self.calculate_relevance_optimized(
+                        question=query,
+                        llm_answer=acc_resp,
+                        reference_docs=source_documents,
+                        top_k=1
+                    )
+                    show_images = []
+                    for doc in relevant_docs:
+                        print(f"文档: {doc['document']}...")  # 只打印前50个字符
+                        print(f"最相关段落: {doc['segment']}...")  # 打印最相关段落的前100个字符
+                        print(f"与LLM回答的相似度: {doc['similarity_llm']:.4f}")
+                        print(f"原始问题相关性分数: {doc['question_score']:.4f}")
+                        print(f"综合得分: {doc['combined_score']:.4f}")
+                        print()
+                        for image in doc['document'].metadata.get('images', []):
+                            image_str = replace_image_references(image, doc['document'].metadata['file_id'])
+                            show_images.append(image_str)
+                    debug_logger.info(f"show_images: {show_images}")
+                    time_record['obtain_images'] = round(time.perf_counter() - last_return_time, 2)
+                    response['show_images'] = show_images
             yield response, history
 
-    def get_completed_document(self, file_id, limit=None):
+    def get_completed_document(self, file_id, limit=None, filter_figures=False):
         sorted_json_datas = self.milvus_summary.get_document_by_file_id(file_id)
         if limit:
             sorted_json_datas = sorted_json_datas[limit[0]: limit[1] + 1]
@@ -503,6 +608,8 @@ class LocalDocQA:
             doc = Document(page_content=doc_json['kwargs']['page_content'], metadata=doc_json['kwargs']['metadata'])
             # rerank之后删除headers，只保留文本内容，用于后续处理
             doc.page_content = re.sub(r'^\[headers]\(.*?\)\n', '', doc.page_content)
+            if filter_figures:
+                doc.page_content = re.sub(r'!\[figure]\(.*?\)', '', doc.page_content)  # 删除图片
             # if 'title_lst' in doc.metadata:
             #     title_lst = doc.metadata['title_lst']
             #     title_lst = [t for t in title_lst if t.replace('#', '') != '']
@@ -539,7 +646,8 @@ class LocalDocQA:
                 first_file_dict['file_id'] = file_id
                 first_file_dict['doc_ids'] = [int(doc.metadata['doc_id'].split('_')[-1])]
                 ori_first_docs.append(doc)
-                first_file_dict['score'] = max([doc.metadata['score'] for doc in source_documents if doc.metadata['file_id'] == file_id])
+                first_file_dict['score'] = max(
+                    [doc.metadata['score'] for doc in source_documents if doc.metadata['file_id'] == file_id])
             elif first_file_dict['file_id'] == file_id:
                 first_file_dict['doc_ids'].append(int(doc.metadata['doc_id'].split('_')[-1]))
                 ori_first_docs.append(doc)
@@ -547,7 +655,8 @@ class LocalDocQA:
                 second_file_dict['file_id'] = file_id
                 second_file_dict['doc_ids'] = [int(doc.metadata['doc_id'].split('_')[-1])]
                 ori_second_docs.append(doc)
-                second_file_dict['score'] = max([doc.metadata['score'] for doc in source_documents if doc.metadata['file_id'] == file_id])
+                second_file_dict['score'] = max(
+                    [doc.metadata['score'] for doc in source_documents if doc.metadata['file_id'] == file_id])
             elif second_file_dict['file_id'] == file_id:
                 second_file_dict['doc_ids'].append(int(doc.metadata['doc_id'].split('_')[-1]))
                 ori_second_docs.append(doc)
@@ -558,7 +667,7 @@ class LocalDocQA:
         ori_second_docs_tokens = custom_llm.num_tokens_from_docs(ori_second_docs)
 
         new_docs = []
-        first_completed_doc = self.get_completed_document(first_file_dict['file_id'])
+        first_completed_doc = self.get_completed_document(first_file_dict['file_id'], filter_figures=True)
         first_completed_doc.metadata['score'] = first_file_dict['score']
         first_doc_tokens = custom_llm.num_tokens_from_docs([first_completed_doc])
         if first_doc_tokens + ori_second_docs_tokens > limited_token_nums:
@@ -567,7 +676,8 @@ class LocalDocQA:
                 return new_docs
             # 获取first_file_dict['doc_ids']的最小值和最大值
             doc_limit = [min(first_file_dict['doc_ids']), max(first_file_dict['doc_ids'])]
-            first_completed_doc_limit = self.get_completed_document(first_file_dict['file_id'], doc_limit)
+            first_completed_doc_limit = self.get_completed_document(first_file_dict['file_id'], doc_limit,
+                                                                    filter_figures=True)
             first_completed_doc_limit.metadata['score'] = first_file_dict['score']
             first_doc_tokens = custom_llm.num_tokens_from_docs([first_completed_doc_limit])
             if first_doc_tokens + ori_second_docs_tokens > limited_token_nums:
@@ -579,10 +689,11 @@ class LocalDocQA:
                     f"first_limit_doc_tokens {doc_limit}: {first_doc_tokens} + ori_second_docs_tokens: {ori_second_docs_tokens} <= limited_token_nums: {limited_token_nums}")
                 new_docs.append(first_completed_doc_limit)
         else:
-            debug_logger.info(f"first_doc_tokens: {first_doc_tokens} + ori_second_docs_tokens: {ori_second_docs_tokens} <= limited_token_nums: {limited_token_nums}")
+            debug_logger.info(
+                f"first_doc_tokens: {first_doc_tokens} + ori_second_docs_tokens: {ori_second_docs_tokens} <= limited_token_nums: {limited_token_nums}")
             new_docs.append(first_completed_doc)
         if second_file_dict:
-            second_completed_doc = self.get_completed_document(second_file_dict['file_id'])
+            second_completed_doc = self.get_completed_document(second_file_dict['file_id'], filter_figures=True)
             second_completed_doc.metadata['score'] = second_file_dict['score']
             second_doc_tokens = custom_llm.num_tokens_from_docs([second_completed_doc])
             if first_doc_tokens + second_doc_tokens > limited_token_nums:
@@ -591,7 +702,8 @@ class LocalDocQA:
                     new_docs.extend(ori_second_docs)
                     return new_docs
                 doc_limit = [min(second_file_dict['doc_ids']), max(second_file_dict['doc_ids'])]
-                second_completed_doc_limit = self.get_completed_document(second_file_dict['file_id'], doc_limit)
+                second_completed_doc_limit = self.get_completed_document(second_file_dict['file_id'], doc_limit,
+                                                                         filter_figures=True)
                 second_completed_doc_limit.metadata['score'] = second_file_dict['score']
                 second_doc_tokens = custom_llm.num_tokens_from_docs([second_completed_doc_limit])
                 if first_doc_tokens + second_doc_tokens > limited_token_nums:
@@ -632,13 +744,16 @@ class LocalDocQA:
                 if doc_json is None:
                     new_docs.append(doc)
                     continue
-                table_doc = Document(page_content=doc_json['kwargs']['page_content'], metadata=doc_json['kwargs']['metadata'])
+                table_doc = Document(page_content=doc_json['kwargs']['page_content'],
+                                     metadata=doc_json['kwargs']['metadata'])
                 table_doc.metadata['score'] = doc.metadata['score']
                 table_doc_tokens = custom_llm.num_tokens_from_docs([table_doc])
-                current_table_docs = [doc for doc in source_documents if doc.metadata.get('table_doc_id', None) == table_doc_id]
+                current_table_docs = [doc for doc in source_documents if
+                                      doc.metadata.get('table_doc_id', None) == table_doc_id]
                 subtract_table_doc_tokens = custom_llm.num_tokens_from_docs(current_table_docs)
                 if current_doc_tokens + table_doc_tokens - subtract_table_doc_tokens > limited_token_nums:
-                    debug_logger.info(f"Add table_doc_tokens: {table_doc_tokens} > limited_token_nums: {limited_token_nums}")
+                    debug_logger.info(
+                        f"Add table_doc_tokens: {table_doc_tokens} > limited_token_nums: {limited_token_nums}")
                     new_docs.append(doc)
                     verified_table_ids.append(table_doc_id)
                     continue
@@ -648,30 +763,3 @@ class LocalDocQA:
                     existing_table_ids.append(table_doc_id)
                     current_doc_tokens = current_doc_tokens + table_doc_tokens - subtract_table_doc_tokens
         return new_docs
-
-    def replace_image_link(self, text):
-        # 正则表达式模式
-        pattern = r'!\[figure\]\((https://zhiyun-common\.nos-eastchina1\.126\.net/pdf_parse/online/[^?]+\.img)[^)]*\)'
-
-        def replace_function(match):
-            full_url = match.group(1)
-
-            # 提取 nos_key，处理两种不同的格式
-            if 'pdf_parse/online/' in full_url:
-                nos_key = re.search(r'pdf_parse/online/[^?]+\.img', full_url).group()
-            else:
-                nos_key = re.search(r'RAG_Parse-[^?]+\.png', full_url).group()
-
-            # 查询数据库获取 image_id
-            result = self.milvus_summary.get_image_id_by_nos_key(nos_key)
-
-            if result:
-                image_id = result[0]
-                debug_logger.info(f"replace nos_key to image_id: {image_id}")
-                return f'![figure]({image_id})'
-            else:
-                return match.group(0)  # 如果没找到，保持原样
-
-        # 使用 re.sub 和自定义替换函数
-        return re.sub(pattern, replace_function, text)
-

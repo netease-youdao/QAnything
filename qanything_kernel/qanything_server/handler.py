@@ -751,6 +751,7 @@ async def local_doc_chat(req: request):
                         "source_documents": source_documents,
                         "retrieval_documents": retrieval_documents,
                         "time_record": formatted_time_record,
+                        "show_images": resp.get('show_images', [])
                     }
                 else:
                     time_record['rollback_length'] = resp.get('rollback_length', 0)

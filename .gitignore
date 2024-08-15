@@ -6,6 +6,7 @@
 user.config
 venv
 custom_models
+file_images
 __pycache__
 QANY_DB
 qanything_logs

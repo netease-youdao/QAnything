@@ -191,22 +191,6 @@ class LocalFileForInsert:
             new_docs.extend(slices)
         return new_docs
 
-    def set_file_images(self, docs):
-        for doc in docs:
-            lines = doc.page_content.split('\n')
-            image_lines = [(idx, line) for idx, line in enumerate(lines) if line.startswith('![figure]')]
-            if not image_lines:
-                continue
-            # 把figure后面的nos_key提取出来
-            for idx, image_line in image_lines:
-                nos_key = image_line.split('](')[1].split(')')[0]
-                image_uuid = uuid.uuid4().hex
-                lines[idx] = f'![figure]({image_uuid})'
-                self.mysql_client.add_file_images(image_uuid, self.file_id, self.user_id, self.kb_id, nos_key)
-            doc.page_content = '\n'.join(lines)
-            doc.metadata['images_number'] = len(image_lines)
-            insert_logger.info(f"set_file_images: {doc.metadata['images_number']}")
-
     @get_time
     async def url_to_documents(self, file_path, file_name, file_url, dir_path="tmp_files", max_retries=3):
         full_dir_path = os.path.join(os.path.dirname(file_path), dir_path)
@@ -410,7 +394,8 @@ class LocalFileForInsert:
             new_doc.metadata["file_url"] = self.file_url
             new_doc.metadata["title_lst"] = doc.metadata.get("title_lst", [])
             new_doc.metadata["has_table"] = doc.metadata.get("has_table", False)
-            new_doc.metadata["images_number"] = doc.metadata.get("images_number", 0)
+            # 从文本中提取图片数量：![figure]（x-figure-x.jpg）
+            new_doc.metadata["images"] = re.findall(r'!\[figure]\(\d+-figure-\d+.jpg.*?\)', page_content)
             new_doc.metadata["page_id"] = doc.metadata.get("page_id", 0)
             kb_name = self.mysql_client.get_knowledge_base_name([self.kb_id])[0][2]
             metadata_infos = {"知识库名": kb_name, '文件名': self.file_name}
@@ -447,7 +432,7 @@ class LocalFileForInsert:
                     last_doc.metadata['title_lst'] += doc.metadata.get('title_lst', [])
                     last_doc.metadata['has_table'] = last_doc.metadata.get('has_table', False) or doc.metadata.get(
                         'has_table', False)
-                    last_doc.metadata['images_number'] += doc.metadata.get('images_number', 0)
+                    last_doc.metadata['images'] += doc.metadata.get('images', [])
                 else:
                     merged_docs.append(doc)
         insert_logger.info(f"after merge doc lens: {len(merged_docs)}")
