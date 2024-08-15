@@ -125,6 +125,9 @@ def combine_two_poly(polygons: np.ndarray, idxs: np.ndarray) -> np.ndarray:
 def match_ocr_cell(
     polygons: np.ndarray, ocr_res: List[Union[List[List[float]], str, str]]
 ) -> Dict[int, List]:
+    if polygons.size == 0:
+        return {}, {}, {}
+
     cell_box_map = {}
     head_box_map = {}
     tail_box_map = {}
@@ -279,13 +282,16 @@ def plot_html_wireless_table(logi_points, cell_box_map):
 
     new_table_dict = {}
     for k, v in table_dict.items():
-        if len(col_dict[k]) < max(col_dict[k]):
-            for i in range(max(col_dict[k])+1):
-                if i not in col_dict[k]: 
-                    v.insert(i, '<td></td>')
-            new_table_dict[k] = ["<tr>"] + v + ["</tr>"]
-        else:
-            new_table_dict[k] = ["<tr>"] + v + ["</tr>"]
+        try:
+            if len(col_dict[k]) < max(col_dict[k]):
+                for i in range(max(col_dict[k]) + 1):
+                    if i not in col_dict[k]:
+                        v.insert(i, '<td></td>')
+                new_table_dict[k] = ["<tr>"] + v + ["</tr>"]
+            else:
+                new_table_dict[k] = ["<tr>"] + v + ["</tr>"]
+        except Exception as e:
+            continue
 
     html_start = """<html><body><table><tbody>"""
     # html_start = """<html><style type="text/css">td {border-left: 1px solid;border-bottom:1px solid;}table, th {border-top:1px solid;font-size: 10px;border-collapse: collapse;border-right: 1px solid;}</style><body><table style="border-bottom:1px solid;border-top:1px solid;"><tbody>"""
