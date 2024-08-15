@@ -3,7 +3,7 @@ import re
 from collections import Counter
 from copy import deepcopy
 import numpy as np
-from qanything_kernel.utils.loader.pdf_to_markdown.core.vision import Recognizer
+from qanything_kernel.dependent_server.pdf_parser_server.pdf_to_markdown.core.vision import Recognizer
 from qanything_kernel.configs.model_config import PDF_MODEL_PATH
 from tqdm import tqdm
 

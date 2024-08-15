@@ -1,7 +1,7 @@
 import json
 import re
-from qanything_kernel.utils.loader.pdf_to_markdown.core.parser import PdfParser
-from qanything_kernel.utils.loader.pdf_to_markdown.convert2markdown import json2markdown
+from qanything_kernel.dependent_server.pdf_parser_server.pdf_to_markdown.core.parser import PdfParser
+from qanything_kernel.dependent_server.pdf_parser_server.pdf_to_markdown import json2markdown
 from qanything_kernel.utils.custom_log import debug_logger
 from timeit import default_timer as timer
 import numpy as np

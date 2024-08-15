@@ -1,5 +1,5 @@
 import re
-from qanything_kernel.utils.loader.pdf_to_markdown.core.layout import TableRecognizer
+from qanything_kernel.dependent_server.pdf_parser_server.pdf_to_markdown.core.layout import TableRecognizer
 from qanything_kernel.utils.custom_log import insert_logger
 import numpy as np
 import cv2

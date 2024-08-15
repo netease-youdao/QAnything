@@ -1,8 +1,7 @@
 import os
 from copy import deepcopy
 import onnxruntime as ort
-from qanything_kernel.utils.loader.pdf_to_markdown.core.vision.operators import *
-from qanything_kernel.utils.custom_log import insert_logger
+from qanything_kernel.dependent_server.pdf_parser_server.pdf_to_markdown.core.vision.operators import *
 
 
 class Recognizer(object):

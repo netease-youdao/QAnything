@@ -14,11 +14,11 @@ import numpy as np
 
 from PyPDF2 import PdfReader as pdf2_read
 
-from qanything_kernel.utils.loader.pdf_to_markdown.core.vision import Recognizer, LayoutRecognizer, \
+from qanything_kernel.dependent_server.pdf_parser_server.pdf_to_markdown.core.vision import Recognizer, LayoutRecognizer, \
     TableStructureRecognizer_LORE
-from qanything_kernel.utils.loader.pdf_to_markdown.core.nlp import huqie
+from qanything_kernel.dependent_server.pdf_parser_server.pdf_to_markdown.core.nlp import huqie
 # from qanything_kernel.dependent_server.ocr_server.ocr import OCRQAnything
-from qanything_kernel.configs.model_config import OCR_MODEL_PATH, PDF_MODEL_PATH
+from qanything_kernel.configs.model_config import PDF_MODEL_PATH
 from qanything_kernel.utils.custom_log import debug_logger
 from tqdm import tqdm
 from copy import deepcopy
