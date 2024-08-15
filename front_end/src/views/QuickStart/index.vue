@@ -338,11 +338,17 @@ onMounted(() => {
 
 // 切换到知识库或者bot，切换对话的在Sider里面
 onBeforeUnmount(() => {
+  saveFileToBeSendList();
+});
+
+const saveFileToBeSendList = () => {
   if (uploadFileListQuick.value.length) {
     addFileToBeSendList(chatId.value, [...uploadFileListQuick.value]);
     initUploadFileListQuick();
   }
-});
+};
+
+window.addEventListener('beforeunload', saveFileToBeSendList);
 
 // 聊天框keydown，不允许enter换行，alt/ctrl/shift/meta(Command或win) + enter可换行
 const textKeydownHandle = e => {
@@ -772,9 +778,15 @@ function getB64Type(suffix) {
 }
 
 onBeforeUnmount(() => {
+  kbIdUnmount();
+});
+
+const kbIdUnmount = () => {
   kbIdCopy.value = kbId.value;
   kbId.value = '';
-});
+};
+
+window.addEventListener('onbeforeunload', kbIdUnmount);
 </script>
 
 <style lang="scss" scoped>
