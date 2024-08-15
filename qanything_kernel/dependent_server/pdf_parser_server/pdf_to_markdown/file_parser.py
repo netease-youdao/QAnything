@@ -1,8 +1,8 @@
 import json
 import re
 
-from qanything_kernel.utils.loader.pdf_to_markdown.core.parser import PdfParser, PlainParser
-from qanything_kernel.utils.loader.pdf_to_markdown.convert2markdown import json2markdown
+from qanything_kernel.dependent_server.pdf_parser_server.pdf_to_markdown.core.parser import PdfParser, PlainParser
+from qanything_kernel.dependent_server.pdf_parser_server.pdf_to_markdown.convert2markdown import json2markdown
 import numpy as np
 import os
 

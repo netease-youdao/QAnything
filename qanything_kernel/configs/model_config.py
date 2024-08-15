@@ -17,7 +17,7 @@ print("IMAGES_ROOT_PATH:", IMAGES_ROOT_PATH)
 OCR_MODEL_PATH = os.path.join(root_path, "qanything_kernel", "dependent_server", "ocr_server", "ocr_models")
 RERANK_MODEL_PATH = os.path.join(root_path, "qanything_kernel", "dependent_server", "rerank_server", "rerank_models")
 EMBED_MODEL_PATH = os.path.join(root_path, "qanything_kernel", "dependent_server", "embed_server", "embed_models")
-PDF_MODEL_PATH = os.path.join(root_path, "qanything_kernel/utils/loader/pdf_to_markdown")
+PDF_MODEL_PATH = os.path.join(root_path, "qanything_kernel/dependent_server/pdf_parser_server/pdf_to_markdown")
 
 # LLM streaming reponse
 STREAMING = True
@@ -111,6 +111,8 @@ MYSQL_PASSWORD_LOCAL = '123456'
 MYSQL_DATABASE_LOCAL = 'qanything'
 
 LOCAL_OCR_SERVICE_URL = "localhost:7001"
+
+LOCAL_PDF_PARSER_SERVICE_URL = "localhost:9009"
 
 LOCAL_RERANK_SERVICE_URL = "localhost:8001"
 LOCAL_RERANK_MODEL_NAME = 'rerank'

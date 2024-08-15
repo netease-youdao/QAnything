@@ -5,7 +5,7 @@ from rapidocr_onnxruntime import RapidOCR
 import numpy as np
 import cv2
 from PIL import Image
-from qanything_kernel.utils.loader.pdf_to_markdown.filetype import html2markdown
+from qanything_kernel.dependent_server.pdf_parser_server.pdf_to_markdown.filetype import html2markdown
 
 
 def pptx_table_to_html(table):

@@ -2,7 +2,7 @@ from qanything_kernel.utils.general_utils import get_time, get_table_infos, num_
     html_to_markdown
 from typing import List, Optional
 from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, LOCAL_OCR_SERVICE_URL, IMAGES_ROOT_PATH, \
-    DEFAULT_CHILD_CHUNK_SIZE
+    DEFAULT_CHILD_CHUNK_SIZE, LOCAL_PDF_PARSER_SERVICE_URL
 from langchain.docstore.document import Document
 from qanything_kernel.utils.loader.my_recursive_url_loader import MyRecursiveUrlLoader
 from qanything_kernel.utils.custom_log import insert_logger
@@ -11,7 +11,6 @@ from langchain_community.document_loaders import UnstructuredWordDocumentLoader
 from langchain_community.document_loaders import UnstructuredEmailLoader
 from langchain_community.document_loaders import UnstructuredPowerPointLoader
 from qanything_kernel.utils.loader import UnstructuredPaddlePDFLoader
-from qanything_kernel.utils.loader.self_pdf_loader import PdfLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from qanything_kernel.utils.loader.csv_loader import CSVLoader
 from qanything_kernel.utils.loader.markdown_parser import convert_markdown_to_langchaindoc
@@ -319,8 +318,14 @@ class LocalFileForInsert:
             docs = self.load_text(self.file_path)
         elif self.file_path.lower().endswith(".pdf"):
             try:
-                loader = PdfLoader(filename=self.file_path, save_dir=os.path.dirname(self.file_path))
-                markdown_file = loader.load_to_markdown()
+                data = {
+                    'filename': self.file_path,
+                    'save_dir': os.path.dirname(self.file_path)
+                }
+                headers = {"content-type": "application/json"}
+                response = requests.post(f"http://{LOCAL_PDF_PARSER_SERVICE_URL}/pdfparser",json=data, headers=headers)
+                response_json = response.json()
+                markdown_file = response_json.get('markdown_file')
                 docs = convert_markdown_to_langchaindoc(markdown_file)
                 docs = self.markdown_process(docs)
                 images_dir = os.path.join(IMAGES_ROOT_PATH, self.file_id)
@@ -373,12 +378,6 @@ class LocalFileForInsert:
         else:
             raise TypeError("文件类型不支持，目前仅支持：[md,txt,pdf,jpg,png,jpeg,docx,xlsx,pptx,eml,csv]")
         self.inject_metadata(docs)
-
-    @staticmethod
-    def remove_substring_after_first(main_string, substring):
-        # 使用正则表达式, 删除第一个子串之外的所有子串：DEL "Hello" for "Hello Hello Hello World" -> "Hello World"
-        pattern = f'({re.escape(substring)}).*?(?={re.escape(substring)}|$)'
-        return re.sub(pattern, r'\1', main_string)
 
     def inject_metadata(self, docs: List[Document]):
         # 这里给每个docs片段的metadata里注入file_id

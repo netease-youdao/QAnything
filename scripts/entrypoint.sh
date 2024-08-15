@@ -46,8 +46,8 @@ if [ ! -L "/workspace/QAnything/qanything_kernel/dependent_server/ocr_server/ocr
   cd /workspace/QAnything/qanything_kernel/dependent_server/ocr_server && ln -s /root/models/ocr_models .  # 创建软连接
 fi
 
-if [ ! -L "/workspace/QAnything/qanything_kernel/utils/loader/pdf_to_markdown/checkpoints" ]; then  # 如果不存在软连接
-  cd /workspace/QAnything/qanything_kernel/utils/loader/pdf_to_markdown && ln -s /root/models/pdf_models checkpoints  # 创建软连接
+if [ ! -L "/workspace/QAnything/qanything_kernel/dependent_server/pdf_parser_server/pdf_to_markdown/checkpoints" ]; then  # 如果不存在软连接
+  cd /workspace/QAnything/qanything_kernel/dependent_server/pdf_parser_server/pdf_to_markdown/ && ln -s /root/models/pdf_models checkpoints  # 创建软连接
 fi
 
 if [ ! -L "/workspace/QAnything/nltk_data" ]; then  # 如果不存在软连接
@@ -72,13 +72,15 @@ else
 fi
 nohup python3 -u qanything_kernel/dependent_server/ocr_server/ocr_server.py > /workspace/QAnything/logs/debug_logs/ocr_server.log 2>&1 &
 PID3=$!
-nohup python3 -u qanything_kernel/dependent_server/insert_files_serve/insert_files_server.py --port 8110 --workers 1 > /workspace/QAnything/logs/debug_logs/insert_files_server.log 2>&1 &
+nohup python3 -u qanything_kernel/dependent_server/pdf_parser_server/pdf_parser_server.py > /workspace/QAnything/logs/debug_logs/pdf_parser_server.log 2>&1 &
 PID4=$!
-nohup python3 -u qanything_kernel/qanything_server/sanic_api.py --host $USER_IP --port 8777 --workers 1 > /workspace/QAnything/logs/debug_logs/main_server.log 2>&1 &
+nohup python3 -u qanything_kernel/dependent_server/insert_files_serve/insert_files_server.py --port 8110 --workers 1 > /workspace/QAnything/logs/debug_logs/insert_files_server.log 2>&1 &
 PID5=$!
+nohup python3 -u qanything_kernel/qanything_server/sanic_api.py --host $USER_IP --port 8777 --workers 1 > /workspace/QAnything/logs/debug_logs/main_server.log 2>&1 &
+PID6=$!
 # 生成close.sh脚本，写入kill命令
 echo "#!/bin/bash" > close.sh
-echo "kill $PID1 $PID2 $PID3 $PID4 $PID5" >> close.sh
+echo "kill $PID1 $PID2 $PID3 $PID4 $PID5 $PID6" >> close.sh
 
 # 给close.sh执行权限
 chmod +x close.sh
@@ -115,6 +117,6 @@ user_ip=$USER_IP
 echo "请在[http://$user_ip:8777/qanything/]下访问前端服务来进行问答，如果前端报错，请在浏览器按F12以获取更多报错信息"
 
 # Keep the container running
-while true; do
-    sleep 5
-done
+# while true; do
+#     sleep 5
+# done
