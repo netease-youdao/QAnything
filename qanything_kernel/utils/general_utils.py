@@ -36,7 +36,7 @@ __all__ = ['isURL', 'get_time', 'get_time_async', 'format_source_documents', 'sa
            'clear_string', 'simplify_filename', 'string_bytes_length', 'correct_kb_id', 'clear_kb_id',
            'clear_string_is_equal', 'export_qalogs_to_excel', 'deduplicate_documents', 'fast_estimate_file_char_count',
            'check_user_id_and_user_info', 'get_table_infos', 'format_time_record', 'get_time_range',
-           'html_to_markdown', "num_tokens_embed", "num_tokens_rerank", "get_all_subpages"]
+           'html_to_markdown', "num_tokens_embed", "num_tokens_rerank", "get_all_subpages", "replace_image_references"]
 
 
 def get_invalid_user_id_msg(user_id):
@@ -544,3 +544,11 @@ def fast_estimate_file_char_count(file_path):
     except Exception as e:
         print(f"Error processing file {file_path}: {str(e)}")
         return None
+
+
+def replace_image_references(text, file_id):
+    def replacement(match):
+        return f"![figure](assets/file_images/{file_id}/{match.group(1)})"
+
+    pattern = r"!\[figure\]\(([^)]+)\)"
+    return re.sub(pattern, replacement, text)

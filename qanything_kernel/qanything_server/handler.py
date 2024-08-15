@@ -905,7 +905,7 @@ async def get_doc_completed(req: request):
     limit = safe_get(req, 'page_limit', 10)  # 默认每页显示10条记录
 
     sorted_json_datas = local_doc_qa.milvus_summary.get_document_by_file_id(file_id)
-    completed_doc = local_doc_qa.get_completed_document(file_id)
+    # completed_doc = local_doc_qa.get_completed_document(file_id)
     # for json_data in sorted_json_datas:
     #     completed_text += json_data['kwargs']['page_content'] + '\n'
     #     if len(completed_text) > 10000:
@@ -921,9 +921,13 @@ async def get_doc_completed(req: request):
     end_index = start_index + limit
     # 截取当前页的数据
     current_page_chunks = chunks[start_index:end_index]
+    for chunk in current_page_chunks:
+        chunk['page_content'] = replace_image_references(chunk['page_content'], file_id)
 
-    return sanic_json({"code": 200, "msg": "success", "completed_text": completed_doc.page_content,
-                       "chunks": current_page_chunks, "page_id": page, "total_count": total_count})
+    # return sanic_json({"code": 200, "msg": "success", "completed_text": completed_doc.page_content,
+    #                    "chunks": current_page_chunks, "page_id": page, "total_count": total_count})
+
+    return sanic_json({"code": 200, "msg": "success", "chunks": current_page_chunks, "page_id": page, "total_count": total_count})
 
 
 @get_time_async

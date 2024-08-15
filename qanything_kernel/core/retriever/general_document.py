@@ -1,7 +1,7 @@
 from qanything_kernel.utils.general_utils import get_time, get_table_infos, num_tokens_embed, get_all_subpages, \
     html_to_markdown
 from typing import List, Optional
-from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, LOCAL_OCR_SERVICE_URL, DEFAULT_PARENT_CHUNK_SIZE, \
+from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, LOCAL_OCR_SERVICE_URL, IMAGES_ROOT_PATH, \
     DEFAULT_CHILD_CHUNK_SIZE
 from langchain.docstore.document import Document
 from qanything_kernel.utils.loader.my_recursive_url_loader import MyRecursiveUrlLoader
@@ -29,6 +29,7 @@ import newspaper
 import uuid
 import traceback
 import openpyxl
+import shutil
 
 
 def get_ocr_result_sync(image_data):
@@ -290,7 +291,19 @@ class LocalFileForInsert:
                 insert_logger.warning(f"TextLoader {encoding} error: {file_path}, {traceback.format_exc()}")
 
         insert_logger.error(f"Failed to load file with all attempted encodings: {file_path}")
-        raise UnicodeDecodeError(f"Unable to decode the file {file_path} with any of the encodings: {encodings}")
+        return []
+
+    @staticmethod
+    def copy_images(image_root_path, output_dir):
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        # 获取当前目录下所有jpg文件
+        images = [f for f in os.listdir(image_root_path) if f.endswith('.jpg')]
+        # 复制到指定目录
+        for image in images:
+            single_image_path = os.path.join(image_root_path, image)
+            insert_logger.info(f"copy image: {single_image_path} -> {output_dir}")
+            shutil.copy(single_image_path, output_dir)
 
     @get_time
     async def split_file_to_docs(self):
@@ -326,6 +339,8 @@ class LocalFileForInsert:
                 markdown_file = loader.load_to_markdown()
                 docs = convert_markdown_to_langchaindoc(markdown_file)
                 docs = self.markdown_process(docs)
+                images_dir = os.path.join(IMAGES_ROOT_PATH, self.file_id)
+                self.copy_images(os.path.dirname(markdown_file), images_dir)
             except Exception as e:
                 insert_logger.warning(
                     f'Error in Powerful PDF parsing: {traceback.format_exc()}, use fast PDF parser instead.')

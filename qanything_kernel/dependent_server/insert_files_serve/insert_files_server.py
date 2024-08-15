@@ -168,7 +168,7 @@ async def check_and_process(pool):
     es_client = StoreElasticSearchClient()
     retriever = ParentRetriever(milvus_kb, mysql_client, es_client)
     while True:
-        sleep_time = 10
+        sleep_time = 3
         # worker_id 根据时间变化，每x分钟变一次，获取当前时间的分钟数
         minutes = int(int(time.strftime("%M", time.localtime())) / INSERT_WORKERS)
         dynamic_worker_id = (worker_id + minutes) % INSERT_WORKERS
