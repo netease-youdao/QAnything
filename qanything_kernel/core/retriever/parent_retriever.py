@@ -71,7 +71,7 @@ class SelfParentRetriever(ParentDocumentRetriever):
             documents: List[Document],
             ids: Optional[List[str]] = None,
             add_to_docstore: bool = True,
-            backup_vectorstore: Optional[Milvus] = None,
+            parent_chunk_size: Optional[int] = None,
             es_store: Optional[ElasticsearchStore] = None,
             single_parent: bool = False,
     ) -> Tuple[int, Dict]:
@@ -82,7 +82,7 @@ class SelfParentRetriever(ParentDocumentRetriever):
             split_documents = []
             need_split_docs = []
             for doc in documents:
-                if doc.metadata['has_table']:
+                if doc.metadata['has_table'] or num_tokens_embed(doc.page_content) <= parent_chunk_size:
                     if need_split_docs:
                         split_documents.extend(self.parent_splitter.split_documents(need_split_docs))
                         need_split_docs = []
@@ -207,7 +207,7 @@ class ParentRetriever:
             )
         # insert_logger.info(f'insert documents: {len(docs)}')
         ids = None if not single_parent else [doc.metadata['doc_id'] for doc in docs]
-        return await self.retriever.aadd_documents(docs, backup_vectorstore=self.backup_vectorstore,
+        return await self.retriever.aadd_documents(docs, parent_chunk_size=parent_chunk_size,
                                                    es_store=self.es_store, ids=ids, single_parent=single_parent)
 
     async def get_retrieved_documents(self, query: str, partition_keys: List[str], time_record: dict, hybrid_search: bool):

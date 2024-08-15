@@ -1,5 +1,5 @@
 from qanything_kernel.utils.general_utils import get_time, get_table_infos, num_tokens_embed, get_all_subpages, \
-    html_to_markdown
+    html_to_markdown, clear_string
 from typing import List, Optional
 from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, LOCAL_OCR_SERVICE_URL, IMAGES_ROOT_PATH, \
     DEFAULT_CHILD_CHUNK_SIZE, LOCAL_PDF_PARSER_SERVICE_URL
@@ -132,7 +132,11 @@ class LocalFileForInsert:
                     # 重新开始一个新的chunk，包含标题和表头
                     table_content = '\n'.join(title_lst) + '\n' + table_head + '\n' + line
                 else:
-                    table_content += '\n' + line
+                    if line == table_head.split('\n')[0]:
+                        table_content += '\n\n' + line
+                        # print('match table_head:', table_content)
+                    else:
+                        table_content += '\n' + line
 
             # 保存最后一个chunk
             if table_content != '\n'.join(title_lst) + '\n' + table_head:
@@ -383,7 +387,9 @@ class LocalFileForInsert:
         # 这里给每个docs片段的metadata里注入file_id
         new_docs = []
         for doc in docs:
-            page_content = re.sub(r'[\n\t]+', '\n', doc.page_content).strip()
+            page_content = re.sub(r'\t+', ' ', doc.page_content)  # 将制表符替换为单个空格
+            page_content = re.sub(r'\n{3,}', '\n\n', page_content)  # 将三个或更多换行符替换为两个
+            page_content = page_content.strip()  # 去除首尾空白字符
             new_doc = Document(page_content=page_content)
             new_doc.metadata["user_id"] = self.user_id
             new_doc.metadata["kb_id"] = self.kb_id
@@ -414,17 +420,22 @@ class LocalFileForInsert:
         insert_logger.info(f"before merge doc lens: {len(new_docs)}")
         child_chunk_size = min(DEFAULT_CHILD_CHUNK_SIZE, int(self.chunk_size / 2))
         merged_docs = []
-        for doc in new_docs:
+        for doc_idx, doc in enumerate(new_docs):
             if not merged_docs:
                 merged_docs.append(doc)
             else:
                 last_doc = merged_docs[-1]
+                # insert_logger.info(f"doc_idx: {doc_idx}, doc_content: {doc.page_content[:100]}")
+                # insert_logger.info(f"last_doc_len: {num_tokens_embed(last_doc.page_content)}, doc_len: {num_tokens_embed(doc.page_content)}")
                 if num_tokens_embed(last_doc.page_content) + num_tokens_embed(doc.page_content) <= child_chunk_size or \
                         num_tokens_embed(doc.page_content) < child_chunk_size / 4:
-                    tmp_content = doc.page_content
-                    print(last_doc.metadata['title_lst'], tmp_content)
-                    for title in last_doc.metadata['title_lst']:
-                        tmp_content = tmp_content.replace(title, '')
+                    tmp_content_slices = doc.page_content.split('\n')
+                    # print(last_doc.metadata['title_lst'], tmp_content)
+                    tmp_content_slices_clear = [line for line in tmp_content_slices if clear_string(line) not in
+                                                [clear_string(t) for t in last_doc.metadata['title_lst']]]
+                    tmp_content = '\n'.join(tmp_content_slices_clear)
+                    # for title in last_doc.metadata['title_lst']:
+                    #     tmp_content = tmp_content.replace(title, '')
                     last_doc.page_content += '\n\n' + tmp_content
                     # for title in last_doc.metadata['title_lst']:
                     #     last_doc.page_content = self.remove_substring_after_first(last_doc.page_content, '![figure]')
