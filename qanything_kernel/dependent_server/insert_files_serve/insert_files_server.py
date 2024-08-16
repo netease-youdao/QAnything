@@ -60,8 +60,8 @@ db_config = {
 
 @get_time_async
 async def process_data(retriever, milvus_kb, mysql_client, file_info, time_record):
-    parse_timeout_seconds = 600
-    insert_timeout_seconds = 120
+    parse_timeout_seconds = 300
+    insert_timeout_seconds = 300
     content_length = -1
     status = 'green'
     process_start = time.perf_counter()
@@ -70,44 +70,31 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
     # 获取格式为'2021-08-01 00:00:00'的时间戳
     insert_timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
     mysql_client.update_knowlegde_base_latest_insert_time(kb_id, insert_timestamp)
-    # download_start = time.perf_counter()
     local_file = LocalFileForInsert(user_id, kb_id, file_id, file_location, file_name, file_url, chunk_size, mysql_client)
-    # download_end = time.perf_counter()
-    # time_record['download_nos_file'] = round(download_end - download_start, 2)
     msg = "success"
     chunks_number = 0
-    # progress = random.randint(1, 5)
-    # await post_data(user_id=user_id, charsize=file_size, docid=local_file.file_id,
-    #                 status="Processing", msg=str(progress))
     mysql_client.update_file_msg(file_id, f'Processing:{random.randint(1, 5)}%')
     # 这里是把文件做向量化，然后写入Milvus的逻辑
     start = time.perf_counter()
     try:
-        await asyncio.wait_for(local_file.split_file_to_docs(), timeout=parse_timeout_seconds)
+        await asyncio.wait_for(
+            asyncio.to_thread(local_file.split_file_to_docs),
+            timeout=parse_timeout_seconds
+        )
         content_length = sum([len(doc.page_content) for doc in local_file.docs])
         if content_length > 1000000:
             status = 'red'
             msg = f"{file_name} content_length too large, {content_length} >= MaxLength(1000000)"
-            # await post_data(user_id=user_id, charsize=-1, docid=local_file.file_id,
-            #                 status=status, msg=msg)
             return status, content_length, chunks_number, msg
         elif content_length == 0:
             status = 'red'
             msg = f"{file_name} content_length is 0, file content is empty or The URL exists anti-crawling or requires login."
-            # await post_data(user_id=user_id, charsize=-1, docid=local_file.file_id,
-            #                 status=status, msg=msg)
             return status, content_length, chunks_number, msg
-        # progress = random.randint(5, 15)
-        # await post_data(user_id=user_id, charsize=file_size, docid=local_file.file_id,
-        #                 status="Processing", msg=str(progress))
     except asyncio.TimeoutError:
-        # executor.shutdown(wait=False)
         local_file.event.set()
         insert_logger.error(f'Timeout: split_file_to_docs took longer than {parse_timeout_seconds} seconds')
         status = 'red'
         msg = f"split_file_to_docs timeout: {parse_timeout_seconds}s"
-        # await post_data(user_id=user_id, charsize=-1, docid=local_file.file_id, status=status,
-        #                 msg=msg)
         return status, content_length, chunks_number, msg
     except Exception as e:
         error_info = f'split_file_to_docs error: {traceback.format_exc()}'
@@ -115,8 +102,6 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
         insert_logger.error(msg)
         status = 'red'
         msg = f"split_file_to_docs error"
-        # await post_data(user_id=user_id, charsize=-1, docid=local_file.file_id, status=status,
-        #                 msg=msg)
         return status, content_length, chunks_number, msg
     end = time.perf_counter()
     time_record['parse_time'] = round(end - start, 2)
@@ -125,9 +110,10 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
 
     try:
         start = time.perf_counter()
-        chunks_number, insert_time_record = await retriever.insert_documents(local_file.docs, chunk_size)
+        chunks_number, insert_time_record = await asyncio.wait_for(
+            retriever.insert_documents(local_file.docs, chunk_size),
+            timeout=insert_timeout_seconds)
         insert_time = time.perf_counter()
-        # time_record['insert_time'] = round(insert_time - start, 2)
         time_record.update(insert_time_record)
         insert_logger.info(f'insert time: {insert_time - start}')
         mysql_client.update_chunks_number(local_file.file_id, chunks_number)
@@ -135,12 +121,9 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
         insert_logger.error(f'Timeout: milvus insert took longer than {insert_timeout_seconds} seconds')
         expr = f'file_id == \"{local_file.file_id}\"'
         milvus_kb.delete_expr(expr)
-        status = 'gray'
+        status = 'red'
         time_record['insert_timeout'] = True
         msg = f"milvus insert timeout: {insert_timeout_seconds}s"
-        # await post_data(user_id=user_id, charsize=-1, docid=local_file.file_id,
-        #                 status=status,
-        #                 msg=msg)
         return status, content_length, chunks_number, msg
     except Exception as e:
         error_info = f'milvus insert error: {traceback.format_exc()}'
@@ -148,12 +131,11 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
         status = 'red'
         time_record['insert_error'] = True
         msg = f"milvus insert error"
-        # await post_data(user_id=user_id, charsize=-1, docid=local_file.file_id, status=status, msg=msg)
         return status, content_length, chunks_number, msg
 
     mysql_client.update_file_msg(file_id, f'Processing:{random.randint(75, 100)}%')
-    # await post_data(user_id=user_id, charsize=content_length, docid=local_file.file_id, status=status, msg=msg, chunks_number=chunks_number)
     time_record['upload_total_time'] = round(time.perf_counter() - process_start, 2)
+    mysql_client.update_file_upload_infos(file_id, time_record)
     insert_logger.info(f'insert_files_to_milvus: {user_id}, {kb_id}, {file_id}, {file_name}, {status}')
     msg = json.dumps(time_record, ensure_ascii=False)
     return status, content_length, chunks_number, msg

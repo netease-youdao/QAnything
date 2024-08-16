@@ -277,6 +277,11 @@ class KnowledgeBaseManager:
         insert_logger.info(f"Update file msg: {file_id} {msg}")
         self.execute_query_(query, (msg, file_id), commit=True)
 
+    def update_file_upload_infos(self, file_id, upload_infos):
+        upload_infos = json.dumps(upload_infos, ensure_ascii=False)
+        query = "UPDATE File SET upload_infos = %s WHERE file_id = %s"
+        self.execute_query_(query, (upload_infos, file_id), commit=True)
+
     def add_file_images(self, image_id, file_id, user_id, kb_id, nos_key):
         nos_key = nos_key.split(' ')[0]
         query = "INSERT INTO FileImages (image_id, file_id, user_id, kb_id, nos_key) VALUES (%s, %s, %s, %s, %s)"
