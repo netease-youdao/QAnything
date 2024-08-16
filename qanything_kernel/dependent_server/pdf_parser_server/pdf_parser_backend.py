@@ -10,30 +10,27 @@ import time
 
 
 class PdfLoader(PdfParser):
-    def __init__(self, filename, binary=None, from_page=0, to_page=10000, zoomin=3, save_dir='results/', callback=None):
+    def __init__(self, binary=None, from_page=0, to_page=10000, zoomin=3, callback=None):
         super().__init__()
-        timestamp = int(time.time())
-        # save_dir = os.path.join(root_dir, filename.split('.')[0] + '_' + str(timestamp))
-        os.makedirs(save_dir, exist_ok=True)
-
-        self.json_dir = os.path.join(save_dir, os.path.basename(filename)[:-4]) + '.json'
-        basedir = os.path.dirname(self.json_dir)
-        basename = os.path.basename(self.json_dir)
-        self.markdown_path = os.path.join(basedir, basename.split('.')[0] + '_md')
-        os.makedirs(self.markdown_path, exist_ok=True)
-        self.markdown_dir = os.path.join(self.markdown_path, basename.split('.')[0] + '.md')
-
-        self.filename = filename
         self.binary = binary
         self.from_page = from_page
         self.to_page = to_page
         self.zoomin = zoomin
         self.callback = callback
+        
 
-    def load_to_markdown(self):
+    def load_to_markdown(self, filename, save_dir):
+        os.makedirs(save_dir, exist_ok=True)
+        json_dir = os.path.join(save_dir, os.path.basename(filename)[:-4]) + '.json'
+        basedir = os.path.dirname(json_dir)
+        basename = os.path.basename(json_dir)
+        markdown_path = os.path.join(basedir, basename.split('.')[0] + '_md')
+        os.makedirs(markdown_path, exist_ok=True)
+        markdown_dir = os.path.join(markdown_path, basename.split('.')[0] + '.md')
+
         ocr_start = timer()
         self.__images__(
-            self.filename if self.binary is None else self.binary,
+            filename if self.binary is None else self.binary,
             self.zoomin,
             self.from_page,
             self.to_page,
@@ -46,7 +43,7 @@ class PdfLoader(PdfParser):
         self._layouts_rec(self.zoomin)
 
         self._text_merge()
-        tbls = self._extract_table_figure(True, self.zoomin, True, True, self.markdown_path)
+        tbls = self._extract_table_figure(True, self.zoomin, True, True, markdown_path)
         try:
             page_width = max([b["x1"] for b in self.boxes if b['layout_type'] == 'text']) - min(
                 [b["x0"] for b in self.boxes if b['layout_type'] == 'text'])
@@ -111,9 +108,9 @@ class PdfLoader(PdfParser):
                 tbl_no = tbl[0][1]
                 new_sections[tbl_no] = {'text': tbl[0][0], 'type': tbl[0][1]}
 
-        json.dump(new_sections, open(self.json_dir, 'w'), ensure_ascii=False, indent=4)
-        markdown_str = json2markdown(self.json_dir, self.markdown_dir)
+        json.dump(new_sections, open(json_dir, 'w'), ensure_ascii=False, indent=4)
+        markdown_str = json2markdown(json_dir, markdown_dir)
         debug_logger.info("PDF Parse finished in %s seconds" % (timer() - start))
         # print(new_sections, flush=True)
-        return self.markdown_dir
+        return markdown_dir
 

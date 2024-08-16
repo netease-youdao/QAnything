@@ -16,17 +16,27 @@ from sanic import Sanic, response
 from sanic.request import Request
 from sanic.response import json
 from qanything_kernel.dependent_server.pdf_parser_server.pdf_parser_backend import PdfLoader
+import time
 
 
 app = Sanic("pdf_parser_server")
+
+
+@app.before_server_start
+async def init_pdf_parser(app, loop):
+    start = time.time()
+    app.ctx.pdf_parser = PdfLoader()
+    end = time.time()
+    print(f'init pdf_parser cost {end - start}s', flush=True)
+
 
 @app.post("/pdfparser")
 async def pdf_parser(request: Request):
     filename = safe_get(request, 'filename')
     save_dir = safe_get(request, 'save_dir')
 
-    loader = PdfLoader(filename=filename, save_dir=save_dir)
-    markdown_file = loader.load_to_markdown()
+    pdf_parser_: PdfLoader = request.app.ctx.pdf_parser
+    markdown_file = pdf_parser_.load_to_markdown(filename, save_dir)
 
     return json({"markdown_file": markdown_file})
 
