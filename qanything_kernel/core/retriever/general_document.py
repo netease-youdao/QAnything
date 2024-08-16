@@ -1,5 +1,5 @@
 from qanything_kernel.utils.general_utils import get_time, get_table_infos, num_tokens_embed, get_all_subpages, \
-    html_to_markdown, clear_string
+    html_to_markdown, clear_string, get_time_async
 from typing import List, Optional
 from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, LOCAL_OCR_SERVICE_URL, IMAGES_ROOT_PATH, \
     DEFAULT_CHILD_CHUNK_SIZE, LOCAL_PDF_PARSER_SERVICE_URL
@@ -29,17 +29,35 @@ import uuid
 import traceback
 import openpyxl
 import shutil
+import time
 
 
 def get_ocr_result_sync(image_data):
     try:
-        response = requests.post(f"http://{LOCAL_OCR_SERVICE_URL}/ocr", data=image_data)
+        response = requests.post(f"http://{LOCAL_OCR_SERVICE_URL}/ocr", data=image_data, timeout=120)
         response.raise_for_status()  # 如果请求返回了错误状态码，将会抛出异常
         ocr_res = response.text
         ocr_res = json.loads(ocr_res)
         return ocr_res['result']
     except Exception as e:
         insert_logger.warning(f"ocr error: {traceback.format_exc()}")
+        return None
+
+def get_pdf_result_sync(file_path):
+    try:
+        data = {
+            'filename': file_path,
+            'save_dir': os.path.dirname(file_path)
+        }
+        headers = {"content-type": "application/json"}
+        response = requests.post(f"http://{LOCAL_PDF_PARSER_SERVICE_URL}/pdfparser", json=data, headers=headers,
+                                 timeout=240)
+        response.raise_for_status()  # 如果请求返回了错误状态码，将会抛出异常
+        response_json = response.json()
+        markdown_file = response_json.get('markdown_file')
+        return markdown_file
+    except Exception as e:
+        insert_logger.warning(f"pdf parser error: {traceback.format_exc()}")
         return None
 
 
@@ -194,8 +212,8 @@ class LocalFileForInsert:
             new_docs.extend(slices)
         return new_docs
 
-    @get_time
-    async def url_to_documents(self, file_path, file_name, file_url, dir_path="tmp_files", max_retries=3):
+    @get_time_async
+    async def url_to_documents_async(self, file_path, file_name, file_url, dir_path="tmp_files", max_retries=3):
         full_dir_path = os.path.join(os.path.dirname(file_path), dir_path)
         if not os.path.exists(full_dir_path):
             os.makedirs(full_dir_path)
@@ -230,6 +248,44 @@ class LocalFileForInsert:
 
             if attempt < max_retries - 1:  # 如果不是最后一次尝试，等待30秒后重试
                 await asyncio.sleep(30)
+
+        return None
+
+    @get_time
+    def url_to_documents(self, file_path, file_name, file_url, dir_path="tmp_files", max_retries=3):
+        full_dir_path = os.path.join(os.path.dirname(file_path), dir_path)
+        if not os.path.exists(full_dir_path):
+            os.makedirs(full_dir_path)
+
+        for attempt in range(max_retries):
+            try:
+                headers = {
+                    "Accept": "application/json",
+                    "X-Return-Format": "markdown",
+                    "X-Timeout": "15",
+                }
+                response = requests.get(f"https://r.jina.ai/{file_url}", headers=headers, timeout=30)
+                jina_response = response.json()
+                if jina_response['code'] == 200:
+                    title = jina_response['data'].get('title', '')
+                    markdown_str = jina_response['data'].get('content', '')
+                    markdown_str = html_to_markdown(markdown_str)
+                    md_file_path = os.path.join(full_dir_path, "%s.md" % (file_name))
+                    with open(md_file_path, 'w', encoding='utf-8') as fout:
+                        fout.write(markdown_str)
+                    docs = convert_markdown_to_langchaindoc(md_file_path)
+                    if title:
+                        for doc in docs:
+                            doc.metadata['title'] = title
+                    docs = self.markdown_process(docs)
+                    return docs
+                else:
+                    insert_logger.warning(f"jina get url warning: {file_url}, {jina_response}")
+            except Exception as e:
+                insert_logger.warning(f"jina get url error: {file_url}, {traceback.format_exc()}")
+
+            if attempt < max_retries - 1:  # 如果不是最后一次尝试，等待30秒后重试
+                time.sleep(30)
 
         return None
 
@@ -293,13 +349,13 @@ class LocalFileForInsert:
             shutil.copy(single_image_path, output_dir)
 
     @get_time
-    async def split_file_to_docs(self):
+    def split_file_to_docs(self):
         insert_logger.info(f"start split file to docs, file_path: {self.file_name}")
         if self.faq_dict:
             docs = [Document(page_content=self.faq_dict['question'], metadata={"faq_dict": self.faq_dict})]
         elif self.file_url:
             insert_logger.info("load url: {}".format(self.file_url))
-            docs = await self.url_to_documents(self.file_path, self.file_name, self.file_url)
+            docs = self.url_to_documents(self.file_path, self.file_name, self.file_url)
             if docs is None:
                 try:
                     article = newspaper.article(self.file_url, timeout=120)
@@ -321,22 +377,15 @@ class LocalFileForInsert:
         elif self.file_path.lower().endswith(".txt"):
             docs = self.load_text(self.file_path)
         elif self.file_path.lower().endswith(".pdf"):
-            try:
-                data = {
-                    'filename': self.file_path,
-                    'save_dir': os.path.dirname(self.file_path)
-                }
-                headers = {"content-type": "application/json"}
-                response = requests.post(f"http://{LOCAL_PDF_PARSER_SERVICE_URL}/pdfparser",json=data, headers=headers)
-                response_json = response.json()
-                markdown_file = response_json.get('markdown_file')
+            markdown_file = get_pdf_result_sync(self.file_path)
+            if markdown_file:
                 docs = convert_markdown_to_langchaindoc(markdown_file)
                 docs = self.markdown_process(docs)
                 images_dir = os.path.join(IMAGES_ROOT_PATH, self.file_id)
                 self.copy_images(os.path.dirname(markdown_file), images_dir)
-            except Exception as e:
+            else:
                 insert_logger.warning(
-                    f'Error in Powerful PDF parsing: {traceback.format_exc()}, use fast PDF parser instead.')
+                    f'Error in Powerful PDF parsing, use fast PDF parser instead.')
                 loader = UnstructuredPaddlePDFLoader(self.file_path, strategy="fast")
                 docs = loader.load()
         elif self.file_path.lower().endswith(".jpg") or self.file_path.lower().endswith(
