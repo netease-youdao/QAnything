@@ -117,6 +117,6 @@ user_ip=$USER_IP
 echo "请在[http://$user_ip:8777/qanything/]下访问前端服务来进行问答，如果前端报错，请在浏览器按F12以获取更多报错信息"
 
 # Keep the container running
-# while true; do
-#     sleep 5
-# done
+while true; do
+    sleep 5
+done
