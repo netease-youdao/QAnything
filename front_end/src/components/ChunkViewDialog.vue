@@ -329,7 +329,6 @@ async function queryFile(file) {
   try {
     setSourceUrl(null);
     const res: any = await resultControl(await urlResquest.getFile({ file_id: file.file_id }));
-    console.log('queryFile', res);
     const suffix = file.file_name.split('.').pop();
     const b64Type = getB64Type(suffix);
     console.log('b64Type', b64Type);
@@ -338,7 +337,6 @@ async function queryFile(file) {
     if (suffix === 'txt' || suffix === 'md' || suffix === 'csv' || suffix === 'eml') {
       const decodedTxt = atob(res.file_base64);
       const correctStr = decodeURIComponent(escape(decodedTxt));
-      console.log('decodedTxt', correctStr);
       setTextContent(correctStr);
     }
   } catch (e) {

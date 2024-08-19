@@ -561,10 +561,10 @@ const send = async () => {
       signal: ctrl.signal,
       onopen(e: any) {
         console.log('open', e);
-        // 模型配置添加进去
-        chatInfoClass.addChatSetting(chatSettingFormActive.value);
         addAnswer(q);
         if (e.ok && e.headers.get('content-type') === 'text/event-stream') {
+          // 模型配置添加进去
+          chatInfoClass.addChatSetting(chatSettingFormActive.value);
           typewriter.start();
         }
       },
@@ -588,6 +588,13 @@ const send = async () => {
 
         if (res?.source_documents?.length) {
           QA_List.value[QA_List.value.length - 1].source = res?.source_documents;
+        }
+
+        if (res?.show_images.legnth) {
+          res?.show_images.legnth.map(item => {
+            typewriter.add(item);
+            console.log(QA_List.value.at(-1).answer);
+          });
         }
       },
       onclose(e: any) {
@@ -823,6 +830,7 @@ $avatar-width: 96px;
 
 .chat {
   margin: 0 auto;
+  width: 100%;
   max-width: 816px;
   //min-width: 500px;
   padding: 28px 0 0 0;
@@ -1192,6 +1200,7 @@ $avatar-width: 96px;
   position: absolute;
   bottom: 120px;
   right: 32px;
+  cursor: pointer;
 
   svg {
     width: 20px;
