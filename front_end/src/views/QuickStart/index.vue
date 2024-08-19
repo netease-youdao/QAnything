@@ -217,6 +217,7 @@
           </div>
         </div>
       </div>
+      <FileUploadDialog :dialog-type="1" />
     </div>
     <div class="scroll-btn-div">
       <img
@@ -229,7 +230,6 @@
   </div>
   <ChatSettingDialog ref="chatSettingForDialogRef" />
   <DefaultModal :content="content" :confirm-loading="confirmLoading" @ok="confirm" />
-  <FileUploadDialog :dialog-type="1" />
 </template>
 
 <script setup lang="ts">

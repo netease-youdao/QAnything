@@ -149,14 +149,12 @@ export const useOptiionList = defineStore(
         return item.status === 'gray' || item.status === 'yellow';
       });
       if (flag) {
-        console.log('有解析中的  5后再次请求');
         //有解析中的
         timer.value = setTimeout(() => {
           clearTimeout(timer.value);
           getDetails();
         }, 5000);
       } else {
-        console.log('当页全部解析完成');
         getProgressDetails();
       }
     };
@@ -193,7 +191,6 @@ export const useOptiionList = defineStore(
     const faqTimer = ref(null);
 
     const getFaqList = async () => {
-      console.log('getgfqaqw');
       try {
         if (faqTimer.value) {
           clearTimeout(faqTimer.value);

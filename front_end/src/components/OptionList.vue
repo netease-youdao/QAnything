@@ -339,6 +339,10 @@ const qaColumns = [
   },
 ];
 
+// onMounted(() => {
+//   console.log(props);
+// })
+
 // 知识库的分页参数
 const kbPaginationConfig = computed(() => ({
   current: kbPageNum.value, // 当前页码

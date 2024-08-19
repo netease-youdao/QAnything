@@ -21,7 +21,14 @@
       >
         <div class="container">
           <div class="file-preview">
-            <Source />
+            <div class="file-preview-content">
+              <Source :zoom-level="zoomLevel" />
+            </div>
+            <div class="scale">
+              <a-button shape="circle" :icon="h(PlusCircleOutlined)" @click="enlargeHandle" />
+              <span class="scale-text">{{ (zoomLevel * 100).toFixed(0) }}%</span>
+              <a-button shape="circle" :icon="h(MinusCircleOutlined)" @click="narrowHandle" />
+            </div>
           </div>
           <div class="chunk-table">
             <a-table
@@ -32,6 +39,7 @@
               :pagination="paginationConfig"
               :loading="loading"
               @change="changePage"
+              @resizeColumn="handleResizeColumn"
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.dataIndex === 'content'">
@@ -43,7 +51,7 @@
                     "
                   />
                 </template>
-                <template v-else-if="column.dataIndex === 'editContent'">
+                <template v-if="column.dataIndex === 'editContent'">
                   <div>
                     <a-textarea
                       v-if="editableData[record.key]"
@@ -98,6 +106,8 @@
 </template>
 
 <script setup lang="ts">
+import { h } from 'vue';
+import { PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons-vue';
 import { useChunkView } from '@/store/useChunkView';
 import { getLanguage } from '@/language';
 import { resultControl } from '@/utils/utils';
@@ -123,16 +133,21 @@ interface IProps {
 const props = defineProps<IProps>();
 const { kbId, fileId, fileName } = toRefs(props);
 
-const columns = [
+const columns = ref([
   {
     title: '编号',
+    key: 'id',
     dataIndex: 'id',
-    width: '10%',
+    width: 70,
   },
   {
     title: 'markdown预览',
     key: 'content',
     dataIndex: 'content',
+    resizable: true,
+    width: 300,
+    minWidth: 150,
+    maxWidth: 500,
   },
   {
     title: '分析结果',
@@ -141,10 +156,15 @@ const columns = [
   },
   {
     title: '操作',
+    key: 'operation',
     dataIndex: 'operation',
-    width: '100px',
+    width: 100,
   },
-];
+]);
+
+function handleResizeColumn(w, col) {
+  col.width = w;
+}
 
 interface IChunkData {
   // 切片唯一标识符 -> chunk_id
@@ -216,6 +236,15 @@ const cancel = (key: string) => {
 const handleCancel = () => {
   showChunkModel.value = false;
   !isShowLoading && (editableData.value = {});
+};
+
+// 预览的放大缩小
+const zoomLevel = ref(1);
+const enlargeHandle = () => {
+  zoomLevel.value += 0.1;
+};
+const narrowHandle = () => {
+  zoomLevel.value -= 0.1;
 };
 
 // 获取切片
@@ -340,18 +369,40 @@ function getB64Type(suffix) {
   height: calc(100% - 32px);
 
   .file-preview {
+    position: relative;
     width: 40%;
     height: 100%;
     padding: 0 10px;
     border: 1px #d9d9d9 solid;
     border-radius: 12px;
-    //overflow: auto;
+
+    .file-preview-content {
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+    }
+
+    .scale {
+      display: flex;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+
+      .scale-text {
+        width: 40px;
+        height: 32px;
+        padding: 0 5px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+    }
   }
 
   .chunk-table {
+    width: 60%;
     height: 100%;
     margin-left: 10px;
-    flex: 1;
 
     :deep(.ant-table-cell) {
       vertical-align: top;

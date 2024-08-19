@@ -1,5 +1,10 @@
 <template>
-  <div class="chat-source">
+  <div
+    class="chat-source"
+    :style="{
+      transform: `scale(${zoomLevel})`,
+    }"
+  >
     <PdfView v-if="sourceType === 'pdf' && sourceUrl" :source-url="sourceUrl" />
     <DocxView v-if="sourceType === 'docx' && sourceUrl" :source-url="sourceUrl" />
     <ExcelView v-if="sourceType === 'xlsx' && sourceUrl" :source-url="sourceUrl" />
@@ -8,7 +13,6 @@
       :src="sourceUrl"
       :preview-mask="false"
     />
-    <!--    <CsvView v-if="sourceType === 'csv' && sourceUrl" :source-url="sourceUrl" />-->
     <div
       v-if="sourceType === 'txt' || sourceType === 'csv' || sourceType === 'eml'"
       class="txt"
@@ -27,6 +31,16 @@ import DocxView from '@/components/Source/DocxView.vue';
 import HighLightMarkDown from '@/components/HighLightMarkDown.vue';
 import { useChatSource } from '@/store/useChatSource';
 
+const props = defineProps({
+  zoomLevel: {
+    type: Number,
+    require: false,
+    default: 1,
+  },
+});
+
+const { zoomLevel } = toRefs(props);
+
 const { sourceUrl, sourceType, textContent } = storeToRefs(useChatSource());
 let imageArr = ['jpg', 'png', 'jpeg'];
 </script>
@@ -39,6 +53,8 @@ let imageArr = ['jpg', 'png', 'jpeg'];
   overflow-y: scroll;
   border-radius: 8px;
   display: flex;
+  transition: transform 0.3s ease;
+  transform-origin: 0 0;
 
   &::-webkit-scrollbar {
     height: 14px !important;

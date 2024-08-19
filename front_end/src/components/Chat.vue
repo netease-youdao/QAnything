@@ -792,8 +792,6 @@ function clearHistory() {
   console.log('清空');
   // history.value = [];
 }
-
-scrollBottom();
 </script>
 
 <style lang="scss" scoped>
