@@ -547,8 +547,14 @@ def fast_estimate_file_char_count(file_path):
 
 
 def replace_image_references(text, file_id):
+    title = None
+    tmp_context = text.split('.jpg')[1]
+    if tmp_context != ')':
+        title = tmp_context[:-1].strip()
     def replacement(match):
-        return f"![figure](/qanything/assets/file_images/{file_id}/{match.group(1)})"
-
+        if title:
+            return f"### {title}\n![figure](/qanything/assets/file_images/{file_id}/{match.group(1)})"
+        else:
+            return f"![figure](/qanything/assets/file_images/{file_id}/{match.group(1)})"
     pattern = r"!\[figure\]\(([^)]+)\)"
     return re.sub(pattern, replacement, text)

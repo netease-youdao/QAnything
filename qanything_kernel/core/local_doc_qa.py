@@ -522,9 +522,10 @@ class LocalDocQA:
 
         source_documents_for_show = copy.deepcopy(source_documents)
         total_images_number = 0
-        for doc in source_documents:
+        for doc in source_documents_for_show:
             if 'images' in doc.metadata:
                 total_images_number += len(doc.metadata['images'])
+            doc.page_content = replace_image_references(doc.page_content, doc.metadata['file_id'])
         debug_logger.info(f"total_images_number: {total_images_number}")
         source_documents, retrieval_documents = await self.prepare_source_documents(query, custom_llm, source_documents,
                                                                                     chat_history,
