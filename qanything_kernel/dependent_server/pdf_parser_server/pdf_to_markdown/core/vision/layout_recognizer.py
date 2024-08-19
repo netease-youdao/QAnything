@@ -13,11 +13,11 @@ class LayoutRecognizer(Recognizer):
         'Caption', 'Header', 'Footer', 'BibInfo', 'Reference',
         'Content', 'Code', 'Other', 'Item', 'Author']
 
-    def __init__(self, domain):
+    def __init__(self, domain, device):
         model_dir = os.path.join(
                     PDF_MODEL_PATH,
                     "checkpoints/layout")
-        super().__init__(self.labels, domain, model_dir)
+        super().__init__(self.labels, domain, model_dir, device)
         self.garbage_layouts = ["footer", "header"]
 
     def __call__(self, image_list, ocr_res, scale_factor=3, thr=0.4, batch_size=16, drop=True):

@@ -14,12 +14,12 @@ cls = {0: 'wired', 1: 'wireless'}
 
 
 class TableCls():
-    def __init__(self, device='cpu'):
+    def __init__(self, device=torch.device("cpu")):
         sess_options = SessionOptions()
         sess_options.graph_optimization_level = GraphOptimizationLevel.ORT_ENABLE_ALL
         # 输出当前文件绝对路径
         cls_model = os.path.join(PDF_MODEL_PATH, 'checkpoints/table/table_cls_l.onnx')
-        if device == 'cuda':
+        if device == torch.device("cuda"):
             self.table_cls = InferenceSession(cls_model, sess_options, providers=['CUDAExecutionProvider'])
         else:
             self.table_cls = InferenceSession(cls_model, sess_options, providers=['CPUExecutionProvider'])

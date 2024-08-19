@@ -10,8 +10,8 @@ import time
 
 
 class PdfLoader(PdfParser):
-    def __init__(self, binary=None, from_page=0, to_page=10000, zoomin=3, callback=None):
-        super().__init__()
+    def __init__(self, device, binary=None, from_page=0, to_page=10000, zoomin=3, callback=None):
+        super().__init__(device=device)
         self.binary = binary
         self.from_page = from_page
         self.to_page = to_page

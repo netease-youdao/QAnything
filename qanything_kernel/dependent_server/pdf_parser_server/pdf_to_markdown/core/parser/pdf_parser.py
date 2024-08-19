@@ -27,16 +27,17 @@ logging.getLogger("pdfminer").setLevel(logging.WARNING)
 
 
 class HuParser:
-    def __init__(self, device='cpu'):
+    def __init__(self, device=torch.device("cpu")):
         # self.ocr = OCRQAnything(model_dir=OCR_MODEL_PATH, device=device)  # 省显存
         if hasattr(self, "model_speciess"):
-            self.layouter: LayoutRecognizer = LayoutRecognizer("layout." + self.model_speciess)
+            self.layouter: LayoutRecognizer = LayoutRecognizer("layout." + self.model_speciess, device)
         else:
-            self.layouter: LayoutRecognizer = LayoutRecognizer("layout")
+            self.layouter: LayoutRecognizer = LayoutRecognizer("layout", device)
         self.tbl_det = TableStructureRecognizer_LORE()
 
         self.updown_cnt_mdl = xgb.Booster()
-        if torch.cuda.is_available():
+        # if torch.cuda.is_available():
+        if device == torch.device("cuda"):
             self.updown_cnt_mdl.set_param({"device": "cuda"})
 
         model_dir = os.path.join(

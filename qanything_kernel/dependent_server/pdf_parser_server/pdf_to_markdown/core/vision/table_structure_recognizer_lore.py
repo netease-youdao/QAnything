@@ -4,10 +4,11 @@ from qanything_kernel.utils.custom_log import insert_logger
 import numpy as np
 import cv2
 import traceback
+import torch
 
 
 class TableStructureRecognizer_LORE():
-    def __init__(self, device='cpu'):
+    def __init__(self, device=torch.device("cpu")):
         self.table_rec = TableRecognizer(device=device)
 
     @staticmethod

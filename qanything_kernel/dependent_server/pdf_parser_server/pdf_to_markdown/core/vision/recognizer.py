@@ -1,11 +1,12 @@
 import os
 from copy import deepcopy
 import onnxruntime as ort
+import torch
 from qanything_kernel.dependent_server.pdf_parser_server.pdf_to_markdown.core.vision.operators import *
 
 
 class Recognizer(object):
-    def __init__(self, label_list, task_name, model_dir=None):
+    def __init__(self, label_list, task_name, model_dir=None, device=torch.device("cpu")):
         """
         If you have trouble downloading HuggingFace models, -_^ this might help!!
 
@@ -21,7 +22,8 @@ class Recognizer(object):
         if not os.path.exists(model_file_path):
             raise ValueError("not find model file path {}".format(
                 model_file_path))
-        if False and ort.get_device() == "GPU":
+        # if ort.get_device() == "GPU":
+        if device == torch.device("cuda"):
             options = ort.SessionOptions()
             options.enable_cpu_mem_arena = False
             self.ort_sess = ort.InferenceSession(model_file_path, options=options,
@@ -431,7 +433,7 @@ class Recognizer(object):
             for ins in inputs:
                 bb = self.postprocess(
                     self.ort_sess.run(None, {k: v for k, v in ins.items() if k in self.input_names})[0], ins, thr)
-                print(f"page_rec_res: {bb}")
+                # print(f"page_rec_res: {bb}")
                 res.append(bb)
 
         return res

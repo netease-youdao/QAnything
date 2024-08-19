@@ -196,10 +196,10 @@ def request_service(input_dict, url):
 
 
 class TableParser(object):
-    def __init__(self, device='cpu'):
+    def __init__(self, device=torch.device("cpu")):
         # self.wired_model_stage1 = torch.jit.load('layout/table_rec/checkpoint/wired_model.pt').to('cuda')
         self.device = device
-        if self.device == 'cuda':
+        if self.device == torch.device("cuda"):
             onnx_backend = 'CUDAExecutionProvider'
         else:
             onnx_backend = 'CPUExecutionProvider'

@@ -17,6 +17,17 @@ from sanic.request import Request
 from sanic.response import json
 from qanything_kernel.dependent_server.pdf_parser_server.pdf_parser_backend import PdfLoader
 import time
+import torch
+import argparse
+
+# 接收外部参数mode
+parser = argparse.ArgumentParser()
+# mode必须是local或online
+parser.add_argument('--use_gpu', action="store_true", help='use gpu or not')
+parser.add_argument('--workers', type=int, default=1, help='workers')
+# 检查是否是local或online，不是则报错
+args = parser.parse_args()
+print("args:", args)
 
 
 app = Sanic("pdf_parser_server")
@@ -25,7 +36,7 @@ app = Sanic("pdf_parser_server")
 @app.before_server_start
 async def init_pdf_parser(app, loop):
     start = time.time()
-    app.ctx.pdf_parser = PdfLoader()
+    app.ctx.pdf_parser = PdfLoader(device=torch.device('cpu') if not args.use_gpu else torch.device('cuda'))
     end = time.time()
     print(f'init pdf_parser cost {end - start}s', flush=True)
 
@@ -42,4 +53,4 @@ async def pdf_parser(request: Request):
 
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=9009, workers=1)
+    app.run(host="0.0.0.0", port=9009, workers=args.workers)
