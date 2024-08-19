@@ -164,7 +164,7 @@ async def check_and_process(pool):
                     file_to_update = await cur.fetchone()
 
                     if file_to_update:
-                        insert_logger.info(f"{worker_id}, file_to_update: {file_to_update}, mode: {args.mode}")
+                        insert_logger.info(f"{worker_id}, file_to_update: {file_to_update}")
                         # 把files_to_update按照timestamp排序, 获取时间最早的那条记录的id
                         # file_to_update = sorted(files_to_update, key=lambda x: x[1])[0]
 
