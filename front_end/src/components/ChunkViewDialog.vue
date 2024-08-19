@@ -19,15 +19,15 @@
         :footer="null"
         @cancel="handleCancel"
       >
+        <div class="scale">
+          <a-button shape="circle" :icon="h(PlusCircleOutlined)" @click="enlargeHandle" />
+          <span class="scale-text">{{ (zoomLevel * 100).toFixed(0) }}%</span>
+          <a-button shape="circle" :icon="h(MinusCircleOutlined)" @click="narrowHandle" />
+        </div>
         <div class="container">
           <div class="file-preview">
             <div class="file-preview-content">
               <Source :zoom-level="zoomLevel" />
-            </div>
-            <div class="scale">
-              <a-button shape="circle" :icon="h(PlusCircleOutlined)" @click="enlargeHandle" />
-              <span class="scale-text">{{ (zoomLevel * 100).toFixed(0) }}%</span>
-              <a-button shape="circle" :icon="h(MinusCircleOutlined)" @click="narrowHandle" />
             </div>
           </div>
           <div class="chunk-table">
@@ -244,6 +244,8 @@ const enlargeHandle = () => {
   zoomLevel.value += 0.1;
 };
 const narrowHandle = () => {
+  // 0.15方便精度计算
+  if (zoomLevel.value <= 0.15) return;
   zoomLevel.value -= 0.1;
 };
 
@@ -285,6 +287,7 @@ watch(
       getChunks(kbId.value, fileId.value);
       handleChatSource({ file_id: fileId.value, file_name: fileName.value });
     } else if (!showChunkModel.value) {
+      zoomLevel.value = 1;
       chunkData.value = [];
       chunkId.value = 1;
       paginationConfig.value.pageNum = 1;
@@ -364,6 +367,24 @@ function getB64Type(suffix) {
 </script>
 
 <style lang="scss" scoped>
+.scale {
+  display: flex;
+  position: absolute;
+  top: 10px;
+  left: 40%;
+  transform: translateX(-100%);
+  border-radius: 18px;
+
+  .scale-text {
+    width: 40px;
+    height: 32px;
+    padding: 0 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
 .container {
   display: flex;
   height: calc(100% - 32px);
@@ -380,22 +401,6 @@ function getB64Type(suffix) {
       width: 100%;
       height: 100%;
       overflow: auto;
-    }
-
-    .scale {
-      display: flex;
-      position: absolute;
-      top: 10px;
-      right: 10px;
-
-      .scale-text {
-        width: 40px;
-        height: 32px;
-        padding: 0 5px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
     }
   }
 

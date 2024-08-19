@@ -1,26 +1,49 @@
 <template>
-  <div
-    class="chat-source"
-    :style="{
-      transform: `scale(${zoomLevel})`,
-    }"
-  >
-    <PdfView v-if="sourceType === 'pdf' && sourceUrl" :source-url="sourceUrl" />
-    <DocxView v-if="sourceType === 'docx' && sourceUrl" :source-url="sourceUrl" />
-    <ExcelView v-if="sourceType === 'xlsx' && sourceUrl" :source-url="sourceUrl" />
+  <div class="chat-source">
+    <PdfView
+      v-if="sourceType === 'pdf' && sourceUrl"
+      :source-url="sourceUrl"
+      :style="{
+        transform: `scale(${zoomLevel})`,
+      }"
+    />
+    <DocxView
+      v-if="sourceType === 'docx' && sourceUrl"
+      :source-url="sourceUrl"
+      :style="{
+        transform: `scale(${zoomLevel})`,
+      }"
+    />
+    <ExcelView
+      v-if="sourceType === 'xlsx' && sourceUrl"
+      :source-url="sourceUrl"
+      :style="{
+        transform: `scale(${zoomLevel})`,
+      }"
+    />
     <a-image
       v-if="imageArr.includes(sourceType) && sourceUrl"
       :src="sourceUrl"
       :preview-mask="false"
+      :style="{
+        transform: `scale(${zoomLevel})`,
+      }"
     />
     <div
       v-if="sourceType === 'txt' || sourceType === 'csv' || sourceType === 'eml'"
       class="txt"
-      style="white-space: pre-wrap"
+      :style="{ whiteSpace: 'pre-wrap', transform: `scale(${zoomLevel})` }"
     >
       {{ textContent }}
     </div>
-    <HighLightMarkDown v-if="sourceType === 'md'" class="txt" :content="textContent" />
+    <HighLightMarkDown
+      v-if="sourceType === 'md'"
+      class="txt"
+      :content="textContent"
+      :style="{
+        transform: `scale(${zoomLevel})`,
+      }"
+    />
   </div>
 </template>
 
@@ -53,11 +76,14 @@ let imageArr = ['jpg', 'png', 'jpeg'];
   overflow-y: scroll;
   border-radius: 8px;
   display: flex;
-  transition: transform 0.3s ease;
-  transform-origin: 0 0;
+
+  & * {
+    transition: transform 0.3s ease;
+    transform-origin: 0 0;
+  }
 
   &::-webkit-scrollbar {
-    height: 14px !important;
+    height: 10px !important;
   }
 
   .txt {
