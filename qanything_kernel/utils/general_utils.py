@@ -548,6 +548,8 @@ def fast_estimate_file_char_count(file_path):
 
 def replace_image_references(text, file_id):
     title = None
+    if '.jpg' not in text:
+        return text
     tmp_context = text.split('.jpg')[1]
     if tmp_context != ')':
         title = tmp_context[:-1].strip()
