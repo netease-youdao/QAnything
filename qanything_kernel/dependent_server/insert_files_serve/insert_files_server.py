@@ -31,16 +31,11 @@ import json
 
 WorkerManager.THRESHOLD = 6000
 
-# 接收外部参数mode
 parser = argparse.ArgumentParser()
-# mode必须是local或online
-parser.add_argument('--mode', type=str, default='online', help='test, dev or online')
 parser.add_argument('--port', type=int, default=8110, help='port')
 parser.add_argument('--workers', type=int, default=4, help='workers')
 # 检查是否是local或online，不是则报错
 args = parser.parse_args()
-if args.mode not in ['test', 'dev', 'online']:
-    raise ValueError('mode must be test, dev or online')
 
 INSERT_WORKERS = args.workers
 insert_logger.info(f"INSERT_WORKERS: {INSERT_WORKERS}")
