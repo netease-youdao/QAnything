@@ -192,14 +192,16 @@ const totalSizeLimit = 125 * 1024 * 1024; // 文件总大小不超过125MB
 //上传前校验
 const beforeFileUpload = async (file, index) => {
   return new Promise((resolve, reject) => {
+    console.log(file);
     // 检查文件扩展名是否被接受
     if (file.name && acceptList.includes('.' + file.name.split('.').pop().toLowerCase())) {
       // 根据文件类型设置大小限制
       const limit = file.type.startsWith('image/') ? fileSizeLimit.image : fileSizeLimit.document;
+      const fileType = file.type.startsWith('image/') ? '图片' : '文档';
 
       // 检查文件大小是否超过限制
       if (file.size > limit) {
-        reject(`文件太大，不能超过 ${limit / 1024 / 1024} MB`);
+        reject(`单个${fileType}太大，不能超过 ${limit / 1024 / 1024} MB`);
         return;
       }
 
