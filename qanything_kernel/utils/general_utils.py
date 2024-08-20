@@ -565,7 +565,7 @@ def replace_image_references(text, file_id):
         if match_with_caption:
             image_path, caption = match_with_caption.groups()
             debug_logger.info(f"line: {line}, caption: {caption}")
-            result.append(f"### {caption}")
+            result.append(f"#### {caption}")
             result.append(f"![figure](/qanything/assets/file_images/{file_id}/{image_path})")
         elif match_without_caption:
             image_path = match_without_caption.group(1)
