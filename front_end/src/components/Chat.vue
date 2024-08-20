@@ -590,8 +590,8 @@ const send = async () => {
           QA_List.value[QA_List.value.length - 1].source = res?.source_documents;
         }
 
-        if (res?.show_images?.legnth) {
-          res?.show_images.legnth.map(item => {
+        if (res?.show_images?.length) {
+          res?.show_images.map(item => {
             typewriter.add(item);
             console.log(QA_List.value.at(-1).answer);
           });
