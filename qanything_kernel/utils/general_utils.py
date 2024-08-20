@@ -547,16 +547,30 @@ def fast_estimate_file_char_count(file_path):
 
 
 def replace_image_references(text, file_id):
-    title = None
-    if '.jpg' not in text:
-        return text
-    tmp_context = text.split('.jpg')[1]
-    if tmp_context != ')':
-        title = tmp_context[:-1].strip()
-    def replacement(match):
-        if title:
-            return f"### {title}\n![figure](/qanything/assets/file_images/{file_id}/{match.group(1)})"
+    lines = text.split('\n')
+    result = []
+
+    # 匹配带标题的图片引用
+    pattern_with_caption = r'^!\[figure\]\((.+\.jpg)\s+(.+)\)$'
+    # 匹配不带标题的图片引用
+    pattern_without_caption = r'^!\[figure\]\((.+\.jpg)\)$'
+
+    for line in lines:
+        if not line.startswith('![figure]'):
+            result.append(line)
+            continue
+
+        match_with_caption = re.match(pattern_with_caption, line)
+        match_without_caption = re.match(pattern_without_caption, line)
+        if match_with_caption:
+            image_path, caption = match_with_caption.groups()
+            debug_logger.info(f"line: {line}, caption: {caption}")
+            result.append(f"### {caption}")
+            result.append(f"![figure](/qanything/assets/file_images/{file_id}/{image_path})")
+        elif match_without_caption:
+            image_path = match_without_caption.group(1)
+            result.append(f"![figure](/qanything/assets/file_images/{file_id}/{image_path})")
         else:
-            return f"![figure](/qanything/assets/file_images/{file_id}/{match.group(1)})"
-    pattern = r"!\[figure\]\(([^)]+)\)"
-    return re.sub(pattern, replacement, text)
+            result.append(line)
+
+    return '\n'.join(result)

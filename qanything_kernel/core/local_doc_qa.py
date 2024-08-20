@@ -583,7 +583,7 @@ class LocalDocQA:
                         reference_docs=source_documents,
                         top_k=1
                     )
-                    show_images = []
+                    show_images = ["## 引用图文如下："]
                     for doc in relevant_docs:
                         print(f"文档: {doc['document']}...")  # 只打印前50个字符
                         print(f"最相关段落: {doc['segment']}...")  # 打印最相关段落的前100个字符
@@ -593,6 +593,7 @@ class LocalDocQA:
                         print()
                         for image in doc['document'].metadata.get('images', []):
                             image_str = replace_image_references(image, doc['document'].metadata['file_id'])
+                            debug_logger.info(f"image_str: {image} -> {image_str}")
                             show_images.append(image_str)
                     debug_logger.info(f"show_images: {show_images}")
                     time_record['obtain_images'] = round(time.perf_counter() - last_return_time, 2)
