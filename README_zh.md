@@ -135,6 +135,7 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 如果需要商用请遵循千问的license，具体请参阅：[通义千问](https://github.com/QwenLM/Qwen)
 
 # 🚀 最近更新 
+- ***2024-08-22***: **支持快速开始、前端配置参数、在线预览和编辑chunk块，优化项目架构和启动方式。** - 详见👉 [v2.0.0](https://github.com/netease-youdao/QAnything/releases/tag/v2.0.0)
 - ***2024-05-20***: **支持与OpenAI API兼容的其他LLM服务，并提供优化后的PDF解析器。** - 详见👉 [v1.4.1](https://github.com/netease-youdao/QAnything/releases/tag/v1.4.1)
 - ***2024-04-26***: **支持联网检索、FAQ、自定义BOT、文件溯源等。** - 详见👉 [v1.4.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.4.0-python)
 - ***2024-04-03***: **支持在纯Python环境中安装；支持混合检索。** - 详见👉 [v1.3.0](https://github.com/netease-youdao/QAnything/releases/tag/v1.3.0)
@@ -154,64 +155,78 @@ QAnything使用的检索组件[BCEmbedding](https://github.com/netease-youdao/BC
 
 # 开始
 ## 安装方式
-我们提供两种版本：
-python版本和docker版本
-python版本适合快速体验新功能，docker版本适合二次开发并用于实际生产环境，且新功能暂缓支持
+此次更新带来了使用门槛，资源占用，检索效果，问答效果，解析效果，前端效果，服务架构，使用方式等多方面的改进。同时合并了旧有的docker版和python版两个版本，改为全新的统一版本，采用docker compose单行命令一键启动。
 
-不同安装方式对应的特性如下表:
+### 最新特性表
 
-| 特性                                | python版本                                                                              | docker版本                                                                    | 说明                                                             |
-|-----------------------------------|---------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|----------------------------------------------------------------|
-| 详细安装文档                            | ✅ [详情](./QAnything使用说明.md)                                                            | ✅ [详情](./QAnything使用说明.md)                                                  |                                                                |
-| API支持                             | ✅ [详情](https://github.com/netease-youdao/QAnything/blob/qanything-python/docs/API.md) | ✅ [详情](https://github.com/netease-youdao/QAnything/blob/master/docs/API.md) |                                                                |
-| 生产环境（小型生产环境）                      | ❌                                                                                     | ✅                                                                           |                                                                |
-| 断网安装（私有化部署）                       | ❌                                                                                     | ✅ [详情](./QAnything使用说明.md)                                                  |                                                                |
-| 支持多并发                             | ❌                                                                                     | ✅ [详情](./QAnything使用说明.md)                                                  | python在使用API而非本地大模型时可手动设置：[详情](./QAnything使用说明.md)             |
-| 支持多卡推理                            | ❌                                                                                     | ✅ [详情](./QAnything使用说明.md)                                                  |                                                                |
-| 支持Mac（M系列芯片）                      | ✅                                                                                     | ❌                                                                           | 目前在mac下运行本地LLM依赖llamacpp，问答速度较慢（最长数分钟），建议使用Openai-API的方式调用模型服务 |
-| 支持Linux                           | ✅                                                                                     | ✅                                                                           | python版本Linux下默认使用onnxruntime-gpu，glibc<2.28时自动切换为onnxruntime  |
-| 支持windows WSL                     | ✅                                                                                     | ✅                                                                           |                                                                |
-| 支持纯CPU环境                          | ✅ [详情](./QAnything使用说明.md)                                                            | ❌                                                                           |                                                                |
-| 支持混合检索（BM25+embedding）            | ❌                                                                                     | ✅                                                                           |                                                                |
-| 支持联网检索（需外网VPN）                    | ✅ [详情](./QAnything使用说明.md)                                                            | ❌                                                                           | docker版本计划中                                                    |
-| 支持FAQ问答                           | ✅ [详情](./QAnything使用说明.md)                                                            | ❌                                                                           | docker版本计划中                                                    |
-| 支持自定义机器人（可绑定知识库，可分享）              | ✅ [详情](./QAnything使用说明.md)                                                            | ❌                                                                           | docker版本计划中                                                    |
-| 支持文件溯源（数据来源可直接点击打开）               | ✅ [详情](./QAnything使用说明.md)                                                            | ❌                                                                           | docker版本计划中                                                    |
-| 支持问答日志检索（暂只支持通过API调用）             | ✅ [详情](./QAnything使用说明.md)                                                            | ❌                                                                           | docker版本计划中                                                    |
-| 支持解析语音文件（依赖faster_whisper，解析速度慢）  | ✅                                                                                     | ❌                                                                           | docker版本计划中，上传文件时可支持mp3，wav格式文件                                |
-| 支持OpenCloudOS                     | ✅[详情](./QAnything使用说明.md)                                                             | ❌                                                                           |                                                                |
-| 支持与OpenAI接口兼容的其他开源大模型服务(包括ollama) | ✅ [详情](./QAnything使用说明.md)                                                            | ✅ [详情](./QAnything使用说明.md)                                                  | 需手动修改api_key，base_url，model等参数                                 |
-| pdf（包含表格）解析效果+++                  | ✅ [详情:需手动开启](./QAnything使用说明.md)                                                      | ❌                                                                           |                                                                |
-| 用户自定义配置（实验性：提升速度）                 | ✅ [详情:需手动开启](./QAnything使用说明.md)                                                      | ❌                                                                           |                                                                |
-| 其他文件类型解析效果+++                     | ❌                                                                                     | ❌                                                                           | 预计下个版本发布（15d）                                                  |
+| 特性                                | python （v1.4.1） | docker （v1.4.1） | 全新QAnything v2.0 | 说明                                                                       |
+| --------------------------------- | --------------- | --------------- | ---------------- | ------------------------------------------------------------------------ |
+| 详细安装文档                            | ✅               | ✅               | ✅                |                                                                          |
+| API支持                             | ✅               | ✅               | ✅                |                                                                          |
+| 生产环境（小型生产环境）                      | ❌               | ✅               | ✅                |                                                                          |
+| 断网安装（私有化部署）                       | ❌               | ✅               | ✅                |                                                                          |
+| 支持多并发                             | ❌               | ✅               | ✅                |                                                                          |
+| 支持多卡推理                            | ❌               | ✅               | ❌                | v2.0版本不再提供默认本地LLM，一律通过openai接口接入，用户可自行通过ollama等工具部署本地LLM                 |
+| 支持Mac（M系列芯片）                      | ✅               | ❌               | ✅                |                                                                          |
+| 支持Linux                           | ✅               | ✅               | ✅                | python版本Linux下默认使用onnxruntime-gpu for cuda12，glibc<2.28时自动切换为onnxruntime |
+| 支持windows （无需WSL）                 | ❌               | ❌               | ✅                | v1.4.1版本的python和docker均要求WSL环境，v2.0可直接在非WSL环境下启动                         |
+| 支持纯CPU环境                          | ✅               | ❌               | ✅                | v2.0版本Mac，Linux，Win统一不再使用GPU，完全迁移至CPU                                    |
+| 支持混合检索（BM25+embedding）            | ❌               | ✅               | ✅                |                                                                          |
+| 支持联网检索（需外网VPN）                    | ✅               | ❌               | ✅                |                                                                          |
+| 支持FAQ问答                           | ✅               | ❌               | ✅                |                                                                          |
+| 支持自定义机器人（可绑定知识库，可分享）              | ✅               | ❌               | ✅                |                                                                          |
+| 支持文件溯源（数据来源可直接点击打开）               | ✅               | ❌               | ✅                |                                                                          |
+| 支持问答日志检索（暂只支持通过API调用）             | ✅               | ❌               | ✅                |                                                                          |
+| 支持解析语音文件（依赖faster_whisper，解析速度慢）  | ✅               | ❌               | ❌                |                                                                          |
+| 支持OpenCloudOS                     | ✅               | ❌               | ✅                |                                                                          |
+| 支持与OpenAI接口兼容的其他开源大模型服务(包括ollama) | ✅               | ✅               | ✅                | v1.4.1版本需手动修改api_key，base_url，model等参数，v2.0版本均改为前端设置自动保存                 |
+| pdf（包含表格）解析效果+++                  | ✅               | ❌               | ✅                | v1.4.1版本需手动设置，v2.0无需手动设置，pdf解析效果和性能均有提升                                  |
+| 用户自定义embed，rerank配置（实验性：提升速度）     | ✅               | ❌               | ✅                | v1.4.1需手动开启，v2.0默认使用最佳配置                                                 |
+| 其他文件类型解析效果+++                     | ❌               | ❌               | ✅                | v2.0版本提升url，md，xlsx，docx等解析效果                                            |
+| 支持独立服务调用                          | ❌               | ❌               | ✅                | v2.0版本独立依赖服务，包括embed，rerank，ocr，pdf解析服务等，可独立调用（http）                     |
+| 支持快速开始模式                          | ❌               | ❌               | ✅                | 快速开始：无需创建知识库，支持文件即传即问，支持无文件问答                                            |
+| 支持仅检索模式                           | ❌               | ❌               | ✅                | 仅返回检索结果，不调用大模型进行问答                                                       |
+| 支持解析结果chunks内容可视化，手动编辑            | ❌               | ❌               | ✅                | v2.0版本支持手动编辑chunks内容，实时生效                                                |
+| pdf解析支持图片,支持回答带图                  | ❌               | ❌               | ✅                |                                                                          |
+
+## 新增细节优化：
+
+* 支持前端配置API_BASE，API_KEY，文本分片大小，输出token数量，上下文消息数量等参数
+* 优化Bot角色设定的指令遵循效果，每个Bot可单独配置模型参数
+* 支持创建多个对话窗口，同时保存多份历史问答记录
+* 支持问答内容保存成图片
+* 优化上传文件逻辑，解析文件与问答请求独立，上传文件不再影响问答
+* 优化镜像大小，旧版本镜像压缩后大小为18.94GB->新版镜像压缩后大小为4.88GB，降为原有的1/4，提供完整Dockerfile
+* 检索优化，chunks新增片段融合与排序，聚合单文档或双文档
+* 检索阶段和问答阶段均嵌入metadata信息，提升检索和问答效果
+  
+  ### 各阶段数据展示：
+* 知识库所有文件上传进度展示
+* 知识库单个文件上传进度展示，上传各阶段耗时
+* 问答信息统计，包含问答各阶段耗时，tokens消耗，模型信息等
+* 用户信息统计，包含上传文件总数量，总耗时，问答历史记录等
+  
+  ### 问题修复
+* xlsx表格支持多sheet解析
+* 优化PDF表格漏识别问题
+* 修复DOCX文件解析出错问题
+* 优化FAQ匹配逻辑
+* 支持非utf-8编码的txt文件                                          |
 
 
-## 纯python环境安装
-
-不想用docker环境安装的，我们提供了[纯Python版本安装教程](https://github.com/netease-youdao/QAnything/blob/qanything-python/README_zh.md)，纯python环境的安装仅作为demo体验，不建议生产环境部署。
-
-- 支持纯CPU安装运行(检索部分跑在CPU上，大模型调用在线API)
-- 支持Mac安装运行
 
 
 ## docker环境安装
 ### 必要条件
-#### **For Linux**
 |**System**| **Required item** | **Minimum Requirement** | **Note**                                                           |
 |---------------------------|-------------------|-------------------------|--------------------------------------------------------------------|
-|Linux | NVIDIA GPU Memory | >= 4GB (use OpenAI API)  | 最低: GTX 1050Ti（use OpenAI API） <br> 推荐: RTX 3090                   |
-|      | NVIDIA Driver Version | >= 525.105.17           |                                                                    |
+|      | RAM Memory | >= 20GB (use OpenAI API)                             
 |      |  Docker version    | >= 20.10.5              | [Docker install](https://docs.docker.com/engine/install/)          |
-|      | docker compose  version | >= 2.23.3               | [docker compose install](https://docs.docker.com/compose/install/) |
+|  Linux/Mac     | docker compose  version | >= 2.23.3               | [docker compose install](https://docs.docker.com/compose/install/) |
+|   Windows   |  Docker Desktop           | >=  4.26.1（131620）     | [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)                                    |
 |      | git-lfs   |                         | [git-lfs install](https://git-lfs.com/)                            |
 
-#### **For Windows with WSL Ubuntu子系统**
-| **System**                 | **Required item**        | **Minimum Requirement**   | **Note**                                                                                                                  |
-|----------------------------|--------------------------|---------------------------|---------------------------------------------------------------------------------------------------------------------------|
-| Windows with WSL Ubuntu子系统 | NVIDIA GPU Memory | >= 4GB (use OpenAI API)                | 最低: GTX 1050Ti（use OpenAI API） <br> 推荐: RTX 3090                                                                          |                                                                |
-|                            | GEFORCE EXPERIENCE    | >= 546.33 | [GEFORCE EXPERIENCE download](https://us.download.nvidia.com/GFE/GFEClient/3.27.0.120/GeForce_Experience_v3.27.0.120.exe) |                                                                                               |
-|                            |  Docker Desktop           | >=  4.26.1（131620）     | [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)                                    |
-|                            | git-lfs   |                  | [git-lfs install](https://git-lfs.com/)                                                                                   |
+
 
 
 ### [docker版本详细安装步骤，请点击此处](https://github.com/netease-youdao/QAnything/blob/master/docs/docker%E7%89%88%E6%9C%AC%E5%AE%89%E8%A3%85%E6%94%BB%E7%95%A5.md)
@@ -223,77 +238,19 @@ git clone https://github.com/netease-youdao/QAnything.git
 ```
 ### step2: 进入项目根目录执行启动脚本
 * [📖 QAnything_Startup_Usage](docs/QAnything_Startup_Usage_README.md)
-* 执行 ```bash ./run.sh -h``` 获取详细的LLM服务配置方法 
+* 执行 ```docker compose启动命令``` 获取详细的LLM服务配置方法 
   
 ```shell
 cd QAnything
-bash run.sh  # 默认在0号GPU上启动
+# 在 Linux 上启动
+docker compose -f docker-compose-linux.yaml up
+# 在 Mac 上启动
+docker compose -f docker-compose-mac.yaml up
+# 在 Windows 上启动
+docker compose -f docker-compose-win.yaml up
 ```
 
-<details>
-<summary>（注意）如果自动下载失败，您可以从以下三个地址之一手动下载模型。</summary>
-
-modelscope: https://modelscope.cn/models/netease-youdao/QAnything
-
-wisemodel: https://wisemodel.cn/models/Netease_Youdao/qanything
-
-huggingfase: https://huggingface.co/netease-youdao/QAnything
-
-</details>
-
-<details>
-<summary>（可选）指定单GPU启动</summary>
-
-```shell
-cd QAnything
-bash ./run.sh -c local -i 0 -b default # 指定0号GPU启动 GPU编号从0开始 windows机器一般只有一张卡，所以只能指定0号GPU
-```
-</details>
-
-<details>
-<summary>（可选）指定单GPU启动 - 推荐 Windows10/Windows11 WSL2 用户使用此方式运行 QAnything</summary>
-
-```shell
-# 注意: Windows系统请先进入**WSL2**环境
-# Step 1. 下载开源 LLM 模型 (e.g., Qwen-7B-QAnything) 并保存在路径 "/path/to/QAnything/assets/custom_models"
-# (可选) 从 ModelScope 下载 Qwen-7B-QAnything: https://www.modelscope.cn/models/netease-youdao/Qwen-7B-QAnything
-# (可选) 从 Huggingface 下载 Qwen-7B-QAnything: https://huggingface.co/netease-youdao/Qwen-7B-QAnything
-cd QAnything/assets/custom_models
-git clone https://huggingface.co/netease-youdao/Qwen-7B-QAnything
-
-# Step 2. 执行启动命令，其中"-b hf"表示指定使用 Huggingface transformers 后端运行 LLM.
-cd ../../
-bash ./run.sh -c local -i 0 -b hf -m Qwen-7B-QAnything -t qwen-7b-qanything
-```
-</details>
-
-<details>
-<summary>（可选）指定单GPU启动 - 推荐 GPU Compute Capability >= 8.6 && VRAM >= 24GB 使用此方式运行 QAnything</summary>
-
-```shell
-# 查看 GPU 算力 GPU Compute Capability: https://developer.nvidia.com/cuda-gpus
-# Step 1. 下载开源 LLM 模型 (e.g., Qwen-7B-QAnything) 并保存在路径 "/path/to/QAnything/assets/custom_models"
-# (可选) 从 ModelScope 下载 Qwen-7B-QAnything: https://www.modelscope.cn/models/netease-youdao/Qwen-7B-QAnything
-# (可选) 从 Huggingface 下载 Qwen-7B-QAnything: https://huggingface.co/netease-youdao/Qwen-7B-QAnything
-cd QAnything/assets/custom_models
-git clone https://huggingface.co/netease-youdao/Qwen-7B-QAnything
-
-# Step 2. 执行启动命令，其中"-b vllm"表示指定使用 vllm 后端运行 LLM.
-cd ../../
-bash ./run.sh -c local -i 0 -b vllm -m Qwen-7B-QAnything -t qwen-7b-qanything -p 1 -r 0.85
-```
-</details>
-
-<details>
-<summary>（可选）指定多GPU启动</summary>
-
-```shell
-cd QAnything
-bash ./run.sh -c local -i 0,1 -b default  # 指定0,1号GPU启动，请确认有多张GPU可用，最多支持两张卡启动
-```
-</details>
-
-
+（注意）如果启动失败，可以尝试将 `docker compose`改为 `docker-compose`。
 
 
 ### step3: 开始体验
@@ -312,43 +269,37 @@ bash ./run.sh -c local -i 0,1 -b default  # 指定0,1号GPU启动，请确认有
 如果想要查看相关日志，请查看`QAnything/logs/debug_logs`目录下的日志文件。
 - **debug.log**
   - 用户请求处理日志
-- **sanic_api.log**
+- **main_server.log**
   - 后端服务运行日志
-- **llm_embed_rerank_tritonserver.log**（单卡部署）
-  - LLM embedding和rerank tritonserver服务启动日志
-- **llm_tritonserver.log**（多卡部署）
-  - LLM tritonserver服务启动日志
-- **embed_rerank_tritonserver.log**（多卡部署或使用openai接口）
-  - embedding和rerank tritonserver服务启动日志
-- rerank_server.log
+- **rerank_server.log**
   - rerank服务运行日志
-- ocr_server.log
+- **ocr_server.log**
   - OCR服务运行日志
-- npm_server.log
+- **embedding_server.log**
   - 前端服务运行日志
-- llm_server_entrypoint.log
-  - LLM中转服务运行日志
-- fastchat_logs/*.log
-  - FastChat服务运行日志
+- **insert_files_server.log**
+  - 文件上传服务运行日志
+- **pdf_parser_server.log**
+  - pdf解析服务运行日志
 
 ### 关闭服务
 ```shell
 bash close.sh
 ```
 
-## 断网安装
-### windows断网安装
-如果您想要断网安装QAnything，您可以使用以下命令启动服务。
+## 离线使用
+如果您想要离线使用QAnything，需要在断网机器提前部署本地的ollama模型，可以使用以下命令启动服务。
+### windows离线使用
 ```shell 
 # 先在联网机器上下载docker镜像
 docker pull quay.io/coreos/etcd:v3.5.5
 docker pull minio/minio:RELEASE.2023-03-20T20-16-18Z
-docker pull milvusdb/milvus:v2.3.4
-docker pull mysql:latest
-docker pull freeren/qanything-win:v1.2.x  # 从 [https://github.com/netease-youdao/QAnything/blob/master/docker-compose-windows.yaml#L103] 中获取最新镜像版本号。
+docker pull milvusdb/milvus:v2.4.8
+docker pull mysql:8.4
+docker pull xixihahaliu01/qanything-win:v1.5.1  # 从 [https://github.com/netease-youdao/QAnything/blob/master/docker-compose-windows.yaml#L103] 中获取最新镜像版本号。
 
 # 打包镜像
-docker save quay.io/coreos/etcd:v3.5.5 minio/minio:RELEASE.2023-03-20T20-16-18Z milvusdb/milvus:v2.3.4 mysql:latest freeren/qanything-win:v1.2.1 -o qanything_offline.tar
+docker save quay.io/coreos/etcd:v3.5.5 minio/minio:RELEASE.2023-03-20T20-16-18Z milvusdb/milvus:v2.4.8 mysql:8.4 xixihahaliu01/qanything-win:v1.5.1 -o qanything_offline.tar
 
 # 下载QAnything代码
 wget https://github.com/netease-youdao/QAnything/archive/refs/heads/master.zip
@@ -365,18 +316,17 @@ cd QAnything-master
 bash run.sh
 ```
 
-### Linux断网安装
-如果您想要断网安装QAnything，您可以使用以下命令启动服务。
+### Linux离线使用
 ```shell 
 # 先在联网机器上下载docker镜像
 docker pull quay.io/coreos/etcd:v3.5.5
 docker pull minio/minio:RELEASE.2023-03-20T20-16-18Z
-docker pull milvusdb/milvus:v2.3.4
-docker pull mysql:latest
-docker pull freeren/qanything:v1.2.x  # 从 [https://github.com/netease-youdao/qanything/blob/master/docker-compose-linux.yaml#L104] 中获取最新镜像版本号。
+docker pull milvusdb/milvus:v2.4.8
+docker pull mysql:8.4
+docker pull xixihahaliu01/qanything-linux:v1.5.1  # 从 [https://github.com/netease-youdao/qanything/blob/master/docker-compose-linux.yaml#L104] 中获取最新镜像版本号。
 
 # 打包镜像
-docker save quay.io/coreos/etcd:v3.5.5 minio/minio:RELEASE.2023-03-20T20-16-18Z milvusdb/milvus:v2.3.4 mysql:latest freeren/qanything:v1.2.1 -o qanything_offline.tar
+docker save quay.io/coreos/etcd:v3.5.5 minio/minio:RELEASE.2023-03-20T20-16-18Z milvusdb/milvus:v2.4.8 mysql:8.4 xixihahaliu01/qanything-linux:v1.5.1 -o qanything_offline.tar
 
 # 下载QAnything代码
 wget https://github.com/netease-youdao/QAnything/archive/refs/heads/master.zip
