@@ -23,6 +23,7 @@
     "ant-design-vue": "4.x",
     "axios": "^1.6.1",
     "crypto-js": "^4.1.1",
+    "echarts": "^5.5.0",
     "highlight.js": "^11.10.0",
     "html2canvas": "^1.4.1",
     "js-cookie": "^3.0.1",

@@ -11,6 +11,7 @@
     <div class="logo">
       <img
         src="../assets/login/logo-small.png"
+        :style="{ marginTop: navIndex === -1 ? '' : '14px' }"
         alt="logo"
         @click="goDetail('https://ai.youdao.com/')"
       />
@@ -54,7 +55,7 @@
         </a-popover>
       </li>
     </ul>
-    <div class="user">
+    <div class="user" @click="goStatistics">
       <img src="../assets/home/avatar.png" alt="头像" />
     </div>
   </div>
@@ -121,6 +122,11 @@ const iconMap = new Map([
 ]);
 const getIcon = itemValue => {
   return iconMap.get(itemValue);
+};
+
+const goStatistics = () => {
+  setNavIndex(-1);
+  changePage('/statistics');
 };
 </script>
 <style lang="scss" scoped>
@@ -209,7 +215,7 @@ const getIcon = itemValue => {
     img {
       width: 146px;
       height: 28px;
-      margin-top: 14px;
+      //margin-top: 14px;
     }
   }
 
@@ -257,6 +263,7 @@ const getIcon = itemValue => {
       align-items: center;
 
       span {
+        font-size: 14px;
         white-space: nowrap;
       }
     }

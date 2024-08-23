@@ -255,7 +255,7 @@ import { pageStatus } from '@/utils/enum';
 import OptionList from '@/components/OptionList.vue';
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
 import { useKnowledgeModal } from '@/store/useKnowledgeModal';
-import FileBlock from '@/views/QuickStart/children/FileBlock.vue';
+import FileBlock from '@/views/QuickStart/components/FileBlock.vue';
 import { useUploadFiles } from '@/store/useUploadFiles';
 import { useChatSetting } from '@/store/useChatSetting';
 import FileUploadDialog from '@/components/FileUploadDialog.vue';

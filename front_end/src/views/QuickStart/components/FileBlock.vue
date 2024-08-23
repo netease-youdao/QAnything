@@ -3,7 +3,7 @@
  * @Date: 2024-07-24 14:43:45
  * @LastEditors: Ianarua 306781523@qq.com
  * @LastEditTime: 2024-08-05 14:40:16
- * @FilePath: front_end/src/views/QuickStart/children/FileBlock.vue
+ * @FilePath: front_end/src/views/QuickStart/components/FileBlock.vue
  * @Description: 这是默认设置,可以在设置》工具》File Description中进行配置
  -->
 <template>
