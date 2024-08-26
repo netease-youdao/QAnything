@@ -1013,7 +1013,7 @@ async def get_qa_info(req: request):
     # else:
     #     msg = f"检索到的Log数为{len(qa_infos)}，一次返回所有数据"
     #     page_id = 0
-    return sanic_json({"code": 200, "msg": msg, "page_id": page_id, "page_limit": page_limit, "qa_infos": current_qa_infos})
+    return sanic_json({"code": 200, "msg": msg, "page_id": page_id, "page_limit": page_limit, "qa_infos": current_qa_infos, "total_count": total_count})
 
 
 @get_time_async
