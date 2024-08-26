@@ -221,4 +221,8 @@ export default {
     parsing: '解析中',
     failure: '失败',
   },
+  statistics: {
+    export: '导出',
+    exportTitle: '确认导出?',
+  },
 };

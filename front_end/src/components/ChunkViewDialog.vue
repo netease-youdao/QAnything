@@ -257,7 +257,7 @@ const getChunks = async (kbId: string, fileId: string) => {
       await urlResquest.getDocCompleted({
         kb_id: kbId,
         file_id: fileId,
-        page_offset: paginationConfig.value.pageNum,
+        page_id: paginationConfig.value.pageNum,
         page_limit: paginationConfig.value.pageSize,
       })
     )) as any;

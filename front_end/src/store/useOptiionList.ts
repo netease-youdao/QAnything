@@ -105,10 +105,10 @@ export const useOptiionList = defineStore(
         clearTimeout(timer.value);
       }
       const res: any = await resultControl(
-        // 接口的page_offset为页码，page_limit为一页几个
+        // 接口的page_id为页码，page_limit为一页几个
         await urlResquest.fileList({
           kb_id: currentId.value,
-          page_offset: kbPageNum.value,
+          page_id: kbPageNum.value,
           page_limit: kbPageSize.value,
         })
       );
@@ -164,10 +164,10 @@ export const useOptiionList = defineStore(
       let timer = null;
       timer = setInterval(async () => {
         const res: any = await resultControl(
-          // 接口的page_offset为页码，page_limit为一页几个
+          // 接口的page_id为页码，page_limit为一页几个
           await urlResquest.fileList({
             kb_id: currentId.value,
-            page_offset: 1,
+            page_id: 1,
             page_limit: kbPageSize.value,
           })
         );
@@ -199,7 +199,7 @@ export const useOptiionList = defineStore(
         const res: any = await resultControl(
           await urlResquest.fileList({
             kb_id: currentId.value + '_FAQ',
-            page_offset: pageNum.value,
+            page_id: pageNum.value,
             page_limit: pageSize.value,
           })
         );

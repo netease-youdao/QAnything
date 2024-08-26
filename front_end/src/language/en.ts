@@ -237,4 +237,8 @@ export default {
     parsing: 'Parsing',
     failure: 'Failure',
   },
+  statistics: {
+    export: 'Export',
+    exportTitle: 'Confirm Export?',
+  },
 };

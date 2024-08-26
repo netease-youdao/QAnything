@@ -15,6 +15,7 @@
     "postbuild": "node writeVersion.js"
   },
   "dependencies": {
+    "@ant-design/icons-vue": "^7.0.1",
     "@fingerprintjs/fingerprintjs": "^4.2.2",
     "@vue-office/docx": "^1.6.0",
     "@vue-office/excel": "^1.7.6",

@@ -11,6 +11,7 @@
 <script lang="ts" setup>
 import * as echarts from 'echarts';
 import { PropType } from 'vue';
+import { EChartsOption } from 'echarts';
 
 export type chartListType = {
   name: string;
@@ -37,7 +38,9 @@ const props = defineProps({
 });
 
 const chartRef = ref(null);
-const totalDate = ref(0);
+const totalDate = computed(() => {
+  return props.list.reduce((sum, cur) => sum + Number(cur.value), 0);
+});
 let chartInstance;
 
 onMounted(() => {
@@ -45,11 +48,25 @@ onMounted(() => {
   if (props.list.length) {
     chartInstance = echarts.init(chartRef.value);
     // 配置项
-    const options = {
+    const options: EChartsOption = {
+      grid: {},
       xAxis: {
         type: 'category',
         data: props.list.map(item => item.name),
-        // boundaryGap: false, // 不留白，从原点开始
+        boundaryGap: false, // 不留白，从原点开始
+        axisLabel: {
+          show: true, // 确保标签显示
+          interval: 0, // 显示所有标签，如果没有特别的需求
+          // formatter: function (value) {
+          //   // 检查文本长度是否超过10px，这里的10假设是你的字体大小
+          //   // 如果不是，请根据你的字体大小调整比例
+          //   if (value.toString().length * 10 > 50) {
+          //     // 假设字体大小为12px
+          //     return value.toString().substring(0, 10) + '...'; // 显示前4个字符加省略号
+          //   }
+          //   return value;
+          // },
+        },
       },
       yAxis: {
         type: 'value',
@@ -63,8 +80,7 @@ onMounted(() => {
       tooltip: {
         trigger: 'axis', // 触发类型，可选为：'item' | 'axis'
         formatter: function (params) {
-          totalDate.value = params[0].value;
-          let str = params[0].axisValueLabel.slice(0, 10) + '<br />';
+          let str = params[0].axisValueLabel + '<br />';
           params.forEach(item => {
             str +=
               '<span style="display:inline-block; margin-right:5px; width:8px; height:8px; left:8px; background-color:' +
@@ -73,12 +89,18 @@ onMounted(() => {
               props.formatDesc +
               ' : ' +
               params[0].value +
-              '<br />';
+              '</span><br/>';
           });
           return str;
         },
         axisPointer: {
           type: 'line', // axisPointer 类型，可选为：'line' | 'shadow' | 'cross'
+        },
+      },
+      lineStyle: {
+        // 设置线条的style等
+        normal: {
+          color: '#7261E9', // 折线线条颜色
         },
       },
       series: [
@@ -89,12 +111,6 @@ onMounted(() => {
           // symbolSize: 8, //小圆点的大小
           itemStyle: {
             color: '#7261E9', //小圆点和线的颜色
-          },
-          lineStyle: {
-            // 设置线条的style等
-            normal: {
-              color: '#7261E9', // 折线线条颜色:红色
-            },
           },
           areaStyle: {
             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
@@ -163,6 +179,11 @@ onUnmounted(() => {
   .line-echart {
     width: 100%;
     height: 100%;
+    overflow: auto;
+
+    &::-webkit-scrollbar {
+      height: 12px;
+    }
   }
 }
 </style>
