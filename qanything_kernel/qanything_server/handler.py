@@ -369,8 +369,8 @@ async def list_docs(req: request):
     kb_id = correct_kb_id(kb_id)
     debug_logger.info("kb_id: {}".format(kb_id))
     file_id = safe_get(req, 'file_id')
-    page = safe_get(req, 'page_offset', 1)  # 默认为第一页
-    limit = safe_get(req, 'page_limit', 10)  # 默认每页显示10条记录
+    page_id = safe_get(req, 'page_id', 1)  # 默认为第一页
+    page_limit = safe_get(req, 'page_limit', 10)  # 默认每页显示10条记录
     data = []
     if file_id is None:
         file_infos = local_doc_qa.milvus_summary.get_files(user_id, kb_id)
@@ -401,10 +401,12 @@ async def list_docs(req: request):
     # 计算总记录数
     total_count = len(data)
     # 计算总页数
-    total_pages = (total_count + limit - 1) // limit
+    total_pages = (total_count + page_limit - 1) // page_limit
+    if page_id > total_pages:
+        return sanic_json({"code": 2002, "msg": f'输入非法！page_id超过最大值，page_id: {page_id}，最大值：{total_pages}，请检查！'})
     # 计算当前页的起始和结束索引
-    start_index = (page - 1) * limit
-    end_index = start_index + limit
+    start_index = (page_id - 1) * page_limit
+    end_index = start_index + page_limit
     # 截取当前页的数据
     current_page_data = data[start_index:end_index]
 
@@ -417,7 +419,8 @@ async def list_docs(req: request):
             "total": total_count,  # 总文件数
             "status_count": status_count,  # 各状态的文件数
             "details": current_page_data,  # 当前页码下的文件目录
-            "page_id": page  # 当前页码
+            "page_id": page_id,  # 当前页码,
+            "page_limit": page_limit  # 每页显示的文件数
         }
     })
 
@@ -521,6 +524,7 @@ async def get_total_status(req: request):
         return sanic_json({"code": 2001, "msg": msg})
     user_id = user_id + '__' + user_info
     debug_logger.info('get_total_status %s', user_id)
+    by_date = safe_get(req, 'by_date', False)
     if not user_id:
         users = local_doc_qa.milvus_summary.get_users()
         users = [user[0] for user in users]
@@ -529,6 +533,9 @@ async def get_total_status(req: request):
     res = {}
     for user in users:
         res[user] = {}
+        if by_date:
+            res[user] = local_doc_qa.milvus_summary.get_total_status_by_date(user)
+            continue
         kbs = local_doc_qa.milvus_summary.get_knowledge_bases(user)
         for kb_id, kb_name in kbs:
             gray_file_infos = local_doc_qa.milvus_summary.get_file_by_status([kb_id], 'gray')
@@ -902,8 +909,8 @@ async def get_doc_completed(req: request):
     if not file_id:
         return sanic_json({"code": 2005, "msg": "fail, file_id is None"})
     debug_logger.info("file_id: {}".format(file_id))
-    page = safe_get(req, 'page_offset', 1)  # 默认为第一页
-    limit = safe_get(req, 'page_limit', 10)  # 默认每页显示10条记录
+    page_id = safe_get(req, 'page_id', 1)  # 默认为第一页
+    page_limit = safe_get(req, 'page_limit', 10)  # 默认每页显示10条记录
 
     sorted_json_datas = local_doc_qa.milvus_summary.get_document_by_file_id(file_id)
     # completed_doc = local_doc_qa.get_completed_document(file_id)
@@ -916,10 +923,12 @@ async def get_doc_completed(req: request):
     # 计算总记录数
     total_count = len(chunks)
     # 计算总页数
-    total_pages = (total_count + limit - 1) // limit
+    total_pages = (total_count + page_limit - 1) // page_limit
+    if page_id > total_pages:
+        return sanic_json({"code": 2002, "msg": f'输入非法！page_id超过最大值，page_id: {page_id}，最大值：{total_pages}，请检查！'})
     # 计算当前页的起始和结束索引
-    start_index = (page - 1) * limit
-    end_index = start_index + limit
+    start_index = (page_id - 1) * page_limit
+    end_index = start_index + page_limit
     # 截取当前页的数据
     current_page_chunks = chunks[start_index:end_index]
     for chunk in current_page_chunks:
@@ -928,7 +937,8 @@ async def get_doc_completed(req: request):
     # return sanic_json({"code": 200, "msg": "success", "completed_text": completed_doc.page_content,
     #                    "chunks": current_page_chunks, "page_id": page, "total_count": total_count})
 
-    return sanic_json({"code": 200, "msg": "success", "chunks": current_page_chunks, "page_id": page, "total_count": total_count})
+    return sanic_json({"code": 200, "msg": "success", "chunks": current_page_chunks,
+                       "page_id": page_id, "page_limit": page_limit, "total_count": total_count})
 
 
 @get_time_async
@@ -956,7 +966,8 @@ async def get_qa_info(req: request):
     if not time_range:
         return {"code": 2002, "msg": f'输入非法！time_start格式错误，time_start: {time_start}，示例：2024-10-05，请检查！'}
 
-    page_id = safe_get(req, 'page_id')
+    page_id = safe_get(req, 'page_id', 1)
+    page_limit = safe_get(req, 'page_limit', 10)
     default_need_info = ["qa_id", "user_id", "bot_id", "kb_ids", "query", "model", "product_source", "time_record",
                          "history", "condense_question", "prompt", "result", "retrieval_documents", "source_documents",
                          "timestamp"]
@@ -973,22 +984,36 @@ async def get_qa_info(req: request):
                                    mime_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                                    headers={'Content-Disposition': f'attachment; filename="{file_name}"'})
 
-    if len(qa_infos) > 100:
-        pages = math.ceil(len(qa_infos) // 100)
-        if page_id is None:
-            msg = f"检索到的Log数超过100，需要分页返回，总数为{len(qa_infos)}, 请使用page_id参数获取某一页数据，参数范围：[0, {pages - 1}], 本次返回page_id为0的数据"
-            qa_infos = qa_infos[:100]
-            page_id = 0
-        elif page_id >= pages:
-            return sanic_json(
-                {"code": 2002, "msg": f'输入非法！page_id超过最大值，page_id: {page_id}，最大值：{pages - 1}，请检查！'})
-        else:
-            msg = f"检索到的Log数超过100，需要分页返回，总数为{len(qa_infos)}, page范围：[0, {pages - 1}], 本次返回page_id为{page_id}的数据"
-            qa_infos = qa_infos[page_id * 100:(page_id + 1) * 100]
-    else:
-        msg = f"检索到的Log数为{len(qa_infos)}，一次返回所有数据"
-        page_id = 0
-    return sanic_json({"code": 200, "msg": msg, "page_id": page_id, "qa_infos": qa_infos})
+    # 计算总记录数
+    total_count = len(qa_infos)
+    # 计算总页数
+    total_pages = (total_count + page_limit - 1) // page_limit
+    if page_id > total_pages:
+        return sanic_json(
+            {"code": 2002, "msg": f'输入非法！page_id超过最大值，page_id: {page_id}，最大值：{total_pages}，请检查！'})
+    # 计算当前页的起始和结束索引
+    start_index = (page_id - 1) * page_limit
+    end_index = start_index + page_limit
+    # 截取当前页的数据
+    current_qa_infos = qa_infos[start_index:end_index]
+    msg = f"检测到的Log总数为{total_count}, 本次返回page_id为{page_id}的数据，每页显示{page_limit}条"
+
+    # if len(qa_infos) > 100:
+    #     pages = math.ceil(len(qa_infos) // 100)
+    #     if page_id is None:
+    #         msg = f"检索到的Log数超过100，需要分页返回，总数为{len(qa_infos)}, 请使用page_id参数获取某一页数据，参数范围：[0, {pages - 1}], 本次返回page_id为0的数据"
+    #         qa_infos = qa_infos[:100]
+    #         page_id = 0
+    #     elif page_id >= pages:
+    #         return sanic_json(
+    #             {"code": 2002, "msg": f'输入非法！page_id超过最大值，page_id: {page_id}，最大值：{pages - 1}，请检查！'})
+    #     else:
+    #         msg = f"检索到的Log数超过100，需要分页返回，总数为{len(qa_infos)}, page范围：[0, {pages - 1}], 本次返回page_id为{page_id}的数据"
+    #         qa_infos = qa_infos[page_id * 100:(page_id + 1) * 100]
+    # else:
+    #     msg = f"检索到的Log数为{len(qa_infos)}，一次返回所有数据"
+    #     page_id = 0
+    return sanic_json({"code": 200, "msg": msg, "page_id": page_id, "page_limit": page_limit, "qa_infos": current_qa_infos})
 
 
 @get_time_async

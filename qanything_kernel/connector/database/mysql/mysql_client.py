@@ -8,6 +8,7 @@ import json
 from typing import List, Optional, Dict
 import uuid
 from datetime import datetime, timedelta
+from collections import defaultdict
 from mysql.connector.errors import Error as MySQLError
 
 
@@ -501,6 +502,26 @@ class KnowledgeBaseManager:
             offset += limit
 
         return all_files
+
+    def get_total_status_by_date(self, user_id):
+        # 查询指定用户上传的文件数量，按日期和状态分组
+        query = """
+        SELECT 
+            LEFT(timestamp, 8) as date,  -- 提取前8个字符作为日期 (YYYYMMDD)
+            status, 
+            COUNT(*) as number 
+        FROM File 
+        WHERE user_id = %s 
+        GROUP BY LEFT(timestamp, 8), status
+        """
+        result = self.execute_query_(query, (user_id,), fetch=True)
+
+        files_by_date = defaultdict(lambda: defaultdict(int))
+
+        for date, status, number in result:
+            files_by_date[date][status] = number
+
+        return {date: dict(status_dict) for date, status_dict in files_by_date.items()}
 
     def get_chunk_size(self, file_ids):
         limit = 100
