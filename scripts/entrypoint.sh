@@ -56,24 +56,13 @@ fi
 
 cd /workspace/QAnything || exit
 
-# 如果GPUID存在且不是-1，则设置CUDA_VISIBLE_DEVICES
-if [[ -n "${GPUID}" && "${GPUID}" != "-1" ]]; then
-  echo "embedding和rerank服务将在 $GPUID 号GPU上运行"
-  CUDA_VISIBLE_DEVICES=$GPUID nohup python3 -u qanything_kernel/dependent_server/rerank_server/rerank_server.py --use_gpu --workers 1 > /workspace/QAnything/logs/debug_logs/rerank_server.log 2>&1 &
-  PID1=$!
-  CUDA_VISIBLE_DEVICES=$GPUID nohup python3 -u qanything_kernel/dependent_server/embedding_server/embedding_server.py --use_gpu --workers 1 > /workspace/QAnything/logs/debug_logs/embedding_server.log 2>&1 &
-  PID2=$!
-  CUDA_VISIBLE_DEVICES=$GPUID nohup python3 -u qanything_kernel/dependent_server/pdf_parser_server/pdf_parser_server.py --use_gpu --workers 1 > /workspace/QAnything/logs/debug_logs/pdf_parser_server.log 2>&1 &
-  PID3=$!
-else
-  echo "embedding和rerank服务将在CPU上运行"
-  nohup python3 -u qanything_kernel/dependent_server/rerank_server/rerank_server.py > /workspace/QAnything/logs/debug_logs/rerank_server.log 2>&1 &
-  PID1=$!
-  nohup python3 -u qanything_kernel/dependent_server/embedding_server/embedding_server.py > /workspace/QAnything/logs/debug_logs/embedding_server.log 2>&1 &
-  PID2=$!
-  nohup python3 -u qanything_kernel/dependent_server/pdf_parser_server/pdf_parser_server.py > /workspace/QAnything/logs/debug_logs/pdf_parser_server.log 2>&1 &
-  PID3=$!
-fi
+echo "embedding和rerank服务将在CPU上运行"
+nohup python3 -u qanything_kernel/dependent_server/rerank_server/rerank_server.py > /workspace/QAnything/logs/debug_logs/rerank_server.log 2>&1 &
+PID1=$!
+nohup python3 -u qanything_kernel/dependent_server/embedding_server/embedding_server.py > /workspace/QAnything/logs/debug_logs/embedding_server.log 2>&1 &
+PID2=$!
+nohup python3 -u qanything_kernel/dependent_server/pdf_parser_server/pdf_parser_server.py > /workspace/QAnything/logs/debug_logs/pdf_parser_server.log 2>&1 &
+PID3=$!
 nohup python3 -u qanything_kernel/dependent_server/ocr_server/ocr_server.py > /workspace/QAnything/logs/debug_logs/ocr_server.log 2>&1 &
 PID4=$!
 nohup python3 -u qanything_kernel/dependent_server/insert_files_serve/insert_files_server.py --port 8110 --workers 1 > /workspace/QAnything/logs/debug_logs/insert_files_server.log 2>&1 &
