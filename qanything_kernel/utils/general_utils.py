@@ -396,9 +396,9 @@ def get_table_infos(markdown_str):
             "lines": lines}
 
 
-def get_time_range(time_start=None, time_end=None, default_days=7):
+def get_time_range(time_start=None, time_end=None, default_days=30):
     """
-    获取时间范围。如果给定的时间范围不完整，将使用默认值（最近7天）。
+    获取时间范围。如果给定的时间范围不完整，将使用默认值（最近30天）。
 
     :param time_start: 起始时间，格式为 "YYYY-MM-DD" 或 "YYYY-MM-DD HH:MM:SS"
     :param time_end: 结束时间，格式为 "YYYY-MM-DD" 或 "YYYY-MM-DD HH:MM:SS"
