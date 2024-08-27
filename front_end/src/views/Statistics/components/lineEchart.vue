@@ -24,8 +24,8 @@ import { EChartsOption, SeriesOption } from 'echarts';
 import { PropType } from 'vue';
 
 export interface IChartList {
-  options: ChartOptionsType;
-  data: ChartDataType[];
+  options: ChartOptionsType; // 这条线的颜色和tooltip配置项
+  data: ChartDataType[]; // 这条线的数据: {name, value}, 横坐标轴的项目按照[0]的.name来读取
 }
 
 type ChartDataType = {
