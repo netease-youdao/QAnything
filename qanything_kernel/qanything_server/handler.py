@@ -19,7 +19,7 @@ from collections import defaultdict
 import os
 from tqdm import tqdm
 import time
-import math
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 import base64
 
@@ -960,11 +960,24 @@ async def get_qa_info(req: request):
         debug_logger.info("get_qa_info %s", user_id)
     query = safe_get(req, 'query')
     bot_id = safe_get(req, 'bot_id')
+    qa_ids = safe_get(req, "qa_ids")
     time_start = safe_get(req, 'time_start')
     time_end = safe_get(req, 'time_end')
     time_range = get_time_range(time_start, time_end)
     if not time_range:
         return {"code": 2002, "msg": f'输入非法！time_start格式错误，time_start: {time_start}，示例：2024-10-05，请检查！'}
+    only_need_count = safe_get(req, 'only_need_count', False)
+    debug_logger.info(f"only_need_count: {only_need_count}")
+    if only_need_count:
+        need_info = ["timestamp"]
+        qa_infos = local_doc_qa.milvus_summary.get_qalog_by_filter(need_info=need_info, user_id=user_id, time_range=time_range)
+        # timestamp = now.strftime("%Y%m%d%H%M")
+        # 按照timestamp，按照天数进行统计，比如20240628，20240629，20240630，计算每天的问答数量
+        qa_infos = sorted(qa_infos, key=lambda x: x['timestamp'])
+        qa_infos = [qa_info['timestamp'] for qa_info in qa_infos]
+        qa_infos = [qa_info[:8] for qa_info in qa_infos]
+        qa_infos_by_day = dict(Counter(qa_infos))
+        return sanic_json({"code": 200, "msg": "success", "qa_infos_by_day": qa_infos_by_day})
 
     page_id = safe_get(req, 'page_id', 1)
     page_limit = safe_get(req, 'page_limit', 10)
@@ -975,7 +988,7 @@ async def get_qa_info(req: request):
     save_to_excel = safe_get(req, 'save_to_excel', False)
     qa_infos = local_doc_qa.milvus_summary.get_qalog_by_filter(need_info=need_info, user_id=user_id, query=query,
                                                                bot_id=bot_id, time_range=time_range,
-                                                               any_kb_id=any_kb_id)
+                                                               any_kb_id=any_kb_id, qa_ids=qa_ids)
     if save_to_excel:
         timestamp = datetime.now().strftime("%Y%m%d%H%M")
         file_name = f"QAnything_QA_{timestamp}.xlsx"

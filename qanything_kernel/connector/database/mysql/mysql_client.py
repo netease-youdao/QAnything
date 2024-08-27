@@ -680,25 +680,29 @@ class KnowledgeBaseManager:
                                            history, condense_question, prompt, result, retrieval_documents,
                                            source_documents), commit=True)
 
-    def get_qalog_by_filter(self, need_info, user_id=None, query=None, bot_id=None, time_range=None, any_kb_id=None):
+    def get_qalog_by_filter(self, need_info, user_id=None, query=None, bot_id=None, time_range=None, any_kb_id=None, qa_ids=None):
         # 判断哪些条件不是None，构建搜索query
         need_info = ", ".join(need_info)
-        mysql_query = f"SELECT {need_info} FROM QaLogs WHERE timestamp BETWEEN %s AND %s"
-        params = list(time_range)
-        if user_id:
-            mysql_query += " AND user_id = %s"
-            params.append(user_id)
-        if any_kb_id:
-            mysql_query += " AND kb_ids LIKE %s"
-            params.append(f'%{any_kb_id}%')
-        if bot_id:
-            mysql_query += " AND bot_id = %s"
-            params.append(bot_id)
-        if query:
-            mysql_query += " AND query = %s"
-            params.append(query)
-        debug_logger.info("get_qalog_by_filter: {}".format(params))
-        qa_infos = self.execute_query_(mysql_query, params, fetch=True)
+        if qa_ids is not None:
+            mysql_query = f"SELECT {need_info} FROM QaLogs WHERE qa_id IN ({','.join(['%s'] * len(qa_ids))})"
+            qa_infos = self.execute_query_(mysql_query, qa_ids, fetch=True)
+        else:
+            mysql_query = f"SELECT {need_info} FROM QaLogs WHERE timestamp BETWEEN %s AND %s"
+            params = list(time_range)
+            if user_id:
+                mysql_query += " AND user_id = %s"
+                params.append(user_id)
+            if any_kb_id:
+                mysql_query += " AND kb_ids LIKE %s"
+                params.append(f'%{any_kb_id}%')
+            if bot_id:
+                mysql_query += " AND bot_id = %s"
+                params.append(bot_id)
+            if query:
+                mysql_query += " AND query = %s"
+                params.append(query)
+            debug_logger.info("get_qalog_by_filter: {}".format(params))
+            qa_infos = self.execute_query_(mysql_query, params, fetch=True)
         # 根据need_info构建一个dict
         qa_infos = [dict(zip(need_info.split(", "), qa_info)) for qa_info in qa_infos]
         for qa_info in qa_infos:
