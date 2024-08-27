@@ -975,7 +975,7 @@ async def get_qa_info(req: request):
         # 按照timestamp，按照天数进行统计，比如20240628，20240629，20240630，计算每天的问答数量
         qa_infos = sorted(qa_infos, key=lambda x: x['timestamp'])
         qa_infos = [qa_info['timestamp'] for qa_info in qa_infos]
-        qa_infos = [qa_info[:8] for qa_info in qa_infos]
+        qa_infos = [qa_info[:10] for qa_info in qa_infos]
         qa_infos_by_day = dict(Counter(qa_infos))
         return sanic_json({"code": 200, "msg": "success", "qa_infos_by_day": qa_infos_by_day})
 
@@ -999,6 +999,8 @@ async def get_qa_info(req: request):
 
     # 计算总记录数
     total_count = len(qa_infos)
+    if total_count == 0:
+        return sanic_json({"code": 200, "msg": "success", "page_id": page_id, "page_limit": page_limit, "qa_infos": [], "total_count": total_count})
     # 计算总页数
     total_pages = (total_count + page_limit - 1) // page_limit
     if page_id > total_pages:
