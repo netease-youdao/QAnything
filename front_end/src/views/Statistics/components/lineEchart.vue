@@ -24,7 +24,7 @@ import { EChartsOption, SeriesOption } from 'echarts';
 import { PropType } from 'vue';
 
 export interface IChartList {
-  options: ChartOptionsType; // 这条线的颜色和tooltip配置项
+  options?: ChartOptionsType; // 这条线的颜色和tooltip配置项
   data: ChartDataType[]; // 这条线的数据: {name, value}, 横坐标轴的项目按照[0]的.name来读取
 }
 
@@ -34,8 +34,8 @@ type ChartDataType = {
 };
 
 type ChartOptionsType = {
-  lineColor: string; // 十六进制
-  name?: string; // tooltip显示的名称
+  lineColor: string; // 十六进制, 默认'#5a47e5'
+  name?: string; // tooltip显示的名称, 默认'数量'
 };
 
 const props = defineProps({
@@ -68,9 +68,9 @@ const initChart = () => {
       type: 'line',
       // symbol: 'circle', //将小圆点改成实心 不写symbol默认空心
       // symbolSize: 8, //小圆点的大小
-      name: list.options.name || '',
+      name: list?.options?.name || '数量', // tooltip显示的名称
       itemStyle: {
-        color: list.options.lineColor, //小圆点和线的颜色
+        color: list?.options?.lineColor || '#5a47e5', //小圆点和线的颜色
       },
       areaStyle: {
         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [

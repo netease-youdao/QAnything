@@ -128,6 +128,23 @@ export const formatDate = (timestamp: string, symbol = '-') => {
 };
 
 /**
+ * @description 返回最近14天的日期范围
+ */
+export const getLastDaysRange = (days: number = 14) => {
+  const today = new Date();
+  const timeEnd = today.toISOString().split('T')[0]; // 获取今天的日期，格式为 'YYYY-MM-DD'
+
+  const timeStart = new Date(today.getTime());
+  timeStart.setDate(today.getDate() - days - 1); // 设置日期为今天减去days-1天
+  const timeStartStr = timeStart.toISOString().split('T')[0]; // 获取14天前的日期，格式为 'YYYY-MM-DD'
+
+  return {
+    time_start: timeStartStr,
+    time_end: timeEnd,
+  };
+};
+
+/**
  * @description 将文件后缀和文件名分开
  * @param filePath 文件全部名称
  */

@@ -93,6 +93,7 @@ import urlResquest from '@/services/urlConfig';
 import { downLoad, getContentDispositionByHeader, resultControl } from '@/utils/utils';
 import { getLanguage } from '@/language';
 import { SearchOutlined } from '@ant-design/icons-vue';
+import message from 'ant-design-vue/es/message';
 
 const { home, common, statistics } = getLanguage();
 
@@ -189,8 +190,8 @@ const pickerBlur = () => {
 // 日期更改
 const dateChange = (date, dateString) => {
   console.log('date', date);
-  searchConfig.value.startDate = dateString[0].replace(/-/g, '');
-  searchConfig.value.endDate = dateString[1].replace(/-/g, '');
+  searchConfig.value.startDate = dateString[0];
+  searchConfig.value.endDate = dateString[1];
 };
 
 // 点击搜索
@@ -203,33 +204,39 @@ const searchHandle = () => {
 // 请求list数据
 const getQADetail = async (...args) => {
   loading.value = true;
-  const res: any = await resultControl(
-    await urlResquest.getQAInfo({
-      page_id: paginationConfig.value.current,
-      page_limit: paginationConfig.value.pageSize,
-      ...args[0],
-    })
-  );
-  loading.value = false;
-  dataSource.value = [];
-  paginationConfig.value.total = res.total_count;
-  const { qa_infos } = res;
-  qa_infos.map(item => {
-    dataSource.value.push({
-      key: item.qa_id,
-      kbIds: item.kb_ids.toString().replaceAll(',', `\n`),
-      question: item.condense_question,
-      answer: item.result,
-      date: item.timestamp,
+  try {
+    const res: any = await resultControl(
+      await urlResquest.getQAInfo({
+        page_id: paginationConfig.value.current,
+        page_limit: paginationConfig.value.pageSize,
+        ...args[0],
+      })
+    );
+    dataSource.value = [];
+    paginationConfig.value.total = res.total_count;
+    const { qa_infos } = res;
+    qa_infos.map(item => {
+      dataSource.value.push({
+        key: item.qa_id,
+        kbIds: item.kb_ids.toString().replaceAll(',', `\n`),
+        question: item.condense_question,
+        answer: item.result,
+        date: item.timestamp,
+      });
     });
-  });
-  console.log(dataSource.value);
+    console.log(dataSource.value);
+  } catch (e) {
+    message.error(e.msg || common.error);
+  } finally {
+    loading.value = false;
+  }
 };
 
 // 切换分页
 const onChange = pagination => {
   paginationConfig.value.current = pagination.current;
-  getQADetail();
+  const { startDate: time_start, endDate: time_end, question: query } = searchConfig.value;
+  getQADetail({ time_start, time_end, query });
 };
 
 // 表格中导出按钮
