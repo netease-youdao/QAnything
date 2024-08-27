@@ -372,16 +372,14 @@ class KnowledgeBaseManager:
         return results
 
     # 对外接口不需要增加用户，新建知识库的时候增加用户就可以了
-    def add_user_(self, user_id, user_name, cluster_list):
-        cluster_list = json.dumps(cluster_list, ensure_ascii=False)
-        query = "INSERT IGNORE INTO User (user_id, user_name, cluster_list) VALUES (%s, %s, %s)"
-        self.execute_query_(query, (user_id, user_name, cluster_list), commit=True)
-        debug_logger.info(f"Add user: {user_id} {user_name} {cluster_list}")
+    def add_user_(self, user_id, user_name):
+        query = "INSERT IGNORE INTO User (user_id, user_name) VALUES (%s, %s, %s)"
+        self.execute_query_(query, (user_id, user_name), commit=True)
+        debug_logger.info(f"Add user: {user_id} {user_name}")
 
     def new_milvus_base(self, kb_id, user_id, kb_name, user_name=None):
         if not self.check_user_exist_(user_id):
-            cluster_list = [MILVUS_HOST_LOCAL]
-            self.add_user_(user_id, user_name, cluster_list)
+            self.add_user_(user_id, user_name)
         query = "INSERT INTO KnowledgeBase (kb_id, user_id, kb_name) VALUES (%s, %s, %s)"
         self.execute_query_(query, (kb_id, user_id, kb_name), commit=True)
         return kb_id, "success"
