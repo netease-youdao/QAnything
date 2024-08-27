@@ -114,6 +114,12 @@ class LocalDocQA:
         start_time = time.perf_counter()
         query_docs = await retriever.get_retrieved_documents(query, partition_keys=kb_ids, time_record=time_record,
                                                              hybrid_search=hybrid_search)
+        if len(query_docs) == 0:
+            debug_logger.warning("MILVUS SEARCH ERROR, RESTARTING MILVUS CLIENT!")
+            retriever.vectorstore_client = VectorStoreMilvusClient()
+            debug_logger.warning("MILVUS CLIENT RESTARTED!")
+            query_docs = await retriever.get_retrieved_documents(query, partition_keys=kb_ids, time_record=time_record,
+                                                                    hybrid_search=hybrid_search)
         end_time = time.perf_counter()
         time_record['retriever_search'] = round(end_time - start_time, 2)
         debug_logger.info(f"retriever_search time: {time_record['retriever_search']}s")
