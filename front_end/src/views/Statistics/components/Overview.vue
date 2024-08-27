@@ -1,6 +1,6 @@
 <template>
   <div class="chart-container">
-    <LineEchart v-if="!loading" title="总对话量" format-desc="问答数量" :list="chatQAChartList" />
+    <!--    <LineEchart v-if="!loading" title="总对话量" format-desc="问答数量" :list="chatQAChartList" />-->
     <LineEchart v-if="!loading" title="知识库总文件" format-desc="文件数量" :list="kbChartList" />
   </div>
 </template>
@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import { resultControl } from '@/utils/utils';
 import urlConfig from '@/services/urlConfig';
-import LineEchart, { type chartListType } from '@/views/Statistics/components/lineEchart.vue';
+import LineEchart, { type IChartList } from '@/views/Statistics/components/lineEchart.vue';
 
 type FileStatus = 'green' | 'yellow' | 'red' | 'gray';
 
@@ -22,7 +22,7 @@ interface IKbInfo {
 const kbInfoData = ref<IKbInfo[]>([]);
 
 // 表格的信息
-const kbChartList = ref<chartListType[]>([]);
+const kbChartList = ref<IChartList[]>([]);
 
 const loading = ref(true);
 
@@ -38,10 +38,28 @@ const handleKbInfo = (infos: any[]) => {
 
 // 处理表格的信息
 const handleKbChartList = (kbInfoData: IKbInfo[]) => {
-  kbInfoData.map(item => {
+  const listType = [
+    {
+      type: 'green',
+      color: '#91CC75',
+      name: '成功',
+    },
+    {
+      type: 'red',
+      color: '#EE6666',
+      name: '失败',
+    },
+  ];
+  listType.map(item => {
     kbChartList.value.push({
-      name: item.date,
-      value: Object.values(item.fileStatus).reduce((sum, currentValue) => sum + currentValue, 0),
+      options: {
+        lineColor: item.color,
+        name: item.name,
+      },
+      data: kbInfoData.map(info => ({
+        name: info.date,
+        value: info.fileStatus[item.type] || 0,
+      })),
     });
   });
   loading.value = false;

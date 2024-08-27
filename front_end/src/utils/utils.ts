@@ -30,19 +30,6 @@ export function clearTimer(timer) {
   }
 }
 
-export function aDownLoad(url, fileName = '', callback?) {
-  let aLink = document.createElement('a');
-  aLink.download = fileName;
-  aLink.style.display = 'none';
-  aLink.href = url;
-  document.body.appendChild(aLink);
-  aLink.click();
-  document.body.removeChild(aLink);
-  if (callback) {
-    callback();
-  }
-}
-
 export function isMac() {
   return /macintosh|mac os x/i.test(navigator.userAgent);
 }
@@ -219,4 +206,32 @@ export function formatTimestamp(timestamp: number): string {
   const seconds = date.getSeconds().toString().padStart(2, '0'); // 获取秒
 
   return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+}
+
+/**
+ * @description 下载文件的通用函数
+ * @param url 文件的下载链接
+ * @param fileName 下载文件的名称，如果不提供，默认为空字符串
+ * @param callback 下载完成后的回调函数，如果提供了回调函数，在下载触发后执行
+ */
+export function downLoad(url, fileName = '', callback?) {
+  let aLink = document.createElement('a');
+  aLink.download = fileName;
+  aLink.style.display = 'none';
+  aLink.href = url;
+  document.body.appendChild(aLink);
+  aLink.click();
+  document.body.removeChild(aLink);
+  if (callback) {
+    callback();
+  }
+}
+
+/**
+ * 从请求头中提取内容处置（Content-Disposition）字段的文件名
+ * @param {Headers} headers - 请求响应头对象，包含所有响应头字段
+ * @return {string} 返回解析出的文件名，如果无法解析或字段不存在，则返回空字符串
+ */
+export function getContentDispositionByHeader(headers) {
+  return decodeURIComponent((headers['content-disposition']?.split('filename=') || [])[1] || '');
 }

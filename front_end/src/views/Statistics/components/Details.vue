@@ -25,16 +25,17 @@
         </a-tooltip>
       </div>
 
-      <!--      <div class="right item-flex">-->
-      <!--        <div class="export-part butotn" @click="exportPart">导出选中</div>-->
-      <!--        <div class="export-all butotn" @click="exportAll">导出全部</div>-->
-      <!--      </div>-->
+      <div class="right item-flex">
+        <div class="export-part button" @click="exportSelected">导出选中</div>
+        <div class="export-all button" @click="exportAll">导出全部</div>
+      </div>
     </div>
     <div class="table">
       <a-table
         :data-source="dataSource"
         :columns="columns"
         :pagination="paginationConfig"
+        :loading="loading"
         :locale="{ emptyText: home.emptyText }"
         :row-selection="{ selectedRowKeys: state.selectedRowKeys, onChange: onSelectChange }"
         :hide-on-single-page="true"
@@ -73,9 +74,9 @@
               :title="statistics.exportTitle"
               :ok-text="common.confirm"
               :cancel-text="common.cancel"
-              @confirm="confirmExportItem"
+              @confirm="confirmExportItem(record)"
             >
-              <a-button type="link" class="export-item" @click="exportItem(record)">
+              <a-button type="link" class="export-item">
                 {{ statistics.export }}
               </a-button>
             </a-popconfirm>
@@ -89,7 +90,7 @@
 <script setup lang="ts">
 import { h } from 'vue';
 import urlResquest from '@/services/urlConfig';
-import { resultControl } from '@/utils/utils';
+import { downLoad, getContentDispositionByHeader, resultControl } from '@/utils/utils';
 import { getLanguage } from '@/language';
 import { SearchOutlined } from '@ant-design/icons-vue';
 
@@ -143,20 +144,24 @@ const columns = [
 // faq的分页参数
 const paginationConfig = ref({
   current: 1, // 当前页码
-  pageSize: 7, // 每页条数
+  pageSize: 6, // 每页条数
   total: 0, // 数据总数
   showSizeChanger: false,
   showTotal: total => `共 ${total} 条`,
 });
 
+// 切换分页的加载
+const loading = ref(false);
+
 const state = reactive<{
   selectedRowKeys: string[];
   loading: boolean;
 }>({
-  selectedRowKeys: [], // Check here to configure the default column
+  selectedRowKeys: [],
   loading: false,
 });
 
+// 点击多选框
 const onSelectChange = (selectedRowKeys: string[]) => {
   console.log('selectedRowKeys changed: ', selectedRowKeys);
   state.selectedRowKeys = selectedRowKeys;
@@ -188,14 +193,16 @@ const dateChange = (date, dateString) => {
   searchConfig.value.endDate = dateString[1].replace(/-/g, '');
 };
 
+// 点击搜索
 const searchHandle = () => {
   console.log(searchConfig.value);
   const { startDate: time_start, endDate: time_end, question: query } = searchConfig.value;
   getQADetail({ time_start, time_end, query });
 };
 
+// 请求list数据
 const getQADetail = async (...args) => {
-  dataSource.value = [];
+  loading.value = true;
   const res: any = await resultControl(
     await urlResquest.getQAInfo({
       page_id: paginationConfig.value.current,
@@ -203,6 +210,8 @@ const getQADetail = async (...args) => {
       ...args[0],
     })
   );
+  loading.value = false;
+  dataSource.value = [];
   paginationConfig.value.total = res.total_count;
   const { qa_infos } = res;
   qa_infos.map(item => {
@@ -217,17 +226,30 @@ const getQADetail = async (...args) => {
   console.log(dataSource.value);
 };
 
+// 切换分页
 const onChange = pagination => {
   paginationConfig.value.current = pagination.current;
   getQADetail();
 };
 
-const exportItem = record => {
-  console.log(record);
-};
-
+// 表格中导出按钮
 const confirmExportItem = record => {
   console.log(record);
+  // TODO 请求excel
+  beforeDownload('');
+};
+
+// 导出选中按钮
+const exportSelected = () => {};
+
+// 导出全部按钮
+const exportAll = () => {};
+
+const beforeDownload = res => {
+  const fileName = getContentDispositionByHeader(res.headers) || 'examlpe.xlsx';
+  const resFile = new File([res.data], fileName, { type: 'application/excel' });
+  const url = URL.createObjectURL(resFile);
+  downLoad(url, fileName);
 };
 
 onMounted(() => {
@@ -271,7 +293,7 @@ onMounted(() => {
     }
   }
 
-  .butotn {
+  .button {
     width: 88px;
     height: 32px;
     line-height: 22px;
