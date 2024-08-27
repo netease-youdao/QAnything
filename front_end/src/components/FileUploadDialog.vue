@@ -285,10 +285,13 @@ const uplolad = async () => {
           // 上传相同文件
           message.warn(data.msg || '出错了');
           // handleCancel();
-          list.forEach(item => {
-            uploadFileList.value[item.order].status = 'error';
-            uploadFileList.value[item.order].errorText = data?.msg || common.upFailed;
-          });
+          notification.close('upload');
+          if (props.dialogType === 1) {
+            list.forEach(item => {
+              uploadFileList.value[item.order].status = 'error';
+              uploadFileList.value[item.order].errorText = data?.msg || common.upFailed;
+            });
+          }
           return;
         }
         openNotification(1);
@@ -308,6 +311,7 @@ const uplolad = async () => {
         }
       } else {
         message.error(data.msg || '出错了');
+        notification.close('upload');
         list.forEach(item => {
           uploadFileList.value[item.order].status = 'error';
           uploadFileList.value[item.order].errorText = data?.msg || common.upFailed;
@@ -319,7 +323,7 @@ const uplolad = async () => {
     });
 };
 
-// 0 上传中，1 上传成功
+// 0 上传中，1 上传成功,
 const openNotification = (type: 0 | 1) => {
   notification[type ? 'success' : 'info']({
     key: 'upload',
