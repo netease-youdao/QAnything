@@ -178,7 +178,8 @@ class LocalDocQA:
                 if 'headers' in doc.metadata:
                     headers = f"headers={doc.metadata['headers']}"
                     headers_token_num = custom_llm.num_tokens_from_messages([headers])
-            doc_token_num = custom_llm.num_tokens_from_docs([doc])
+            doc_valid_content = re.sub(r'!\[figure]\(.*?\)', '', doc.page_content)
+            doc_token_num = custom_llm.num_tokens_from_messages([doc_valid_content])
             doc_token_num += headers_token_num
             if total_token_num + doc_token_num <= limited_token_nums:
                 new_source_docs.append(doc)
@@ -194,6 +195,7 @@ class LocalDocQA:
             context = ''
             not_repeated_file_ids = []
             for doc in source_docs:
+                doc_valid_content = re.sub(r'!\[figure]\(.*?\)', '', doc.page_content)  # 生成prompt时去掉图片
                 file_id = doc.metadata['file_id']
                 if file_id not in not_repeated_file_ids:
                     if len(not_repeated_file_ids) != 0:
@@ -201,11 +203,11 @@ class LocalDocQA:
                     not_repeated_file_ids.append(file_id)
                     if 'headers' in doc.metadata:
                         headers = f"headers={doc.metadata['headers']}"
-                        context += f"<reference {headers}>[{len(not_repeated_file_ids)}]" + '\n' + doc.page_content + '\n'
+                        context += f"<reference {headers}>[{len(not_repeated_file_ids)}]" + '\n' + doc_valid_content + '\n'
                     else:
-                        context += f"<reference>[{len(not_repeated_file_ids)}]" + '\n' + doc.page_content + '\n'
+                        context += f"<reference>[{len(not_repeated_file_ids)}]" + '\n' + doc_valid_content + '\n'
                 else:
-                    context += doc.page_content + '\n'
+                    context += doc_valid_content + '\n'
             context += '</reference>\n'
 
             # prompt = prompt_template.format(context=context).replace("{{question}}", query)
@@ -264,14 +266,14 @@ class LocalDocQA:
                                        chat_history: List[str], prompt_template: str,
                                        need_web_search: bool = False):
         # 删除文档中的图片
-        for doc in source_documents:
-            doc.page_content = re.sub(r'!\[figure]\(.*?\)', '', doc.page_content)
+        # for doc in source_documents:
+        #     doc.page_content = re.sub(r'!\[figure]\(.*?\)', '', doc.page_content)
 
         retrieval_documents, limited_token_nums = self.reprocess_source_documents(custom_llm=custom_llm, query=query,
                                                                                   source_docs=source_documents,
                                                                                   history=chat_history,
                                                                                   prompt_template=prompt_template)
-
+        debug_logger.info(f"retrieval_documents len: {len(retrieval_documents)}")
         if not need_web_search:
             try:
                 new_docs = self.aggregate_documents(retrieval_documents, limited_token_nums, custom_llm)
@@ -296,6 +298,7 @@ class LocalDocQA:
         else:
             source_documents = retrieval_documents
 
+        debug_logger.info(f"source_documents len: {len(source_documents)}")
         return source_documents, retrieval_documents
 
     async def calculate_relevance_optimized(
@@ -526,18 +529,24 @@ class LocalDocQA:
                 prompt_template = SIMPLE_PROMPT_TEMPLATE.replace("{{today}}", today).replace("{{now}}", now).replace(
                     "{{custom_prompt}}", simple_custom_prompt)
 
-        source_documents_for_show = copy.deepcopy(source_documents)
-        total_images_number = 0
-        for doc in source_documents_for_show:
-            if 'images' in doc.metadata:
-                total_images_number += len(doc.metadata['images'])
-            doc.page_content = replace_image_references(doc.page_content, doc.metadata['file_id'])
-        debug_logger.info(f"total_images_number: {total_images_number}")
+        # source_documents_for_show = copy.deepcopy(source_documents)
+        # total_images_number = 0
+        # for doc in source_documents_for_show:
+        #     if 'images' in doc.metadata:
+        #         total_images_number += len(doc.metadata['images'])
+        #     doc.page_content = replace_image_references(doc.page_content, doc.metadata['file_id'])
+        # debug_logger.info(f"total_images_number: {total_images_number}")
         source_documents, retrieval_documents = await self.prepare_source_documents(query, custom_llm, source_documents,
                                                                                     chat_history,
                                                                                     prompt_template,
                                                                                     need_web_search)
 
+        total_images_number = 0
+        for doc in source_documents:
+            if doc.metadata.get('images', []):
+                total_images_number += len(doc.metadata['images'])
+                doc.page_content = replace_image_references(doc.page_content, doc.metadata['file_id'])
+        debug_logger.info(f"total_images_number: {total_images_number}")
 
         t2 = time.perf_counter()
         time_record['reprocess'] = round(t2 - t1, 2)
@@ -569,7 +578,7 @@ class LocalDocQA:
                         "result": resp,
                         "condense_question": condense_question,
                         "retrieval_documents": retrieval_documents,
-                        "source_documents": source_documents_for_show}
+                        "source_documents": source_documents}
             time_record['prompt_tokens'] = prompt_tokens if prompt_tokens != 0 else est_prompt_tokens
             time_record['completion_tokens'] = completion_tokens if completion_tokens != 0 else num_tokens(acc_resp)
             time_record['total_tokens'] = total_tokens if total_tokens != 0 else time_record['prompt_tokens'] + \
@@ -606,41 +615,47 @@ class LocalDocQA:
                     response['show_images'] = show_images
             yield response, history
 
-    def get_completed_document(self, file_id, limit=None, filter_figures=False):
+    def get_completed_document(self, file_id, limit=None):
         sorted_json_datas = self.milvus_summary.get_document_by_file_id(file_id)
         if limit:
             sorted_json_datas = sorted_json_datas[limit[0]: limit[1] + 1]
+
+        completed_content_with_figure = ''
         completed_content = ''
-        existing_titles = []
         for doc_json in sorted_json_datas:
             doc = Document(page_content=doc_json['kwargs']['page_content'], metadata=doc_json['kwargs']['metadata'])
             # rerank之后删除headers，只保留文本内容，用于后续处理
             doc.page_content = re.sub(r'^\[headers]\(.*?\)\n', '', doc.page_content)
-            if filter_figures:
-                doc.page_content = re.sub(r'!\[figure]\(.*?\)', '', doc.page_content)  # 删除图片
-            # if 'title_lst' in doc.metadata:
-            #     title_lst = doc.metadata['title_lst']
-            #     title_lst = [t for t in title_lst if t.replace('#', '') != '']
-            #     for title in title_lst:
-            #         if title in existing_titles:
-            #             continue
-            #         existing_titles.append(title)
-            #     # doc.page_content = '\n\n'.join(doc.page_content.split('\n\n')[len(title_lst):])  # TODO 删除方式不对，因为有merge short之后title也会合并
-            #     first_appearance_titles = []
-            #     for title in title_lst:
-            #         if title in existing_titles:
-            #             continue
-            #         first_appearance_titles.append(title)
-            #     existing_titles += first_appearance_titles
-            #     # 删除所有仅有多个#的title
-            #     if doc.page_content == "":  # page_content为空时把first_appearance_titles当做正文
-            #         cleaned_list = [re.sub(r'^#+\s*', '', item) for item in first_appearance_titles]
-            #         doc.page_content = '\n'.join(cleaned_list)
-            #     else:
-            #         doc.page_content = '\n'.join(first_appearance_titles) + '\n' + doc.page_content
-            completed_content += doc.page_content + '\n\n'
+            # if filter_figures:
+            #     doc.page_content = re.sub(r'!\[figure]\(.*?\)', '', doc.page_content)  # 删除图片
+            completed_content_with_figure += doc.page_content + '\n\n'
+            completed_content += re.sub(r'!\[figure]\(.*?\)', '', doc.page_content) + '\n\n' # 删除图片
+        completed_doc_with_figure = Document(page_content=completed_content_with_figure, metadata=sorted_json_datas[0]['kwargs']['metadata'])
         completed_doc = Document(page_content=completed_content, metadata=sorted_json_datas[0]['kwargs']['metadata'])
-        return completed_doc
+        # FIX metadata
+        has_table = False
+        images = []
+        for doc_json in sorted_json_datas:
+            if doc_json['kwargs']['metadata'].get('has_table'):
+                has_table = True
+                break
+            if doc_json['kwargs']['metadata'].get('images'):
+                images.extend(doc_json['kwargs']['metadata']['images'])
+        completed_doc.metadata['has_table'] = has_table
+        completed_doc.metadata['images'] = images
+        completed_doc_with_figure.metadata['has_table'] = has_table
+        completed_doc_with_figure.metadata['images'] = images
+
+        # completed_content = ''
+        # for doc_json in sorted_json_datas:
+        #     doc = Document(page_content=doc_json['kwargs']['page_content'], metadata=doc_json['kwargs']['metadata'])
+        #     # rerank之后删除headers，只保留文本内容，用于后续处理
+        #     doc.page_content = re.sub(r'^\[headers]\(.*?\)\n', '', doc.page_content)
+        #     if filter_figures:
+        #         doc.page_content = re.sub(r'!\[figure]\(.*?\)', '', doc.page_content)  # 删除图片
+        #     completed_content += doc.page_content + '\n\n'
+        # completed_doc = Document(page_content=completed_content, metadata=sorted_json_datas[0]['kwargs']['metadata'])
+        return completed_doc, completed_doc_with_figure
 
     def aggregate_documents(self, source_documents, limited_token_nums, custom_llm):
         # 聚合文档，具体逻辑是帮我判断所有候选是否集中在一个或两个文件中，是的话直接返回这一个或两个完整文档，如果tokens不够则截取文档中的完整上下文
@@ -675,7 +690,7 @@ class LocalDocQA:
         ori_second_docs_tokens = custom_llm.num_tokens_from_docs(ori_second_docs)
 
         new_docs = []
-        first_completed_doc = self.get_completed_document(first_file_dict['file_id'], filter_figures=True)
+        first_completed_doc, first_completed_doc_with_figure = self.get_completed_document(first_file_dict['file_id'])
         first_completed_doc.metadata['score'] = first_file_dict['score']
         first_doc_tokens = custom_llm.num_tokens_from_docs([first_completed_doc])
         if first_doc_tokens + ori_second_docs_tokens > limited_token_nums:
@@ -684,8 +699,8 @@ class LocalDocQA:
                 return new_docs
             # 获取first_file_dict['doc_ids']的最小值和最大值
             doc_limit = [min(first_file_dict['doc_ids']), max(first_file_dict['doc_ids'])]
-            first_completed_doc_limit = self.get_completed_document(first_file_dict['file_id'], doc_limit,
-                                                                    filter_figures=True)
+            first_completed_doc_limit, first_completed_doc_limit_with_figure = self.get_completed_document(
+                first_file_dict['file_id'], doc_limit)
             first_completed_doc_limit.metadata['score'] = first_file_dict['score']
             first_doc_tokens = custom_llm.num_tokens_from_docs([first_completed_doc_limit])
             if first_doc_tokens + ori_second_docs_tokens > limited_token_nums:
@@ -695,13 +710,13 @@ class LocalDocQA:
             else:
                 debug_logger.info(
                     f"first_limit_doc_tokens {doc_limit}: {first_doc_tokens} + ori_second_docs_tokens: {ori_second_docs_tokens} <= limited_token_nums: {limited_token_nums}")
-                new_docs.append(first_completed_doc_limit)
+                new_docs.append(first_completed_doc_limit_with_figure)
         else:
             debug_logger.info(
                 f"first_doc_tokens: {first_doc_tokens} + ori_second_docs_tokens: {ori_second_docs_tokens} <= limited_token_nums: {limited_token_nums}")
-            new_docs.append(first_completed_doc)
+            new_docs.append(first_completed_doc_with_figure)
         if second_file_dict:
-            second_completed_doc = self.get_completed_document(second_file_dict['file_id'], filter_figures=True)
+            second_completed_doc, second_completed_doc_with_figure = self.get_completed_document(second_file_dict['file_id'])
             second_completed_doc.metadata['score'] = second_file_dict['score']
             second_doc_tokens = custom_llm.num_tokens_from_docs([second_completed_doc])
             if first_doc_tokens + second_doc_tokens > limited_token_nums:
@@ -710,8 +725,8 @@ class LocalDocQA:
                     new_docs.extend(ori_second_docs)
                     return new_docs
                 doc_limit = [min(second_file_dict['doc_ids']), max(second_file_dict['doc_ids'])]
-                second_completed_doc_limit = self.get_completed_document(second_file_dict['file_id'], doc_limit,
-                                                                         filter_figures=True)
+                second_completed_doc_limit, second_completed_doc_limit_with_figure = self.get_completed_document(
+                    second_file_dict['file_id'], doc_limit)
                 second_completed_doc_limit.metadata['score'] = second_file_dict['score']
                 second_doc_tokens = custom_llm.num_tokens_from_docs([second_completed_doc_limit])
                 if first_doc_tokens + second_doc_tokens > limited_token_nums:
@@ -722,11 +737,11 @@ class LocalDocQA:
                 else:
                     debug_logger.info(
                         f"first_doc_tokens: {first_doc_tokens} + second_limit_doc_tokens {doc_limit}: {second_doc_tokens} <= limited_token_nums: {limited_token_nums}")
-                    new_docs.append(second_completed_doc_limit)
+                    new_docs.append(second_completed_doc_limit_with_figure)
             else:
                 debug_logger.info(
                     f"first_doc_tokens: {first_doc_tokens} + second_doc_tokens: {second_doc_tokens} <= limited_token_nums: {limited_token_nums}")
-                new_docs.append(second_completed_doc)
+                new_docs.append(second_completed_doc_with_figure)
         return new_docs
 
     def incomplete_table(self, source_documents, limited_token_nums, custom_llm):
