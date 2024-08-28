@@ -91,6 +91,9 @@ export const getStatus = (item: IFileListItem) => {
 //对接口的返回值作统一处理
 export const resultControl = async res => {
   return new Promise((resolve, reject) => {
+    if (res?.request?.responseType === 'blob') {
+      resolve(res);
+    }
     if (res.errorCode === '0' || res.code === 200) {
       resolve(res.result || res.data || res);
     } else if (res.errorCode === '111') {
@@ -249,6 +252,8 @@ export function downLoad(url, fileName = '', callback?) {
  * @param {Headers} headers - 请求响应头对象，包含所有响应头字段
  * @return {string} 返回解析出的文件名，如果无法解析或字段不存在，则返回空字符串
  */
-export function getContentDispositionByHeader(headers) {
-  return decodeURIComponent((headers['content-disposition']?.split('filename=') || [])[1] || '');
+export function getContentDispositionByHeader(headers: Headers): string {
+  return decodeURIComponent(
+    (headers['content-disposition']?.split('filename=') || [])[1].slice(1, -1) || ''
+  );
 }

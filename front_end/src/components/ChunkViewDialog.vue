@@ -60,9 +60,7 @@
                       show-count
                       auto-size
                     />
-                    <template v-else>
-                      {{ record.content }}
-                    </template>
+                    <div v-else v-html="formattedContent(record.content)" />
                   </div>
                 </template>
                 <template v-else-if="column.dataIndex === 'operation'">
@@ -362,6 +360,11 @@ function getB64Type(suffix) {
   const index = supportSourceTypes.indexOf(suffix);
   return b64Types[index];
 }
+
+// 使用计算属性来处理内容替换
+const formattedContent = str => {
+  return str.replace(/\n/g, '<br />');
+};
 </script>
 
 <style lang="scss" scoped>

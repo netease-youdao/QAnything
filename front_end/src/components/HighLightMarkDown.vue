@@ -43,7 +43,8 @@ const html = ref('');
 watch(
   () => props.content,
   newvalue => {
-    html.value = md.render(newvalue);
+    // 单个\n不识别换行，两个以上\n才换行
+    html.value = md.render(newvalue.replace(/\n(?!\n)/g, '\n\n'));
   },
   { immediate: true }
 );
@@ -66,6 +67,7 @@ watch(
   user-select: text;
   word-break: break-all;
 }
+
 .high-light-comp ul,
 .high-light-comp ol {
   padding-left: 20px;
@@ -78,6 +80,7 @@ watch(
   list-style-type: disc;
   word-break: break-all;
   /* white-space: pre-line; */
+
   p {
     margin: 0;
     display: inline;

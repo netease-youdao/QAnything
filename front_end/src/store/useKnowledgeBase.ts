@@ -83,9 +83,11 @@ export const useKnowledgeBase = defineStore(
               selectList.value.push(list[0]?.kb_id);
             }
           } else {
+            setKnowledgeBaseList([]);
             setDefault(pageStatus.default);
           }
         }
+        console.log(knowledgeBaseList.value);
       } catch (e) {
         message.error(e.msg || common.error);
       }

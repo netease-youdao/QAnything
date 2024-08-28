@@ -37,7 +37,8 @@
         :pagination="paginationConfig"
         :loading="loading"
         :locale="{ emptyText: home.emptyText }"
-        :row-selection="{ selectedRowKeys: state.selectedRowKeys, onChange: onSelectChange }"
+        :scroll="{ x: 1000, y: 470 }"
+        :row-selection="{ selectedRowKeys: [...selectedKeys], onSelect, onSelectAll }"
         :hide-on-single-page="true"
         :show-size-changer="false"
         @change="onChange"
@@ -119,7 +120,7 @@ const columns = [
     title: '提问',
     dataIndex: 'question',
     key: 'question',
-    width: '35%',
+    maxWidth: '35%',
     ellipsis: true,
   },
   {
@@ -138,7 +139,8 @@ const columns = [
   {
     title: home.operate,
     key: 'options',
-    width: '5%',
+    width: '8%',
+    fixed: 'right',
   },
 ];
 
@@ -154,18 +156,31 @@ const paginationConfig = ref({
 // 切换分页的加载
 const loading = ref(false);
 
-const state = reactive<{
-  selectedRowKeys: string[];
-  loading: boolean;
-}>({
-  selectedRowKeys: [],
-  loading: false,
-});
+const selectedKeys = ref<Set<string>>(new Set());
 
 // 点击多选框
-const onSelectChange = (selectedRowKeys: string[]) => {
-  console.log('selectedRowKeys changed: ', selectedRowKeys);
-  state.selectedRowKeys = selectedRowKeys;
+const onSelect = (selectedRow: any) => {
+  console.log('selectedRowKeys changed: ', selectedRow);
+  const key = selectedRow.key;
+  if (selectedKeys.value.has(key)) {
+    selectedKeys.value.delete(key);
+  } else {
+    selectedKeys.value.add(key);
+  }
+};
+
+// 点击全选框
+const onSelectAll = (...args) => {
+  const changeRows = args[2];
+  console.log(args);
+  changeRows.map(item => {
+    const key = item.key;
+    if (selectedKeys.value.has(key)) {
+      selectedKeys.value.delete(key);
+    } else {
+      selectedKeys.value.add(key);
+    }
+  });
 };
 
 const searchConfig = ref({
@@ -240,17 +255,46 @@ const onChange = pagination => {
 };
 
 // 表格中导出按钮
-const confirmExportItem = record => {
+const confirmExportItem = async record => {
   console.log(record);
-  // TODO 请求excel
-  beforeDownload('');
+  const res = await exportPost(record.key);
+  beforeDownload(res);
 };
 
 // 导出选中按钮
-const exportSelected = () => {};
+const exportSelected = async () => {
+  const res = await exportPost([...selectedKeys.value]);
+  beforeDownload(res);
+};
 
 // 导出全部按钮
-const exportAll = () => {};
+const exportAll = async () => {
+  const res = await exportPost();
+  beforeDownload(res);
+};
+
+// 导出请求, 默认全部，传qa_ids的话就是选中导出, qa_ids为单个字符串就是表格内的导出按钮
+const exportPost = async (qa_ids?: string[] | string) => {
+  try {
+    const params: { save_to_excel: boolean; qa_ids?: string[] } = {
+      save_to_excel: true,
+    };
+
+    // 检查 qa_ids 参数是否存在
+    if (qa_ids) {
+      params.qa_ids = Array.isArray(qa_ids) ? qa_ids : [qa_ids];
+    }
+
+    // 发送请求，包含可能的自定义响应类型和响应头
+    const res: any = await resultControl(
+      await urlResquest.getQAInfo(params, { responseType: 'blob', getResponseHeader: true })
+    );
+    console.log(res);
+    return res;
+  } catch (e) {
+    message.error(e.msg || common.error);
+  }
+};
 
 const beforeDownload = res => {
   const fileName = getContentDispositionByHeader(res.headers) || 'examlpe.xlsx';
@@ -322,7 +366,15 @@ onMounted(() => {
 }
 
 .table {
-  overflow: auto;
+  flex: 1;
+
+  .ant-table {
+    max-height: 517px;
+  }
+
+  .ant-table-pagination {
+    margin-top: 10px;
+  }
 
   .export-item {
     padding-left: 0;
