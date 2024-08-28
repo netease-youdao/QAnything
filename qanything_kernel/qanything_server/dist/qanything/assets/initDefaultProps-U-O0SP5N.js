@@ -1,0 +1,1 @@
+import{_ as s}from"./index-CVjowkL6.js";const n=(p,o)=>{const r=s({},p);return Object.keys(o).forEach(t=>{const e=r[t];if(e)e.type||e.default?e.default=o[t]:e.def?e.def(o[t]):r[t]={type:e,default:o[t]};else throw new Error(`not have ${t} prop`)}),r};export{n as i};

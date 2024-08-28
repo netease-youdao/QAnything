@@ -1,1 +1,0 @@
-import{d as o,a3 as t,A as s,B as a,c,M as n}from"./index-DohhV1-H.js";const _={class:"page"},r=o({__name:"Bots",setup(p){return(d,m)=>{const e=t("router-view");return s(),a("div",_,[c(e)])}}}),l=n(r,[["__scopeId","data-v-125a7a08"]]);export{l as default};
