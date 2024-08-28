@@ -2,7 +2,7 @@ from qanything_kernel.core.local_file import LocalFile
 from qanything_kernel.core.local_doc_qa import LocalDocQA
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from qanything_kernel.configs.model_config import (BOT_DESC, BOT_IMAGE, BOT_PROMPT, BOT_WELCOME,
-                                                   DEFAULT_PARENT_CHUNK_SIZE, MAX_CHARS)
+                                                   DEFAULT_PARENT_CHUNK_SIZE, MAX_CHARS, VECTOR_SEARCH_TOP_K)
 from qanything_kernel.utils.general_utils import *
 from langchain.schema import Document
 from sanic.response import ResponseStream
@@ -628,6 +628,10 @@ async def local_doc_chat(req: request):
     api_context_length = safe_get(req, 'api_context_length', 4096)
     top_p = safe_get(req, 'top_p', 0.99)
     temperature = safe_get(req, 'temperature', 0.5)
+    top_k = safe_get(req, 'top_k', VECTOR_SEARCH_TOP_K)
+
+    if top_k > 100:
+        return sanic_json({"code": 2003, "msg": "fail, top_k should less than or equal to 100"})
 
     missing_params = []
     if not api_base:
@@ -638,6 +642,8 @@ async def local_doc_chat(req: request):
         missing_params.append('api_context_length')
     if not top_p:
         missing_params.append('top_p')
+    if not top_k:
+        missing_params.append('top_k')
     if top_p == 1.0:
         top_p = 0.99
     if not temperature:
@@ -671,6 +677,7 @@ async def local_doc_chat(req: request):
     debug_logger.info("api_key: %s", api_key)
     debug_logger.info("api_context_length: %s", api_context_length)
     debug_logger.info("top_p: %s", top_p)
+    debug_logger.info("top_k: %s", top_k)
     debug_logger.info("temperature: %s", temperature)
     debug_logger.info("hybrid_search: %s", hybrid_search)
     debug_logger.info("web_chunk_size: %s", web_chunk_size)
@@ -722,7 +729,8 @@ async def local_doc_chat(req: request):
                                                                                     api_base=api_base,
                                                                                     api_key=api_key,
                                                                                     api_context_length=api_context_length,
-                                                                                    top_p=top_p
+                                                                                    top_p=top_p,
+                                                                                    top_k=top_k
                                                                                     ):
                 chunk_data = resp["result"]
                 if not chunk_data:
@@ -802,7 +810,8 @@ async def local_doc_chat(req: request):
                                                                            api_base=api_base,
                                                                            api_key=api_key,
                                                                            api_context_length=api_context_length,
-                                                                           top_p=top_p
+                                                                           top_p=top_p,
+                                                                           top_k=top_k
                                                                            ):
             pass
         if only_need_search_results:

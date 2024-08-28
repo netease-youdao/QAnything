@@ -3,7 +3,7 @@ from qanything_kernel.core.retriever.vectorstore import VectorStoreMilvusClient
 from qanything_kernel.core.retriever.elasticsearchstore import StoreElasticSearchClient
 from qanything_kernel.connector.database.mysql.mysql_client import KnowledgeBaseManager
 from qanything_kernel.core.retriever.docstrore import MysqlStore
-from qanything_kernel.configs.model_config import VECTOR_SEARCH_TOP_K, ES_TOP_K, DEFAULT_CHILD_CHUNK_SIZE, DEFAULT_PARENT_CHUNK_SIZE
+from qanything_kernel.configs.model_config import DEFAULT_CHILD_CHUNK_SIZE, DEFAULT_PARENT_CHUNK_SIZE
 from qanything_kernel.utils.custom_log import debug_logger, insert_logger
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from qanything_kernel.utils.general_utils import num_tokens_embed, get_time_async
@@ -210,11 +210,12 @@ class ParentRetriever:
         return await self.retriever.aadd_documents(docs, parent_chunk_size=parent_chunk_size,
                                                    es_store=self.es_store, ids=ids, single_parent=single_parent)
 
-    async def get_retrieved_documents(self, query: str, partition_keys: List[str], time_record: dict, hybrid_search: bool):
+    async def get_retrieved_documents(self, query: str, partition_keys: List[str], time_record: dict,
+                                      hybrid_search: bool, top_k: int):
         milvus_start_time = time.perf_counter()
         expr = f'kb_id in {partition_keys}'
         # self.retriever.set_search_kwargs("mmr", k=VECTOR_SEARCH_TOP_K, expr=expr)
-        self.retriever.set_search_kwargs("similarity", k=VECTOR_SEARCH_TOP_K, expr=expr)
+        self.retriever.set_search_kwargs("similarity", k=top_k, expr=expr)
         query_docs = await self.retriever.aget_relevant_documents(query)
         for doc in query_docs:
             doc.metadata['retrieval_source'] = 'milvus'
@@ -228,7 +229,7 @@ class ParentRetriever:
             # filter = []
             # for partition_key in partition_keys:
             filter = [{"terms": {"metadata.kb_id.keyword": partition_keys}}]
-            es_sub_docs = await self.es_store.asimilarity_search(query, k=ES_TOP_K, filter=filter)
+            es_sub_docs = await self.es_store.asimilarity_search(query, k=top_k, filter=filter)
             es_ids = []
             milvus_doc_ids = [d.metadata[self.retriever.id_key] for d in query_docs]
             for d in es_sub_docs:

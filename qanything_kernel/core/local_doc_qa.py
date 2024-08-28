@@ -38,7 +38,6 @@ class LocalDocQA:
         self.milvus_cache = None
         self.embeddings: YouDaoEmbeddings = None
         self.rerank: YouDaoRerank = None
-        self.top_k: int = VECTOR_SEARCH_TOP_K
         self.chunk_conent: bool = True
         self.score_threshold: int = VECTOR_SEARCH_SCORE_THRESHOLD
         self.milvus_kb: VectorStoreMilvusClient = None
@@ -77,9 +76,7 @@ class LocalDocQA:
         self.retriever = ParentRetriever(self.milvus_kb, self.milvus_summary, self.es_client)
 
     @get_time
-    def get_web_search(self, queries, top_k=None):
-        if not top_k:
-            top_k = self.top_k
+    def get_web_search(self, queries, top_k):
         query = queries[0]
         web_content, web_documents = duckduckgo_search(query, top_k)
         source_documents = []
@@ -109,17 +106,17 @@ class LocalDocQA:
         return source_documents
 
     @get_time_async
-    async def get_source_documents(self, query, retriever: ParentRetriever, kb_ids, time_record, hybrid_search):
+    async def get_source_documents(self, query, retriever: ParentRetriever, kb_ids, time_record, hybrid_search, top_k):
         source_documents = []
         start_time = time.perf_counter()
         query_docs = await retriever.get_retrieved_documents(query, partition_keys=kb_ids, time_record=time_record,
-                                                             hybrid_search=hybrid_search)
+                                                             hybrid_search=hybrid_search, top_k=top_k)
         if len(query_docs) == 0:
             debug_logger.warning("MILVUS SEARCH ERROR, RESTARTING MILVUS CLIENT!")
             retriever.vectorstore_client = VectorStoreMilvusClient()
             debug_logger.warning("MILVUS CLIENT RESTARTED!")
             query_docs = await retriever.get_retrieved_documents(query, partition_keys=kb_ids, time_record=time_record,
-                                                                    hybrid_search=hybrid_search)
+                                                                    hybrid_search=hybrid_search, top_k=top_k)
         end_time = time.perf_counter()
         time_record['retriever_search'] = round(end_time - start_time, 2)
         debug_logger.info(f"retriever_search time: {time_record['retriever_search']}s")
@@ -367,7 +364,7 @@ class LocalDocQA:
         return relevant_docs
 
     async def get_knowledge_based_answer(self, model, max_token, kb_ids, query, retriever, custom_prompt, time_record,
-                                         temperature, api_base, api_key, api_context_length, top_p, web_chunk_size,
+                                         temperature, api_base, api_key, api_context_length, top_p, top_k, web_chunk_size,
                                          chat_history=None, streaming: bool = STREAMING, rerank: bool = False,
                                          only_need_search_results: bool = False, need_web_search=False,
                                          hybrid_search=False):
@@ -428,7 +425,7 @@ class LocalDocQA:
 
         if kb_ids:
             source_documents = await self.get_source_documents(retrieval_query, retriever, kb_ids, time_record,
-                                                               hybrid_search)
+                                                               hybrid_search, top_k)
         else:
             source_documents = []
 
@@ -498,6 +495,8 @@ class LocalDocQA:
                 # 退出函数
                 return
 
+        # es检索+milvus检索结果最多可能是2k
+        source_documents = source_documents[:top_k]
         # 获取今日日期
         today = time.strftime("%Y-%m-%d", time.localtime())
         # 获取当前时间
