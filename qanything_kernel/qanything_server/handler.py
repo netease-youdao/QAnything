@@ -402,7 +402,7 @@ async def list_docs(req: request):
     total_count = len(data)
     # 计算总页数
     total_pages = (total_count + page_limit - 1) // page_limit
-    if page_id > total_pages:
+    if page_id > total_pages and total_count != 0:
         return sanic_json({"code": 2002, "msg": f'输入非法！page_id超过最大值，page_id: {page_id}，最大值：{total_pages}，请检查！'})
     # 计算当前页的起始和结束索引
     start_index = (page_id - 1) * page_limit
@@ -924,7 +924,7 @@ async def get_doc_completed(req: request):
     total_count = len(chunks)
     # 计算总页数
     total_pages = (total_count + page_limit - 1) // page_limit
-    if page_id > total_pages:
+    if page_id > total_pages and total_count != 0:
         return sanic_json({"code": 2002, "msg": f'输入非法！page_id超过最大值，page_id: {page_id}，最大值：{total_pages}，请检查！'})
     # 计算当前页的起始和结束索引
     start_index = (page_id - 1) * page_limit
@@ -999,11 +999,9 @@ async def get_qa_info(req: request):
 
     # 计算总记录数
     total_count = len(qa_infos)
-    if total_count == 0:
-        return sanic_json({"code": 200, "msg": "success", "page_id": page_id, "page_limit": page_limit, "qa_infos": [], "total_count": total_count})
     # 计算总页数
     total_pages = (total_count + page_limit - 1) // page_limit
-    if page_id > total_pages:
+    if page_id > total_pages and total_count != 0:
         return sanic_json(
             {"code": 2002, "msg": f'输入非法！page_id超过最大值，page_id: {page_id}，最大值：{total_pages}，请检查！'})
     # 计算当前页的起始和结束索引
