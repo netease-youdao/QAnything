@@ -99,6 +99,8 @@ export default {
     temperatureLabelDescription: '控制输出的随机性。较低值使输出更确定，较高值增加创意性',
     top_PLabel: '累积概率阈值',
     top_PLabelDescription: '限制词汇选择范围。较低值使输出更聚焦，较高值增加多样性',
+    top_KLabel: '检索结果数量上限',
+    top_KLabelDescription: '检索算法取所有文档分片里最相关的分片数量上限',
     capabilitiesLabel: '模型能力',
     saveModel: '保存当前自定义模型',
     plsInput: '请输入',

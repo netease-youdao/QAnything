@@ -106,9 +106,12 @@ export default {
     temperatureLabel: 'Temperature',
     temperatureLabelDescription:
       'Control the randomness of the output. Lower values make the output more certain, higher values increase creativity',
-    top_PLabel: 'Top P',
+    top_PLabel: 'Top_P',
     top_PLabelDescription:
       'Limit vocabulary selection. Lower values make the output more focused, higher values add variety',
+    top_KLabel: 'Top_K',
+    top_KLabelDescription:
+      'The search algorithm takes the upper limit of the number of most relevant fragments among all document fragments.',
     capabilitiesLabel: 'Model capabilities',
     saveModel: 'Save current custom model',
     plsInput: 'Please Input',
