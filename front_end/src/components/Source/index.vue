@@ -87,7 +87,7 @@ let imageArr = ['jpg', 'png', 'jpeg'];
   }
 
   .txt {
-    width: 680px;
+    width: 100%;
     height: auto;
     padding: 15px 20px 30px 20px;
   }

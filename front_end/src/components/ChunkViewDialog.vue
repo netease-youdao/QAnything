@@ -25,7 +25,8 @@
           <a-button shape="circle" :icon="h(MinusCircleOutlined)" @click="narrowHandle" />
         </div>
         <div class="container">
-          <div class="file-preview">
+          <div class="file-preview" :style="{ width: filePreviewWidth }" @mousedown="onMouseDown">
+            <div class="resize-handle"></div>
             <div class="file-preview-content">
               <Source :zoom-level="zoomLevel" />
             </div>
@@ -137,32 +138,32 @@ const columns = ref([
     key: 'id',
     dataIndex: 'id',
     width: 70,
+    // fixed: 'left',
   },
   {
     title: 'markdown预览',
     key: 'content',
     dataIndex: 'content',
     resizable: true,
-    width: 300,
+    width: 150,
     minWidth: 150,
-    maxWidth: 500,
   },
   {
     title: '分析结果',
     key: 'editContent',
     dataIndex: 'editContent',
+    width: 150,
+    // resizable: true,
+    // minWidth: 150,
   },
   {
     title: '操作',
     key: 'operation',
     dataIndex: 'operation',
     width: 100,
+    fixed: 'right',
   },
 ]);
-
-function handleResizeColumn(w, col) {
-  col.width = w;
-}
 
 interface IChunkData {
   // 切片唯一标识符 -> chunk_id
@@ -183,7 +184,7 @@ const isShowLoading = ref(false);
 // 分页参数
 const paginationConfig = ref({
   pageNum: 1, // 当前页码
-  pageSize: 3, // 每页条数
+  pageSize: 5, // 每页条数
   total: 0, // 数据总数
   showSizeChanger: false,
   showTotal: total => `共 ${total} 条`,
@@ -259,7 +260,7 @@ const getChunks = async (kbId: string, fileId: string) => {
         page_limit: paginationConfig.value.pageSize,
       })
     )) as any;
-    chunkId.value = paginationConfig.value.pageSize * paginationConfig.value.pageNum - 2;
+    chunkId.value = (paginationConfig.value.pageNum - 1) * paginationConfig.value.pageSize + 1;
     paginationConfig.value.total = res.total_count;
     chunkData.value = [];
     res.chunks.forEach((item: any) => {
@@ -361,9 +362,74 @@ function getB64Type(suffix) {
   return b64Types[index];
 }
 
-// 使用计算属性来处理内容替换
+// 分析结果的换行
 const formattedContent = str => {
   return str.replace(/\n/g, '<br />');
+};
+
+// 表格内的拖动
+// 计算 分析结果 部分是否可以再缩小了
+const isColstart2Narrow = () => {
+  const minWidth = 150;
+  const tableDom = document.querySelector('.chunk-table');
+  const colstart2 = tableDom.querySelector('.ant-table-cell[colstart="2"]');
+  const currentWidth = colstart2.clientWidth;
+  return currentWidth > minWidth;
+};
+
+const handleResizeColumn = (w, col) => {
+  const direction = w < col.width ? 'left' : 'right';
+  if (isColstart2Narrow() || direction === 'left') {
+    col.width = w;
+  }
+};
+
+// 预览拖动相关
+const isResizing = ref(false);
+const initialX = ref(0);
+const initialWidth = ref(0);
+const filePreviewWidth = ref('40%');
+
+const setNewWidth = newWidth => {
+  const widthRules = {
+    min: 300,
+  };
+  // 最小值
+  if (newWidth >= widthRules.min) {
+    filePreviewWidth.value = `${newWidth}px`;
+  }
+};
+
+const onMouseDown = event => {
+  console.log(event.target.classList);
+  // 检查鼠标按下的元素是否是拖动手柄
+  if (event.target.classList.contains('resize-handle')) {
+    isResizing.value = true;
+    initialX.value = event.clientX;
+    initialWidth.value = event.target.parentElement.offsetWidth;
+
+    // 监听全局的鼠标移动和松开事件
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  }
+};
+
+const onMouseMove = event => {
+  if (isResizing.value) {
+    const deltaX = event.clientX - initialX.value;
+    const newWidth = initialWidth.value + deltaX;
+    // 设置新的宽度
+    setNewWidth(newWidth);
+  }
+};
+
+const onMouseUp = () => {
+  if (isResizing.value) {
+    isResizing.value = false;
+    // 移除监听器
+    window.removeEventListener('mousemove', onMouseMove);
+    window.removeEventListener('mouseup', onMouseUp);
+  }
 };
 </script>
 
@@ -388,6 +454,7 @@ const formattedContent = str => {
 
 .container {
   display: flex;
+  width: 100%;
   height: calc(100% - 32px);
 
   .file-preview {
@@ -398,6 +465,24 @@ const formattedContent = str => {
     border: 1px #d9d9d9 solid;
     border-radius: 12px;
 
+    .resize-handle {
+      position: absolute;
+      top: 50%;
+      right: 0;
+      width: 1px;
+      height: 99%;
+      transform: translateY(-50%);
+      cursor: ew-resize;
+      background-color: #eee;
+      user-select: none;
+    }
+
+    /* 可选：添加一些悬浮效果 */
+    .resize-handle:hover {
+      width: 2px;
+      background-color: #ccc; /* 鼠标悬浮时改变背景色 */
+    }
+
     .file-preview-content {
       width: 100%;
       height: 100%;
@@ -406,12 +491,20 @@ const formattedContent = str => {
   }
 
   .chunk-table {
-    width: 60%;
+    flex: 1;
+    min-width: 600px;
     height: 100%;
     margin-left: 10px;
+    overflow: hidden;
 
     :deep(.ant-table-cell) {
       vertical-align: top;
+    }
+
+    :deep(.ant-table-body) {
+      &::-webkit-scrollbar {
+        height: 12px;
+      }
     }
 
     :deep(.ant-table-wrapper),
@@ -422,6 +515,10 @@ const formattedContent = str => {
 
     :deep(.ant-table) {
       min-height: calc(100% - 64px);
+    }
+
+    :deep(.ant-table-cell[colstart='2']) {
+      min-width: 150px !important;
     }
   }
 }
