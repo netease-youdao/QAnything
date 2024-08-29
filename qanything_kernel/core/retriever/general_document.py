@@ -413,6 +413,8 @@ class LocalFileForInsert:
                 sheet_names = excel_file.sheet_names
                 for idx, sheet_name in enumerate(sheet_names):
                     xlsx = pd.read_excel(self.file_path, sheet_name=sheet_name, engine='openpyxl')
+                    xlsx = xlsx.dropna(how='all', axis=1)  # 只删除全为空的列
+                    xlsx = xlsx.dropna(how='all', axis=0)  # 只删除全为空的行
                     csv_file_path = self.file_path[:-5] + f'_{idx}.csv'
                     xlsx.to_csv(csv_file_path, index=False)
                     insert_logger.info('xlsx2csv: %s', csv_file_path)
