@@ -54,15 +54,19 @@
           </div>
         </a-popover>
       </li>
+      <li>
+        <div class="myspan" @click="goStatistics">
+          <LineChartOutlined style="margin-right: 5px" />
+          <span>{{ header.statistics }}</span>
+        </div>
+      </li>
     </ul>
-    <div class="user" @click="goStatistics">
-      <img src="../assets/home/avatar.png" alt="头像" />
-    </div>
   </div>
 </template>
 <script lang="ts" setup>
 // import { useUser } from '@/store/useUser';
 // const { userInfo } = storeToRefs(useUser());
+import { LineChartOutlined } from '@ant-design/icons-vue';
 import { useHeader } from '@/store/useHeader';
 import { useLanguage } from '@/store/useLanguage';
 import { getLanguage } from '@/language/index';
@@ -267,12 +271,6 @@ const goStatistics = () => {
         white-space: nowrap;
       }
     }
-  }
-
-  .user {
-    margin-right: 20px;
-    width: 32px;
-    height: 32px;
   }
 }
 </style>

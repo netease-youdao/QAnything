@@ -4,6 +4,7 @@ export default {
     cooperation: 'Cooperation',
     cooperationMore: 'Contact us ',
     cooperationTips: 'Feedback and technical support',
+    statistics: 'Statistics',
     knowledge: 'Knowledge',
     quickStart: 'QuickStart',
   },

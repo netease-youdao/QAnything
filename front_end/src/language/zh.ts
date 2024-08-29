@@ -4,6 +4,7 @@ export default {
     cooperation: '合作咨询',
     cooperationMore: '更多合作请咨询',
     cooperationTips: '意见反馈及技术支持群',
+    statistics: '数据统计',
     knowledge: '知识库',
     quickStart: '快速开始',
   },
