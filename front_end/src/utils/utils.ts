@@ -230,7 +230,7 @@ export function formatTimestamp(timestamp: number): string {
 
 /**
  * @description 下载文件的通用函数
- * @param url 文件的下载链接
+ * @param url URL.createObjectURL 的文件链接
  * @param fileName 下载文件的名称，如果不提供，默认为空字符串
  * @param callback 下载完成后的回调函数，如果提供了回调函数，在下载触发后执行
  */

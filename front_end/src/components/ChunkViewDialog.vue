@@ -19,26 +19,32 @@
         :footer="null"
         @cancel="handleCancel"
       >
-        <div class="scale">
-          <a-button shape="circle" :icon="h(PlusCircleOutlined)" @click="enlargeHandle" />
-          <span class="scale-text">{{ (zoomLevel * 100).toFixed(0) }}%</span>
-          <a-button shape="circle" :icon="h(MinusCircleOutlined)" @click="narrowHandle" />
-        </div>
         <div class="container">
           <div class="file-preview" :style="{ width: filePreviewWidth }" @mousedown="onMouseDown">
-            <div class="resize-handle"></div>
+            <div class="scale">
+              <a-button shape="circle" :icon="h(PlusCircleOutlined)" @click="enlargeHandle" />
+              <span class="scale-text">{{ (zoomLevel * 100).toFixed(0) }}%</span>
+              <a-button shape="circle" :icon="h(MinusCircleOutlined)" @click="narrowHandle" />
+            </div>
             <div class="file-preview-content">
+              <div class="resize-handle"></div>
               <Source :zoom-level="zoomLevel" />
             </div>
           </div>
           <div class="chunk-table">
+            <div class="export">
+              <a-button type="primary" @click="exportSelected">
+                导出选中({{ selectedKeys.size }})
+              </a-button>
+            </div>
             <a-table
               :columns="columns"
               :data-source="chunkData"
               bordered
-              :scroll="{ y: 'calc(100vh - 32px - 40px - 42px - 64px - 56px)' }"
+              :scroll="{ y: 'calc(100vh - 32px - 40px - 42px - 64px - 56px - 42px)' }"
               :pagination="paginationConfig"
               :loading="loading"
+              :row-selection="{ selectedRowKeys: [...selectedKeys.keys()], onSelect, onSelectAll }"
               @change="changePage"
               @resizeColumn="handleResizeColumn"
             >
@@ -109,7 +115,7 @@ import { h } from 'vue';
 import { PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons-vue';
 import { useChunkView } from '@/store/useChunkView';
 import { getLanguage } from '@/language';
-import { resultControl } from '@/utils/utils';
+import { downLoad, resultControl } from '@/utils/utils';
 import urlResquest from '@/services/urlConfig';
 import { message } from 'ant-design-vue';
 import { useChatSetting } from '@/store/useChatSetting';
@@ -175,6 +181,51 @@ interface IChunkData {
   // 编辑内容
   editContent: string;
 }
+
+// 多选
+const selectedKeys = ref<Map<string, string>>(new Map());
+
+// 点击多选框
+const onSelect = (selectedRow: any) => {
+  const key = selectedRow.key;
+  const content = selectedRow.content;
+  if (selectedKeys.value.has(key)) {
+    selectedKeys.value.delete(key);
+  } else {
+    selectedKeys.value.set(key, content);
+  }
+};
+
+// 点击全选框
+const onSelectAll = (...args) => {
+  const changeRows = args[2];
+  changeRows.map(item => {
+    const key = item.key;
+    const content = item.content;
+    if (selectedKeys.value.has(key)) {
+      selectedKeys.value.delete(key);
+    } else {
+      selectedKeys.value.set(key, content);
+    }
+  });
+};
+
+// 导出按钮
+const exportSelected = () => {
+  let str = '';
+  const contentArr = [...selectedKeys.value.values()];
+  contentArr.map(item => {
+    str += item + '\n\n';
+  });
+  beforeDownload(str);
+};
+
+const beforeDownload = content => {
+  const fileName = 'output.txt';
+  const resFile = new File([content], fileName, { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(resFile);
+  downLoad(url, fileName);
+};
 
 // 整体加载的loading
 const loading = ref(false);
@@ -265,8 +316,8 @@ const getChunks = async (kbId: string, fileId: string) => {
     chunkData.value = [];
     res.chunks.forEach((item: any) => {
       chunkData.value.push({
-        id: chunkId.value++,
         key: item.chunk_id,
+        id: chunkId.value++,
         content: item.page_content,
         editContent: item.page_content,
       });
@@ -293,6 +344,7 @@ watch(
       paginationConfig.value.total = 1;
       setSourceUrl('');
       setTextContent('');
+      selectedKeys.value.clear();
     }
   }
 );
@@ -434,24 +486,6 @@ const onMouseUp = () => {
 </script>
 
 <style lang="scss" scoped>
-.scale {
-  display: flex;
-  position: absolute;
-  top: 10px;
-  left: 40%;
-  transform: translateX(-100%);
-  border-radius: 18px;
-
-  .scale-text {
-    width: 40px;
-    height: 32px;
-    padding: 0 5px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-}
-
 .container {
   display: flex;
   width: 100%;
@@ -460,33 +494,58 @@ const onMouseUp = () => {
   .file-preview {
     position: relative;
     width: 40%;
-    height: 100%;
-    padding: 0 10px;
-    border: 1px #d9d9d9 solid;
-    border-radius: 12px;
+    height: 95%;
+    display: flex;
+    flex-direction: column;
+    //padding: 0 10px;
 
-    .resize-handle {
-      position: absolute;
-      top: 50%;
-      right: 0;
-      width: 1px;
-      height: 99%;
-      transform: translateY(-50%);
-      cursor: ew-resize;
-      background-color: #eee;
-      user-select: none;
-    }
+    .scale {
+      display: flex;
+      justify-content: flex-end;
+      border-radius: 18px;
 
-    /* 可选：添加一些悬浮效果 */
-    .resize-handle:hover {
-      width: 2px;
-      background-color: #ccc; /* 鼠标悬浮时改变背景色 */
+      .scale-text {
+        width: 40px;
+        height: 32px;
+        padding: 0 5px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
     }
 
     .file-preview-content {
+      position: relative;
       width: 100%;
       height: 100%;
+      padding: 0;
+      border: 1px #d9d9d9 solid;
+      //border-right: 0;
+      border-radius: 12px;
       overflow: auto;
+      box-sizing: border-box;
+
+      &::-webkit-scrollbar {
+        width: 0;
+      }
+
+      .resize-handle {
+        position: absolute;
+        top: 50%;
+        right: 0;
+        width: 1px;
+        height: 100%;
+        transform: translateY(-50%);
+        cursor: ew-resize;
+        background-color: #eee;
+        user-select: none;
+        z-index: 999;
+      }
+
+      .resize-handle:hover {
+        width: 2px;
+        background-color: #ccc;
+      }
     }
   }
 
@@ -496,6 +555,13 @@ const onMouseUp = () => {
     height: 100%;
     margin-left: 10px;
     overflow: hidden;
+
+    .export {
+      width: 100%;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: flex-end;
+    }
 
     :deep(.ant-table-cell) {
       vertical-align: top;
@@ -514,7 +580,7 @@ const onMouseUp = () => {
     }
 
     :deep(.ant-table) {
-      min-height: calc(100% - 64px);
+      min-height: calc(100% - 64px - 42px);
     }
 
     :deep(.ant-table-cell[colstart='2']) {

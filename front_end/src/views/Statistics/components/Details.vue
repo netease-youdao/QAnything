@@ -256,7 +256,6 @@ const onChange = pagination => {
 
 // 表格中导出按钮
 const confirmExportItem = async record => {
-  console.log(record);
   const res = await exportPost(record.key);
   beforeDownload(res);
 };
@@ -297,7 +296,7 @@ const exportPost = async (qa_ids?: string[] | string) => {
 };
 
 const beforeDownload = res => {
-  const fileName = getContentDispositionByHeader(res.headers) || 'examlpe.xlsx';
+  const fileName = getContentDispositionByHeader(res.headers) || 'example.xlsx';
   const resFile = new File([res.data], fileName, { type: 'application/excel' });
   const url = URL.createObjectURL(resFile);
   downLoad(url, fileName);
