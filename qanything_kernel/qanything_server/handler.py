@@ -945,8 +945,10 @@ async def get_doc_completed(req: request):
 
     # return sanic_json({"code": 200, "msg": "success", "completed_text": completed_doc.page_content,
     #                    "chunks": current_page_chunks, "page_id": page, "total_count": total_count})
-
-    return sanic_json({"code": 200, "msg": "success", "chunks": current_page_chunks,
+    file_location = local_doc_qa.milvus_summary.get_file_location(file_id)
+    # 获取file_location的上一级目录
+    file_path = os.path.dirname(file_location)
+    return sanic_json({"code": 200, "msg": "success", "chunks": current_page_chunks, "file_path": file_path,
                        "page_id": page_id, "page_limit": page_limit, "total_count": total_count})
 
 
