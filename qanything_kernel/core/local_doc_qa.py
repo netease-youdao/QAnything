@@ -627,6 +627,9 @@ class LocalDocQA:
             doc.page_content = re.sub(r'^\[headers]\(.*?\)\n', '', doc.page_content)
             # if filter_figures:
             #     doc.page_content = re.sub(r'!\[figure]\(.*?\)', '', doc.page_content)  # 删除图片
+            if doc_json['kwargs']['metadata']['file_name'].endswith('.faq'):
+                faq_dict = doc_json['kwargs']['metadata']['faq_dict']
+                doc.page_content = f"{faq_dict['question']}：{faq_dict['answer']}"
             completed_content_with_figure += doc.page_content + '\n\n'
             completed_content += re.sub(r'!\[figure]\(.*?\)', '', doc.page_content) + '\n\n' # 删除图片
         completed_doc_with_figure = Document(page_content=completed_content_with_figure, metadata=sorted_json_datas[0]['kwargs']['metadata'])
