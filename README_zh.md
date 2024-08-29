@@ -92,6 +92,7 @@
 ### 特别鸣谢！
 <h2><span style="color:red;">请注意：我们的贡献者名单是自动更新的，因此您的贡献可能不会立即显示在此列表中。</span></h2>
 <h2><span style="color:red;">特别鸣谢！：@ikun-moxiaofei</span></h2>
+<h2><span style="color:red;">特别鸣谢！：@Ianarua</span></h2>
 
 
 ## 商务问题联系方式：

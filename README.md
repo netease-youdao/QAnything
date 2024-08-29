@@ -61,6 +61,7 @@
   - [FAQ](#faq)
   - [Contributing](#contributing)
     - [Thanks to all contributors for their efforts](#thanks-to-all-contributors-for-their-efforts)
+    - [Special thanks!](#special-thanks)
   - [Business contact information：](#business-contact-information)
 - [Roadmap & Feedback](#-roadmap--feedback)
 - [Community & Support](#community--support)
@@ -90,6 +91,11 @@ We appreciate your interest in contributing to our project. Whether you're fixin
 <a href="https://github.com/netease-youdao/QAnything/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=netease-youdao/QAnything" />
 </a>
+
+### Special thanks!
+<h2><span style="color:red;">Please note: Our list of contributors is automatically updated, so your contributions may not appear immediately on this list.</span></h2>
+<h2><span style="color:red;"Special thanks!：@ikun-moxiaofei</span></h2>
+<h2><span style="color:red;">Special thanks!：@Ianarua</span></h2>
 
 
 ## Business contact information：
