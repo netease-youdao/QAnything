@@ -19,7 +19,7 @@ from qanything_kernel.connector.database.mysql.mysql_client import KnowledgeBase
 from qanything_kernel.core.retriever.elasticsearchstore import StoreElasticSearchClient
 from qanything_kernel.core.retriever.parent_retriever import ParentRetriever
 from qanything_kernel.configs.model_config import MYSQL_HOST_LOCAL, MYSQL_PORT_LOCAL, \
-    MYSQL_USER_LOCAL, MYSQL_PASSWORD_LOCAL, MYSQL_DATABASE_LOCAL
+    MYSQL_USER_LOCAL, MYSQL_PASSWORD_LOCAL, MYSQL_DATABASE_LOCAL, MAX_CHARS
 from sanic.worker.manager import WorkerManager
 import asyncio
 import traceback
@@ -77,9 +77,9 @@ async def process_data(retriever, milvus_kb, mysql_client, file_info, time_recor
             timeout=parse_timeout_seconds
         )
         content_length = sum([len(doc.page_content) for doc in local_file.docs])
-        if content_length > 1000000:
+        if content_length > MAX_CHARS:
             status = 'red'
-            msg = f"{file_name} content_length too large, {content_length} >= MaxLength(1000000)"
+            msg = f"{file_name} content_length too large, {content_length} >= MaxLength({MAX_CHARS})"
             return status, content_length, chunks_number, msg
         elif content_length == 0:
             status = 'red'

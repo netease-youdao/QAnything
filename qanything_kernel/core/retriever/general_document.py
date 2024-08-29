@@ -291,31 +291,45 @@ class LocalFileForInsert:
 
     @staticmethod
     def excel_to_markdown(file_path, markdown_path):
-        basename = os.path.basename(file_path)
-        markdown_file = os.path.join(markdown_path, basename.split('.')[0] + '.md')
-        # 打开 Excel 文件
-        workbook = openpyxl.load_workbook(file_path)
+        def clean_cell_content(cell):
+            if cell is None:
+                return ''
+            # 将单元格内容转换为字符串，并替换换行符为空格
+            return re.sub(r'\s+', ' ', str(cell)).strip()
+        basename = os.path.splitext(os.path.basename(file_path))[0]
+        markdown_file = os.path.join(markdown_path, f"{basename}.md")
+
+        workbook = openpyxl.load_workbook(file_path, read_only=True, data_only=True)
 
         with open(markdown_file, 'w', encoding='utf-8') as md_file:
-            # 遍历所有的工作表
             for sheet_name in workbook.sheetnames:
                 sheet = workbook[sheet_name]
-
-                # 添加 sheet 名称作为标题
                 md_file.write(f"# {sheet_name}\n\n")
 
-                for row_index, row in enumerate(sheet.iter_rows(values_only=True)):
-                    # 将每行转换为 Markdown 表格行
-                    markdown_row = '| ' + ' | '.join(str(cell) if cell is not None else '' for cell in row) + ' |'
+                # 获取非空行和列
+                rows = [[clean_cell_content(cell) for cell in row] for row in sheet.iter_rows(values_only=True)]
+                non_empty_rows = [row for row in rows if any(cell != '' for cell in row)]
+
+                if not non_empty_rows:
+                    continue  # 跳过空表格
+
+                max_cols = max(len(row) for row in non_empty_rows)
+
+                # 处理每一行
+                for row_index, row in enumerate(non_empty_rows):
+                    # 补齐空单元格
+                    padded_row = row + [''] * (max_cols - len(row))
+
+                    # 转换为Markdown表格行，使用竖线作为分隔符
+                    markdown_row = '| ' + ' | '.join(padded_row) + ' |'
                     md_file.write(markdown_row + '\n')
 
                     # 在第一行后添加分隔符
                     if row_index == 0:
-                        separator = '|' + '|'.join(['---' for _ in row]) + '|'
+                        separator = '|' + '|'.join(['---' for _ in range(max_cols)]) + '|'
                         md_file.write(separator + '\n')
 
-                # 在每个表格后添加空行，以便更好地分隔
-                md_file.write('\n\n')
+                md_file.write('\n\n')  # 在每个表格后添加空行
 
         insert_logger.info(f"转换完成。Markdown 文件已保存为 {markdown_file}")
         return markdown_file
