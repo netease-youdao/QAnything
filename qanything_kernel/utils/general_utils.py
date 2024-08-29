@@ -7,6 +7,7 @@ import os
 import logging
 import re
 import tiktoken
+import mimetypes
 
 __all__ = ['write_check_file', 'isURL', 'format_source_documents', 'get_time', 'safe_get', 'truncate_filename',
            'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens']
@@ -126,11 +127,25 @@ def read_files_with_extensions():
     directory = project_dir + '/data'
     print(f'now reading {directory}')
     extensions = ['.md', '.txt', '.pdf', '.jpg', '.docx', '.xlsx', '.eml', '.csv']
-    for root, dirs, files in os.walk(directory):
-        for file in files:
+
+    files = []
+    for root, dirs, files_list in os.walk(directory):
+        for file in files_list:
             if file.endswith(tuple(extensions)):
                 file_path = os.path.join(root, file)
-                yield file_path
+                with open(file_path, 'rb') as f:
+                    file_content = f.read()
+                    mime_type, _ = mimetypes.guess_type(file_path)
+                    if mime_type is None:
+                        mime_type = 'application/octet-stream'
+                    # 模拟 req.files.getlist('files') 返回的对象
+                    file_obj = type('FileStorage', (object,), {
+                        'name': file,
+                        'type': mime_type,
+                        'body': file_content
+                    })()
+                    files.append(file_obj)
+    return files
 
 
 def validate_user_id(user_id):
