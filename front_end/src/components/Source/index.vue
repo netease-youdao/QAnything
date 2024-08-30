@@ -73,7 +73,7 @@ let imageArr = ['jpg', 'png', 'jpeg'];
   width: 100%;
   min-height: 35vh;
   max-height: calc(90vh - 48px);
-  overflow-y: scroll;
+  //overflow-y: scroll;
   border-radius: 8px;
   display: flex;
 

@@ -18,7 +18,7 @@ import urlResquest from '@/services/urlConfig';
 import { resultControl } from '@/utils/utils';
 import { message } from 'ant-design-vue';
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
-const { getList, setCurrentId, setNewKbId, setCurrentKbName, setDefault } = useKnowledgeBase();
+const { getList, setCurrentId, setCurrentKbName, setDefault } = useKnowledgeBase();
 const { selectList } = storeToRefs(useKnowledgeBase());
 import { useKnowledgeModal } from '@/store/useKnowledgeModal';
 import { pageStatus } from '@/utils/enum';
@@ -41,7 +41,6 @@ const addKb = async () => {
     const res: any = await resultControl(await urlResquest.createKb({ kb_name: kb_name.value }));
     kb_name.value = '';
     setCurrentId(res?.kb_id);
-    setNewKbId(res?.kb_id);
     setCurrentKbName(res?.kb_name);
     selectList.value.push(res?.kb_id);
     await getList();

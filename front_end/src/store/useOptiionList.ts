@@ -19,6 +19,7 @@ type Status = 'green' | 'yellow' | 'red' | 'gray';
 interface IDataSource {
   id: number;
   bytes: number | string;
+  contentLength: number;
   fileId: string;
   fileIdName: string;
   status: Status;
@@ -140,6 +141,7 @@ export const useOptiionList = defineStore(
           fileIdName: item?.file_name,
           status: item?.status,
           bytes: formatFileSize(item?.bytes || 0),
+          contentLength: item?.content_length,
           createtime: formatDate(item?.timestamp),
           remark: item?.status === 'gray' ? '' : computedRemark(item?.msg, item?.status),
         });

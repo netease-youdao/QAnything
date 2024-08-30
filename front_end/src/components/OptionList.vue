@@ -209,7 +209,7 @@ import UploadProgress from '@/components/UploadProgress.vue';
 import ChunkViewDialog from '@/components/ChunkViewDialog.vue';
 import FileUploadDialog from '@/components/FileUploadDialog.vue';
 
-const { setDefault, setNewKbId } = useKnowledgeBase();
+const { setDefault } = useKnowledgeBase();
 const { currentKbName, currentId } = storeToRefs(useKnowledgeBase());
 const { setModalVisible, setUrlModalVisible, setModalTitle } = useKnowledgeModal();
 const { showChunkModel } = storeToRefs(useChunkView());
@@ -278,6 +278,12 @@ const columns = [
     title: home.fileSize,
     dataIndex: 'bytes',
     key: 'bytes',
+    width: '10%',
+  },
+  {
+    title: home.contentLength,
+    dataIndex: 'contentLength',
+    key: 'contentLength',
     width: '10%',
   },
   {
@@ -576,9 +582,6 @@ watch(
 onBeforeUnmount(() => {
   clearTimeout(timer.value);
   clearTimeout(faqTimer.value);
-  // 不加这个判断的话，new的知识库跳转后kb会为''
-  // !newKbId.value && setCurrentId('');
-  setNewKbId('');
   setKbPageNum(1);
   setPageNum(1);
 });

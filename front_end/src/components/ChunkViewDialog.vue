@@ -27,12 +27,13 @@
               <a-button shape="circle" :icon="h(MinusCircleOutlined)" @click="narrowHandle" />
             </div>
             <div class="file-preview-content">
-              <div class="resize-handle"></div>
               <Source :zoom-level="zoomLevel" />
             </div>
+            <div class="resize-handle"></div>
           </div>
           <div class="chunk-table">
             <div class="export">
+              <p class="file-path">file_path: {{ filePath }}</p>
               <a-button type="primary" @click="exportSelected">
                 导出选中({{ selectedKeys.size }})
               </a-button>
@@ -41,7 +42,7 @@
               :columns="columns"
               :data-source="chunkData"
               bordered
-              :scroll="{ y: 'calc(100vh - 32px - 40px - 42px - 64px - 56px - 42px)' }"
+              :scroll="{ y: 'calc(100vh - 32px - 40px - 42px - 64px - 56px - 42px - 8px)' }"
               :pagination="paginationConfig"
               :loading="loading"
               :row-selection="{ selectedRowKeys: [...selectedKeys.keys()], onSelect, onSelectAll }"
@@ -221,10 +222,15 @@ const exportSelected = () => {
 };
 
 const beforeDownload = content => {
-  const fileName = 'output.txt';
-  const resFile = new File([content], fileName, { type: 'text/plain;charset=utf-8' });
-  const url = URL.createObjectURL(resFile);
-  downLoad(url, fileName);
+  try {
+    const fileName = 'output.txt';
+    const resFile = new File([content], fileName, { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(resFile);
+    downLoad(url, fileName);
+    selectedKeys.value.clear();
+  } catch (e) {
+    message.error('download error');
+  }
 };
 
 // 整体加载的loading
@@ -251,6 +257,7 @@ const changePage = pagination => {
 const chunkData = ref<IChunkData[]>([]);
 const editableData = ref<Record<string, IChunkData>>({});
 const chunkId = ref(1);
+const filePath = ref('');
 
 const edit = (key: string) => {
   editableData.value[key] = JSON.parse(
@@ -314,6 +321,7 @@ const getChunks = async (kbId: string, fileId: string) => {
     chunkId.value = (paginationConfig.value.pageNum - 1) * paginationConfig.value.pageSize + 1;
     paginationConfig.value.total = res.total_count;
     chunkData.value = [];
+    filePath.value = res.file_path;
     res.chunks.forEach((item: any) => {
       chunkData.value.push({
         key: item.chunk_id,
@@ -489,12 +497,12 @@ const onMouseUp = () => {
 .container {
   display: flex;
   width: 100%;
-  height: calc(100% - 32px);
+  height: calc(100% - 42px - 20px);
 
   .file-preview {
     position: relative;
     width: 40%;
-    height: 95%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     //padding: 0 10px;
@@ -518,34 +526,37 @@ const onMouseUp = () => {
       position: relative;
       width: 100%;
       height: 100%;
-      padding: 0;
       border: 1px #d9d9d9 solid;
+      padding-right: 0;
+      padding-bottom: 8px;
       //border-right: 0;
       border-radius: 12px;
-      overflow: auto;
+      overflow-x: auto;
       box-sizing: border-box;
 
       &::-webkit-scrollbar {
-        width: 0;
+        //width: 0;
+        height: 12px;
       }
+    }
+  }
 
-      .resize-handle {
-        position: absolute;
-        top: 50%;
-        right: 0;
-        width: 1px;
-        height: 100%;
-        transform: translateY(-50%);
-        cursor: ew-resize;
-        background-color: #eee;
-        user-select: none;
-        z-index: 999;
-      }
+  .resize-handle {
+    position: absolute !important;
+    //top: 50%;
+    bottom: 0;
+    right: 0 !important;
+    width: 1px;
+    height: calc(100% - 44px);
+    transform: translateY(-6px);
+    cursor: ew-resize;
+    background-color: #eee;
+    user-select: none;
+    z-index: 999;
 
-      .resize-handle:hover {
-        width: 2px;
-        background-color: #ccc;
-      }
+    &:hover {
+      width: 2px;
+      background-color: #ccc;
     }
   }
 
@@ -560,7 +571,16 @@ const onMouseUp = () => {
       width: 100%;
       margin-bottom: 10px;
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
+      align-items: center;
+
+      .file-path {
+        padding: 0 10px;
+        font-size: 10px;
+        font-weight: 400;
+        color: #999;
+        word-break: break-all;
+      }
     }
 
     :deep(.ant-table-cell) {
@@ -591,7 +611,7 @@ const onMouseUp = () => {
 
 .footer {
   width: 100%;
-  margin-top: 10px;
+  margin-top: 20px;
   display: flex;
   justify-content: flex-end;
 }
@@ -602,7 +622,7 @@ const onMouseUp = () => {
 
   .operation-div {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-evenly;
     align-items: center;
 
     .operation-btn {
