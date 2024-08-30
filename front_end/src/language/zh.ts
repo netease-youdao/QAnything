@@ -124,7 +124,7 @@ export default {
     documentStatus: '文档状态',
     documentStatusNode: '解析成功后可问答',
     fileSize: '文件大小',
-    contentLength: '文件字数',
+    contentLength: '解析后字符数',
     creationDate: '创建日期',
     remark: '备注',
     operate: '操作',

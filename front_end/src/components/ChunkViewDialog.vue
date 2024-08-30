@@ -33,7 +33,7 @@
           </div>
           <div class="chunk-table">
             <div class="export">
-              <p class="file-path">file_path: {{ filePath }}</p>
+              <p class="file-path">文件与解析结果所在目录: {{ filePath }}</p>
               <a-button type="primary" @click="exportSelected">
                 导出选中({{ selectedKeys.size }})
               </a-button>
@@ -42,7 +42,7 @@
               :columns="columns"
               :data-source="chunkData"
               bordered
-              :scroll="{ y: 'calc(100vh - 32px - 40px - 42px - 64px - 56px - 42px - 8px)' }"
+              :scroll="{ y: 'calc(100vh - 32px - 40px - 42px - 64px - 56px - 42px - 48px)' }"
               :pagination="paginationConfig"
               :loading="loading"
               :row-selection="{ selectedRowKeys: [...selectedKeys.keys()], onSelect, onSelectAll }"
@@ -576,10 +576,11 @@ const onMouseUp = () => {
 
       .file-path {
         padding: 0 10px;
-        font-size: 10px;
+        font-size: 14px;
         font-weight: 400;
         color: #999;
         word-break: break-all;
+        user-select: text;
       }
     }
 
@@ -611,7 +612,7 @@ const onMouseUp = () => {
 
 .footer {
   width: 100%;
-  margin-top: 20px;
+  margin-top: 24px;
   display: flex;
   justify-content: flex-end;
 }

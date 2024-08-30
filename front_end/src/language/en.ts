@@ -135,7 +135,7 @@ export default {
     documentStatus: 'Document Status',
     documentStatusNode: 'Q&A after successful parsing',
     fileSize: 'File Size',
-    contentLength: 'File Word Count',
+    contentLength: 'Post-Parsing Character Count',
     creationDate: 'Creation Date',
     remark: 'Remarks or Notes',
     operate: 'Operate',

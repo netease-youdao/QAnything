@@ -206,6 +206,7 @@
       <img src="@/assets/bots/lock.png" alt="icon" />
       <p>{{ bots.bindKbtoPreview }}</p>
     </div>
+    <ChatSettingDialog ref="chatSettingForDialogRef" />
   </div>
   <DefaultModal :content="content" :confirm-loading="confirmLoading" @ok="confirm" />
 </template>
@@ -231,6 +232,7 @@ import { ChatInfoClass, resultControl } from '@/utils/utils';
 import { useChatSetting } from '@/store/useChatSetting';
 import ChatInfoPanel from '@/components/ChatInfoPanel.vue';
 import HighLightMarkDown from '@/components/HighLightMarkDown.vue';
+import ChatSettingDialog from '@/components/ChatSettingDialog.vue';
 
 const props = defineProps({
   chatType: {
@@ -354,12 +356,15 @@ const stopChat = () => {
 };
 
 //发送问答消息
-const send = () => {
+const send = async () => {
+  if (!question.value.trim().length) {
+    return;
+  }
   if (!question.value.length) {
     message.warn('正在聊天中...请等待结束');
     return;
   }
-  if (!checkChatSetting()) {
+  if (!(await checkChatSetting())) {
     message.error('模型设置错误，请先检查模型配置');
     return;
   }
@@ -557,12 +562,9 @@ const confirm = async () => {
 };
 
 // 模型配置是否正确
+const chatSettingForDialogRef = ref<InstanceType<typeof ChatSettingDialog>>();
 const checkChatSetting = () => {
-  return !!(
-    chatSettingFormActive.value.apiKey &&
-    chatSettingFormActive.value.apiBase &&
-    chatSettingFormActive.value.apiModelName
-  );
+  return chatSettingForDialogRef.value.handleOk();
 };
 
 // 检查信息来源的文件是否支持窗口化渲染
