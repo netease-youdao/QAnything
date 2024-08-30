@@ -129,7 +129,7 @@ export default {
   },
   home: {
     newConversation: 'New Conversation',
-    newConversationQuick: 'Start new conversation',
+    newConversationQuick: 'Start New Conversation',
     documentId: 'Document ID',
     documentName: 'Document Name',
     documentStatus: 'Document Status',
