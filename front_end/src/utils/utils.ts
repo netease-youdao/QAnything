@@ -119,15 +119,36 @@ export const formatFileSize = sizeInBytes => {
   }
 };
 
-export const formatDate = (timestamp: string, symbol = '-') => {
-  if (timestamp) {
-    const year = timestamp.slice(0, 4);
-    const month = timestamp.slice(4, 6);
-    const day = timestamp.slice(6, 8);
-    return year + symbol + month + symbol + day;
-  } else {
+export const formatDate = (timestamp, symbol = '-', timeSymbol = ':') => {
+  if (!timestamp) {
     return '';
   }
+
+  // 拆分日期和时间部分
+  const datePart = timestamp.slice(0, 8); // 取前8位作为日期
+  const timePart = timestamp.slice(8); // 剩余部分作为时间
+
+  // 解析日期部分
+  const year = datePart.slice(0, 4);
+  const month = datePart.slice(4, 6);
+  const day = datePart.slice(6, 8);
+
+  // 检查时间部分是否存在，并解析时间
+  let hour, minute;
+  if (timePart) {
+    hour = timePart.slice(0, 2);
+    minute = timePart.slice(2, 4);
+  }
+
+  // 构建日期字符串
+  let dateString = `${year}${symbol}${month}${symbol}${day}`;
+
+  // 如果存在时间部分，添加到日期字符串
+  if (timePart) {
+    dateString += ` ${hour}${timeSymbol}${minute}`;
+  }
+
+  return dateString;
 };
 
 /**

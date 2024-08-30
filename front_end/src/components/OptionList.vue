@@ -377,7 +377,6 @@ const deleteItem = item => {
 const fileId = ref('');
 const fileIdName = ref('');
 const viewItem = async item => {
-  console.log('item', item);
   fileId.value = item.fileId;
   fileIdName.value = item.fileIdName;
   // 打开弹窗

@@ -15,7 +15,7 @@
         centered
         width="100%"
         wrap-class-name="chunk-modal"
-        :destroy-on-close="true"
+        destroy-on-close
         :footer="null"
         @cancel="handleCancel"
       >
@@ -31,18 +31,26 @@
             </div>
             <div class="resize-handle"></div>
           </div>
-          <div class="chunk-table">
+          <div ref="tableDomRef" class="chunk-table">
             <div class="export">
-              <p class="file-path">文件与解析结果所在目录: {{ filePath }}</p>
+              <a-tooltip color="#fff" placement="bottom">
+                <template #title>
+                  <span style="color: #666; user-select: text">{{ filePath }}</span>
+                </template>
+                <span class="file-path">文件与解析结果所在目录: {{ filePath }}</span>
+              </a-tooltip>
               <a-button type="primary" @click="exportSelected">
                 导出选中({{ selectedKeys.size }})
               </a-button>
             </div>
+            <!--            x: tableDomWidth,-->
             <a-table
               :columns="columns"
               :data-source="chunkData"
               bordered
-              :scroll="{ y: 'calc(100vh - 32px - 40px - 42px - 64px - 56px - 42px - 48px)' }"
+              :scroll="{
+                y: 'calc(100vh - 32px - 40px - 42px - 64px - 56px - 42px - 48px)',
+              }"
               :pagination="paginationConfig"
               :loading="loading"
               :row-selection="{ selectedRowKeys: [...selectedKeys.keys()], onSelect, onSelectAll }"
@@ -159,16 +167,16 @@ const columns = ref([
     title: '分析结果',
     key: 'editContent',
     dataIndex: 'editContent',
+    resizable: true,
     width: 150,
-    // resizable: true,
-    // minWidth: 150,
+    minWidth: 150,
   },
   {
     title: '操作',
     key: 'operation',
     dataIndex: 'operation',
     width: 100,
-    fixed: 'right',
+    // fixed: 'right',
   },
 ]);
 
@@ -377,7 +385,6 @@ const checkFileType = filename => {
 };
 
 const handleChatSource = file => {
-  console.log('handleChatSource', file);
   const isSupport = checkFileType(file.file_name);
   if (isSupport) {
     queryFile(file);
@@ -429,15 +436,26 @@ const formattedContent = str => {
 
 // 表格内的拖动
 // 计算 分析结果 部分是否可以再缩小了
+const tableDomRef = ref(null);
+const computedTableDomWidth = () => {
+  return tableDomRef.value.clientWidth;
+};
+const tableDomWidth = ref(0);
+
 const isColstart2Narrow = () => {
   const minWidth = 150;
   const tableDom = document.querySelector('.chunk-table');
-  const colstart2 = tableDom.querySelector('.ant-table-cell[colstart="2"]');
-  const currentWidth = colstart2.clientWidth;
+  const colstart3 = tableDom.querySelector('.ant-table-cell[colstart="3"]');
+  const currentWidth = colstart3.clientWidth;
+  console.log('----', currentWidth);
   return currentWidth > minWidth;
 };
 
 const handleResizeColumn = (w, col) => {
+  tableDomWidth.value = computedTableDomWidth();
+  console.log(tableDomWidth.value);
+  console.log(isColstart2Narrow());
+  console.log(w, col.width);
   const direction = w < col.width ? 'left' : 'right';
   if (isColstart2Narrow() || direction === 'left') {
     col.width = w;
@@ -575,12 +593,15 @@ const onMouseUp = () => {
       align-items: center;
 
       .file-path {
+        flex: 1;
         padding: 0 10px;
+        margin-right: 20px;
         font-size: 14px;
         font-weight: 400;
         color: #999;
-        word-break: break-all;
-        user-select: text;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
     }
 
@@ -604,7 +625,7 @@ const onMouseUp = () => {
       min-height: calc(100% - 64px - 42px);
     }
 
-    :deep(.ant-table-cell[colstart='2']) {
+    :deep(.ant-table-cell[colstart='3']) {
       min-width: 150px !important;
     }
   }
