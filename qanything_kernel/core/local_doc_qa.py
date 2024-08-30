@@ -49,7 +49,7 @@ class LocalDocQA:
             separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
             chunk_size=LOCAL_EMBED_MAX_LENGTH / 2,
             chunk_overlap=0,
-            length_function=num_tokens_embed
+            length_function=len
         )
 
     @staticmethod
@@ -591,10 +591,12 @@ class LocalDocQA:
                 time_record['llm_completed'] = round(last_return_time - t1, 2) - time_record['llm_first_return']
                 history[-1][1] = acc_resp
                 if total_images_number != 0:  # 如果有图片，需要处理回答带图的情况
+                    docs_with_images = [doc for doc in source_documents if doc.metadata.get('images', [])]
+                    time1 = time.perf_counter()
                     relevant_docs = await self.calculate_relevance_optimized(
                         question=query,
                         llm_answer=acc_resp,
-                        reference_docs=source_documents,
+                        reference_docs=docs_with_images,
                         top_k=1
                     )
                     show_images = ["\n### 引用图文如下：\n"]
@@ -611,7 +613,11 @@ class LocalDocQA:
                             show_images.append(image_str + '\n')
                     debug_logger.info(f"show_images: {show_images}")
                     time_record['obtain_images'] = round(time.perf_counter() - last_return_time, 2)
-                    response['show_images'] = show_images
+                    time2 = time.perf_counter()
+                    debug_logger.info(f"obtain_images time: {time2 - time1}s")
+                    time_record["obtain_images_time"] = round(time2 - time1, 2)
+                    if len(show_images) > 1:
+                        response['show_images'] = show_images
             yield response, history
 
     def get_completed_document(self, file_id, limit=None):
