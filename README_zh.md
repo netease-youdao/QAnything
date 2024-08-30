@@ -236,7 +236,7 @@ v2.0版本QAnything不再提供本地大模型，用户可自行接入OpenAI接�
 * 知识库所有文件上传进度展示
 * 知识库单个文件上传进度展示，上传各阶段耗时
 * 问答信息统计，包含问答各阶段耗时，tokens消耗，模型信息等
-* 用户信息统计，包含上传文件总数量，总耗时，问答历史记录等（即将发布）
+* 用户信息统计，包含上传文件总数量，总耗时，问答历史记录等
   
 ### 问题修复
 * xlsx表格支持多sheet解析
@@ -468,7 +468,7 @@ docker compose -f docker-compose-linux.yaml up
 
 欢迎扫码进入QAnything交流群
 
-<img src="docs/images/Wechat_0509.jpg" width="30%" height="auto">
+<img src="docs/images/Wechat.jpg" width="30%" height="auto">
 
 ## 邮箱
 如果你需要私信我们团队，请通过下面的邮箱联系我们：

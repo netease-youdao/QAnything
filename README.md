@@ -73,9 +73,9 @@
 # 🚀 Important Updates 
 <h1><span style="color:red;">Important things should be said three times.</span></h1>
 
-# [2024-05-17:QAnything updated to version 2.0.] 
-# [2024-05-17:QAnything updated to version 2.0.]
-# [2024-05-17:QAnything updated to version 2.0.]
+# [2024-08-23: QAnything updated to version 2.0.] 
+# [2024-08-23: QAnything updated to version 2.0.]
+# [2024-08-23: QAnything updated to version 2.0.]
 
 <h2>
 
@@ -247,7 +247,7 @@ If you need to use it for commercial purposes, please follow the license of Qwen
 * Display the upload progress of all files in the knowledge base.
 * Display the progress of uploading a single file in the knowledge base, and the time consumed in each stage of the upload.
 * Question and answer information statistics, including time consumption at each stage of question and answer, token consumption, model information, etc.
-* User information statistics, including total number of uploaded files, total time consumed, question and answer history records, etc. (coming soon)
+* User information statistics, including total number of uploaded files, total time consumed, question and answer history records, etc.
 
 ### Problem fixed
 * The xlsx file format supports parsing multiple sheets.
@@ -449,7 +449,7 @@ Welcome to follow QAnything WeChat Official Account to get the latest informatio
 
 Welcome to scan the code to join the QAnything discussion group.
 
-<img src="docs/images/Wechat_0509.jpg" width="30%" height="auto">
+<img src="docs/images/Wechat.jpg" width="30%" height="auto">
 
 
 ## Email
