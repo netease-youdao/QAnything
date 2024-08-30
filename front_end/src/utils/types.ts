@@ -142,6 +142,8 @@ export interface IChatSetting {
   temperature: number;
   /* top_P 0~1 */
   top_P: number;
+  /* 控制数据来源数量 1~100 */
+  top_K: number;
   /* 模型能力 */
   capabilities: ICapabilities;
   /* 是否开启（只有一个） */

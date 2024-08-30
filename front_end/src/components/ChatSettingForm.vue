@@ -210,6 +210,30 @@
           />
         </a-form-item>
       </div>
+      <div class="form-item-inline">
+        <a-form-item ref="top_K" name="top_K">
+          <template #label>
+            <a-popover placement="topLeft">
+              <template #content>
+                <p>{{ common.top_KLabelDescription }}</p>
+              </template>
+              <span>{{ common.top_KLabel }}</span>
+            </a-popover>
+          </template>
+          <a-slider v-model:value="chatSettingForm.top_K" :min="1" :max="100" :step="1" />
+        </a-form-item>
+        <a-form-item name="top_K">
+          <a-input-number
+            v-model:value="chatSettingForm.top_K"
+            :min="1"
+            :max="100"
+            :step="1"
+            style="margin-left: 16px"
+            :precision="0"
+            :controls="false"
+          />
+        </a-form-item>
+      </div>
       <a-form-item ref="context" name="context">
         <template #label>
           <a-popover placement="topLeft">
@@ -376,6 +400,7 @@ const rules: Record<string, Rule[]> = {
   ],
   temperature: [{ required: true, message: `${common.plsInput}temperature`, trigger: 'change' }],
   top_P: [{ required: true, message: `${common.plsInput}top_P`, trigger: 'change' }],
+  top_K: [{ required: true, message: `${common.plsInput}top_K`, trigger: 'change' }],
 };
 
 // 主动检测是否通过

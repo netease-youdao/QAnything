@@ -19,6 +19,7 @@ type Status = 'green' | 'yellow' | 'red' | 'gray';
 interface IDataSource {
   id: number;
   bytes: number | string;
+  contentLength: number;
   fileId: string;
   fileIdName: string;
   status: Status;
@@ -105,10 +106,10 @@ export const useOptiionList = defineStore(
         clearTimeout(timer.value);
       }
       const res: any = await resultControl(
-        // 接口的page_offset为页码，page_limit为一页几个
+        // 接口的page_id为页码，page_limit为一页几个
         await urlResquest.fileList({
           kb_id: currentId.value,
-          page_offset: kbPageNum.value,
+          page_id: kbPageNum.value,
           page_limit: kbPageSize.value,
         })
       );
@@ -140,6 +141,7 @@ export const useOptiionList = defineStore(
           fileIdName: item?.file_name,
           status: item?.status,
           bytes: formatFileSize(item?.bytes || 0),
+          contentLength: item?.content_length,
           createtime: formatDate(item?.timestamp),
           remark: item?.status === 'gray' ? '' : computedRemark(item?.msg, item?.status),
         });
@@ -149,14 +151,12 @@ export const useOptiionList = defineStore(
         return item.status === 'gray' || item.status === 'yellow';
       });
       if (flag) {
-        console.log('有解析中的  5后再次请求');
         //有解析中的
         timer.value = setTimeout(() => {
           clearTimeout(timer.value);
           getDetails();
         }, 5000);
       } else {
-        console.log('当页全部解析完成');
         getProgressDetails();
       }
     };
@@ -166,10 +166,10 @@ export const useOptiionList = defineStore(
       let timer = null;
       timer = setInterval(async () => {
         const res: any = await resultControl(
-          // 接口的page_offset为页码，page_limit为一页几个
+          // 接口的page_id为页码，page_limit为一页几个
           await urlResquest.fileList({
             kb_id: currentId.value,
-            page_offset: 1,
+            page_id: 1,
             page_limit: kbPageSize.value,
           })
         );
@@ -193,7 +193,6 @@ export const useOptiionList = defineStore(
     const faqTimer = ref(null);
 
     const getFaqList = async () => {
-      console.log('getgfqaqw');
       try {
         if (faqTimer.value) {
           clearTimeout(faqTimer.value);
@@ -202,7 +201,7 @@ export const useOptiionList = defineStore(
         const res: any = await resultControl(
           await urlResquest.fileList({
             kb_id: currentId.value + '_FAQ',
-            page_offset: pageNum.value,
+            page_id: pageNum.value,
             page_limit: pageSize.value,
           })
         );

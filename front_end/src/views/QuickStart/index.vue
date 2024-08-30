@@ -106,10 +106,11 @@
                         </p>
                         <Transition name="sourceItem">
                           <div v-show="sourceItem.showDetailDataSource" class="source-content">
-                            <p v-html="sourceItem.content?.replaceAll('\n', '<br/>')"></p>
+                            <!--                            <p v-html="sourceItem.content?.replaceAll('\n', '<br/>')"></p>-->
+                            <HighLightMarkDown :content="sourceItem.content" />
                             <p class="score">
-                              <span class="tips">{{ common.correlation }}</span
-                              >{{ sourceItem.score }}
+                              <span class="tips">{{ common.correlation }}</span>
+                              {{ sourceItem.score }}
                             </p>
                           </div>
                         </Transition>
@@ -216,6 +217,7 @@
           </div>
         </div>
       </div>
+      <FileUploadDialog :dialog-type="1" />
     </div>
     <div class="scroll-btn-div">
       <img
@@ -228,7 +230,6 @@
   </div>
   <ChatSettingDialog ref="chatSettingForDialogRef" />
   <DefaultModal :content="content" :confirm-loading="confirmLoading" @ok="confirm" />
-  <FileUploadDialog :dialog-type="1" />
 </template>
 
 <script setup lang="ts">
@@ -254,7 +255,7 @@ import { pageStatus } from '@/utils/enum';
 import OptionList from '@/components/OptionList.vue';
 import { useKnowledgeBase } from '@/store/useKnowledgeBase';
 import { useKnowledgeModal } from '@/store/useKnowledgeModal';
-import FileBlock from '@/views/QuickStart/children/FileBlock.vue';
+import FileBlock from '@/views/QuickStart/components/FileBlock.vue';
 import { useUploadFiles } from '@/store/useUploadFiles';
 import { useChatSetting } from '@/store/useChatSetting';
 import FileUploadDialog from '@/components/FileUploadDialog.vue';
@@ -520,6 +521,7 @@ const send = async () => {
     api_context_length: chatSettingFormActive.value.apiContextLength,
     chunk_size: chatSettingFormActive.value.chunkSize,
     top_p: chatSettingFormActive.value.top_P,
+    top_k: chatSettingFormActive.value.top_K,
     temperature: chatSettingFormActive.value.temperature,
   };
 
@@ -563,10 +565,10 @@ const send = async () => {
       signal: ctrl.signal,
       onopen(e: any) {
         console.log('open', e);
-        // 模型配置添加进去
-        chatInfoClass.addChatSetting(chatSettingFormActive.value);
         addAnswer(q);
         if (e.ok && e.headers.get('content-type') === 'text/event-stream') {
+          // 模型配置添加进去
+          chatInfoClass.addChatSetting(chatSettingFormActive.value);
           typewriter.start();
         }
       },
@@ -590,6 +592,13 @@ const send = async () => {
 
         if (res?.source_documents?.length) {
           QA_List.value[QA_List.value.length - 1].source = res?.source_documents;
+        }
+
+        if (res?.show_images?.length) {
+          res?.show_images.map(item => {
+            typewriter.add(item);
+            console.log(QA_List.value.at(-1).answer);
+          });
         }
       },
       onclose(e: any) {
@@ -809,12 +818,6 @@ $avatar-width: 96px;
   flex-direction: column;
   background: #f3f6fd;
   overflow: hidden;
-}
-
-@media (min-width: 768px) {
-  .chat {
-    max-width: 816px; /* 在屏幕宽度大于 768px 时，设置最大宽度 */
-  }
 }
 
 .chat {
@@ -1207,6 +1210,7 @@ $avatar-width: 96px;
   position: absolute;
   bottom: 120px;
   right: 32px;
+  cursor: pointer;
 
   svg {
     width: 20px;

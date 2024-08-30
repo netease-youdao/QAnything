@@ -1,22 +1,49 @@
 <template>
   <div class="chat-source">
-    <PdfView v-if="sourceType === 'pdf' && sourceUrl" :source-url="sourceUrl" />
-    <DocxView v-if="sourceType === 'docx' && sourceUrl" :source-url="sourceUrl" />
-    <ExcelView v-if="sourceType === 'xlsx' && sourceUrl" :source-url="sourceUrl" />
+    <PdfView
+      v-if="sourceType === 'pdf' && sourceUrl"
+      :source-url="sourceUrl"
+      :style="{
+        transform: `scale(${zoomLevel})`,
+      }"
+    />
+    <DocxView
+      v-if="sourceType === 'docx' && sourceUrl"
+      :source-url="sourceUrl"
+      :style="{
+        transform: `scale(${zoomLevel})`,
+      }"
+    />
+    <ExcelView
+      v-if="sourceType === 'xlsx' && sourceUrl"
+      :source-url="sourceUrl"
+      :style="{
+        transform: `scale(${zoomLevel})`,
+      }"
+    />
     <a-image
       v-if="imageArr.includes(sourceType) && sourceUrl"
       :src="sourceUrl"
       :preview-mask="false"
+      :style="{
+        transform: `scale(${zoomLevel})`,
+      }"
     />
-    <!--    <CsvView v-if="sourceType === 'csv' && sourceUrl" :source-url="sourceUrl" />-->
     <div
       v-if="sourceType === 'txt' || sourceType === 'csv' || sourceType === 'eml'"
       class="txt"
-      style="white-space: pre-wrap"
+      :style="{ whiteSpace: 'pre-wrap', transform: `scale(${zoomLevel})` }"
     >
       {{ textContent }}
     </div>
-    <HighLightMarkDown v-if="sourceType === 'md'" class="txt" :content="textContent" />
+    <HighLightMarkDown
+      v-if="sourceType === 'md'"
+      class="txt"
+      :content="textContent"
+      :style="{
+        transform: `scale(${zoomLevel})`,
+      }"
+    />
   </div>
 </template>
 
@@ -27,6 +54,16 @@ import DocxView from '@/components/Source/DocxView.vue';
 import HighLightMarkDown from '@/components/HighLightMarkDown.vue';
 import { useChatSource } from '@/store/useChatSource';
 
+const props = defineProps({
+  zoomLevel: {
+    type: Number,
+    require: false,
+    default: 1,
+  },
+});
+
+const { zoomLevel } = toRefs(props);
+
 const { sourceUrl, sourceType, textContent } = storeToRefs(useChatSource());
 let imageArr = ['jpg', 'png', 'jpeg'];
 </script>
@@ -36,16 +73,21 @@ let imageArr = ['jpg', 'png', 'jpeg'];
   width: 100%;
   min-height: 35vh;
   max-height: calc(90vh - 48px);
-  overflow-y: scroll;
+  //overflow-y: scroll;
   border-radius: 8px;
   display: flex;
 
+  & * {
+    transition: transform 0.3s ease;
+    transform-origin: 0 0;
+  }
+
   &::-webkit-scrollbar {
-    height: 14px !important;
+    height: 10px !important;
   }
 
   .txt {
-    width: 680px;
+    width: 100%;
     height: auto;
     padding: 15px 20px 30px 20px;
   }

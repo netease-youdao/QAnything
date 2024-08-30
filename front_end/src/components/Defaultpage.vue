@@ -40,7 +40,7 @@ const acceptList = [
   '.jpg',
   '.jpeg',
   '.png',
-  '.bmp',
+  // '.bmp',
   '.txt',
   '.eml',
 ];

@@ -33,12 +33,6 @@ export const useKnowledgeBase = defineStore(
       }
     );
 
-    // 新建的知识库暂存
-    const newKbId = ref('');
-    const setNewKbId = (id: string) => {
-      newKbId.value = id;
-    };
-
     //选中的知识库id
     const selectList = ref<string[]>([]);
     const setSelectList = list => {
@@ -83,9 +77,11 @@ export const useKnowledgeBase = defineStore(
               selectList.value.push(list[0]?.kb_id);
             }
           } else {
+            setKnowledgeBaseList([]);
             setDefault(pageStatus.default);
           }
         }
+        console.log(knowledgeBaseList.value);
       } catch (e) {
         message.error(e.msg || common.error);
       }
@@ -93,8 +89,6 @@ export const useKnowledgeBase = defineStore(
 
     return {
       currentId,
-      newKbId,
-      setNewKbId,
       setCurrentId,
       knowledgeBaseList,
       setKnowledgeBaseList,

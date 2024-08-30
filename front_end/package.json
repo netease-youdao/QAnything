@@ -15,6 +15,7 @@
     "postbuild": "node writeVersion.js"
   },
   "dependencies": {
+    "@ant-design/icons-vue": "^7.0.1",
     "@fingerprintjs/fingerprintjs": "^4.2.2",
     "@vue-office/docx": "^1.6.0",
     "@vue-office/excel": "^1.7.6",
@@ -23,6 +24,7 @@
     "ant-design-vue": "4.x",
     "axios": "^1.6.1",
     "crypto-js": "^4.1.1",
+    "echarts": "^5.5.0",
     "highlight.js": "^11.10.0",
     "html2canvas": "^1.4.1",
     "js-cookie": "^3.0.1",

@@ -402,6 +402,7 @@ const send = () => {
       api_context_length: chatSettingFormActive.value.apiContextLength,
       chunk_size: chatSettingFormActive.value.chunkSize,
       top_p: chatSettingFormActive.value.top_P,
+      top_k: chatSettingFormActive.value.top_K,
       temperature: chatSettingFormActive.value.temperature,
     }),
     signal: ctrl.signal,

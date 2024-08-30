@@ -4,6 +4,7 @@ export default {
     cooperation: 'Cooperation',
     cooperationMore: 'Contact us ',
     cooperationTips: 'Feedback and technical support',
+    statistics: 'Statistics',
     knowledge: 'Knowledge',
     quickStart: 'QuickStart',
   },
@@ -106,9 +107,12 @@ export default {
     temperatureLabel: 'Temperature',
     temperatureLabelDescription:
       'Control the randomness of the output. Lower values make the output more certain, higher values increase creativity',
-    top_PLabel: 'Top P',
+    top_PLabel: 'Top_P',
     top_PLabelDescription:
       'Limit vocabulary selection. Lower values make the output more focused, higher values add variety',
+    top_KLabel: 'Top_K',
+    top_KLabelDescription:
+      'The search algorithm takes the upper limit of the number of most relevant fragments among all document fragments.',
     capabilitiesLabel: 'Model capabilities',
     saveModel: 'Save current custom model',
     plsInput: 'Please Input',
@@ -125,12 +129,13 @@ export default {
   },
   home: {
     newConversation: 'New Conversation',
-    newConversationQuick: 'Start new conversation',
+    newConversationQuick: 'Start New Conversation',
     documentId: 'Document ID',
     documentName: 'Document Name',
     documentStatus: 'Document Status',
     documentStatusNode: 'Q&A after successful parsing',
     fileSize: 'File Size',
+    contentLength: 'File Word Count',
     creationDate: 'Creation Date',
     remark: 'Remarks or Notes',
     operate: 'Operate',
@@ -236,5 +241,9 @@ export default {
     inLine: 'In Line',
     parsing: 'Parsing',
     failure: 'Failure',
+  },
+  statistics: {
+    export: 'Export',
+    exportTitle: 'Confirm Export?',
   },
 };

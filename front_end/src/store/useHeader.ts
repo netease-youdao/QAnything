@@ -3,6 +3,7 @@ import { useRouter } from 'vue-router';
 export const useHeader = defineStore('useHeader', () => {
   const route = useRouter();
   const pathMap = new Map<string, number>([
+    ['statistics', -1],
     ['home', 0],
     ['bot', 1],
     ['quickstart', 2],

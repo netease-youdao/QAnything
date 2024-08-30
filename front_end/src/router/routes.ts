@@ -72,6 +72,24 @@ export const routes: RouteRecordRaw[] = [
     ],
   },
   {
+    path: '/statistics',
+    name: 'statistics',
+    component: () => import('@/views/Statistics/index.vue'),
+    redirect: '/statistics/overview',
+    children: [
+      {
+        path: 'overview',
+        name: 'overview',
+        component: () => import('@/views/Statistics/components/Overview.vue'),
+      },
+      {
+        path: 'details',
+        name: 'details',
+        component: () => import('@/views/Statistics/components/Details.vue'),
+      },
+    ],
+  },
+  {
     path: '/bots/:botId/share',
     name: 'share',
     component: () => import('@/views/bots/children/BotShare.vue'),

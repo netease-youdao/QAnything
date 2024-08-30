@@ -33,6 +33,8 @@ enum EUrlKey {
   updateDocCompleted = 'updateDocCompleted',
   clearUpload = 'clearUpload',
   sendQuestion = 'sendQuestion',
+  getQAInfo = 'getQAInfo',
+  getKbInfo = 'getKbInfo',
 }
 
 interface IUrlValueConfig {
@@ -212,6 +214,22 @@ const urlConfig: IUrlConfig = {
   sendQuestion: {
     type: EUrlType.POST,
     url: '/local_doc_qa/local_doc_chat',
+    param: {
+      user_id: userId,
+    },
+  },
+  // 检索qa日志
+  getQAInfo: {
+    type: EUrlType.POST,
+    url: '/local_doc_qa/get_qa_info',
+    param: {
+      user_id: userId,
+    },
+  },
+  // 获取所有知识库状态
+  getKbInfo: {
+    type: EUrlType.POST,
+    url: '/local_doc_qa/get_total_status',
     param: {
       user_id: userId,
     },

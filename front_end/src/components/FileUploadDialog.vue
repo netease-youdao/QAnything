@@ -14,6 +14,7 @@
       centered
       width="480px"
       wrap-class-name="upload-file-modal"
+      destroy-on-close
     >
       <div class="file">
         <div class="box">
@@ -104,7 +105,7 @@ import SvgIcon from './SvgIcon.vue';
 // import UploadList from '@/components/UploadList.vue';
 import { pageStatus } from '@/utils/enum';
 import { IFileListItem } from '@/utils/types';
-import { message } from 'ant-design-vue';
+import { message, notification } from 'ant-design-vue';
 import { userId } from '@/services/urlConfig';
 import { getLanguage } from '@/language/index';
 import { useUploadFiles } from '@/store/useUploadFiles';
@@ -126,7 +127,7 @@ const props = defineProps({
   // 0为知识库上传，1为快速开始上传
   dialogType: {
     type: Number,
-    require: false,
+    require: true,
     default: 0,
   },
 });
@@ -147,7 +148,6 @@ const canSubmit = computed(() => {
 watch(
   () => modalVisible.value,
   () => {
-    console.log('curid', currentId.value);
     setKnowledgeName(currentKbName.value);
     // showUploadList.value = !!uploadFileList.value.length;
     // 如果是快速开始的便捷上传，将quick的引用给uploadFileList，因为便捷上传和知识库上传用两个data
@@ -192,14 +192,16 @@ const totalSizeLimit = 125 * 1024 * 1024; // 文件总大小不超过125MB
 //上传前校验
 const beforeFileUpload = async (file, index) => {
   return new Promise((resolve, reject) => {
+    console.log(file);
     // 检查文件扩展名是否被接受
     if (file.name && acceptList.includes('.' + file.name.split('.').pop().toLowerCase())) {
       // 根据文件类型设置大小限制
       const limit = file.type.startsWith('image/') ? fileSizeLimit.image : fileSizeLimit.document;
+      const fileType = file.type.startsWith('image/') ? '图片' : '文档';
 
       // 检查文件大小是否超过限制
       if (file.size > limit) {
-        reject(`文件太大，不能超过 ${limit / 1024 / 1024} MB`);
+        reject(`单个${fileType}太大，不能超过 ${limit / 1024 / 1024} MB`);
         return;
       }
 
@@ -264,6 +266,7 @@ const uplolad = async () => {
   formData.append('chunk_size', chatSettingFormActive.value.chunkSize.toString());
   // 上传模式，soft：文件名重复的文件不再上传，strong：文件名重复的文件强制上传
   formData.append('mode', 'soft');
+  openNotification(0);
   fetch(apiBase + '/local_doc_qa/upload_files', {
     method: 'POST',
     body: formData,
@@ -281,27 +284,34 @@ const uplolad = async () => {
         if (data.data.length === 0) {
           // 上传相同文件
           message.warn(data.msg || '出错了');
-          handleCancel();
-          list.forEach(item => {
-            uploadFileList.value[item.order].status = 'error';
-            uploadFileList.value[item.order].errorText = data?.msg || common.upFailed;
-          });
+          // handleCancel();
+          notification.close('upload');
+          if (props.dialogType === 1) {
+            list.forEach(item => {
+              uploadFileList.value[item.order].status = 'error';
+              uploadFileList.value[item.order].errorText = data?.msg || common.upFailed;
+            });
+          }
           return;
         }
-        list.forEach((item, index) => {
-          let status = data.data[index].status;
-          if (status == 'green' || status == 'gray') {
-            status = 'success';
-          } else {
-            status = 'error';
-          }
-          uploadFileList.value[item.order].status = status;
-          uploadFileList.value[item.order].file_id = data.data[index].file_id;
-          uploadFileList.value[item.order].bytes = data.data[index].bytes;
-          uploadFileList.value[item.order].errorText = common.upSucceeded;
-        });
+        openNotification(1);
+        if (props.dialogType === 1) {
+          list.forEach((item, index) => {
+            let status = data.data[index].status;
+            if (status == 'green' || status == 'gray') {
+              status = 'success';
+            } else {
+              status = 'error';
+            }
+            uploadFileList.value[item.order].status = status;
+            uploadFileList.value[item.order].file_id = data.data[index].file_id;
+            uploadFileList.value[item.order].bytes = data.data[index].bytes;
+            uploadFileList.value[item.order].errorText = common.upSucceeded;
+          });
+        }
       } else {
         message.error(data.msg || '出错了');
+        notification.close('upload');
         list.forEach(item => {
           uploadFileList.value[item.order].status = 'error';
           uploadFileList.value[item.order].errorText = data?.msg || common.upFailed;
@@ -311,6 +321,16 @@ const uplolad = async () => {
     .finally(() => {
       getDetails();
     });
+};
+
+// 0 上传中，1 上传成功,
+const openNotification = (type: 0 | 1) => {
+  notification[type ? 'success' : 'info']({
+    key: 'upload',
+    message: type ? '上传完成' : '上传中',
+    description: type ? '' : '最多需要30s',
+    duration: type ? 2.5 : 0,
+  });
 };
 
 const handleOk = async () => {

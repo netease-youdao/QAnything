@@ -11,6 +11,7 @@
     <div class="logo">
       <img
         src="../assets/login/logo-small.png"
+        :style="{ marginTop: navIndex === -1 ? '' : '14px' }"
         alt="logo"
         @click="goDetail('https://ai.youdao.com/')"
       />
@@ -53,15 +54,19 @@
           </div>
         </a-popover>
       </li>
+      <li>
+        <div class="myspan" @click="goStatistics">
+          <LineChartOutlined style="margin-right: 5px" />
+          <span>{{ header.statistics }}</span>
+        </div>
+      </li>
     </ul>
-    <div class="user">
-      <img src="../assets/home/avatar.png" alt="头像" />
-    </div>
   </div>
 </template>
 <script lang="ts" setup>
 // import { useUser } from '@/store/useUser';
 // const { userInfo } = storeToRefs(useUser());
+import { LineChartOutlined } from '@ant-design/icons-vue';
 import { useHeader } from '@/store/useHeader';
 import { useLanguage } from '@/store/useLanguage';
 import { getLanguage } from '@/language/index';
@@ -121,6 +126,11 @@ const iconMap = new Map([
 ]);
 const getIcon = itemValue => {
   return iconMap.get(itemValue);
+};
+
+const goStatistics = () => {
+  setNavIndex(-1);
+  changePage('/statistics');
 };
 </script>
 <style lang="scss" scoped>
@@ -209,7 +219,7 @@ const getIcon = itemValue => {
     img {
       width: 146px;
       height: 28px;
-      margin-top: 14px;
+      //margin-top: 14px;
     }
   }
 
@@ -257,15 +267,10 @@ const getIcon = itemValue => {
       align-items: center;
 
       span {
+        font-size: 14px;
         white-space: nowrap;
       }
     }
-  }
-
-  .user {
-    margin-right: 20px;
-    width: 32px;
-    height: 32px;
   }
 }
 </style>
