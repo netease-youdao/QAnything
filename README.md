@@ -330,7 +330,7 @@ git clone https://github.com/netease-youdao/QAnything.git
 ```
 ### step2: Enter the project root directory and execute the startup command.
 * Execute the docker compose start command
-
+* **The startup process takes about 30 seconds. When the log outputs "qanything backend service is ready!", the startup is complete!** 
 ```shell
 cd QAnything
 # Start on Linux
@@ -418,6 +418,7 @@ Similarly for other systems, just replace the corresponding image of the system,
 
 
 ## FAQ
+### The most common issue at present is that the local service of Ollama has poor question and answer effects, and you can refer to the solutions in the FAQ.
 [FAQ](FAQ_zh.md)
 
 

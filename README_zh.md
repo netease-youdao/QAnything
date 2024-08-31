@@ -324,7 +324,7 @@ git clone https://github.com/netease-youdao/QAnything.git
 ```
 ### step2: 进入项目根目录执行启动命令
 * 执行 docker compose 启动命令
-  
+* **启动过程大约需要30秒左右，当日志输出"qanything后端服务已就绪!"后，启动完毕！** 
 ```shell
 cd QAnything
 # 在 Linux 上启动
@@ -439,6 +439,7 @@ docker compose -f docker-compose-linux.yaml up
 ```
 
 ## 常见问题
+### 目前最常见的问题是ollama本地服务问答效果不佳，可以参考faq中的解决方案
 [常见问题](FAQ_zh.md)
 
 ## 贡献代码
