@@ -570,6 +570,8 @@ const send = async () => {
           // 模型配置添加进去
           chatInfoClass.addChatSetting(chatSettingFormActive.value);
           typewriter.start();
+        } else if (e.headers.get('content-type') === 'application/json') {
+          typewriter.add('Error 请检查模型是否配置正确');
         }
       },
       onmessage(msg: { data: string }) {
@@ -663,6 +665,7 @@ const content = ref('');
 const type = ref('');
 
 const uploadFile = () => {
+  if (showLoading.value) return;
   if (!kbId.value) return;
   setModalVisible(true);
   setModalTitle(home.upload);
