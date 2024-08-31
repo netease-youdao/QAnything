@@ -1,3 +1,4 @@
+import traceback
 from openai import OpenAI
 from typing import List, Optional
 import json
@@ -121,7 +122,7 @@ class OpenAILLM:
                 yield "data: " + json.dumps(delta, ensure_ascii=False)
 
         except Exception as e:
-            debug_logger.info(f"Error calling OpenAI API: {e}")
+            debug_logger.info(f"Error calling OpenAI API: {traceback.format_exc()}")
             delta = {'answer': f"{e}"}
             yield "data: " + json.dumps(delta, ensure_ascii=False)
 

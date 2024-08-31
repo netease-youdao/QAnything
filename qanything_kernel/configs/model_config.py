@@ -2,6 +2,8 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
+# 获取环境变量GATEWAY_IP
+GATEWAY_IP = os.getenv("GATEWAY_IP", "localhost")
 # LOG_FORMAT = "%(levelname) -5s %(asctime)s" "-1d: %(message)s"
 # logger = logging.getLogger()
 # logger.setLevel(logging.INFO)
@@ -94,18 +96,23 @@ VECTOR_SEARCH_TOP_K = 30
 VECTOR_SEARCH_SCORE_THRESHOLD = 0.3
 
 KB_SUFFIX = '_240625'
-MILVUS_HOST_LOCAL = 'milvus-standalone-local'
-MILVUS_PORT = 19530
+# MILVUS_HOST_LOCAL = 'milvus-standalone-local'
+# MILVUS_PORT = 19530
+MILVUS_HOST_LOCAL = GATEWAY_IP
+MILVUS_PORT = 19540
 MILVUS_COLLECTION_NAME = 'qanything_collection' + KB_SUFFIX
 
-ES_URL = 'http://es-container-local:9200/'
+# ES_URL = 'http://es-container-local:9200/'
+ES_URL = f'http://{GATEWAY_IP}:9210/'
 ES_USER = None
 ES_PASSWORD = None
 ES_TOP_K = 30
 ES_INDEX_NAME = 'qanything_es_index' + KB_SUFFIX
 
-MYSQL_HOST_LOCAL = 'mysql-container-local'
-MYSQL_PORT_LOCAL = 3306
+# MYSQL_HOST_LOCAL = 'mysql-container-local'
+# MYSQL_PORT_LOCAL = 3306
+MYSQL_HOST_LOCAL = GATEWAY_IP
+MYSQL_PORT_LOCAL = 3316
 MYSQL_USER_LOCAL = 'root'
 MYSQL_PASSWORD_LOCAL = '123456'
 MYSQL_DATABASE_LOCAL = 'qanything'

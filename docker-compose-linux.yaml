@@ -4,9 +4,8 @@ services:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.2
     user: root
     privileged: true
-    # ports:
-    #   - 9200:9200
-    #   - 9300:9300
+    ports:
+      - "9210:9200"
     restart: on-failure
     environment:
       - discovery.type=single-node
@@ -84,9 +83,8 @@ services:
       start_period: 90s
       timeout: 20s
       retries: 3
-    # ports:
-    #       - "19530:19530"
-    #       - "9091:9091"
+    ports:
+      - "19540:19530"
     depends_on:
       - "etcd"
       - "minio"
@@ -95,8 +93,8 @@ services:
     container_name: mysql-container-local
     privileged: true
     image: mysql:8.4
-    #     ports:
-    #       - "3306:3306"
+    ports:
+      - "3316:3306"
     command: --max-connections=10000
     environment:
       - MYSQL_ROOT_PASSWORD=123456
@@ -114,10 +112,12 @@ services:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/:/workspace/QAnything/
     ports:
       - "8777:8777"
+    network_mode: "host"
     environment:
       - NCCL_LAUNCH_MODE=PARALLEL
       - GPUID=${GPUID:-0}
       - USER_IP=${USER_IP:-localhost}
+      - Gateway_IP=${Gateway_IP:-localhost}
     depends_on:
       standalone:
         condition: service_healthy
@@ -128,7 +128,7 @@ services:
     tty: true
     stdin_open: true
 
-networks:
-  default:
-    name: QAnything
+#networks:
+#  default:
+#    name: QAnything
 

@@ -31,6 +31,9 @@ __all__ = ["new_knowledge_base", "upload_files", "list_kbs", "list_docs", "delet
 
 INVALID_USER_ID = f"fail, Invalid user_id: . user_id 必须只含有字母，数字和下划线且字母开头"
 
+# 获取环境变量GATEWAY_IP
+GATEWAY_IP = os.getenv("GATEWAY_IP", "localhost")
+debug_logger.info(f"GATEWAY_IP: {GATEWAY_IP}")
 
 # 异步包装器，用于在后台执行带有参数的同步函数
 async def run_in_background(func, *args):
@@ -645,6 +648,9 @@ async def local_doc_chat(req: request):
     need_web_search = safe_get(req, 'networking', False)
 
     api_base = safe_get(req, 'api_base', '')
+    # 如果api_base中包含0.0.0.0或127.0.0.1或localhost，替换为GATEWAY_IP
+    api_base = api_base.replace('0.0.0.0', GATEWAY_IP).replace('127.0.0.1', GATEWAY_IP).replace('localhost', GATEWAY_IP)
+
     api_key = safe_get(req, 'api_key', 'ollama')
     api_context_length = safe_get(req, 'api_context_length', 4096)
     top_p = safe_get(req, 'top_p', 0.99)
