@@ -94,7 +94,7 @@ We appreciate your interest in contributing to our project. Whether you're fixin
 
 ### Special thanks!
 <h2><span style="color:red;">Please note: Our list of contributors is automatically updated, so your contributions may not appear immediately on this list.</span></h2>
-<h2><span style="color:red;"Special thanks!：@ikun-moxiaofei</span></h2>
+<h2><span style="color:red;">Special thanks!：@ikun-moxiaofei</span></h2>
 <h2><span style="color:red;">Special thanks!：@Ianarua</span></h2>
 
 
