@@ -110,8 +110,8 @@ services:
     shm_size: '8gb'
     volumes:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/:/workspace/QAnything/
-    ports:
-      - "8777:8777"
+    # ports:
+    #   - "8777:8777"
     network_mode: "host"
     environment:
       - NCCL_LAUNCH_MODE=PARALLEL
