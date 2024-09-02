@@ -530,7 +530,7 @@ def fast_estimate_file_char_count(file_path):
 
         elif file_extension in ['.jpg', '.png', '.jpeg']:
             # 图片文件无法准确估算字符数，返回True让后续OCR处理
-            return True
+            return None
 
         elif file_extension == '.docx':
             text = docx2txt.process(file_path)
@@ -553,7 +553,7 @@ def fast_estimate_file_char_count(file_path):
 
         else:
             # 不支持的文件类型
-            return False
+            return None
 
         return char_count
 

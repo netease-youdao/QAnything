@@ -246,7 +246,8 @@ async def upload_files(req: request):
             continue
         local_file = LocalFile(user_id, kb_id, file, file_name)
         chars = fast_estimate_file_char_count(local_file.file_location)
-        if chars > MAX_CHARS:
+        debug_logger.info(f"{file_name} char_size: {chars}")
+        if chars and chars > MAX_CHARS:
             debug_logger.warning(f"fail, file {file_name} chars is {chars}, max length is {MAX_CHARS}.")
             # return sanic_json({"code": 2003, "msg": f"fail, file {file_name} chars is too much, max length is {MAX_CHARS}."})
             failed_files.append(file_name)
