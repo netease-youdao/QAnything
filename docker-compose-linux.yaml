@@ -116,8 +116,8 @@ services:
     environment:
       - NCCL_LAUNCH_MODE=PARALLEL
       - GPUID=${GPUID:-0}
-      - USER_IP=${USER_IP:-localhost}
-      - Gateway_IP=${Gateway_IP:-localhost}
+      - USER_IP=${USER_IP:-0.0.0.0}
+      - Gateway_IP=${Gateway_IP:-0.0.0.0}
     depends_on:
       standalone:
         condition: service_healthy

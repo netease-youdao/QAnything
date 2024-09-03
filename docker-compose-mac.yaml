@@ -117,7 +117,7 @@ services:
     ports:
       - "8777:8777"
     environment:
-      - USER_IP=${USER_IP:-localhost}
+      - USER_IP=${USER_IP:-0.0.0.0}
       - GATEWAY_IP=host.docker.internal
     depends_on:
       standalone:

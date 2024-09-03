@@ -115,7 +115,7 @@ services:
     environment:
       - NCCL_LAUNCH_MODE=PARALLEL
       - GPUID=${GPUID:-0}
-      - USER_IP=${USER_IP:-localhost}
+      - USER_IP=${USER_IP:-0.0.0.0}
       - GATEWAY_IP=host.docker.internal
     depends_on:
       standalone:
