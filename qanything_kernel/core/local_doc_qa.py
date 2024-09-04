@@ -11,7 +11,7 @@ from qanything_kernel.connector.rerank.rerank_for_online_client import YouDaoRer
 from qanything_kernel.connector.llm import OpenAILLM
 from langchain.schema import Document
 from langchain.schema.messages import AIMessage, HumanMessage
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.text_splitter import CharacterTextSplitter
 from qanything_kernel.connector.database.mysql.mysql_client import KnowledgeBaseManager
 from qanything_kernel.core.retriever.vectorstore import VectorStoreMilvusClient
 from qanything_kernel.core.retriever.elasticsearchstore import StoreElasticSearchClient
@@ -45,8 +45,7 @@ class LocalDocQA:
         self.milvus_summary: KnowledgeBaseManager = None
         self.es_client: StoreElasticSearchClient = None
         self.session = self.create_retry_session(retries=3, backoff_factor=1)
-        self.doc_splitter = RecursiveCharacterTextSplitter(
-            separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
+        self.doc_splitter = CharacterTextSplitter(
             chunk_size=LOCAL_EMBED_MAX_LENGTH / 2,
             chunk_overlap=0,
             length_function=len
@@ -308,7 +307,7 @@ class LocalDocQA:
         # 获取问题的scores
         question_scores = [doc.metadata['score'] for doc in reference_docs]
         # 计算问题和LLM回答的embedding
-        question_embedding = await self.embeddings.aembed_query(question)
+        # question_embedding = await self.embeddings.aembed_query(question)
         llm_answer_embedding = await self.embeddings.aembed_query(llm_answer)
 
         # 计算所有引用文档分段的embeddings
@@ -317,7 +316,7 @@ class LocalDocQA:
         reference_embeddings = await self.embeddings.aembed_documents(all_segments)
 
         # 将嵌入向量转换为numpy数组以便使用scipy的cosine函数
-        question_embedding = np.array(question_embedding)
+        # question_embedding = np.array(question_embedding)
         llm_answer_embedding = np.array(llm_answer_embedding)
         reference_embeddings = np.array(reference_embeddings)
 
