@@ -1,0 +1,59 @@
+{
+    // Python 相关设置
+    "python.linting.enabled": true,              // 启用Linting
+    "python.linting.flake8Enabled": true,        // 启用Flake8
+    "python.linting.pylintEnabled": false,       // 禁用Pylint
+    "python.formatting.provider": "black",       // 使用Black作为格式化工具
+    "python.formatting.blackArgs": ["--line-length", "88"],  // Black格式化时的行长度
+    "python.linting.mypyEnabled": true,          // 启用Mypy进行类型检查
+    "python.analysis.typeCheckingMode": "strict",// 严格的类型检查模式
+    "python.testing.pytestEnabled": true,        // 启用Pytest测试框架
+    "python.testing.unittestEnabled": false,     // 禁用Unittest
+
+    // 编辑器显示设置
+    "editor.fontSize": 14,                       // 编辑器字体大小
+    "editor.lineHeight": 22,                     // 行高
+    "editor.tabSize": 4,                         // Tab宽度
+    "editor.insertSpaces": true,                 // 使用空格而非Tab
+    "editor.wordWrap": "on",                     // 自动换行
+    "editor.rulers": [88],                       // 设置右侧参考线（与Black保持一致）
+    "editor.formatOnSave": true,                 // 保存时自动格式化
+
+    // 代码样式相关
+    "editor.formatOnPaste": true,                // 粘贴代码时自动格式化
+    "editor.formatOnType": false,                // 输入时不自动格式化
+    "editor.defaultFormatter": "ms-python.python", // 默认的格式化工具
+    "files.trimTrailingWhitespace": true,        // 删除行尾多余的空格
+    "files.insertFinalNewline": true,            // 文件末尾自动添加换行
+
+    // 文件和项目相关设置
+    "files.exclude": {                           // 排除某些文件/文件夹
+        "**/__pycache__": true,
+        "**/*.pyc": true,
+        "**/.DS_Store": true
+    },
+    "explorer.confirmDelete": false,             // 删除时不再弹出确认窗口
+    "files.autoSave": "onFocusChange",           // 切换焦点时自动保存文件
+
+    // 终端配置
+    "terminal.integrated.fontSize": 14,           // 终端字体大小
+    "terminal.integrated.defaultProfile.windows": "Command Prompt", // 设置默认终端
+
+    // 插件配置
+    "extensions.ignoreRecommendations": false,   // 不忽略插件推荐
+    "python.languageServer": "Pylance",          // 使用Pylance作为语言服务器
+
+    // 插件建议
+    "extensions.recommendations": [
+        "ms-python.python",                      // Python插件
+        "ms-python.vscode-pylance",              // Pylance插件
+        "esbenp.prettier-vscode",                // Prettier插件
+        "ms-toolsai.jupyter",                    // Jupyter插件
+        "visualstudioexptteam.vscodeintellicode",// IntelliCode插件
+        "eamodio.gitlens",                       // GitLens插件
+        "batisteo.vscode-django"                 // Django支持插件（如果需要）
+    ],
+    "[python]": {
+        "editor.defaultFormatter": "mikoz.black-py"
+    }
+}
