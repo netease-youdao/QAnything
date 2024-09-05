@@ -24,6 +24,8 @@ from sanic_ext import Extend
 import time
 import argparse
 import webbrowser
+from urllib.parse import urlparse, parse_qs
+import requests
 
 WorkerManager.THRESHOLD = 6000
 
@@ -67,6 +69,75 @@ async def start_server_and_open_browser(app, loop):
     except Exception as e:
         # 记录或处理任何异常
         print(f"Failed to open browser: {e}")
+
+@app.middleware("request")
+async def check_url_for_code(request):
+    # 解析请求路径和查询参数
+    parsed_url = urlparse(request.url)
+    path = parsed_url.path
+    query_params = parse_qs(parsed_url.query)
+
+    # 检查路径是否是 /qanything/ 且不包含 code 参数
+    if path == "/qanything/" and "code" not in query_params:
+        # 如果没有 code 参数，则重定向到登录页面
+        return sanic_response.redirect("/auth/dingtalk")
+
+# 钉钉应用配置
+DINGTALK_APP_KEY = os.getenv("DINGTALK_APP_KEY")
+DINGTALK_APP_SECRET = os.getenv("DINGTALK_APP_SECRET")
+DINGTALK_REDIRECT_URI = os.getenv("DINGTALK_REDIRECT_URI")
+
+# 钉钉扫码登录URL
+DINGTALK_AUTH_URL = f"https://oapi.dingtalk.com/connect/qrconnect?appid={DINGTALK_APP_KEY}&response_type=code&scope=snsapi_login&state=STATE&redirect_uri={DINGTALK_REDIRECT_URI}"
+
+# 钉钉认证接口
+@app.route("/auth/dingtalk", methods=["GET"])
+async def dingtalk_auth(request):
+    return sanic_response.redirect(DINGTALK_AUTH_URL)
+
+# 钉钉认证回调接口
+@app.route("/auth/dingtalk/callback", methods=["GET"])
+async def dingtalk_callback(request):
+    code = request.args.get("code")
+    if not code:
+        return sanic_response.json({"error": "Code not provided"}, status=400)
+
+    # 使用钉钉提供的code换取access_token
+    token_url = "https://oapi.dingtalk.com/sns/gettoken"
+    token_data = {
+        "appid": DINGTALK_APP_KEY,
+        "appsecret": DINGTALK_APP_SECRET
+    }
+    token_resp = requests.post(token_url, data=token_data)
+    token_json = token_resp.json()
+
+    if "errcode" in token_json and token_json["errcode"] != 0:
+        return sanic_response.json({"error": token_json.get("errmsg")}, status=400)
+
+    access_token = token_json["access_token"]
+
+    # 用 access_token 获取用户信息
+    user_info_url = f"https://oapi.dingtalk.com/sns/getuserinfo_bycode?accessKey={DINGTALK_APP_KEY}&accessSecret={DINGTALK_APP_SECRET}"
+    user_info_data = {
+        "tmp_auth_code": code
+    }
+    user_info_resp = requests.post(user_info_url, json=user_info_data)
+    user_info_json = user_info_resp.json()
+
+    if "errcode" in user_info_json and user_info_json["errcode"] != 0:
+        return sanic_response.json({"error": user_info_json.get("errmsg")}, status=400)
+
+    # 用户信息
+    user_info = user_info_json["user_info"]
+
+    # 在这里处理用户登录逻辑，例如生成JWT token返回给前端
+    # 假设我们生成了一个user_token
+    user_token = "some_generated_token"
+
+    # 认证通过后，设置 cookie 标记
+    response = sanic_response.redirect("/qanything/")
+    response.cookies["authenticated"] = "true"
+    return response
 
 # app.add_route(lambda req: response.redirect('/api/docs'), '/')
 # tags=["新建知识库"]
