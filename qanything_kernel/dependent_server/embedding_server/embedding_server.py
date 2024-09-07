@@ -47,9 +47,9 @@ async def embedding(request):
 
 @app.listener('before_server_start')
 async def setup_onnx_backend(app, loop):
-    app.ctx.onnx_backend = EmbeddingAsyncBackend(model_path=LOCAL_EMBED_MODEL_PATH, 
+    app.ctx.onnx_backend = EmbeddingAsyncBackend(model_path=LOCAL_EMBED_MODEL_PATH,
                                                  use_cpu=not args.use_gpu, num_threads=LOCAL_EMBED_THREADS)
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=9001, workers=args.workers)
+    app.run(host="0.0.0.0", port=9005, workers=args.workers)

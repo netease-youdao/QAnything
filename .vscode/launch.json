@@ -1,0 +1,98 @@
+{
+    // 使用 IntelliSense 了解相关属性。
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run rerank_server",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/qanything_kernel/dependent_server/rerank_server/rerank_server.py",
+            "console": "integratedTerminal",
+            "env": {
+                "USER_IP": "${env:USER_IP}"
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "logToFile": true,
+            "justMyCode": false
+        },
+        {
+            "name": "Run embedding_server",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/qanything_kernel/dependent_server/embedding_server/embedding_server.py",
+            "console": "integratedTerminal",
+            "env": {
+                "USER_IP": "${env:USER_IP}"
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "logToFile": true,
+            "justMyCode": false
+        },
+        {
+            "name": "Run pdf_parser_server",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/qanything_kernel/dependent_server/pdf_parser_server/pdf_parser_server.py",
+            "console": "integratedTerminal",
+            "env": {
+                "USER_IP": "${env:USER_IP}"
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "logToFile": true,
+            "justMyCode": false
+        },
+        {
+            "name": "Run ocr_server",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/qanything_kernel/dependent_server/ocr_server/ocr_server.py",
+            "console": "integratedTerminal",
+            "env": {
+                "USER_IP": "${env:USER_IP}"
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "logToFile": true,
+            "justMyCode": false
+        },
+        {
+            "name": "Run insert_files_server",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/qanything_kernel/dependent_server/insert_files_serve/insert_files_server.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--port",
+                "8110",
+                "--workers",
+                "1"
+            ],
+            "cwd": "${workspaceFolder}",
+            "logToFile": true,
+            "justMyCode": false
+        },
+        {
+            "name": "Run main_server",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/qanything_kernel/qanything_server/sanic_api.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--host",
+                "${env:USER_IP}",
+                "--port",
+                "8777",
+                "--workers",
+                "1"
+            ],
+            "cwd": "${workspaceFolder}",
+            "logToFile": true,
+            "justMyCode": false
+        }
+    ]
+}
