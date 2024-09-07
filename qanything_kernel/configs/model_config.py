@@ -25,7 +25,7 @@ PDF_MODEL_PATH = os.path.join(root_path, "qanything_kernel/dependent_server/pdf_
 STREAMING = True
 
 SYSTEM = """
-You are a helpful assistant. 
+You are a helpful assistant.
 You are always a reliable assistant that can answer questions with the help of external documents.
 Today's date is {{today_date}}. The current time is {{current_time}}.
 """
@@ -81,7 +81,7 @@ SIMPLE_PROMPT_TEMPLATE = """
 - Before answering, confirm the number of key points or pieces of information required, ensuring nothing is overlooked.
 - Now, answer the following question:
 {{question}}
-Return your answer in Markdown formatting, and in the same language as the question "{{question}}". 
+Return your answer in Markdown formatting, and in the same language as the question "{{question}}".
 """
 
 # 缓存知识库数量
@@ -129,7 +129,7 @@ LOCAL_RERANK_THREADS = 1
 LOCAL_RERANK_PATH = os.path.join(root_path, 'qanything_kernel/dependent_server/rerank_server', 'rerank_model_configs_v0.0.1')
 LOCAL_RERANK_MODEL_PATH = os.path.join(LOCAL_RERANK_PATH, "rerank.onnx")
 
-LOCAL_EMBED_SERVICE_URL = "localhost:9001"
+LOCAL_EMBED_SERVICE_URL = "localhost:9005"
 LOCAL_EMBED_MODEL_NAME = 'embed'
 LOCAL_EMBED_MAX_LENGTH = 512
 LOCAL_EMBED_BATCH = 1

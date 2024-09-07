@@ -1,0 +1,111 @@
+version: '3.8'
+
+networks:
+  default:
+    name: QAnything
+
+services:
+  elasticsearch:
+    container_name: es-container-local
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.2
+    user: root
+    privileged: true
+    ports:
+      - "9210:9200"  # Expose port 9200 for access
+    restart: on-failure
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms1024m -Xmx1024m"
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/third_party/es/plugins:/usr/share/elasticsearch/plugins
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/es/data:/usr/share/elasticsearch/data
+    command: >
+      /bin/bash -c "
+        mkdir -p /usr/share/elasticsearch/data /usr/share/elasticsearch/plugins &&
+        chown -R elasticsearch:elasticsearch /usr/share/elasticsearch &&
+        su elasticsearch -c '/usr/share/elasticsearch/bin/elasticsearch'
+      "
+    healthcheck:
+      test: curl --fail http://localhost:9200/_cat/health || exit 1
+      interval: 10s
+      timeout: 20s
+      retries: 3
+
+  etcd:
+    container_name: milvus-etcd-local
+    image: quay.io/coreos/etcd:v3.5.5
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/etcd:/etcd
+    ports:
+      - "2379:2379"  # Expose etcd port
+    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 10s
+      timeout: 20s
+      retries: 3
+
+  minio:
+    container_name: milvus-minio-local
+    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    # ports:
+    #   - "9000:9000"  # Expose MinIO API port
+    #   - "9001:9001"  # Expose MinIO console port
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/minio:/minio_data
+    command: minio server /minio_data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 20s
+      retries: 3
+
+  standalone:
+    container_name: milvus-standalone-local
+    image: milvusdb/milvus:v2.4.8
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+    command: ["milvus", "run", "standalone"]
+    security_opt:
+    - seccomp:unconfined
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+    ports:
+      - "19540:19530"  # Expose Milvus port
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/milvus:/var/lib/milvus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 10s
+      start_period: 90s
+      timeout: 20s
+      retries: 3
+    depends_on:
+      - "etcd"
+      - "minio"
+
+  mysql:
+    container_name: mysql-container-local
+    privileged: true
+    image: docker.io/library/mysql:8.4
+    ports:
+      - "3316:3306"  # Expose MySQL port
+    command: --max-connections=10000
+    environment:
+      - MYSQL_ROOT_PASSWORD=123456
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/mysql:/var/lib/mysql
+
