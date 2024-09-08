@@ -335,6 +335,10 @@ class LocalDocQA:
         relevant_docs = []
         for doc_index in indices[0]:
             doc_id = doc_index // len(self.doc_splitter.split_documents([reference_docs[0]]))
+            # doc_id 计算出来有可能超出 question_scores 索引范围
+            if doc_id >= len(question_scores):
+                doc_id = round(np.median(question_scores))  # 获取分数的中位数
+                debug_logger.warning(f"doc_id {doc_id} is out of range for question_scores of length {len(question_scores)}, using median score {doc_id}")
 
             # 使用1 - cosine距离来计算相似度
             # similarity_llm = 1 - cosine(llm_answer_embedding, reference_embeddings[doc_index])
@@ -521,7 +525,7 @@ class LocalDocQA:
                     "{{custom_prompt}}", custom_prompt)
             else:
                 simple_custom_prompt = """
-                - If you cannot answer based on the given information, you will return the sentence \"抱歉，已知的信息不足，因此无法回答。\". 
+                - If you cannot answer based on the given information, you will return the sentence \"抱歉，已知的信息不足，因此无法回答。\".
                 """
                 # prompt_template = SIMPLE_PROMPT_TEMPLATE.format(today=today, now=now, custom_prompt=simple_custom_prompt)
                 prompt_template = SIMPLE_PROMPT_TEMPLATE.replace("{{today}}", today).replace("{{now}}", now).replace(
