@@ -23,7 +23,16 @@ from sanic import Sanic, response
 from sanic.request import Request
 from sanic.response import json
 import base64
+import argparse
 
+# 接收外部参数mode
+parser = argparse.ArgumentParser()
+# mode必须是local或online
+parser.add_argument('--use_gpu', action="store_true", help='use gpu or not')
+parser.add_argument('--workers', type=int, default=1, help='workers')
+# 检查是否是local或online，不是则报错
+args = parser.parse_args()
+print("args:", args)
 
 def transform(data, ops=None):
     """ transform """
@@ -609,7 +618,8 @@ app = Sanic("OCRService")
 
 @app.before_server_start
 async def setup_ocr(app, loop):
-    app.ctx.ocr = OCRQAnything(model_dir=OCR_MODEL_PATH, device='cpu')
+    device = 'cpu' if not args.use_gpu else 'cuda'
+    app.ctx.ocr = OCRQAnything(model_dir=OCR_MODEL_PATH, device=device)
 
 @app.post("/ocr")
 async def ocr_api(request: Request):
@@ -632,4 +642,4 @@ async def ocr_api(request: Request):
 
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=7001, workers=1)
+    app.run(host="0.0.0.0", port=7001, workers=args.workers)
