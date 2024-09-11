@@ -120,13 +120,13 @@ class KnowledgeBaseManager:
         self.execute_query_(query, (), commit=True)
         query = """
             CREATE TABLE IF NOT EXISTS KnowledgeBase (
-                id INT AUTO_INCREMENT PRIMARY KEY, 
+                id INT AUTO_INCREMENT PRIMARY KEY,
                 kb_id VARCHAR(255) UNIQUE,
                 user_id VARCHAR(255),
                 kb_name VARCHAR(255),
                 deleted BOOL DEFAULT 0,
                 latest_qa_time TIMESTAMP,
-                latest_insert_time TIMESTAMP 
+                latest_insert_time TIMESTAMP
             );
 
         """
@@ -166,9 +166,9 @@ class KnowledgeBaseManager:
                 faq_id  VARCHAR(255) UNIQUE,
                 user_id VARCHAR(255) NOT NULL,
                 kb_id VARCHAR(255) NOT NULL,
-                question VARCHAR(512) NOT NULL, 
-                answer VARCHAR(2048) NOT NULL, 
-                nos_keys VARCHAR(768) 
+                question VARCHAR(512) NOT NULL,
+                answer VARCHAR(2048) NOT NULL,
+                nos_keys VARCHAR(768)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         """
         self.execute_query_(query, (), commit=True)
@@ -228,7 +228,7 @@ class KnowledgeBaseManager:
                 user_id VARCHAR(255) NOT NULL,
                 kb_id VARCHAR(255) NOT NULL,
                 nos_key VARCHAR(255) NOT NULL,
-                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         """
         self.execute_query_(query, (), commit=True)
@@ -336,10 +336,10 @@ class KnowledgeBaseManager:
             return []
 
         file_ids_str = ','.join("'{}'".format(str(x)) for x in file_ids)
-        query = """SELECT file_id, status FROM File 
+        query = """SELECT file_id, status FROM File
                  WHERE deleted = 0
                  AND file_id IN ({})
-                 AND kb_id = %s 
+                 AND kb_id = %s
                  AND kb_id IN (SELECT kb_id FROM KnowledgeBase WHERE user_id = %s)""".format(file_ids_str)
         result = self.execute_query_(query, (kb_id, user_id), fetch=True)
         debug_logger.info("check_file_exist {}".format(result))
@@ -356,10 +356,10 @@ class KnowledgeBaseManager:
             # 创建参数化的查询，用%s作为占位符
             placeholders = ','.join(['%s'] * len(batch_file_names))
             query = """
-                SELECT file_id, file_name, file_size, status FROM File 
+                SELECT file_id, file_name, file_size, status FROM File
                 WHERE deleted = 0
                 AND file_name IN ({})
-                AND kb_id = %s 
+                AND kb_id = %s
                 AND kb_id IN (SELECT kb_id FROM KnowledgeBase WHERE user_id = %s)
             """.format(placeholders)
 
@@ -373,7 +373,7 @@ class KnowledgeBaseManager:
 
     # 对外接口不需要增加用户，新建知识库的时候增加用户就可以了
     def add_user_(self, user_id, user_name):
-        query = "INSERT IGNORE INTO User (user_id, user_name) VALUES (%s, %s, %s)"
+        query = "INSERT IGNORE INTO User (user_id, user_name) VALUES (%s, %s)"
         self.execute_query_(query, (user_id, user_name), commit=True)
         debug_logger.info(f"Add user: {user_id} {user_name}")
 
@@ -504,12 +504,12 @@ class KnowledgeBaseManager:
     def get_total_status_by_date(self, user_id):
         # 查询指定用户上传的文件数量，按日期和状态分组
         query = """
-        SELECT 
+        SELECT
             LEFT(timestamp, 8) as date,  -- 提取前8个字符作为日期 (YYYYMMDD)
-            status, 
-            COUNT(*) as number 
-        FROM File 
-        WHERE user_id = %s 
+            status,
+            COUNT(*) as number
+        FROM File
+        WHERE user_id = %s
         GROUP BY LEFT(timestamp, 8), status
         """
         result = self.execute_query_(query, (user_id,), fetch=True)
