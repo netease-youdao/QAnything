@@ -21,7 +21,7 @@ from qanything_kernel.utils.general_utils import (get_time, clear_string, get_ti
                                                   num_tokens_rerank, deduplicate_documents, replace_image_references)
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger, rerank_logger
 from qanything_kernel.core.chains.condense_q_chain import RewriteQuestionChain
-from qanything_kernel.core.tools.web_search_tool import duckduckgo_search
+from qanything_kernel.core.tools.web_search_tool import duckduckgo_search, baidu_search
 import copy
 import requests
 import json
@@ -77,7 +77,7 @@ class LocalDocQA:
     @get_time
     def get_web_search(self, queries, top_k):
         query = queries[0]
-        web_content, web_documents = duckduckgo_search(query, top_k)
+        web_content, web_documents = baidu_search(query, top_k)
         source_documents = []
         for idx, doc in enumerate(web_documents):
             doc.metadata['retrieval_query'] = query  # 添加查询到文档的元数据中
@@ -521,7 +521,7 @@ class LocalDocQA:
                     "{{custom_prompt}}", custom_prompt)
             else:
                 simple_custom_prompt = """
-                - If you cannot answer based on the given information, you will return the sentence \"抱歉，已知的信息不足，因此无法回答。\". 
+                - If you cannot answer based on the given information, you will return the sentence \"抱歉，已知的信息不足，因此无法回答。\".
                 """
                 # prompt_template = SIMPLE_PROMPT_TEMPLATE.format(today=today, now=now, custom_prompt=simple_custom_prompt)
                 prompt_template = SIMPLE_PROMPT_TEMPLATE.replace("{{today}}", today).replace("{{now}}", now).replace(
