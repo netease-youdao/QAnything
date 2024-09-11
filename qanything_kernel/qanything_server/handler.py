@@ -5,7 +5,7 @@ from qanything_kernel.core.local_doc_qa import LocalDocQA
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from qanything_kernel.configs.model_config import (BOT_DESC, BOT_IMAGE, BOT_PROMPT, BOT_WELCOME,
                                                    DEFAULT_PARENT_CHUNK_SIZE, MAX_CHARS, VECTOR_SEARCH_TOP_K,
-                                                   UPLOAD_ROOT_PATH)
+                                                   UPLOAD_ROOT_PATH, IMAGES_ROOT_PATH)
 from qanything_kernel.utils.general_utils import *
 from langchain.schema import Document
 from sanic.response import ResponseStream
@@ -559,6 +559,10 @@ async def delete_docs(req: request):
             debug_logger.info("delete_docs file_dir %s", file_dir)
             # delete file dir
             shutil.rmtree(file_dir)
+            # delele images dir
+            images_dir = os.path.join(IMAGES_ROOT_PATH, file_id)
+            debug_logger.info("delete_docs images_dir %s", images_dir)
+            shutil.rmtree(images_dir)
         except Exception as e:
             debug_logger.error("An error occurred while constructing file paths: %s", str(e))
 
