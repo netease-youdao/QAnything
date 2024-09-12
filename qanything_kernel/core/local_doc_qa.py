@@ -137,14 +137,14 @@ class LocalDocQA:
     def reprocess_source_documents(self, custom_llm: OpenAILLM, query: str,
                                    source_docs: List[Document],
                                    history: List[str],
-                                   prompt_template: str) -> Tuple[List[Document], int]:
+                                   prompt_template: str) -> Tuple[List[Document], int, str]:
         # 组装prompt,根据max_token
-        query_token_num = custom_llm.num_tokens_from_messages([query]) * 4
-        history_token_num = custom_llm.num_tokens_from_messages([x for sublist in history for x in sublist])
-        template_token_num = custom_llm.num_tokens_from_messages([prompt_template])
+        query_token_num = int(custom_llm.num_tokens_from_messages([query]) * 4)
+        history_token_num = int(custom_llm.num_tokens_from_messages([x for sublist in history for x in sublist]))
+        template_token_num = int(custom_llm.num_tokens_from_messages([prompt_template]))
 
-        reference_field_token_num = custom_llm.num_tokens_from_messages(
-            [f"<reference>[{idx + 1}]</reference>" for idx in range(len(source_docs))])
+        reference_field_token_num = int(custom_llm.num_tokens_from_messages(
+            [f"<reference>[{idx + 1}]</reference>" for idx in range(len(source_docs))]))
         limited_token_nums = custom_llm.token_window - custom_llm.max_token - custom_llm.offcut_token - query_token_num - history_token_num - template_token_num - reference_field_token_num
 
         debug_logger.info(f"=============================================")
@@ -157,6 +157,16 @@ class LocalDocQA:
         debug_logger.info(f"query token nums: {query_token_num}")
         debug_logger.info(f"history token nums: {history_token_num}")
         debug_logger.info(f"=============================================")
+
+        tokens_msg = """
+        token_window = {custom_llm.token_window}, max_token = {custom_llm.max_token},       
+        offcut_token = {custom_llm.offcut_token}, docs_available_token_nums: {limited_token_nums}, 
+        template token nums: {template_token_num}, reference_field token nums: {reference_field_token_num}, 
+        query token nums: {query_token_num}, history token nums: {history_token_num}
+        docs_available_token_nums = token_window - max_token - offcut_token - query_token_num * 4 - history_token_num - template_token_num - reference_field_token_num
+        """.format(custom_llm=custom_llm, limited_token_nums=limited_token_nums, template_token_num=template_token_num,
+                     reference_field_token_num=reference_field_token_num, query_token_num=query_token_num // 4,
+                     history_token_num=history_token_num)
 
         # if limited_token_nums < 200:
         #     return []
@@ -184,7 +194,7 @@ class LocalDocQA:
                 break
 
         debug_logger.info(f"new_source_docs token nums: {custom_llm.num_tokens_from_docs(new_source_docs)}")
-        return new_source_docs, limited_token_nums
+        return new_source_docs, limited_token_nums, tokens_msg
 
     def generate_prompt(self, query, source_docs, prompt_template):
         if source_docs:
@@ -258,40 +268,28 @@ class LocalDocQA:
                 doc.metadata['score'] = cosine_similarity(embed1, embed2)
             return docs
 
-    async def prepare_source_documents(self, query: str, custom_llm: OpenAILLM, source_documents: List[Document],
-                                       chat_history: List[str], prompt_template: str,
-                                       need_web_search: bool = False):
-        # 删除文档中的图片
-        # for doc in source_documents:
-        #     doc.page_content = re.sub(r'!\[figure]\(.*?\)', '', doc.page_content)
-
-        retrieval_documents, limited_token_nums = self.reprocess_source_documents(custom_llm=custom_llm, query=query,
-                                                                                  source_docs=source_documents,
-                                                                                  history=chat_history,
-                                                                                  prompt_template=prompt_template)
+    async def prepare_source_documents(self, custom_llm: OpenAILLM, retrieval_documents: List[Document],
+                                       limited_token_nums: int):
         debug_logger.info(f"retrieval_documents len: {len(retrieval_documents)}")
-        if not need_web_search:
-            try:
-                new_docs = self.aggregate_documents(retrieval_documents, limited_token_nums, custom_llm)
-                if new_docs:
-                    source_documents = new_docs
-                else:
-                    # 合并所有候选文档，从前往后，所有file_id相同的文档合并，按照doc_id排序
-                    merged_documents_file_ids = []
-                    for doc in retrieval_documents:
-                        if doc.metadata['file_id'] not in merged_documents_file_ids:
-                            merged_documents_file_ids.append(doc.metadata['file_id'])
-                    source_documents = []
-                    for file_id in merged_documents_file_ids:
-                        docs = [doc for doc in retrieval_documents if doc.metadata['file_id'] == file_id]
-                        docs = sorted(docs, key=lambda x: int(x.metadata['doc_id'].split('_')[-1]))
-                        source_documents.extend(docs)
+        try:
+            new_docs = self.aggregate_documents(retrieval_documents, limited_token_nums, custom_llm)
+            if new_docs:
+                source_documents = new_docs
+            else:
+                # 合并所有候选文档，从前往后，所有file_id相同的文档合并，按照doc_id排序
+                merged_documents_file_ids = []
+                for doc in retrieval_documents:
+                    if doc.metadata['file_id'] not in merged_documents_file_ids:
+                        merged_documents_file_ids.append(doc.metadata['file_id'])
+                source_documents = []
+                for file_id in merged_documents_file_ids:
+                    docs = [doc for doc in retrieval_documents if doc.metadata['file_id'] == file_id]
+                    docs = sorted(docs, key=lambda x: int(x.metadata['doc_id'].split('_')[-1]))
+                    source_documents.extend(docs)
 
-                # source_documents = self.incomplete_table(source_documents, limited_token_nums, custom_llm)
-            except Exception as e:
-                debug_logger.error(f"aggregate_documents error w/ {e}: {traceback.format_exc()}")
-                source_documents = retrieval_documents
-        else:
+            # source_documents = self.incomplete_table(source_documents, limited_token_nums, custom_llm)
+        except Exception as e:
+            debug_logger.error(f"aggregate_documents error w/ {e}: {traceback.format_exc()}")
             source_documents = retrieval_documents
 
         debug_logger.info(f"source_documents len: {len(source_documents)}")
@@ -527,17 +525,47 @@ class LocalDocQA:
                 prompt_template = SIMPLE_PROMPT_TEMPLATE.replace("{{today}}", today).replace("{{now}}", now).replace(
                     "{{custom_prompt}}", simple_custom_prompt)
 
-        # source_documents_for_show = copy.deepcopy(source_documents)
-        # total_images_number = 0
-        # for doc in source_documents_for_show:
-        #     if 'images' in doc.metadata:
-        #         total_images_number += len(doc.metadata['images'])
-        #     doc.page_content = replace_image_references(doc.page_content, doc.metadata['file_id'])
-        # debug_logger.info(f"total_images_number: {total_images_number}")
-        source_documents, retrieval_documents = await self.prepare_source_documents(query, custom_llm, source_documents,
-                                                                                    chat_history,
-                                                                                    prompt_template,
-                                                                                    need_web_search)
+        retrieval_documents, limited_token_nums, tokens_msg = self.reprocess_source_documents(custom_llm=custom_llm, query=query,
+                                                                                  source_docs=source_documents,
+                                                                                  history=chat_history,
+                                                                                  prompt_template=prompt_template)
+
+        if limited_token_nums < web_chunk_size:
+            debug_logger.error(f"limited_token_nums: {limited_token_nums} < {web_chunk_size}!")
+            res = (f"抱歉，由于留给相关文档使用的token数量不足(docs_available_token_nums: {limited_token_nums} < 文本分片大小: {web_chunk_size})，"
+                   f"无法保证回答质量，请提高总Token数量或减少上下文消息数量再继续提问。\n计算方式：{tokens_msg}")
+            history = chat_history + [[query, res]]
+            if streaming:
+                res = 'data: ' + json.dumps({'answer': res}, ensure_ascii=False)
+            response = {"query": query,
+                        "prompt": 'TOKENS_NOT_ENOUGH',
+                        "result": res,
+                        "condense_question": condense_question,
+                        "retrieval_documents": source_documents,
+                        "source_documents": source_documents}
+            time_record['llm_completed'] = 0.0
+            time_record['total_tokens'] = 0
+            time_record['prompt_tokens'] = 0
+            time_record['completion_tokens'] = 0
+            yield response, history
+            if streaming:
+                response['result'] = "data: [DONE]\n\n"
+                yield response, history
+            # 退出函数
+            return
+
+        if limited_token_nums < web_chunk_size * 3:
+            tokens_msg = (f"\n\nWARNING: docs_available_token_nums: {limited_token_nums} < 文本分片大小 * 3: {web_chunk_size * 3}\n"
+                          f"可能会影响回答质量，尤其是问题涉及的相关内容较多时。\n"
+                          f"请提高总Token数量或减少上下文消息数量再继续提问。\n"
+                          f"计算方式：{tokens_msg}")
+        else:
+            tokens_msg = f"\n\nINFO：docs_available_token_nums: {limited_token_nums}"
+
+
+        source_documents, retrieval_documents = await self.prepare_source_documents(custom_llm,
+                                                                                    retrieval_documents,
+                                                                                    limited_token_nums)
 
         total_images_number = 0
         for doc in source_documents:
@@ -586,6 +614,13 @@ class LocalDocQA:
                 has_first_return = True
                 time_record['llm_first_return'] = round(first_return_time - t1, 2)
             if resp[6:].startswith("[DONE]"):
+                msg_response = {"query": query,
+                            "prompt": prompt,
+                            "result": f"data: {json.dumps({'answer': tokens_msg}, ensure_ascii=False)}",
+                            "condense_question": condense_question,
+                            "retrieval_documents": retrieval_documents,
+                            "source_documents": source_documents}
+                yield msg_response, history
                 last_return_time = time.perf_counter()
                 time_record['llm_completed'] = round(last_return_time - t1, 2) - time_record['llm_first_return']
                 history[-1][1] = acc_resp

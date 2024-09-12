@@ -688,7 +688,7 @@ async def local_doc_chat(req: request):
     max_token = safe_get(req, 'max_token')
     request_source = safe_get(req, 'source', 'unknown')
     hybrid_search = safe_get(req, 'hybrid_search', False)
-    web_chunk_size = safe_get(req, 'web_chunk_size', DEFAULT_PARENT_CHUNK_SIZE)
+    chunk_size = safe_get(req, 'chunk_size', DEFAULT_PARENT_CHUNK_SIZE)
 
     debug_logger.info("history: %s ", history)
     debug_logger.info("question: %s", question)
@@ -708,7 +708,7 @@ async def local_doc_chat(req: request):
     debug_logger.info("top_k: %s", top_k)
     debug_logger.info("temperature: %s", temperature)
     debug_logger.info("hybrid_search: %s", hybrid_search)
-    debug_logger.info("web_chunk_size: %s", web_chunk_size)
+    debug_logger.info("chunk_size: %s", chunk_size)
 
     time_record = {}
     if kb_ids:
@@ -752,7 +752,7 @@ async def local_doc_chat(req: request):
                                                                                     time_record=time_record,
                                                                                     need_web_search=need_web_search,
                                                                                     hybrid_search=hybrid_search,
-                                                                                    web_chunk_size=web_chunk_size,
+                                                                                    web_chunk_size=chunk_size,
                                                                                     temperature=temperature,
                                                                                     api_base=api_base,
                                                                                     api_key=api_key,
@@ -833,7 +833,7 @@ async def local_doc_chat(req: request):
                                                                            only_need_search_results=only_need_search_results,
                                                                            need_web_search=need_web_search,
                                                                            hybrid_search=hybrid_search,
-                                                                           web_chunk_size=web_chunk_size,
+                                                                           web_chunk_size=chunk_size,
                                                                            temperature=temperature,
                                                                            api_base=api_base,
                                                                            api_key=api_key,
