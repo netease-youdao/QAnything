@@ -76,9 +76,9 @@ def format_time_record(time_record):
     time_usage = {}
     for k, v in time_record.items():
         if 'tokens' in k:
-            token_usage[k] = v
+            token_usage[k] = round(v)
         else:
-            time_usage[k] = v
+            time_usage[k] = round(v, 2)
     if 'rewrite_prompt_tokens' in token_usage:
         if 'prompt_tokens' in token_usage:
             token_usage['prompt_tokens'] += token_usage['rewrite_prompt_tokens']
