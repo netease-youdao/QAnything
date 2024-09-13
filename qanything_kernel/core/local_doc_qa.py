@@ -360,6 +360,51 @@ class LocalDocQA:
 
         return relevant_docs
 
+    @staticmethod
+    async def generate_response(query, res, condense_question, source_documents, time_record, chat_history, streaming, prompt):
+        """
+        生成response并使用yield返回。
+
+        :param query: 用户的原始查询
+        :param res: 生成的答案
+        :param condense_question: 压缩后的问题
+        :param source_documents: 从检索中获取的文档
+        :param time_record: 记录时间的字典
+        :param chat_history: 聊天历史
+        :param streaming: 是否启用流式输出
+        :param prompt: 生成response时的prompt类型
+        """
+        history = chat_history + [[query, res]]
+
+        if streaming:
+            res = 'data: ' + json.dumps({'answer': res}, ensure_ascii=False)
+
+        response = {
+            "query": query,
+            "prompt": prompt,  # 允许自定义 prompt
+            "result": res,
+            "condense_question": condense_question,
+            "retrieval_documents": source_documents,
+            "source_documents": source_documents
+        }
+
+        if 'llm_completed' not in time_record:
+            time_record['llm_completed'] = 0.0
+        if 'total_tokens' not in time_record:
+            time_record['total_tokens'] = 0
+        if 'prompt_tokens' not in time_record:
+            time_record['prompt_tokens'] = 0
+        if 'completion_tokens' not in time_record:
+            time_record['completion_tokens'] = 0
+
+        # 使用yield返回response和history
+        yield response, history
+
+        # 如果是流式输出，发送结束标志
+        if streaming:
+            response['result'] = "data: [DONE]\n\n"
+            yield response, history
+
     async def get_knowledge_based_answer(self, model, max_token, kb_ids, query, retriever, custom_prompt, time_record,
                                          temperature, api_base, api_key, api_context_length, top_p, top_k, web_chunk_size,
                                          chat_history=None, streaming: bool = STREAMING, rerank: bool = False,
@@ -440,6 +485,13 @@ class LocalDocQA:
             time_record['web_search'] = round(t2 - t1, 2)
             source_documents += web_search_results
 
+        # if kb_ids and not source_documents:
+        #     res = "数据库检索失败，请检查logs/debug_logs/debug.log日志！"
+        #     async for response, history in self.generate_response(query, res, condense_question, source_documents,
+        #                                                           time_record, chat_history, streaming,'NO_DOCUMENTS'):
+        #         yield response, history
+        #     return
+
         source_documents = deduplicate_documents(source_documents)
         if rerank and len(source_documents) > 1 and num_tokens_rerank(query) <= 300:
             try:
@@ -454,6 +506,9 @@ class LocalDocQA:
             except Exception as e:
                 time_record['rerank'] = 0.0
                 debug_logger.error(f"query {query}: kb_ids: {kb_ids}, rerank error: {traceback.format_exc()}")
+
+        # es检索+milvus检索结果最多可能是2k
+        source_documents = source_documents[:top_k]
 
         # rerank之后删除headers，只保留文本内容，用于后续处理
         for doc in source_documents:
@@ -472,34 +527,19 @@ class LocalDocQA:
                     yield source_documents, None
                     return
                 res = doc.metadata['faq_dict']['answer']
-                history = chat_history + [[query, res]]
-                if streaming:
-                    res = 'data: ' + json.dumps({'answer': res}, ensure_ascii=False)
-                response = {"query": query,
-                            "prompt": 'MATCH_FAQ',
-                            "result": res,
-                            "condense_question": condense_question,
-                            "retrieval_documents": source_documents,
-                            "source_documents": source_documents}
-                time_record['llm_completed'] = 0.0
-                time_record['total_tokens'] = 0
-                time_record['prompt_tokens'] = 0
-                time_record['completion_tokens'] = 0
-                yield response, history
-                if streaming:
-                    response['result'] = "data: [DONE]\n\n"
+                async for response, history in self.generate_response(query, res, condense_question, source_documents,
+                                                                      time_record, chat_history, streaming, 'MATCH_FAQ'):
                     yield response, history
-                # 退出函数
                 return
 
-        # es检索+milvus检索结果最多可能是2k
-        source_documents = source_documents[:top_k]
         # 获取今日日期
         today = time.strftime("%Y-%m-%d", time.localtime())
         # 获取当前时间
         now = time.strftime("%H:%M:%S", time.localtime())
 
-        t1 = time.perf_counter()
+        extra_msg = None
+        total_images_number = 0
+        retrieval_documents = []
         if source_documents:
             if custom_prompt:
                 # escaped_custom_prompt = custom_prompt.replace('{', '{{').replace('}', '}}')
@@ -511,6 +551,46 @@ class LocalDocQA:
                 # prompt_template = PROMPT_TEMPLATE.format(system=system_prompt, instructions=INSTRUCTIONS)
                 prompt_template = PROMPT_TEMPLATE.replace("{{system}}", system_prompt).replace("{{instructions}}",
                                                                                                INSTRUCTIONS)
+
+            t1 = time.perf_counter()
+            retrieval_documents, limited_token_nums, tokens_msg = self.reprocess_source_documents(custom_llm=custom_llm,
+                                                                                                  query=query,
+                                                                                                  source_docs=source_documents,
+                                                                                                  history=chat_history,
+                                                                                                  prompt_template=prompt_template)
+
+            if len(retrieval_documents) < len(source_documents):
+                # 重新处理后文档数量减少，说明由于tokens不足而被裁切
+                if len(retrieval_documents) == 0:  # 说明被裁切后文档数量为0
+                    debug_logger.error(f"limited_token_nums: {limited_token_nums} < {web_chunk_size}!")
+                    res = (
+                        f"抱歉，由于留给相关文档使用的token数量不足(docs_available_token_nums: {limited_token_nums} < 文本分片大小: {web_chunk_size})，"
+                        f"\n无法保证回答质量，请在模型配置中提高【总Token数量】或减少【输出Tokens数量】或减少【上下文消息数量】再继续提问。"
+                        f"\n计算方式：{tokens_msg}")
+                    async for response, history in self.generate_response(query, res, condense_question, source_documents,
+                                                                          time_record, chat_history, streaming,
+                                                                          'TOKENS_NOT_ENOUGH'):
+                        yield response, history
+                    return
+
+                extra_msg = (
+                    f"\n\nWARNING: 由于留给相关文档使用的token数量不足(docs_available_token_nums: {limited_token_nums})，"
+                    f"\n检索到的部分文档chunk被裁切，原始来源数量：{len(source_documents)}，裁切后数量：{len(retrieval_documents)}，"
+                    f"\n可能会影响回答质量，尤其是问题涉及的相关内容较多时。"
+                    f"\n可在模型配置中提高【总Token数量】或减少【输出Tokens数量】或减少【上下文消息数量】再继续提问。\n")
+
+            source_documents, retrieval_documents = await self.prepare_source_documents(custom_llm,
+                                                                                        retrieval_documents,
+                                                                                        limited_token_nums)
+
+            for doc in source_documents:
+                if doc.metadata.get('images', []):
+                    total_images_number += len(doc.metadata['images'])
+                    doc.page_content = replace_image_references(doc.page_content, doc.metadata['file_id'])
+            debug_logger.info(f"total_images_number: {total_images_number}")
+
+            t2 = time.perf_counter()
+            time_record['reprocess'] = round(t2 - t1, 2)
         else:
             if custom_prompt:
                 # escaped_custom_prompt = custom_prompt.replace('{', '{{').replace('}', '}}')
@@ -525,57 +605,8 @@ class LocalDocQA:
                 prompt_template = SIMPLE_PROMPT_TEMPLATE.replace("{{today}}", today).replace("{{now}}", now).replace(
                     "{{custom_prompt}}", simple_custom_prompt)
 
-        retrieval_documents, limited_token_nums, tokens_msg = self.reprocess_source_documents(custom_llm=custom_llm, query=query,
-                                                                                  source_docs=source_documents,
-                                                                                  history=chat_history,
-                                                                                  prompt_template=prompt_template)
-
-        if limited_token_nums < web_chunk_size:
-            debug_logger.error(f"limited_token_nums: {limited_token_nums} < {web_chunk_size}!")
-            res = (f"抱歉，由于留给相关文档使用的token数量不足(docs_available_token_nums: {limited_token_nums} < 文本分片大小: {web_chunk_size})，"
-                   f"无法保证回答质量，请提高总Token数量或减少上下文消息数量再继续提问。\n计算方式：{tokens_msg}")
-            history = chat_history + [[query, res]]
-            if streaming:
-                res = 'data: ' + json.dumps({'answer': res}, ensure_ascii=False)
-            response = {"query": query,
-                        "prompt": 'TOKENS_NOT_ENOUGH',
-                        "result": res,
-                        "condense_question": condense_question,
-                        "retrieval_documents": source_documents,
-                        "source_documents": source_documents}
-            time_record['llm_completed'] = 0.0
-            time_record['total_tokens'] = 0
-            time_record['prompt_tokens'] = 0
-            time_record['completion_tokens'] = 0
-            yield response, history
-            if streaming:
-                response['result'] = "data: [DONE]\n\n"
-                yield response, history
-            # 退出函数
-            return
-
-        if limited_token_nums < web_chunk_size * 3:
-            tokens_msg = (f"\n\nWARNING: docs_available_token_nums: {limited_token_nums} < 文本分片大小 * 3: {web_chunk_size * 3}\n"
-                          f"可能会影响回答质量，尤其是问题涉及的相关内容较多时。\n"
-                          f"请提高总Token数量或减少上下文消息数量再继续提问。\n"
-                          f"计算方式：{tokens_msg}")
-        else:
-            tokens_msg = f"\n\nINFO：docs_available_token_nums: {limited_token_nums}"
 
 
-        source_documents, retrieval_documents = await self.prepare_source_documents(custom_llm,
-                                                                                    retrieval_documents,
-                                                                                    limited_token_nums)
-
-        total_images_number = 0
-        for doc in source_documents:
-            if doc.metadata.get('images', []):
-                total_images_number += len(doc.metadata['images'])
-                doc.page_content = replace_image_references(doc.page_content, doc.metadata['file_id'])
-        debug_logger.info(f"total_images_number: {total_images_number}")
-
-        t2 = time.perf_counter()
-        time_record['reprocess'] = round(t2 - t1, 2)
         if only_need_search_results:
             yield source_documents, None
             return
@@ -614,13 +645,14 @@ class LocalDocQA:
                 has_first_return = True
                 time_record['llm_first_return'] = round(first_return_time - t1, 2)
             if resp[6:].startswith("[DONE]"):
-                msg_response = {"query": query,
-                            "prompt": prompt,
-                            "result": f"data: {json.dumps({'answer': tokens_msg}, ensure_ascii=False)}",
-                            "condense_question": condense_question,
-                            "retrieval_documents": retrieval_documents,
-                            "source_documents": source_documents}
-                yield msg_response, history
+                if extra_msg is not None:
+                    msg_response = {"query": query,
+                                "prompt": prompt,
+                                "result": f"data: {json.dumps({'answer': extra_msg}, ensure_ascii=False)}",
+                                "condense_question": condense_question,
+                                "retrieval_documents": retrieval_documents,
+                                "source_documents": source_documents}
+                    yield msg_response, history
                 last_return_time = time.perf_counter()
                 time_record['llm_completed'] = round(last_return_time - t1, 2) - time_record['llm_first_return']
                 history[-1][1] = acc_resp
