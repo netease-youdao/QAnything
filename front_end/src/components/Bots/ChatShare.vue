@@ -8,7 +8,7 @@
       <ul id="chat-ul" ref="scrollDom">
         <div class="ai">
           <div class="content">
-            <img class="avatar" src="@/assets/home/ai-avatar.png" alt="头像" />
+            <img class="avatar" src="@/assets/home/ai-avatar2.png" alt="头像" />
             <p class="question-text" v-html="botInfo.welcome_message"></p>
           </div>
         </div>
@@ -19,28 +19,28 @@
           </div>
           <div v-else class="ai">
             <div class="content">
-              <img class="avatar" src="@/assets/home/ai-avatar.png" alt="头像" />
+              <img class="avatar" src="@/assets/home/ai-avatar2.png" alt="头像" />
               <p
-                class="question-text"
-                :class="[
+                  class="question-text"
+                  :class="[
                   !item.source.length ? 'change-radius' : '',
                   item.showTools ? '' : 'flashing',
                 ]"
-                v-html="item.answer"
+                  v-html="item.answer"
               ></p>
             </div>
             <template v-if="item?.picList?.length">
               <div
-                v-for="(picItem, picIndex) in item.picList"
-                :key="picItem + picIndex"
-                class="data-picList"
+                  v-for="(picItem, picIndex) in item.picList"
+                  :key="picItem + picIndex"
+                  class="data-picList"
               >
                 <a-image :width="150" :src="picItem" class="responsive-image" />
               </div>
             </template>
             <template v-if="item.source.length">
               <div
-                :class="[
+                  :class="[
                   'source-total',
                   !showSourceIdxs.includes(index) ? 'source-total-last' : '',
                 ]"
@@ -48,50 +48,50 @@
                 <span v-if="language === 'zh'">找到了{{ item.source.length }}个信息来源：</span>
                 <span v-else>Found {{ item.source.length }} source of information</span>
                 <SvgIcon
-                  v-show="!showSourceIdxs.includes(index)"
-                  name="down"
-                  @click="showSourceList(index)"
+                    v-show="!showSourceIdxs.includes(index)"
+                    name="down"
+                    @click="showSourceList(index)"
                 />
                 <SvgIcon
-                  v-show="showSourceIdxs.includes(index)"
-                  name="up"
-                  @click="hideSourceList(index)"
+                    v-show="showSourceIdxs.includes(index)"
+                    name="up"
+                    @click="hideSourceList(index)"
                 />
               </div>
               <div v-show="showSourceIdxs.includes(index)" class="source-list">
                 <div
-                  v-for="(sourceItem, sourceIndex) in item.source"
-                  :key="sourceIndex"
-                  class="data-source"
+                    v-for="(sourceItem, sourceIndex) in item.source"
+                    :key="sourceIndex"
+                    class="data-source"
                 >
                   <p v-show="sourceItem.file_name" class="control">
                     <span class="tips">{{ common.dataSource }}{{ sourceIndex + 1 }}:</span>
                     <a
-                      v-if="sourceItem.file_id.startsWith('http')"
-                      :href="sourceItem.file_id"
-                      target="_blank"
+                        v-if="sourceItem.file_id.startsWith('http')"
+                        :href="sourceItem.file_id"
+                        target="_blank"
                     >
                       {{ sourceItem.file_name }}
                     </a>
                     <span
-                      v-else
-                      :class="[
+                        v-else
+                        :class="[
                         'file',
                         checkFileType(sourceItem.file_name) ? 'filename-active' : '',
                       ]"
-                      @click="handleChatSource(sourceItem)"
+                        @click="handleChatSource(sourceItem)"
                     >
                       {{ sourceItem.file_name }}
                     </span>
                     <SvgIcon
-                      v-show="sourceItem.showDetailDataSource"
-                      name="iconup"
-                      @click="hideDetail(item, sourceIndex)"
+                        v-show="sourceItem.showDetailDataSource"
+                        name="iconup"
+                        @click="hideDetail(item, sourceIndex)"
                     />
                     <SvgIcon
-                      v-show="!sourceItem.showDetailDataSource"
-                      name="icondown"
-                      @click="showDetail(item, sourceIndex)"
+                        v-show="!sourceItem.showDetailDataSource"
+                        name="icondown"
+                        @click="showDetail(item, sourceIndex)"
                     />
                   </p>
                   <Transition name="sourceitem">
@@ -113,25 +113,25 @@
               </div>
               <div class="tools">
                 <SvgIcon
-                  :style="{
+                    :style="{
                     color: item.copied ? '#4D71FF' : '',
                   }"
-                  name="copy"
-                  @click="myCopy(item)"
+                    name="copy"
+                    @click="myCopy(item)"
                 ></SvgIcon>
                 <SvgIcon
-                  :style="{
+                    :style="{
                     color: item.like ? '#4D71FF' : '',
                   }"
-                  name="like"
-                  @click="like(item, $event)"
+                    name="like"
+                    @click="like(item, $event)"
                 ></SvgIcon>
                 <SvgIcon
-                  :style="{
+                    :style="{
                     color: item.unlike ? '#4D71FF' : '',
                   }"
-                  name="unlike"
-                  @click="unlike(item)"
+                    name="unlike"
+                    @click="unlike(item)"
                 ></SvgIcon>
               </div>
             </div>
@@ -170,10 +170,10 @@
             <SvgIcon name="chat-download" />
           </span>
           <a-input
-            v-model:value="question"
-            max-length="200"
-            :placeholder="common.problemPlaceholder"
-            @keyup.enter="send"
+              v-model:value="question"
+              max-length="200"
+              :placeholder="common.problemPlaceholder"
+              @keyup.enter="send"
           >
             <template #suffix>
               <div class="send-plane">
@@ -288,17 +288,17 @@ const unlike = (item: IChatItem) => {
 //拷贝
 const myCopy = (item: IChatItem) => {
   copy(item.answer)
-    .then(() => {
-      item.copied = !item.copied;
-      message.success(common.copySuccess, 1);
-      const timer = setTimeout(() => {
-        clearTimeout(timer);
+      .then(() => {
         item.copied = !item.copied;
-      }, 1000);
-    })
-    .catch(() => {
-      message.error(common.copyFailed, 1);
-    });
+        message.success(common.copySuccess, 1);
+        const timer = setTimeout(() => {
+          clearTimeout(timer);
+          item.copied = !item.copied;
+        }, 1000);
+      })
+      .catch(() => {
+        message.error(common.copyFailed, 1);
+      });
 };
 
 const addQuestion = q => {
@@ -382,15 +382,15 @@ const send = () => {
       } else if (e.headers.get('content-type') === 'application/json') {
         showLoading.value = false;
         return e
-          .json()
-          .then(data => {
-            console.log(data);
-            message.error(data?.msg || '出错了,请稍后刷新重试。');
-          })
-          .catch(e => {
-            console.log(e);
-            message.error('出错了,请稍后刷新重试。');
-          }); // 将响应解析为 JSON
+            .json()
+            .then(data => {
+              console.log(data);
+              message.error(data?.msg || '出错了,请稍后刷新重试。');
+            })
+            .catch(e => {
+              console.log(e);
+              message.error('出错了,请稍后刷新重试。');
+            }); // 将响应解析为 JSON
       }
     },
     onmessage(msg: { data: string }) {
