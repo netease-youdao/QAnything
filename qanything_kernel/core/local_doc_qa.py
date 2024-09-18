@@ -502,13 +502,14 @@ class LocalDocQA:
                 time_record['rerank'] = round(t2 - t1, 2)
                 # 过滤掉低分的文档
                 debug_logger.info(f"rerank step1 num: {len(source_documents)}")
+                debug_logger.info(f"rerank step1 scores: {[doc.metadata['score'] for doc in source_documents]}")
                 if len(source_documents) > 1:
                     source_documents = [doc for doc in source_documents if doc.metadata['score'] >= 0.28]
                     debug_logger.info(f"rerank step2 num: {len(source_documents)}")
                     saved_docs = [source_documents[0]]
                     for doc in source_documents[1:]:
-                        relative_difference = (saved_docs[-1].metadata['score'] - doc.metadata['score']) / saved_docs[-1].metadata['score']
-                        debug_logger.info(relative_difference)
+                        debug_logger.info(f"rerank doc score: {doc.metadata['score']}")
+                        relative_difference = (saved_docs[0].metadata['score'] - doc.metadata['score']) / saved_docs[0].metadata['score']
                         if relative_difference > 0.5:
                             break
                         else:
