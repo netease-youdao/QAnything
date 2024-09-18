@@ -51,7 +51,7 @@ class YouDaoRerank:
             all_scores[start_index:start_index + batch_size] = res
 
         for idx, score in enumerate(all_scores):
-            source_documents[idx].metadata['score'] = float(score)
+            source_documents[idx].metadata['score'] = round(float(score), 2)
         source_documents = sorted(source_documents, key=lambda x: x.metadata['score'], reverse=True)
 
         return source_documents
