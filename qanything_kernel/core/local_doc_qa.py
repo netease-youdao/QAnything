@@ -252,7 +252,7 @@ class LocalDocQA:
                 debug_logger.info(f"use rerank, rerank docs num: {len(docs)}")
                 docs = await self.rerank.arerank_documents(query, docs)
                 if len(docs) > 1:
-                    docs = [doc for doc in docs if float(doc.metadata['score']) >= 0.28]
+                    docs = [doc for doc in docs if doc.metadata['score'] >= 0.28]
                 return docs
             except Exception as e:
                 debug_logger.error(f"query tokens: {num_tokens_rerank(query)}, rerank error: {e}")
@@ -501,8 +501,20 @@ class LocalDocQA:
                 t2 = time.perf_counter()
                 time_record['rerank'] = round(t2 - t1, 2)
                 # 过滤掉低分的文档
+                debug_logger.info(f"rerank step1 num: {len(source_documents)}")
                 if len(source_documents) > 1:
-                    source_documents = [doc for doc in source_documents if float(doc.metadata['score']) >= 0.28]
+                    source_documents = [doc for doc in source_documents if doc.metadata['score'] >= 0.28]
+                    debug_logger.info(f"rerank step2 num: {len(source_documents)}")
+                    saved_docs = [source_documents[0]]
+                    for doc in source_documents[1:]:
+                        relative_difference = (saved_docs[-1].metadata['score'] - doc.metadata['score']) / saved_docs[-1].metadata['score']
+                        debug_logger.info(relative_difference)
+                        if relative_difference > 0.5:
+                            break
+                        else:
+                            saved_docs.append(doc)
+                    source_documents = saved_docs
+                    debug_logger.info(f"rerank step3 num: {len(source_documents)}")
             except Exception as e:
                 time_record['rerank'] = 0.0
                 debug_logger.error(f"query {query}: kb_ids: {kb_ids}, rerank error: {traceback.format_exc()}")
@@ -515,7 +527,7 @@ class LocalDocQA:
             doc.page_content = re.sub(r'^\[headers]\(.*?\)\n', '', doc.page_content)
 
         high_score_faq_documents = [doc for doc in source_documents if
-                                    doc.metadata['file_name'].endswith('.faq') and float(doc.metadata['score'] >= 0.9)]
+                                    doc.metadata['file_name'].endswith('.faq') and doc.metadata['score'] >= 0.9]
         if high_score_faq_documents:
             source_documents = high_score_faq_documents
         # FAQ完全匹配处理逻辑

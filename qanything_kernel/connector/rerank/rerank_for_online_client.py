@@ -36,7 +36,7 @@ class YouDaoRerank:
     async def arerank_documents(self, query: str, source_documents: List[Document]) -> List[Document]:
         """Embed search docs using async calls, maintaining the original order."""
         batch_size = LOCAL_RERANK_BATCH  # 增大客户端批处理大小
-        all_scores = [None for _ in range(len(source_documents))]
+        all_scores = [0 for _ in range(len(source_documents))]
         passages = [doc.page_content for doc in source_documents]
 
         tasks = []
@@ -51,7 +51,7 @@ class YouDaoRerank:
             all_scores[start_index:start_index + batch_size] = res
 
         for idx, score in enumerate(all_scores):
-            source_documents[idx].metadata['score'] = score
+            source_documents[idx].metadata['score'] = float(score)
         source_documents = sorted(source_documents, key=lambda x: x.metadata['score'], reverse=True)
 
         return source_documents

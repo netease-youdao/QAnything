@@ -4,6 +4,11 @@ from qanything_kernel.configs.model_config import LOCAL_RERANK_MODEL_PATH
 from qanything_kernel.utils.custom_log import debug_logger
 import numpy as np
 
+def sigmoid(x):
+    x = x.astype('float32')
+    scores = 1/(1+np.exp(-x))
+    scores = np.clip(1.5*(scores-0.5)+0.5, 0, 1)
+    return scores
 
 class RerankOnnxBackend(RerankBackend):
     def __init__(self, use_cpu: bool = False):
@@ -12,6 +17,8 @@ class RerankOnnxBackend(RerankBackend):
         # 创建一个ONNX Runtime会话设置，使用GPU执行
         sess_options = onnxruntime.SessionOptions()
         sess_options.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_ENABLE_ALL
+        sess_options.intra_op_num_threads = 0
+        sess_options.inter_op_num_threads = 0
         if use_cpu:
             providers = ['CPUExecutionProvider']
         else:
@@ -31,6 +38,7 @@ class RerankOnnxBackend(RerankBackend):
         # debug_logger.info(f"rerank result: {result}")
 
         # 应用sigmoid函数
-        sigmoid_scores = 1 / (1 + np.exp(-np.array(result[0])))
+        # sigmoid_scores = 1 / (1 + np.exp(-np.array(result[0])))
+        sigmoid_scores = sigmoid(np.array(result[0]))
 
         return sigmoid_scores.reshape(-1).tolist()

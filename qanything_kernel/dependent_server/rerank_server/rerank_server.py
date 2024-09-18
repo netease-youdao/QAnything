@@ -13,6 +13,7 @@ print(root_dir)
 from sanic import Sanic
 from sanic.response import json
 from qanything_kernel.dependent_server.rerank_server.rerank_async_backend import RerankAsyncBackend
+from qanything_kernel.dependent_server.rerank_server.rerank_onnx_backend import RerankOnnxBackend
 from qanything_kernel.configs.model_config import LOCAL_RERANK_MODEL_PATH, LOCAL_RERANK_THREADS
 from qanything_kernel.utils.general_utils import get_time_async
 import argparse
@@ -35,8 +36,12 @@ async def rerank(request):
     data = request.json
     query = data.get('query')
     passages = data.get('passages')
-    onnx_backend: RerankAsyncBackend = request.app.ctx.onnx_backend
-    result_data = await onnx_backend.get_rerank_async(query, passages)
+
+    onnx_backend: RerankOnnxBackend = request.app.ctx.onnx_backend
+    # onnx_backend: RerankAsyncBackend = request.app.ctx.onnx_backend
+
+    # result_data = await onnx_backend.get_rerank_async(query, passages)
+    result_data = onnx_backend.get_rerank(query, passages)
     # print("local rerank query:", query, flush=True)
     # print("local rerank passages number:", len(passages), flush=True)
 
@@ -45,8 +50,9 @@ async def rerank(request):
 
 @app.listener('before_server_start')
 async def setup_onnx_backend(app, loop):
-    app.ctx.onnx_backend = RerankAsyncBackend(model_path=LOCAL_RERANK_MODEL_PATH, use_cpu=not args.use_gpu,
-                                              num_threads=LOCAL_RERANK_THREADS)
+    # app.ctx.onnx_backend = RerankAsyncBackend(model_path=LOCAL_RERANK_MODEL_PATH, use_cpu=not args.use_gpu,
+    #                                           num_threads=LOCAL_RERANK_THREADS)
+    app.ctx.onnx_backend = RerankOnnxBackend(use_cpu=not args.use_gpu)
 
 
 if __name__ == "__main__":
