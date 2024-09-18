@@ -2,13 +2,9 @@ import traceback
 from openai import OpenAI
 from typing import List, Optional
 import json
-from transformers import AutoTokenizer
 from qanything_kernel.connector.llm.base import AnswerResult
 from qanything_kernel.utils.custom_log import debug_logger
-from qanything_kernel.configs.model_config import TOKENIZER_PATH
 import tiktoken
-
-# tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_PATH, local_files_only=True)
 
 
 class OpenAILLM:
@@ -70,7 +66,9 @@ class OpenAILLM:
                 raise ValueError(f"Unsupported message type: {type(message)}")
         if self.use_cl100k_base:
             total_tokens *= 1.2
-        return total_tokens
+        else:
+            total_tokens *= 1.1  # 保留一定余量，由于metadata信息的嵌入导致token比计算的会多一些
+        return int(total_tokens)
 
     def num_tokens_from_docs(self, docs):
         total_tokens = 0
@@ -81,7 +79,9 @@ class OpenAILLM:
             total_tokens += len(tokens)
         if self.use_cl100k_base:
             total_tokens *= 1.2
-        return total_tokens
+        else:
+            total_tokens *= 1.1  # 保留一定余量，由于metadata信息的嵌入导致token比计算的会多一些
+        return int(total_tokens)
 
     async def _call(self, messages: List[dict], streaming: bool = False) -> str:
         try:
