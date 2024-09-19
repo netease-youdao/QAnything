@@ -88,10 +88,10 @@ class LocalDocQA:
             doc.metadata['score'] = 1 - (idx / len(web_documents))
             doc.metadata['file_id'] = 'websearch' + str(idx)
             doc.metadata['headers'] = {"新闻标题": file_name}
-            source_documents.append(doc)
             if 'description' in doc.metadata:
                 desc_doc = Document(page_content=doc.metadata['description'], metadata=doc.metadata)
                 source_documents.append(desc_doc)
+            source_documents.append(doc)  # 先插入description，再插入原文
         return web_content, source_documents
 
     def web_page_search(self, query, top_k=None):
@@ -482,6 +482,23 @@ class LocalDocQA:
                 length_function=num_tokens_embed,
             )
             web_search_results = web_splitter.split_documents(web_search_results)
+
+            current_doc_id = 0
+            current_file_id = web_search_results[0].metadata['file_id']
+            for doc in web_search_results:
+                if doc.metadata['file_id'] == current_file_id:
+                    doc.metadata['doc_id'] = current_file_id + '_' + str(current_doc_id)
+                    current_doc_id += 1
+                else:
+                    current_file_id = doc.metadata['file_id']
+                    current_doc_id = 0
+                    doc.metadata['doc_id'] = current_file_id + '_' + str(current_doc_id)
+                    current_doc_id += 1
+                doc_json = doc.to_json()
+                if doc_json['kwargs'].get('metadata') is None:
+                    doc_json['kwargs']['metadata'] = doc.metadata
+                self.milvus_summary.add_document(doc_id=doc.metadata['doc_id'], json_data=doc_json)
+
             t2 = time.perf_counter()
             time_record['web_search'] = round(t2 - t1, 2)
             source_documents += web_search_results
