@@ -1343,8 +1343,8 @@ async def update_bot(req: request):
         llm_setting["temperature"] = temperature
     if model := safe_get(req, "model"):
         llm_setting["model"] = model
-    if max_tokens := safe_get(req, "max_tokens"):
-        llm_setting["max_tokens"] = max_tokens
+    if max_token := safe_get(req, "max_token"):
+        llm_setting["max_token"] = max_token
     # 如果rerank不是None，赋值，false也可以
     rerank = safe_get(req, "rerank")
     if rerank is not None:
