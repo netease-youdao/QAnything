@@ -17,8 +17,8 @@ from PyPDF2 import PdfReader as pdf2_read
 from qanything_kernel.dependent_server.pdf_parser_server.pdf_to_markdown.core.vision import Recognizer, LayoutRecognizer, \
     TableStructureRecognizer_LORE
 from qanything_kernel.dependent_server.pdf_parser_server.pdf_to_markdown.core.nlp import huqie
-# from qanything_kernel.dependent_server.ocr_server.ocr import OCRQAnything
-from qanything_kernel.configs.model_config import PDF_MODEL_PATH
+from qanything_kernel.dependent_server.ocr_server.ocr import OCRQAnything
+from qanything_kernel.configs.model_config import PDF_MODEL_PATH, OCR_MODEL_PATH
 from qanything_kernel.utils.custom_log import debug_logger
 from tqdm import tqdm
 from copy import deepcopy
@@ -28,7 +28,7 @@ logging.getLogger("pdfminer").setLevel(logging.WARNING)
 
 class HuParser:
     def __init__(self, device=torch.device("cpu")):
-        # self.ocr = OCRQAnything(model_dir=OCR_MODEL_PATH, device=device)  # 省显存
+        self.ocr = OCRQAnything(model_dir=OCR_MODEL_PATH, device=device)  # 省显存
         if hasattr(self, "model_speciess"):
             self.layouter: LayoutRecognizer = LayoutRecognizer("layout." + self.model_speciess, device)
         else:
@@ -245,6 +245,54 @@ class HuParser:
                 b["H_left"] = spans[ii]["x0"]
                 b["H_right"] = spans[ii]["x1"]
                 b["SP"] = ii
+
+
+    def __ocr(self, pagenum, img, chars, ZM=3):
+        bxs = self.ocr.detect(np.array(img))
+        if not bxs:
+            self.boxes.append([])
+            return
+        bxs = [(line[0], line[1][0]) for line in bxs]
+        bxs = Recognizer.sort_Y_firstly(
+            [{"x0": b[0][0] / ZM, "x1": b[1][0] / ZM,
+              "top": b[0][1] / ZM, "text": "", "txt": t,
+              "bottom": b[-1][1] / ZM,
+              "page_number": pagenum} for b, t in bxs if b[0][0] <= b[1][0] and b[0][1] <= b[-1][1]],
+            self.mean_height[-1] / 3
+        )
+
+        # merge chars in the same rect
+        for c in Recognizer.sort_Y_firstly(
+                chars, self.mean_height[pagenum - 1] // 4):
+            ii = Recognizer.find_overlapped(c, bxs)
+            if ii is None:
+                self.lefted_chars.append(c)
+                continue
+            ch = c["bottom"] - c["top"]
+            bh = bxs[ii]["bottom"] - bxs[ii]["top"]
+            if abs(ch - bh) / max(ch, bh) >= 0.7 and c["text"] != ' ':
+                self.lefted_chars.append(c)
+                continue
+            if c["text"] == " " and bxs[ii]["text"]:
+                if re.match(r"[0-9a-zA-Z,.?;:!%%]", bxs[ii]["text"][-1]):
+                    bxs[ii]["text"] += " "
+            else:
+                bxs[ii]["text"] += c["text"]
+
+        for b in bxs:
+            if not b["text"]:
+                left, right, top, bott = b["x0"] * ZM, b["x1"] * \
+                                         ZM, b["top"] * ZM, b["bottom"] * ZM
+                b["text"] = self.ocr.recognize(np.array(img),
+                                               np.array([[left, top], [right, top], [right, bott], [left, bott]],
+                                                        dtype=np.float32))
+            del b["txt"]
+        bxs = [b for b in bxs if b["text"]]
+        if self.mean_height[-1] == 0:
+            self.mean_height[-1] = np.median([b["bottom"] - b["top"]
+                                              for b in bxs])
+        self.boxes.append(bxs)
+
 
     def __ocr_pdf(self, pagenum, bxs_pymupdf, ZM=3):
         """
@@ -1006,8 +1054,8 @@ class HuParser:
                                                                        chars[j]["width"]) / 2:
                     chars[j]["text"] += " "
                 j += 1
-            # self.__ocr(i + 1, img, chars, zoomin)
-            self.__ocr_pdf(i + 1, self.ocr_res[i], zoomin)
+            self.__ocr(i + 1, img, chars, zoomin)
+            # self.__ocr_pdf(i + 1, self.ocr_res[i], zoomin)
             if callback:
                 callback(prog=(i + 1) * 0.6 / len(self.page_images), msg="")
 
