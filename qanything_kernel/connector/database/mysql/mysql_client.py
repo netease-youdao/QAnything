@@ -243,11 +243,11 @@ class KnowledgeBaseManager:
                 head_image      VARCHAR(512),
                 prompt_setting  MEDIUMTEXT,
                 welcome_message MEDIUMTEXT,
-                model           VARCHAR(100),
                 kb_ids_str      VARCHAR(1024),
                 deleted         INT DEFAULT 0,
                 create_time     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                update_time     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                update_time     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                llm_setting     VARCHAR(512) DEFAULT '{}'
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         """
         self.execute_query_(query, (), commit=True)
@@ -259,8 +259,9 @@ class KnowledgeBaseManager:
             "CREATE INDEX index_bot_id ON QaLogs (bot_id)",
             "CREATE INDEX index_query ON QaLogs (query)",
             "CREATE INDEX index_timestamp ON QaLogs (timestamp)",
-            # 给QanythingBot添加一列：llm_setting VARCHAR(512)
-            "ALTER TABLE QanythingBot ADD llm_setting VARCHAR(512)",
+            # 如果没有的话，给QanythingBot添加一列：llm_setting VARCHAR(512)
+            "ALTER TABLE QanythingBot ADD COLUMN llm_setting VARCHAR(512) DEFAULT '{}'",
+            "ALTER TABLE QanythingBot DROP COLUMN model",
         ]
 
         for query in index_queries:
@@ -270,6 +271,10 @@ class KnowledgeBaseManager:
             except mysql.connector.Error as err:
                 if err.errno == 1061:  # 重复键错误
                     debug_logger.info(f"Index already exists (this is okay): {query}")
+                elif err.errno == 1060:  # 已存在的列无需创建
+                    debug_logger.info(f"Column already exists (this is okay): {query}")
+                elif err.errno == 1091:  # 已经删除的列无需删除
+                    debug_logger.info(f"Column already deleted (this is okay): {query}")
                 else:
                     debug_logger.error(f"Error creating index: {err}")
 
@@ -837,10 +842,10 @@ class KnowledgeBaseManager:
         return result is not None and len(result) > 0
 
     def new_qanything_bot(self, bot_id, user_id, bot_name, description, head_image, prompt_setting, welcome_message,
-                          model, kb_ids_str):
-        query = "INSERT INTO QanythingBot (bot_id, user_id, bot_name, description, head_image, prompt_setting, welcome_message, model, kb_ids_str) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                          kb_ids_str):
+        query = "INSERT INTO QanythingBot (bot_id, user_id, bot_name, description, head_image, prompt_setting, welcome_message, kb_ids_str) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
         self.execute_query_(query, (
-        bot_id, user_id, bot_name, description, head_image, prompt_setting, welcome_message, model, kb_ids_str),
+        bot_id, user_id, bot_name, description, head_image, prompt_setting, welcome_message, kb_ids_str),
                             commit=True)
         return bot_id, "success"
 
@@ -851,24 +856,22 @@ class KnowledgeBaseManager:
 
     def get_bot(self, user_id, bot_id):
         if not bot_id:
-            query = "SELECT bot_id, bot_name, description, head_image, prompt_setting, welcome_message, model, kb_ids_str, update_time, user_id, llm_setting FROM QanythingBot WHERE user_id = %s AND deleted = 0"
+            query = "SELECT bot_id, bot_name, description, head_image, prompt_setting, welcome_message, kb_ids_str, update_time, user_id, llm_setting FROM QanythingBot WHERE user_id = %s AND deleted = 0"
             return self.execute_query_(query, (user_id,), fetch=True)
         elif not user_id:
-            query = "SELECT bot_id, bot_name, description, head_image, prompt_setting, welcome_message, model, kb_ids_str, update_time, user_id, llm_setting FROM QanythingBot WHERE bot_id = %s AND deleted = 0"
+            query = "SELECT bot_id, bot_name, description, head_image, prompt_setting, welcome_message, kb_ids_str, update_time, user_id, llm_setting FROM QanythingBot WHERE bot_id = %s AND deleted = 0"
             return self.execute_query_(query, (bot_id,), fetch=True)
         else:
-            query = "SELECT bot_id, bot_name, description, head_image, prompt_setting, welcome_message, model, kb_ids_str, update_time, user_id, llm_setting FROM QanythingBot WHERE user_id = %s AND bot_id = %s AND deleted = 0"
+            query = "SELECT bot_id, bot_name, description, head_image, prompt_setting, welcome_message, kb_ids_str, update_time, user_id, llm_setting FROM QanythingBot WHERE user_id = %s AND bot_id = %s AND deleted = 0"
             return self.execute_query_(query, (user_id, bot_id), fetch=True)
 
-    def update_bot(self, user_id, bot_id, bot_name, description, head_image, prompt_setting, welcome_message, model,
+    def update_bot(self, user_id, bot_id, bot_name, description, head_image, prompt_setting, welcome_message,
                    kb_ids_str, update_time, llm_setting):
         llm_setting = json.dumps(llm_setting, ensure_ascii=False)
-        debug_logger.info(len(llm_setting))
-        debug_logger.info(llm_setting)
-        query = "UPDATE QanythingBot SET bot_name = %s, description = %s, head_image = %s, prompt_setting = %s, welcome_message = %s, model = %s, kb_ids_str = %s, update_time = %s WHERE user_id = %s AND bot_id = %s AND llm_setting = %s AND deleted = 0"
+        query = "UPDATE QanythingBot SET bot_name = %s, description = %s, head_image = %s, prompt_setting = %s, welcome_message = %s, kb_ids_str = %s, update_time = %s, llm_setting = %s WHERE user_id = %s AND bot_id = %s AND deleted = 0"
         self.execute_query_(query, (
-        bot_name, description, head_image, prompt_setting, welcome_message, model, kb_ids_str, update_time, user_id,
-        bot_id, llm_setting), commit=True)
+        bot_name, description, head_image, prompt_setting, welcome_message, kb_ids_str, update_time, llm_setting, user_id,
+        bot_id), commit=True)
 
     def get_files_by_status(self, status):
         query = "SELECT file_id, file_name FROM File WHERE status = %s AND deleted = 0"
