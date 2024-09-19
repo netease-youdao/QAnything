@@ -1,6 +1,6 @@
 from qanything_kernel.configs.model_config import VECTOR_SEARCH_TOP_K, VECTOR_SEARCH_SCORE_THRESHOLD, \
     PROMPT_TEMPLATE, STREAMING, SYSTEM, INSTRUCTIONS, SIMPLE_PROMPT_TEMPLATE, CUSTOM_PROMPT_TEMPLATE, \
-    LOCAL_RERANK_MODEL_NAME, LOCAL_EMBED_MAX_LENGTH
+    LOCAL_RERANK_MODEL_NAME, LOCAL_EMBED_MAX_LENGTH, SEPARATORS
 from typing import List, Tuple, Union, Dict
 import time
 from scipy.spatial import cKDTree
@@ -476,7 +476,7 @@ class LocalDocQA:
             t1 = time.perf_counter()
             web_search_results = self.web_page_search(query, top_k=3)
             web_splitter = RecursiveCharacterTextSplitter(
-                separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
+                separators=SEPARATORS,
                 chunk_size=web_chunk_size,
                 chunk_overlap=int(web_chunk_size / 4),
                 length_function=num_tokens_embed,

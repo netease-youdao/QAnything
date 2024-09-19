@@ -170,6 +170,7 @@ TOKENIZER_PATH = os.path.join(root_path, 'qanything_kernel/connector/llm/tokeniz
 
 DEFAULT_CHILD_CHUNK_SIZE = 400
 DEFAULT_PARENT_CHUNK_SIZE = 800
+SEPARATORS = ["\n\n", "\n", "。", "，", ",", ".", ""]
 MAX_CHARS = 1000000  # 单个文件最大字符数，超过此字符数将上传失败，改大可能会导致解析超时
 
 # llm_config = {

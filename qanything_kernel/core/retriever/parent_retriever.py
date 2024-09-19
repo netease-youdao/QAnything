@@ -3,7 +3,7 @@ from qanything_kernel.core.retriever.vectorstore import VectorStoreMilvusClient
 from qanything_kernel.core.retriever.elasticsearchstore import StoreElasticSearchClient
 from qanything_kernel.connector.database.mysql.mysql_client import KnowledgeBaseManager
 from qanything_kernel.core.retriever.docstrore import MysqlStore
-from qanything_kernel.configs.model_config import DEFAULT_CHILD_CHUNK_SIZE, DEFAULT_PARENT_CHUNK_SIZE
+from qanything_kernel.configs.model_config import DEFAULT_CHILD_CHUNK_SIZE, DEFAULT_PARENT_CHUNK_SIZE, SEPARATORS
 from qanything_kernel.utils.custom_log import debug_logger, insert_logger
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from qanything_kernel.utils.general_utils import num_tokens_embed, get_time_async
@@ -162,14 +162,14 @@ class ParentRetriever:
         self.vectorstore_client = vectorstore_client
         # This text splitter is used to create the parent documents
         init_parent_splitter = RecursiveCharacterTextSplitter(
-            separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
+            separators=SEPARATORS,
             chunk_size=DEFAULT_PARENT_CHUNK_SIZE,
             chunk_overlap=0,
             length_function=num_tokens_embed)
         # # This text splitter is used to create the child documents
         # # It should create documents smaller than the parent
         init_child_splitter = RecursiveCharacterTextSplitter(
-            separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
+            separators=SEPARATORS,
             chunk_size=DEFAULT_CHILD_CHUNK_SIZE,
             chunk_overlap=int(DEFAULT_CHILD_CHUNK_SIZE / 4),
             length_function=num_tokens_embed)
@@ -189,13 +189,13 @@ class ParentRetriever:
         if parent_chunk_size != self.parent_chunk_size:
             self.parent_chunk_size = parent_chunk_size
             parent_splitter = RecursiveCharacterTextSplitter(
-                separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
+                separators=SEPARATORS,
                 chunk_size=parent_chunk_size,
                 chunk_overlap=0,
                 length_function=num_tokens_embed)
             child_chunk_size = min(DEFAULT_CHILD_CHUNK_SIZE, int(parent_chunk_size / 2))
             child_splitter = RecursiveCharacterTextSplitter(
-                separators=["\n\n", "\n", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " ", ""],
+                separators=SEPARATORS,
                 chunk_size=child_chunk_size,
                 chunk_overlap=int(child_chunk_size / 4),
                 length_function=num_tokens_embed)

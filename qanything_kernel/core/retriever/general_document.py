@@ -2,7 +2,7 @@ from qanything_kernel.utils.general_utils import get_time, get_table_infos, num_
     html_to_markdown, clear_string, get_time_async
 from typing import List, Optional
 from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, LOCAL_OCR_SERVICE_URL, IMAGES_ROOT_PATH, \
-    DEFAULT_CHILD_CHUNK_SIZE, LOCAL_PDF_PARSER_SERVICE_URL
+    DEFAULT_CHILD_CHUNK_SIZE, LOCAL_PDF_PARSER_SERVICE_URL, SEPARATORS
 from langchain.docstore.document import Document
 from qanything_kernel.utils.loader.my_recursive_url_loader import MyRecursiveUrlLoader
 from qanything_kernel.utils.custom_log import insert_logger
@@ -64,8 +64,8 @@ def get_pdf_result_sync(file_path):
 class LocalFileForInsert:
     def __init__(self, user_id, kb_id, file_id, file_location, file_name, file_url, chunk_size, mysql_client):
         self.chunk_size = chunk_size
-        self.markdown_text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=0,
-                                                                     length_function=num_tokens_embed)
+        self.markdown_text_splitter = RecursiveCharacterTextSplitter(separators=SEPARATORS, chunk_size=chunk_size,
+                                                                     chunk_overlap=0, length_function=num_tokens_embed)
         self.user_id = user_id
         self.kb_id = kb_id
         self.file_id = file_id
