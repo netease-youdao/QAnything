@@ -129,6 +129,7 @@ class LocalDocQA:
             if 'score' not in doc.metadata:
                 doc.metadata['score'] = 1 - (idx / len(query_docs))  # TODO 这个score怎么获取呢
             source_documents.append(doc)
+        debug_logger.info(f"embed scores: {[doc.metadata['score'] for doc in source_documents]}")
         # if cosine_thresh:
         #     source_documents = [item for item in source_documents if float(item.metadata['score']) > cosine_thresh]
 
@@ -269,10 +270,10 @@ class LocalDocQA:
             return docs
 
     async def prepare_source_documents(self, custom_llm: OpenAILLM, retrieval_documents: List[Document],
-                                       limited_token_nums: int):
+                                       limited_token_nums: int, rerank: bool):
         debug_logger.info(f"retrieval_documents len: {len(retrieval_documents)}")
         try:
-            new_docs = self.aggregate_documents(retrieval_documents, limited_token_nums, custom_llm)
+            new_docs = self.aggregate_documents(retrieval_documents, limited_token_nums, custom_llm, rerank)
             if new_docs:
                 source_documents = new_docs
             else:
@@ -504,7 +505,8 @@ class LocalDocQA:
                 debug_logger.info(f"rerank step1 num: {len(source_documents)}")
                 debug_logger.info(f"rerank step1 scores: {[doc.metadata['score'] for doc in source_documents]}")
                 if len(source_documents) > 1:
-                    source_documents = [doc for doc in source_documents if doc.metadata['score'] >= 0.28]
+                    if filtered_documents := [doc for doc in source_documents if doc.metadata['score'] >= 0.28]:
+                        source_documents = filtered_documents
                     debug_logger.info(f"rerank step2 num: {len(source_documents)}")
                     saved_docs = [source_documents[0]]
                     for doc in source_documents[1:]:
@@ -594,7 +596,8 @@ class LocalDocQA:
 
             source_documents, retrieval_documents = await self.prepare_source_documents(custom_llm,
                                                                                         retrieval_documents,
-                                                                                        limited_token_nums)
+                                                                                        limited_token_nums,
+                                                                                        rerank)
 
             for doc in source_documents:
                 if doc.metadata.get('images', []):
@@ -744,7 +747,7 @@ class LocalDocQA:
         # completed_doc = Document(page_content=completed_content, metadata=sorted_json_datas[0]['kwargs']['metadata'])
         return completed_doc, completed_doc_with_figure
 
-    def aggregate_documents(self, source_documents, limited_token_nums, custom_llm):
+    def aggregate_documents(self, source_documents, limited_token_nums, custom_llm, rerank):
         # 聚合文档，具体逻辑是帮我判断所有候选是否集中在一个或两个文件中，是的话直接返回这一个或两个完整文档，如果tokens不够则截取文档中的完整上下文
         first_file_dict = {}
         ori_first_docs = []
@@ -756,8 +759,12 @@ class LocalDocQA:
                 first_file_dict['file_id'] = file_id
                 first_file_dict['doc_ids'] = [int(doc.metadata['doc_id'].split('_')[-1])]
                 ori_first_docs.append(doc)
-                first_file_dict['score'] = max(
-                    [doc.metadata['score'] for doc in source_documents if doc.metadata['file_id'] == file_id])
+                if rerank:
+                    first_file_dict['score'] = max(
+                        [doc.metadata['score'] for doc in source_documents if doc.metadata['file_id'] == file_id])
+                else:
+                    first_file_dict['score'] = min(
+                        [doc.metadata['score'] for doc in source_documents if doc.metadata['file_id'] == file_id])
             elif first_file_dict['file_id'] == file_id:
                 first_file_dict['doc_ids'].append(int(doc.metadata['doc_id'].split('_')[-1]))
                 ori_first_docs.append(doc)
@@ -765,8 +772,12 @@ class LocalDocQA:
                 second_file_dict['file_id'] = file_id
                 second_file_dict['doc_ids'] = [int(doc.metadata['doc_id'].split('_')[-1])]
                 ori_second_docs.append(doc)
-                second_file_dict['score'] = max(
-                    [doc.metadata['score'] for doc in source_documents if doc.metadata['file_id'] == file_id])
+                if rerank:
+                    second_file_dict['score'] = max(
+                        [doc.metadata['score'] for doc in source_documents if doc.metadata['file_id'] == file_id])
+                else:
+                    second_file_dict['score'] = min(
+                        [doc.metadata['score'] for doc in source_documents if doc.metadata['file_id'] == file_id])
             elif second_file_dict['file_id'] == file_id:
                 second_file_dict['doc_ids'].append(int(doc.metadata['doc_id'].split('_')[-1]))
                 ori_second_docs.append(doc)
