@@ -31,11 +31,12 @@ Today's date is {{today_date}}. The current time is {{current_time}}.
 """
 
 INSTRUCTIONS = """
-- All contents between <DOCUMENTS> and </DOCUMENTS> are reference information retrieved from an external knowledge base.
-- Use any relevant information to formulate an answer, even if it's not complete. 
-- If no relevant information is found, respond with \"抱歉，检索到的参考信息并未提供任何相关的信息，因此无法回答。\".
-- Before answering, confirm the number of key points or pieces of information required, ensuring nothing is overlooked.
-- Now, answer the following question based on the above retrieved documents (Let's think step by step):
+- Answer the question strictly based on the reference information provided between <DOCUMENTS> and </DOCUMENTS>. 
+- Do not attempt to modify or adapt unrelated information. If the reference information does not match the person or topic mentioned in the question, respond only with: \"抱歉，检索到的参考信息并未提供任何相关的信息，因此无法回答。\"
+- Before generating the answer, please confirm the following (Let's think step by step):
+    1. First, check if the reference information directly matches the person or topic mentioned in the question. If no match is found, immediately return: \"抱歉，检索到的参考信息并未提供任何相关的信息，因此无法回答。\"
+    2. If a match is found, ensure all required key points or pieces of information from the reference are addressed in the answer.
+- Now, answer the following question based on the above retrieved documents:
 {{question}}
 - Please format your response in a **logical and structured manner** that best fits the question. Follow these guidelines:
 
@@ -169,6 +170,7 @@ TOKENIZER_PATH = os.path.join(root_path, 'qanything_kernel/connector/llm/tokeniz
 
 DEFAULT_CHILD_CHUNK_SIZE = 400
 DEFAULT_PARENT_CHUNK_SIZE = 800
+SEPARATORS = ["\n\n", "\n", "。", "，", ",", ".", ""]
 MAX_CHARS = 1000000  # 单个文件最大字符数，超过此字符数将上传失败，改大可能会导致解析超时
 
 # llm_config = {
