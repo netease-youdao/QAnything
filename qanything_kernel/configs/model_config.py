@@ -80,10 +80,6 @@ PROMPT_TEMPLATE = """
 <DOCUMENTS>
 {{context}}
 </DOCUMENTS>
-
-<INSTRUCTIONS>
-{{instructions}}
-</INSTRUCTIONS>
 """
 
 CUSTOM_PROMPT_TEMPLATE = """
