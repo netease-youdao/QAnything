@@ -309,8 +309,8 @@ class LocalDocQA:
     ) -> List[Dict]:
         # 获取问题的scores
         question_scores = [doc.metadata['score'] for doc in reference_docs]
-        # 计算问题和LLM回答的embedding
-        # question_embedding = await self.embeddings.aembed_query(question)
+
+        # 计算LLM回答的embedding
         llm_answer_embedding = await self.embeddings.aembed_query(llm_answer)
 
         # 计算所有引用文档分段的embeddings
@@ -319,7 +319,6 @@ class LocalDocQA:
         reference_embeddings = await self.embeddings.aembed_documents(all_segments)
 
         # 将嵌入向量转换为numpy数组以便使用scipy的cosine函数
-        # question_embedding = np.array(question_embedding)
         llm_answer_embedding = np.array(llm_answer_embedding)
         reference_embeddings = np.array(reference_embeddings)
 
@@ -331,20 +330,26 @@ class LocalDocQA:
         if isinstance(indices[0], np.int64):
             indices = [indices]
 
+        # 计算每个文档的分段数量，以便根据索引找到对应的文档
+        doc_segment_lengths = [len(self.doc_splitter.split_documents([doc])) for doc in reference_docs]
+
+        # 创建一个累积的段落索引，用于根据段落找到文档ID
+        cumulative_lengths = np.cumsum([0] + doc_segment_lengths)
+
+        # 定义加权几何平均函数
         def weighted_geometric_mean(scores, weights):
             return gmean([score ** weight for score, weight in zip(scores, weights)])
 
         # 计算相似度和综合得分
         relevant_docs = []
         for doc_index in indices[0]:
-            doc_id = doc_index // len(self.doc_splitter.split_documents([reference_docs[0]]))
+            # 根据doc_index找到对应的文档ID
+            doc_id = np.searchsorted(cumulative_lengths, doc_index, side='right') - 1
 
-            # 使用1 - cosine距离来计算相似度
-            # similarity_llm = 1 - cosine(llm_answer_embedding, reference_embeddings[doc_index])
-            # similarity_question = 1 - cosine(question_embedding, reference_embeddings[doc_index])
-            # 综合得分：结合LLM回答相似度、问题相似度和原始问题得分
-            # combined_score = (similarity_llm + similarity_question + question_scores[doc_id]) / 3
+            # 获取该文档内的实际分段索引
+            segment_index_in_doc = doc_index - cumulative_lengths[doc_id]
 
+            # 计算1 - cosine距离来计算相似度
             similarity_llm = 1 - cosine(llm_answer_embedding, reference_embeddings[doc_index])
             rerank_score = question_scores[doc_id]
 
