@@ -80,7 +80,10 @@ class LocalDocQA:
         web_content, web_documents = duckduckgo_search(query, top_k)
         source_documents = []
         for idx, doc in enumerate(web_documents):
+            if 'title' not in doc.metadata:
+                continue
             doc.metadata['retrieval_query'] = query  # 添加查询到文档的元数据中
+            debug_logger.info(f"web search doc: {doc.metadata}")
             file_name = re.sub(r'[\uFF01-\uFF5E\u3000-\u303F]', '', doc.metadata['title'])
             doc.metadata['file_name'] = file_name + '.web'
             doc.metadata['file_url'] = doc.metadata['source']
@@ -271,6 +274,7 @@ class LocalDocQA:
 
     async def prepare_source_documents(self, custom_llm: OpenAILLM, retrieval_documents: List[Document],
                                        limited_token_nums: int, rerank: bool):
+        return retrieval_documents, retrieval_documents
         debug_logger.info(f"retrieval_documents len: {len(retrieval_documents)}")
         try:
             new_docs = self.aggregate_documents(retrieval_documents, limited_token_nums, custom_llm, rerank)
