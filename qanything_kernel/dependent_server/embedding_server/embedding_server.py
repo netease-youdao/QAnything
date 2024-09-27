@@ -1,6 +1,5 @@
 import sys
 import os
-import platform
 
 # 获取当前脚本的绝对路径
 current_script_path = os.path.abspath(__file__)
@@ -14,6 +13,7 @@ print(root_dir)
 from sanic import Sanic
 from sanic.response import json
 from qanything_kernel.dependent_server.embedding_server.embedding_async_backend import EmbeddingAsyncBackend
+from qanything_kernel.dependent_server.embedding_server.embedding_onnx_backend import EmbeddingOnnxBackend
 from qanything_kernel.configs.model_config import LOCAL_EMBED_MODEL_PATH, LOCAL_EMBED_THREADS
 from qanything_kernel.utils.general_utils import get_time_async
 import argparse
@@ -37,8 +37,10 @@ async def embedding(request):
     texts = data.get('texts')
     # print("local embedding texts number:", len(texts), flush=True)
 
-    onnx_backend: EmbeddingAsyncBackend = request.app.ctx.onnx_backend
-    result_data = await onnx_backend.embed_documents_async(texts)
+    # onnx_backend: EmbeddingAsyncBackend = request.app.ctx.onnx_backend
+    onnx_backend: EmbeddingOnnxBackend = request.app.ctx.onnx_backend
+    # result_data = await onnx_backend.embed_documents_async(texts)
+    result_data = onnx_backend.predict(texts)
     # print("local embedding result number:", len(result_data), flush=True)
     # print("local embedding result:", result_data, flush=True)
 
@@ -47,8 +49,9 @@ async def embedding(request):
 
 @app.listener('before_server_start')
 async def setup_onnx_backend(app, loop):
-    app.ctx.onnx_backend = EmbeddingAsyncBackend(model_path=LOCAL_EMBED_MODEL_PATH, 
-                                                 use_cpu=not args.use_gpu, num_threads=LOCAL_EMBED_THREADS)
+    # app.ctx.onnx_backend = EmbeddingAsyncBackend(model_path=LOCAL_EMBED_MODEL_PATH,
+    #                                              use_cpu=not args.use_gpu, num_threads=LOCAL_EMBED_THREADS)
+    app.ctx.onnx_backend = EmbeddingOnnxBackend(use_cpu=not args.use_gpu)
 
 
 if __name__ == "__main__":

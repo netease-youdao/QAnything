@@ -1,7 +1,7 @@
 """Wrapper around YouDao embedding models."""
 from typing import List
 from qanything_kernel.configs.model_config import LOCAL_EMBED_MAX_LENGTH, LOCAL_EMBED_BATCH, \
-    LOCAL_EMBED_PATH, LOCAL_EMBED_WORKERS
+    LOCAL_EMBED_PATH, LOCAL_EMBED_THREADS
 from qanything_kernel.utils.general_utils import get_time
 from qanything_kernel.utils.custom_log import debug_logger
 from transformers import AutoTokenizer
@@ -16,7 +16,7 @@ class EmbeddingBackend(ABC):
     def __init__(self, use_cpu: bool = False):
         self.use_cpu = use_cpu
         self._tokenizer = AutoTokenizer.from_pretrained(LOCAL_EMBED_PATH)
-        self.workers = LOCAL_EMBED_WORKERS
+        self.workers = LOCAL_EMBED_THREADS
 
     @abstractmethod
     def get_embedding(self, sentences, max_length) -> List:
