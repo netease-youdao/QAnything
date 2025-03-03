@@ -1,9 +1,9 @@
 """Wrapper around YouDao embedding models."""
-from typing import List
+from typing import List, Optional
 from qanything_kernel.utils.custom_log import debug_logger, embed_logger
 from qanything_kernel.utils.general_utils import get_time_async, get_time
 from langchain_core.embeddings import Embeddings
-from qanything_kernel.configs.model_config import LOCAL_EMBED_SERVICE_URL, LOCAL_RERANK_BATCH
+from qanything_kernel.configs.model_config import LOCAL_EMBED_SERVICE_URL, LOCAL_EMBED_BATCH
 import traceback
 import aiohttp
 import asyncio
@@ -21,33 +21,39 @@ class YouDaoEmbeddings(Embeddings):
         self.model_version = 'local_v20240725'
         self.url = f"http://{LOCAL_EMBED_SERVICE_URL}/embedding"
         self.session = requests.Session()
+        self.semaphore = asyncio.Semaphore(4)  # 限制并发数为4
         super().__init__()
 
-    async def _get_embedding_async(self, session, queries):
-        data = {'texts': queries}
-        async with session.post(self.url, json=data) as response:
-            return await response.json()
+    async def _get_embedding_async(self, session, queries, task_type: str) -> List[List[float]]:
+        async with self.semaphore:
+            data = {'texts': queries, 'task_type': task_type}
+            async with session.post(self.url, json=data) as response:
+                return await response.json()
 
     @get_time_async
     async def aembed_documents(self, texts: List[str]) -> List[List[float]]:
-        batch_size = LOCAL_RERANK_BATCH  # 增大客户端批处理大小
-        # 向上取整
-        embed_logger.info(f'embedding texts number: {len(texts) / batch_size}')
+        batch_size = LOCAL_EMBED_BATCH
+        embed_logger.info(f'embedding texts number: {len(texts)}, batch_size: {batch_size}')
         all_embeddings = []
+
         async with aiohttp.ClientSession() as session:
-            tasks = [self._get_embedding_async(session, texts[i:i + batch_size])
+            # 创建所有任务
+            tasks = [self._get_embedding_async(session, texts[i:i + batch_size], 'retrieval.passage')
                      for i in range(0, len(texts), batch_size)]
+            # 执行任务，信号量会自动控制并发数
             results = await asyncio.gather(*tasks)
             for result in results:
                 all_embeddings.extend(result)
+
         debug_logger.info(f'success embedding number: {len(all_embeddings)}')
         return all_embeddings
 
     async def aembed_query(self, text: str) -> List[float]:
-        return (await self.aembed_documents([text]))[0]
+        async with aiohttp.ClientSession() as session:
+            return (await self._get_embedding_async(session, [text], 'retrieval.query'))[0]
 
-    def _get_embedding_sync(self, texts):
-        data = {'texts': [_process_query(text) for text in texts]}
+    def _get_embedding_sync(self, texts, task_type: str) -> Optional[List[List[float]]]:
+        data = {'texts': [_process_query(text) for text in texts], 'task_type': task_type}
         try:
             response = self.session.post(self.url, json=data)
             response.raise_for_status()
@@ -59,13 +65,13 @@ class YouDaoEmbeddings(Embeddings):
 
     # @get_time
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
-        return self._get_embedding_sync(texts)
+        return self._get_embedding_sync(texts, 'retrieval.passage')
 
     @get_time
     def embed_query(self, text: str) -> List[float]:
         """Embed query text."""
         # return self._get_embedding([text])['embeddings'][0]
-        return self._get_embedding_sync([text])[0]
+        return self._get_embedding_sync([text], 'retrieval.query')[0]
 
     @property
     def embed_version(self):

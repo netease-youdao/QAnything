@@ -1,5 +1,6 @@
 import sys
 import os
+import platform
 
 # 获取当前脚本的绝对路径
 current_script_path = os.path.abspath(__file__)
@@ -12,11 +13,15 @@ print(root_dir)
 
 from sanic import Sanic
 from sanic.response import json
-from qanything_kernel.dependent_server.embedding_server.embedding_async_backend import EmbeddingAsyncBackend
+from sanic.worker.manager import WorkerManager
 from qanything_kernel.dependent_server.embedding_server.embedding_onnx_backend import EmbeddingOnnxBackend
 from qanything_kernel.configs.model_config import LOCAL_EMBED_MODEL_PATH, LOCAL_EMBED_THREADS
+from qanything_kernel.utils.custom_log import embed_logger
 from qanything_kernel.utils.general_utils import get_time_async
 import argparse
+import traceback
+
+WorkerManager.THRESHOLD = 1200  # 120秒
 
 # 接收外部参数mode
 parser = argparse.ArgumentParser()
@@ -35,12 +40,15 @@ app = Sanic("embedding_server")
 async def embedding(request):
     data = request.json
     texts = data.get('texts')
+    task_type = data.get('task_type')  # task_type in
     # print("local embedding texts number:", len(texts), flush=True)
 
-    # onnx_backend: EmbeddingAsyncBackend = request.app.ctx.onnx_backend
     onnx_backend: EmbeddingOnnxBackend = request.app.ctx.onnx_backend
-    # result_data = await onnx_backend.embed_documents_async(texts)
-    result_data = onnx_backend.predict(texts)
+    try:
+        result_data = onnx_backend.predict(texts, task_type)
+    except Exception as e:
+        embed_logger.error(f"embedding error: {traceback.format_exc()}")
+        return json({"error": "embedding error"}, status=400)
     # print("local embedding result number:", len(result_data), flush=True)
     # print("local embedding result:", result_data, flush=True)
 
@@ -49,8 +57,6 @@ async def embedding(request):
 
 @app.listener('before_server_start')
 async def setup_onnx_backend(app, loop):
-    # app.ctx.onnx_backend = EmbeddingAsyncBackend(model_path=LOCAL_EMBED_MODEL_PATH,
-    #                                              use_cpu=not args.use_gpu, num_threads=LOCAL_EMBED_THREADS)
     app.ctx.onnx_backend = EmbeddingOnnxBackend(use_cpu=not args.use_gpu)
 
 

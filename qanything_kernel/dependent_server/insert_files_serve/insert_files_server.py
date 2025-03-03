@@ -54,7 +54,8 @@ db_config = {
 
 
 @get_time_async
-async def process_data(retriever, milvus_kb, mysql_client, file_info, time_record):
+async def process_data(retriever: ParentRetriever, milvus_kb: VectorStoreMilvusClient, mysql_client: KnowledgeBaseManager, 
+                       file_info: tuple, time_record: dict):
     parse_timeout_seconds = 300
     insert_timeout_seconds = 300
     content_length = -1
