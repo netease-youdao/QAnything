@@ -96,16 +96,45 @@ class OpenAILLM:
                     top_p=self.top_p,
                     stop=self.stop_words
                 )
+
+                first_reason_return = True
+                first_content_return = True
+                has_think = False
                 for event in response:
                     if not isinstance(event, dict):
                         event = event.model_dump()
-
+                    # debug_logger.info(f"call event: {event}")
                     if isinstance(event['choices'], List) and len(event['choices']) > 0:
-                        event_text = event["choices"][0]['delta']['content']
-                        if isinstance(event_text, str) and event_text != "":
-                            delta = {'answer': event_text}
+                        delta = event["choices"][0]["delta"]
+                        finish_reason = event["choices"][0]["finish_reason"]
+                        if finish_reason == "stop":
+                            delta["answer"] = "\n</response>"
                             yield "data: " + json.dumps(delta, ensure_ascii=False)
+                            yield "data: [DONE]\n\n"
+                            continue
 
+                        reasoning_content = delta.get("reasoning_content", "")
+                        content = delta.get("content", "")
+                        if reasoning_content:
+                            has_think = True 
+                        if has_think:
+                            if reasoning_content:
+                                if first_reason_return:
+                                    reasoning_content = "<think>\n" + reasoning_content
+                                    first_reason_return = False
+                                delta["answer"] = reasoning_content
+                            elif content:
+                                if first_content_return:
+                                    content = "</think>\n<response>\n" + content
+                                    first_content_return = False
+                                delta["answer"] = content
+                            else:
+                                continue
+                            yield "data: " + json.dumps(delta, ensure_ascii=False)
+                        else:
+                            if isinstance(content, str) and content != "":
+                                delta["answer"] = content
+                                yield "data: " + json.dumps(delta, ensure_ascii=False)
             else:
                 response = self.client.chat.completions.create(
                     model=self.model,
@@ -118,7 +147,14 @@ class OpenAILLM:
                 )
 
                 event_text = response.choices[0].message.content if response.choices else ""
-                delta = {'answer': event_text}
+                if event_text.startswith("<think>"):
+                    event_text = event_text.replace("</think>\n", "</think>\n<response>") + "\n</response>"
+                    delta = {'answer': event_text}
+                elif response.choices and hasattr(response.choices[0].message, 'reasoning_content'):
+                    event_reason = response.choices[0].message.reasoning_content if response.choices else ""
+                    delta = {'answer': f"<think>\n{event_reason}\n</think>\n<response>\n{event_text}\n</response>"}
+                else:
+                    delta = {'answer': event_text}
                 yield "data: " + json.dumps(delta, ensure_ascii=False)
 
         except Exception as e:
