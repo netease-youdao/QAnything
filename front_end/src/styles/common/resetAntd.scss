@@ -1,0 +1,388 @@
+// 修改primary按钮默认背景色
+.ant-btn-primary {
+  background-color: $baseColor !important;
+
+  + :not(:disabled):hover {
+    //background-color: $baseColor !important;
+  }
+}
+.ant-btn-default:not(:disabled):hover {
+  border-color: #5a47e5;
+  color: #5a47e5;
+}
+.ant-btn {
+  + :not(:disabled):focus-visible {
+    outline: 0;
+    outline-offset: 0;
+  }
+
+  + .ant-btn-loading {
+    opacity: 1;
+  }
+}
+
+//search input
+.search-input {
+  &:hover,
+  &:focus {
+    border-color: #fff !important;
+  }
+}
+
+//修改二维码表框
+.ant-qrcode {
+  border-color: #e5e5e5;
+  border-radius: 12px;
+  padding: 20px;
+
+  canvas {
+    width: 230px !important;
+    height: 230px !important;
+  }
+}
+//修改起泡卡片
+
+.ant-popover.cooperate {
+  width: 265px;
+  top: 40px !important;
+  .ant-popover-arrow {
+    left: 82% !important;
+  }
+  .ant-popover-title {
+    color: $title1 !important;
+  }
+
+  .ant-popover-inner-content {
+    color: $title2 !important;
+    font-size: 14px;
+  }
+  .consult {
+    img {
+      display: inline-block;
+      width: 240px;
+      height: 240px;
+      margin-top: 10px;
+    }
+    span {
+      display: inline-block;
+      width: 100%;
+      text-align: center;
+      font-size: 14px;
+      margin-top: 4px;
+      color: #666666;
+    }
+  }
+}
+
+
+.url-upload-modal {
+  .ant-modal-content {
+    height: 210px !important;
+  }
+}
+
+.exceed-tip-modal,
+.connect-us-modal {
+  .ant-modal-content {
+    padding: 0;
+    border-radius: 24px;
+  }
+}
+
+.pay-modal {
+  .ant-modal-content {
+    border-radius: 24px;
+  }
+}
+
+.chat-source-modal {
+  // .ant-modal {
+  //   width: auto !important;
+  // }
+  .ant-modal-content {
+    width: fit-content;
+    min-width: 680px;
+    max-width: 90vw;
+    background: #ffffff;
+    padding: 0;
+  }
+  .ant-modal-header {
+    height: 48px;
+    line-height: 48px;
+    background: #f7f9ff;
+    border-radius: 8px 8px 0px 0px;
+    padding: 12px 0 12px 28px;
+    margin-bottom: 0;
+  }
+}
+.answer-detail-modal {
+
+  .ant-modal-content {
+    background: #ffffff;
+    padding: 0;
+  }
+  .ant-modal-header {
+    height: 48px;
+    line-height: 48px;
+    background: #f7f9ff;
+    border-radius: 8px 8px 0px 0px;
+    padding: 12px 0 12px 24px;
+    margin-bottom: 0;
+  }
+}
+//新增、修改知识库弹窗
+.upload-file-modal,
+.import-kb-modal
+{
+  .ant-modal-content {
+    background: #ffffff;
+    padding: 0 0 24px 0;
+    // height: 400px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .ant-modal-header {
+    height: 48px;
+    line-height: 48px;
+    background: #f7f9ff;
+    border-radius: 8px 8px 0px 0px;
+    padding: 12px 0 12px 28px;
+    margin-bottom: 0;
+  }
+
+  .ant-modal-body {
+    padding: 24px 28px;
+    // overflow: auto;
+  }
+
+  .ant-modal-footer {
+    margin: 0;
+    padding-right: 28px;
+    .ant-btn {
+      height: 36px;
+      width: 84px;
+    }
+  }
+
+  .ant-modal-close {
+    top: 14px;
+  }
+
+  .ant-modal .ant-modal-footer .ant-btn + .ant-btn:not(.ant-dropdown-trigger) {
+    margin-inline-start: 16px;
+  }
+
+  .ant-btn-primary[disabled] {
+    background-color: rgba(90, 71, 229, 0.5) !important;
+    color: #fff !important;
+  }
+
+  .ant-btn-primary {
+    background: #5a47e5 !important;
+  }
+
+  .ant-btn-default:hover {
+    color: #5a47e5;
+    border-color: #5a47e5 !important;
+  }
+
+  .ant-input:focus,
+  .ant-input-focused {
+    border-color: #5a47e5 !important;
+  }
+
+  .ant-input-affix-wrapper-focused {
+    border-color: #5a47e5 !important;
+  }
+  .ant-input-affix-wrapper:not(.ant-input-affix-wrapper-disabled):hover {
+    border-color: #5a47e5 !important;
+  }
+
+  .ant-input:focus,
+  .ant-input-focused,
+  .ant-input:hover,
+  .ant-input-active {
+    caret-color: #5a47e5;
+  }
+}
+
+.temp-detail-modal {
+  .ant-modal {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+
+  .ant-modal-header {
+    height: 48px;
+    line-height: 48px;
+    background: #fff;
+    border-radius: 0;
+    padding: 12px 0 12px 24px;
+    margin-bottom: 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .ant-modal-content {
+    background: #fff;
+    padding: 0;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  .ant-modal-body {
+    height: calc(100vh - 48px);
+    overflow-y: scroll;
+  }
+
+  .ant-modal-close {
+    top: 14px;
+  }
+}
+
+.edit-qa-set-modal {
+  .ant-modal-header {
+    height: 48px;
+    line-height: 48px;
+    background: #f7f9ff;
+    border-radius: 8px 8px 0px 0px;
+    padding: 12px 0 12px 28px;
+    margin-bottom: 0;
+  }
+  .ant-modal-content {
+    background: #ffffff;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .ant-modal-body {
+    padding: 0 28px;
+  }
+  .ant-modal-footer {
+    margin: 0;
+  }
+}
+
+// 信息来源弹窗
+.source-modal {
+  .ant-modal-content {
+    background: #ffffff;
+    padding: 0;
+    height: 90vh;
+    display: flex;
+    flex-direction: column;
+  }
+  // .ant-modal-body {
+  //   overflow-y: scroll;
+  // }
+  .ant-modal-header {
+    height: 48px;
+    line-height: 48px;
+    background: #f7f9ff;
+    border-radius: 8px 8px 0 0;
+    padding: 12px 0 12px 28px;
+    margin-bottom: 0;
+  }
+}
+
+// 切片弹窗
+.chunk-modal {
+  .ant-modal {
+    max-width: 100%;
+    top: 0;
+    padding-bottom: 0;
+    margin: 0;
+  }
+
+  .ant-modal-content {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh);
+  }
+
+  .ant-modal-body {
+    flex: 1;
+    overflow: hidden;
+  }
+}
+
+.satisfaction-modal,
+.publish-set-modal,
+.model-set-modal,
+.privatization-modal,
+.new-bot-modal {
+  .ant-modal-content {
+    background: #ffffff;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .ant-modal-body {
+    padding: 24px 24px;
+  }
+  .ant-modal-header {
+    height: 48px;
+    line-height: 48px;
+    background: #f7f9ff;
+    border-radius: 8px 8px 0 0;
+    padding: 12px 0 12px 28px;
+    margin-bottom: 0;
+  }
+  .ant-form-item:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.select-knowledge-modal {
+  .ant-modal-content {
+    background: #ffffff;
+    height: 418px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .ant-modal-body {
+    padding: 24px 24px;
+  }
+  .ant-modal-header {
+    height: 48px;
+    line-height: 48px;
+    background: #f7f9ff;
+    border-radius: 8px 8px 0 0;
+    padding: 12px 0 12px 28px;
+    margin-bottom: 0;
+  }
+  .ant-form-item:last-child {
+    margin-bottom: 0;
+  }
+}
+
+//input focus style
+.ant-input {
+  color: $title1;
+}
+.ant-input:focus,
+.ant-input-focused {
+  border-color: #5a47e5 !important;
+}
+
+.ant-input-affix-wrapper-focused {
+  border-color: #5a47e5 !important;
+}
+.ant-input-affix-wrapper:not(.ant-input-affix-wrapper-disabled):hover {
+  border-color: #5a47e5 !important;
+}
+.ant-input-textarea:focus {
+  border-color: #5a47e5 !important;
+}
+.ant-input:hover {
+  border-color: #5a47e5 !important;
+}
+
+.ant-image-preview-img {
+  width: auto !important;
+  max-width: 100% !important;
+  max-height: 80vh !important;
+  object-fit: contain !important;
+}

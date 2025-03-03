@@ -1,0 +1,56 @@
+{
+    "type": "bundle",
+    "id": "bundle--1b5de6a3-1a45-4f85-8103-81cff6d77e22",
+    "spec_version": "2.1",
+    "objects": [
+        {
+            "type": "x-mitre-collection",
+            "id": "x-mitre-collection--1f5f1533-f617-4ca8-9ab4-6a02367fa019",
+            "spec_version": "2.1",
+            "x_mitre_attack_spec_version": "2.1.0",
+            "name": "Enterprise ATT&CK",
+            "x_mitre_version": "16.1",
+            "description": "ATT&CK for Enterprise provides a knowledge base of real-world adversary behavior targeting traditional enterprise networks. ATT&CK for Enterprise covers the following platforms: Windows, macOS, Linux, PRE, Office 365, Google Workspace, IaaS, Network, and Containers.",
+            "created_by_ref": "identity--c78cb6e5-0c4b-4611-8297-d1b8b55e40b5",
+            "created": "2018-01-17T12:56:55.080Z",
+            "modified": "2024-11-12T14:00:00.188Z",
+            "object_marking_refs": [
+                "marking-definition--fa42a846-8d90-4e51-bc29-71d5b4802168"
+            ],
+            "x_mitre_contents": [
+                {
+                    "object_ref": "attack-pattern--0042a9f5-f053-4769-b3ef-9ad018dfa298",
+                    "object_modified": "2022-04-25T14:00:00.188Z"
+                },
+                {
+                    "object_ref": "attack-pattern--005a06c6-14bf-4118-afa0-ebcd8aebb0c9",
+                    "object_modified": "2024-10-13T16:13:47.770Z"
+                },
+                {
+                    "object_ref": "attack-pattern--005cc321-08ce-4d17-b1ea-cb5275926520",
+                    "object_modified": "2022-11-08T14:00:00.188Z"
+                },
+                {
+                    "object_ref": "attack-pattern--00d0b012-8a03-410e-95de-5826bf542de6",
+                    "object_modified": "2022-04-25T14:00:00.188Z"
+                },
+                {
+                    "object_ref": "attack-pattern--00f90846-cbd1-4fc5-9233-df5c2bf2a662",
+                    "object_modified": "2023-09-15T19:02:53.995Z"
+                },
+                {
+                    "object_ref": "attack-pattern--01327cde-66c4-4123-bf34-5f258d59457b",
+                    "object_modified": "2024-09-12T15:20:07.264Z"
+                },
+                {
+                    "object_ref": "attack-pattern--01a5a209-b94c-450b-b7f9-946497d91055",
+                    "object_modified": "2024-10-15T15:20:57.328Z"
+                },
+                {
+                    "object_ref": "attack-pattern--01df3350-ce05-4bdf-bdf8-0a919a66d4a8",
+                    "object_modified": "2023-10-15T20:24:13.473Z"
+                }
+            ]
+        }
+    ]
+}

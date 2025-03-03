@@ -28,7 +28,7 @@ def json2markdown(json_dir, markdown_dir):
             para = text.split('@@')[0] + '\n'
             pdf.append(para)
             if para_before:
-                if any([re.match(p, para_before[-2]) for p in before_patt]) and any([re.match(p, para[0]) for p in after_patt]):
+                if len(para_before) > 1 and any([re.match(p, para_before[-2]) for p in before_patt]) and any([re.match(p, para[0]) for p in after_patt]):
                     pdf.pop(pdf.index(para))
                     pdf.pop(pdf.index(para_before))
                     pdf.append(para_before[:-1] + ' ' + para)

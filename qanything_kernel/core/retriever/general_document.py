@@ -13,6 +13,7 @@ from langchain_community.document_loaders import UnstructuredPowerPointLoader
 from qanything_kernel.utils.loader import UnstructuredPaddlePDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from qanything_kernel.utils.loader.csv_loader import CSVLoader
+from qanything_kernel.utils.loader.json_loader import JSONLoader
 from qanything_kernel.utils.loader.markdown_parser import convert_markdown_to_langchaindoc
 import asyncio
 import aiohttp
@@ -440,6 +441,9 @@ class LocalFileForInsert:
             docs = loader.load()
         elif self.file_path.lower().endswith(".eml"):
             loader = UnstructuredEmailLoader(self.file_path, strategy="fast")
+            docs = loader.load()
+        elif self.file_path.lower().endswith(".json"):
+            loader = JSONLoader(self.file_path)
             docs = loader.load()
         elif self.file_path.lower().endswith(".csv"):
             loader = CSVLoader(self.file_path, autodetect_encoding=True, csv_args={"delimiter": ",", "quotechar": '"'})

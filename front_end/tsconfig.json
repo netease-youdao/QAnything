@@ -1,0 +1,68 @@
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "target": "esnext",
+    "useDefineForClassFields": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "strict": false,
+    "jsx": "preserve",
+    "allowJs": true,
+    "sourceMap": true,
+    "noImplicitAny": false,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "noUnusedLocals": true,
+    "lib": [
+      "esnext",
+      "dom"
+    ],
+    "types": [
+      "vite/client",
+      "node"
+    ],
+    "baseUrl": "./",
+    "paths": {
+      "@/*": [
+        "src/*"
+      ],
+      "@views/": [
+        "src/views"
+      ],
+      "@comps": [
+        "./src/components"
+      ],
+      "@imgs": [
+        "./src/assets/img"
+      ],
+      "@icons": [
+        "./src/assets/icons"
+      ],
+      "@utils": [
+        "./src/utils"
+      ],
+      "@stores": [
+        "./src/store"
+      ],
+      "@plugins": [
+        "./src/plugins"
+      ],
+      "@styles": [
+        "./src/styles"
+      ],
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "src/services/axiosInterceptor/interceptors/crypto.js",
+    "./auto-imports.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.js"
+  ],
+}

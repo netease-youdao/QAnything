@@ -1,0 +1,92 @@
+{
+  "name": "ai-demo",
+  "version": "2.0.4",
+  "tagname": "qanything",
+  "scripts": {
+    "dev": "vite",
+    "test": "vite build --mode test",
+    "analyzer": "vite build --mode test",
+    "build": "vite build",
+    "serve": "vite preview --port 5052",
+    "lint-staged": "lint-staged",
+    "cdn-test": "bash ./cicdn.sh test",
+    "cdn-prod": "bash ./cicdn.sh prod",
+    "auto": "node ./autoHandle/create.js",
+    "prebuild": "node writeVersion.js",
+    "predev": "node writeVersion.js"
+  },
+  "dependencies": {
+    "@ant-design/icons-vue": "^7.0.1",
+    "@fingerprintjs/fingerprintjs": "^4.2.2",
+    "@flyfish-group/file-viewer3": "^1.0.3",
+    "@vue-office/docx": "^1.6.0",
+    "@vue-office/excel": "^1.7.6",
+    "@vue-office/pdf": "^1.6.5",
+    "@vueuse/core": "^10.5.0",
+    "ant-design-vue": "4.x",
+    "axios": "^1.6.1",
+    "crypto-js": "^4.1.1",
+    "echarts": "^5.5.0",
+    "highlight.js": "^11.10.0",
+    "html2canvas": "^1.4.1",
+    "js-cookie": "^3.0.1",
+    "markdown-it": "^14.1.0",
+    "moment": "^2.30.1",
+    "nprogress": "^0.2.0",
+    "pdfjs-dist": "^2.0.943",
+    "pinia": "^2.1.7",
+    "pinia-plugin-persistedstate": "^3.2.0",
+    "qs": "^6.11.0",
+    "vue": "3.3",
+    "vue-demi": "^0.14.7",
+    "vue-router": "^4.0.11"
+  },
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
+      "pre-commit": "npm run lint-staged"
+    }
+  },
+  "lint-staged": {
+    "src/**/*.{js,vue}": [
+      "eslint",
+      "git add"
+    ]
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^14.1.0",
+    "@commitlint/config-conventional": "^14.1.0",
+    "@microsoft/fetch-event-source": "^2.0.1",
+    "@types/node": "^18.0.0",
+    "@types/nprogress": "^0.2.3",
+    "@typescript-eslint/eslint-plugin": "^6.18.1",
+    "@typescript-eslint/parser": "^6.18.1",
+    "@vitejs/plugin-vue": "^5.0.3",
+    "babel-eslint": "^10.1.0",
+    "babel-plugin-import": "^1.13.3",
+    "eslint": "^7.32.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-import": "^2.24.2",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-vue": "^7.17.0",
+    "husky": "4.3.8",
+    "inquirer": "^8.2.0",
+    "lint-staged": "^12.0.2",
+    "prettier": "^2.4.1",
+    "rollup-plugin-terser": "^7.0.2",
+    "rollup-plugin-visualizer": "^5.12.0",
+    "rxjs": "^7.4.0",
+    "sass": "^1.42.1",
+    "sass-loader": "^12.1.0",
+    "typescript": "^5.3.3",
+    "unplugin-auto-import": "^0.16.7",
+    "unplugin-vue-components": "^0.25.2",
+    "vite": "^5.0.11",
+    "vite-plugin-eslint": "^1.8.1",
+    "vite-plugin-imagemin": "^0.6.1",
+    "vite-plugin-style-import": "^2.0.0",
+    "vite-plugin-svg-icons": "^2.0.1",
+    "vue-eslint-parser": "^9.3.2"
+  }
+}

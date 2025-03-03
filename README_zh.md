@@ -398,10 +398,11 @@ docker pull quay.io/coreos/etcd:v3.5.5
 docker pull minio/minio:RELEASE.2023-03-20T20-16-18Z
 docker pull milvusdb/milvus:v2.4.8
 docker pull mysql:8.4
+docker pull docker.elastic.co/elasticsearch/elasticsearch:8.13.2
 docker pull xixihahaliu01/qanything-win:v1.5.1  # 从 [https://github.com/netease-youdao/QAnything/blob/master/docker-compose-windows.yaml#L103] 中获取最新镜像版本号。
 
 # 打包镜像
-docker save quay.io/coreos/etcd:v3.5.5 minio/minio:RELEASE.2023-03-20T20-16-18Z milvusdb/milvus:v2.4.8 mysql:8.4 xixihahaliu01/qanything-win:v1.5.1 -o qanything_offline.tar
+docker save quay.io/coreos/etcd:v3.5.5 minio/minio:RELEASE.2023-03-20T20-16-18Z milvusdb/milvus:v2.4.8 mysql:8.4 docker.elastic.co/elasticsearch/elasticsearch:8.13.2 xixihahaliu01/qanything-win:v1.5.1 -o qanything_offline.tar
 
 # 下载QAnything代码
 wget https://github.com/netease-youdao/QAnything/archive/refs/heads/master.zip
@@ -425,10 +426,11 @@ docker pull quay.io/coreos/etcd:v3.5.5
 docker pull minio/minio:RELEASE.2023-03-20T20-16-18Z
 docker pull milvusdb/milvus:v2.4.8
 docker pull mysql:8.4
+docker pull docker.elastic.co/elasticsearch/elasticsearch:8.13.2
 docker pull xixihahaliu01/qanything-linux:v1.5.1  # 从 [https://github.com/netease-youdao/qanything/blob/master/docker-compose-linux.yaml#L104] 中获取最新镜像版本号。
 
 # 打包镜像
-docker save quay.io/coreos/etcd:v3.5.5 minio/minio:RELEASE.2023-03-20T20-16-18Z milvusdb/milvus:v2.4.8 mysql:8.4 xixihahaliu01/qanything-linux:v1.5.1 -o qanything_offline.tar
+docker save quay.io/coreos/etcd:v3.5.5 minio/minio:RELEASE.2023-03-20T20-16-18Z milvusdb/milvus:v2.4.8 mysql:8.4 docker.elastic.co/elasticsearch/elasticsearch:8.13.2 xixihahaliu01/qanything-linux:v1.5.1 -o qanything_offline.tar
 
 # 下载QAnything代码
 wget https://github.com/netease-youdao/QAnything/archive/refs/heads/master.zip

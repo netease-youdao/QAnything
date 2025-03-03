@@ -136,6 +136,8 @@ class OpenAILLM:
 
         if history is None or len(history) == 0:
             history = [[]]
+        else:
+            history.append([])
         # debug_logger.info(f"history_len: {self.history_len}")
         # debug_logger.info(f"prompt: {prompt}")
         debug_logger.info(f"prompt tokens: {self.num_tokens_from_messages([{'content': prompt}])}")

@@ -1,8 +1,11 @@
+import shutil
+
 from qanything_kernel.core.local_file import LocalFile
 from qanything_kernel.core.local_doc_qa import LocalDocQA
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from qanything_kernel.configs.model_config import (BOT_DESC, BOT_IMAGE, BOT_PROMPT, BOT_WELCOME,
-                                                   DEFAULT_PARENT_CHUNK_SIZE, MAX_CHARS, VECTOR_SEARCH_TOP_K)
+                                                   DEFAULT_PARENT_CHUNK_SIZE, MAX_CHARS, VECTOR_SEARCH_TOP_K,
+                                                   UPLOAD_ROOT_PATH, IMAGES_ROOT_PATH)
 from qanything_kernel.utils.general_utils import *
 from langchain.schema import Document
 from sanic.response import ResponseStream
@@ -480,6 +483,17 @@ async def delete_knowledge_base(req: request):
         asyncio.create_task(run_in_background(local_doc_qa.es_client.delete_files, file_ids, file_chunks))
         local_doc_qa.milvus_summary.delete_documents(file_ids)
         local_doc_qa.milvus_summary.delete_faqs(file_ids)
+
+        # delete kb_id file dir
+        try:
+            upload_path = os.path.join(UPLOAD_ROOT_PATH, user_id)
+            file_dir = os.path.join(upload_path, kb_id)
+            debug_logger.info("delete_knowledge_base file dir : %s", file_dir)
+            shutil.rmtree(file_dir)
+        except Exception as e:
+            debug_logger.error("An error occurred while constructing file paths: %s", str(e))
+
+
         debug_logger.info(f"""delete knowledge base {kb_id} success""")
     local_doc_qa.milvus_summary.delete_knowledge_base(user_id, kb_ids)
     return sanic_json({"code": 200, "msg": "Knowledge Base {} delete success".format(kb_ids)})
@@ -525,6 +539,7 @@ async def delete_docs(req: request):
     if len(valid_file_infos) == 0:
         return sanic_json({"code": 2004, "msg": "fail, files {} not found".format(file_ids)})
     valid_file_ids = [file_info[0] for file_info in valid_file_infos]
+    debug_logger.info("delete_docs valid_file_ids %s", valid_file_ids)
     # milvus_kb = local_doc_qa.match_milvus_kb(user_id, [kb_id])
     # milvus_kb.delete_files(file_ids)
     expr = f"""kb_id == "{kb_id}" and file_id in {valid_file_ids}"""  # 删除数据库中的记录
@@ -536,6 +551,21 @@ async def delete_docs(req: request):
     local_doc_qa.milvus_summary.delete_files(kb_id, valid_file_ids)
     local_doc_qa.milvus_summary.delete_documents(valid_file_ids)
     local_doc_qa.milvus_summary.delete_faqs(valid_file_ids)
+    # list file_ids
+    for file_id in file_ids:
+        try:
+            upload_path = os.path.join(UPLOAD_ROOT_PATH, user_id)
+            file_dir = os.path.join(upload_path, kb_id, file_id)
+            debug_logger.info("delete_docs file_dir %s", file_dir)
+            # delete file dir
+            shutil.rmtree(file_dir)
+            # delele images dir
+            images_dir = os.path.join(IMAGES_ROOT_PATH, file_id)
+            debug_logger.info("delete_docs images_dir %s", images_dir)
+            shutil.rmtree(images_dir)
+        except Exception as e:
+            debug_logger.error("An error occurred while constructing file paths: %s", str(e))
+
     return sanic_json({"code": 200, "msg": "documents {} delete success".format(valid_file_ids)})
 
 
@@ -790,7 +820,7 @@ async def local_doc_chat(req: request):
                     # result = resp['result']
                     time_record['chat_completed'] = round(time.perf_counter() - preprocess_start, 2)
                     if time_record.get('llm_completed', 0) > 0:
-                       time_record['tokens_per_second'] = round(
+                        time_record['tokens_per_second'] = round(
                             len(result) / time_record['llm_completed'], 2)
                     formatted_time_record = format_time_record(time_record)
                     chat_data = {'user_id': user_id, 'kb_ids': kb_ids, 'query': question, "model": model,
@@ -1424,6 +1454,7 @@ async def get_file_base64(req: request):
     file_id = safe_get(req, 'file_id')
     debug_logger.info("get_file_base64 %s", file_id)
     file_location = local_doc_qa.milvus_summary.get_file_location(file_id)
+    debug_logger.info("file_location %s", file_location)
     # file_location = '/home/liujx/Downloads/2021-08-01 00:00:00.pdf'
     if not file_location:
         return sanic_json({"code": 2005, "msg": "fail, file_id is Invalid"})
