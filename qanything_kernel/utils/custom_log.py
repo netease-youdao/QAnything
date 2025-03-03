@@ -66,7 +66,7 @@ debug_handler = ConcurrentRotatingFileHandler(os.path.join(debug_log_folder, "de
 process_type = 'MainProcess' if 'SANIC_WORKER_NAME' not in os.environ else os.environ['SANIC_WORKER_NAME']
 
 # 创建一个带有自定义字段的格式器
-formatter = logging.Formatter(f"%(asctime)s - [PID: %(process)d][{process_type}] - [Function: %(funcName)s] - %(levelname)s - %(message)s")
+formatter = logging.Formatter(f"%(asctime)s - [PID: %(process)d][{process_type}] - [%(filename)s:%(lineno)d][%(funcName)s] - %(levelname)s - %(message)s")
 
 # formatter = logging.Formatter("%(asctime)s - %(name)s - [PID: %(process)d] - %(levelname)s - %(message)s")
 # 设置日志格式
@@ -106,7 +106,7 @@ embed_logger.addHandler(embed_handler)
 
 insert_handler = ConcurrentRotatingFileHandler(os.path.join(insert_log_folder, "insert.log"), "a", 64 * 1024 * 1024, 256)
 # 定义日志格式
-formatter = logging.Formatter(f"%(asctime)s - [PID: %(process)d][{process_type}] - [Function: %(funcName)s] - %(levelname)s - %(message)s")
+formatter = logging.Formatter(f"%(asctime)s - [PID: %(process)d][{process_type}] - [%(filename)s:%(lineno)d][%(funcName)s] - %(levelname)s - %(message)s")
 # 设置日志格式
 insert_handler.setFormatter(formatter)
 
