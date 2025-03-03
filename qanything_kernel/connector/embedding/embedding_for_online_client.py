@@ -3,7 +3,7 @@ from typing import List, Optional
 from qanything_kernel.utils.custom_log import debug_logger, embed_logger
 from qanything_kernel.utils.general_utils import get_time_async, get_time
 from langchain_core.embeddings import Embeddings
-from qanything_kernel.configs.model_config import LOCAL_EMBED_SERVICE_URL, LOCAL_EMBED_BATCH
+from qanything_kernel.configs.model_config import LOCAL_EMBED_SERVICE_URL, LOCAL_EMBED_BATCH, LOCAL_EMBED_THREADS
 import traceback
 import aiohttp
 import asyncio
@@ -21,7 +21,7 @@ class YouDaoEmbeddings(Embeddings):
         self.model_version = 'local_v20240725'
         self.url = f"http://{LOCAL_EMBED_SERVICE_URL}/embedding"
         self.session = requests.Session()
-        self.semaphore = asyncio.Semaphore(4)  # 限制并发数为4
+        self.semaphore = asyncio.Semaphore(LOCAL_EMBED_THREADS)  # 限制并发数为LOCAL_EMBED_THREADS
         super().__init__()
 
     async def _get_embedding_async(self, session, queries, task_type: str) -> List[List[float]]:

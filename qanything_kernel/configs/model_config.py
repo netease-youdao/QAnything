@@ -192,16 +192,16 @@ LOCAL_PDF_PARSER_SERVICE_URL = "localhost:9009"
 LOCAL_RERANK_SERVICE_URL = "localhost:8001"
 LOCAL_RERANK_MODEL_NAME = 'rerank'
 LOCAL_RERANK_MAX_LENGTH = 512
-LOCAL_RERANK_BATCH = 1
-LOCAL_RERANK_THREADS = 1
+LOCAL_RERANK_BATCH = 4
+LOCAL_RERANK_THREADS = 4
 LOCAL_RERANK_PATH = os.path.join(root_path, 'qanything_kernel/dependent_server/rerank_server', 'rerank_model_configs_v0.0.1')
 LOCAL_RERANK_MODEL_PATH = os.path.join(LOCAL_RERANK_PATH, "rerank.onnx")
 
 LOCAL_EMBED_SERVICE_URL = "localhost:9001"
 LOCAL_EMBED_MODEL_NAME = 'embed'
-LOCAL_EMBED_MAX_LENGTH = 512
-LOCAL_EMBED_BATCH = 1
-LOCAL_EMBED_THREADS = 1
+LOCAL_EMBED_MAX_LENGTH = 1024
+LOCAL_EMBED_BATCH = 4
+LOCAL_EMBED_THREADS = 4
 LOCAL_EMBED_PATH = os.path.join(root_path, 'qanything_kernel/dependent_server/embedding_server', 'embedding_model_configs_v0.0.1')
 LOCAL_EMBED_MODEL_PATH = os.path.join(LOCAL_EMBED_PATH, "embed.onnx")
 

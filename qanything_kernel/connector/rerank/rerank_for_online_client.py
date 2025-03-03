@@ -3,7 +3,7 @@ import aiohttp
 from typing import List
 from qanything_kernel.utils.custom_log import debug_logger
 from qanything_kernel.utils.general_utils import get_time_async
-from qanything_kernel.configs.model_config import LOCAL_RERANK_SERVICE_URL, LOCAL_RERANK_BATCH
+from qanything_kernel.configs.model_config import LOCAL_RERANK_SERVICE_URL, LOCAL_RERANK_BATCH, LOCAL_RERANK_THREADS
 from langchain.schema import Document
 import traceback
 
@@ -11,6 +11,7 @@ import traceback
 class YouDaoRerank:
     def __init__(self):
         self.url = f"http://{LOCAL_RERANK_SERVICE_URL}/rerank"
+        self.semaphore = asyncio.Semaphore(LOCAL_RERANK_THREADS)  # 限制并发数为LOCAL_EMBED_THREADS
 
     async def _get_rerank_res(self, query, passages):
         data = {
@@ -41,8 +42,9 @@ class YouDaoRerank:
 
         tasks = []
         for i in range(0, len(passages), batch_size):
-            task = asyncio.create_task(self._get_rerank_res(query, passages[i:i + batch_size]))
-            tasks.append((i, task))
+            async with self.semaphore:
+                task = asyncio.create_task(self._get_rerank_res(query, passages[i:i + batch_size]))
+                tasks.append((i, task))
 
         for start_index, task in tasks:
             res = await task
