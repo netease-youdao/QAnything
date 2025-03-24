@@ -1,0 +1,1 @@
+import{d as a,k as s,y as e,c as t,a1 as o,D as r}from"./index-BVM7diGR.js";const d={class:"page"},c=r(a({__name:"Bots",setup:a=>(a,r)=>{const c=o("router-view");return s(),e("div",d,[t(c)])}}),[["__scopeId","data-v-125a7a08"]]);export{c as default};
