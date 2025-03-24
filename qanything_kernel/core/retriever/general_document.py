@@ -31,11 +31,13 @@ import traceback
 import openpyxl
 import shutil
 import time
+import fitz
 
 
-def get_ocr_result_sync(image_data):
+def get_ocr_result_sync(files):
     try:
-        response = requests.post(f"http://{LOCAL_OCR_SERVICE_URL}/ocr", data=image_data, timeout=120)
+        response = requests.post(f"http://{LOCAL_OCR_SERVICE_URL}/ocr", files=files, timeout=120)
+        insert_logger.info(f"ocr response: {response.text}")
         response.raise_for_status()  # 如果请求返回了错误状态码，将会抛出异常
         ocr_res = response.text
         ocr_res = json.loads(ocr_res)
@@ -103,12 +105,12 @@ class LocalFileForInsert:
         # 读取图片
         img_np = open(filepath, 'rb').read()
 
-        img_data = {
-            "img64": base64.b64encode(img_np).decode("utf-8"),
-        }
+        files = {'file': ('image.png', img_np, 'image/png')}
 
-        result = get_ocr_result_sync(img_data)
-
+        result = get_ocr_result_sync(files)
+        if not result:
+            return None
+        
         ocr_result = [line for line in result if line]
         ocr_result = '\n'.join(ocr_result)
 
@@ -392,7 +394,16 @@ class LocalFileForInsert:
         elif self.file_path.lower().endswith(".txt"):
             docs = self.load_text(self.file_path)
         elif self.file_path.lower().endswith(".pdf"):
-            markdown_file = get_pdf_result_sync(self.file_path)
+            fitz_doc = fitz.open(self.file_path)
+            texts = ""
+            for i in range(fitz_doc.page_count):
+                page = fitz_doc.load_page(i)
+                texts += page.get_text()
+            insert_logger.info(f"pdf page count: {fitz_doc.page_count}, text len: {len(texts)}")
+            if texts:
+                markdown_file = get_pdf_result_sync(self.file_path)
+            else:
+                markdown_file = None
             if markdown_file:
                 docs = convert_markdown_to_langchaindoc(markdown_file)
                 docs = self.markdown_process(docs)
@@ -401,7 +412,7 @@ class LocalFileForInsert:
             else:
                 insert_logger.warning(
                     f'Error in Powerful PDF parsing, use fast PDF parser instead.')
-                loader = UnstructuredPaddlePDFLoader(self.file_path, strategy="fast")
+                loader = UnstructuredPaddlePDFLoader(self.file_path, strategy="fast", ocr_engine=get_ocr_result_sync)
                 docs = loader.load()
         elif self.file_path.lower().endswith(".jpg") or self.file_path.lower().endswith(
                 ".png") or self.file_path.lower().endswith(".jpeg"):

@@ -623,20 +623,24 @@ async def setup_ocr(app, loop):
 
 @app.post("/ocr")
 async def ocr_api(request: Request):
-    img64 = safe_get(request, 'img64')
-
-    if img64 is None:
-        return json({"error": "No image data provided"}, status=400)
-
+    # 从 multipart/form-data 中获取图像文件
+    if 'file' not in request.files:
+        return json({"error": "No image file provided"}, status=400)
+    
+    img_file = request.files.get('file')
+    
     try:
-        img_data = base64.b64decode(img64)
-        img = cv2.imdecode(np.frombuffer(img_data, np.uint8), cv2.IMREAD_COLOR)
+        # 将二进制文件数据转换为 NumPy 数组
+        img_array = np.frombuffer(img_file.body, dtype=np.uint8)
+        # 解码为图像
+        img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
     except Exception as e:
         return json({"error": "Invalid image data"}, status=400)
-
+    
     if img is None:
         return json({"error": "Invalid image file"}, status=400)
-
+    
+    # 调用 OCR 引擎处理图像
     result = app.ctx.ocr(img)
     return json({"result": result})
 

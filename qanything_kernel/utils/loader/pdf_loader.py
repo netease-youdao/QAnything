@@ -7,6 +7,8 @@ import os
 import fitz
 from tqdm import tqdm
 from typing import Union, Any
+import numpy as np
+import cv2
 
 
 class UnstructuredPaddlePDFLoader(UnstructuredFileLoader):
@@ -15,9 +17,11 @@ class UnstructuredPaddlePDFLoader(UnstructuredFileLoader):
         self,
         file_path: Union[str, List[str]],
         mode: str = "single",
+        ocr_engine: Callable[[Any], List[str]] = None,
         **unstructured_kwargs: Any,
     ):
         """Initialize with file path."""
+        self.ocr_engine = ocr_engine
         super().__init__(file_path=file_path, mode=mode, **unstructured_kwargs)
 
     def _get_elements(self) -> List:
@@ -27,22 +31,33 @@ class UnstructuredPaddlePDFLoader(UnstructuredFileLoader):
                 os.makedirs(full_dir_path)
             doc = fitz.open(filepath)
             txt_file_path = os.path.join(full_dir_path, "{}.txt".format(os.path.split(filepath)[-1]))
-            img_name = os.path.join(full_dir_path, 'tmp.png')
             with open(txt_file_path, 'w', encoding='utf-8') as fout:
                 for i in tqdm(range(doc.page_count)):
                     page = doc.load_page(i)
-                    # pix = page.get_pixmap(dpi=300)
-                    # img = np.frombuffer(pix.samples, dtype=np.uint8).reshape((pix.h, pix.w, pix.n))
-                    #
-                    # img_data = {"img64": base64.b64encode(img).decode("utf-8"), "height": pix.h, "width": pix.w,
-                    #             "channels": pix.n}
-                    # result = self.ocr_engine(img_data)
-                    # result = [line for line in result if line]
-                    # ocr_result = [i[1][0] for line in result for i in line]
                     result = page.get_text()
+                    # 如果页面中有图片或 OCR 返回空，需要检查图片内容
+                    pix = page.get_pixmap(dpi=300)
+                    img = np.frombuffer(pix.samples, dtype=np.uint8).reshape((pix.h, pix.w, pix.n))
+                    
+                    _, img_encoded = cv2.imencode('.png', img)
+                    img_bytes = img_encoded.tobytes()
+                    files = {'file': ('image.png', img_bytes, 'image/png')}
+
+                    # 调用 OCR 引擎处理图片内容
+                    ocr_result = self.ocr_engine(files)
+                    # OCR 引擎可能返回 None，需要合理处理
+                    if ocr_result is not None:
+                        ocr_result = '\n'.join([line for line in ocr_result if line])
+                        # 如果文本内容和 OCR 内容同时存在，拼接两部分
+                        if result.strip():  # 页面有文本内容
+                            result = result.strip() + '\n' + ocr_result.strip()
+                        else:  # 仅有 OCR 内容
+                            result = ocr_result.strip()
+
+                    # 如果 OCR 也未返回任何内容，保留当前的文本内容（可能为空）
+                    result = result.strip()
                     fout.write(result + '\n\n')
-            if os.path.exists(img_name):
-                os.remove(img_name)
+
             return txt_file_path
 
         txt_file_path = pdf_ocr_txt(self.file_path)
