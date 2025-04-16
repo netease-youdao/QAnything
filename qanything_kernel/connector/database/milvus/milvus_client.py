@@ -254,7 +254,7 @@ class MilvusClient:
                         merge_content = group_chunk_map[expand_index]
                         if docs_len + len(merge_content) > CHUNK_SIZE:
                             id_list = sorted(list(id_set))
-                            id_lists = id_lists.append(id_list)
+                            id_lists.append(id_list)
                             break_flag = True
                             break
                         else:
