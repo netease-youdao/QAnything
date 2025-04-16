@@ -221,7 +221,7 @@ class MilvusClient:
     def process_group(self, group):
         new_cands = []
         group.sort(key=lambda x: int(x.metadata['chunk_id'].split('_')[-1]))
-        id_set = set()
+        id_lists = []
         file_id = group[0].metadata['file_id']
         file_name = group[0].metadata['file_name']
         group_scores_map = {}
@@ -242,6 +242,7 @@ class MilvusClient:
 
         group_file_chunk_num = list(group_chunk_map.keys())
         for cand_doc in group:
+            id_set = set()
             current_chunk_id = int(cand_doc.metadata['chunk_id'].split('_')[-1])
             doc = copy.deepcopy(cand_doc)
             id_set.add(current_chunk_id)
@@ -252,6 +253,8 @@ class MilvusClient:
                     if expand_index in group_file_chunk_num:
                         merge_content = group_chunk_map[expand_index]
                         if docs_len + len(merge_content) > CHUNK_SIZE:
+                            id_list = sorted(list(id_set))
+                            id_lists = id_lists.append(id_list)
                             break_flag = True
                             break
                         else:
@@ -260,8 +263,6 @@ class MilvusClient:
                 if break_flag:
                     break
 
-        id_list = sorted(list(id_set))
-        id_lists = self.seperate_list(id_list)
         for id_seq in id_lists:
             for id in id_seq:
                 if id == id_seq[0]:
