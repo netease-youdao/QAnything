@@ -46,6 +46,16 @@ async def embedding(request):
 
     return json(result_data)
 
+@get_time_async
+@app.route("/compute_token_len", methods=["POST"])
+async def compute_token_len(request):
+    data = request.json
+    text = data.get('text')
+
+    onnx_backend: EmbeddingOnnxBackend = request.app.ctx.onnx_backend
+    token_num = len(onnx_backend._tokenizer.encode(text, add_special_tokens=True))
+
+    return {"token_num": token_num}
 
 @app.listener('before_server_start')
 async def setup_onnx_backend(app, loop):
