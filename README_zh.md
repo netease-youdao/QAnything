@@ -490,7 +490,6 @@ docker compose -f docker-compose-linux.yaml up
 
 AIcloud_Business@corp.youdao.com
 
-详细信息请参阅 [SUPPORT.md](SUPPORT.md)。
 
 ## GitHub issues & discussions
 有任何公开的问题，欢迎提交issues，或者在discussions区讨论

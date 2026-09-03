@@ -463,7 +463,6 @@ If you need to contact our team privately, please reach out to us via the follow
 
 AIcloud_Business@corp.youdao.com
 
-For a concise reference, see [SUPPORT.md](SUPPORT.md).
 
 ## GitHub issues & discussions
 Reach out to the maintainer at one of the following places:
