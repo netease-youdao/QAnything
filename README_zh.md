@@ -99,6 +99,11 @@
 ### 010-82558901
 ![](docs/images/business.jpeg)
 
+商务合作请通过以下电话或邮箱联系我们：
+
+- 联系电话：010-82558901
+- 邮箱：AIcloud_Business@corp.youdao.com
+
 # 什么是QAnything？
 **QAnything** (**Q**uestion and **A**nswer based on **Anything**) 是致力于支持任意格式文件或数据库的本地知识库问答系统，可断网安装使用。
 
@@ -483,7 +488,9 @@ docker compose -f docker-compose-linux.yaml up
 ## 邮箱
 如果你需要私信我们团队，请通过下面的邮箱联系我们：
 
-qanything@rd.netease.com
+AIcloud_Business@corp.youdao.com
+
+详细信息请参阅 [SUPPORT.md](SUPPORT.md)。
 
 ## GitHub issues & discussions
 有任何公开的问题，欢迎提交issues，或者在discussions区讨论
