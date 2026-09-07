@@ -1,7 +1,7 @@
 from sanic.request import Request
 from sanic.exceptions import BadRequest
 from qanything_kernel.utils.custom_log import debug_logger, embed_logger, rerank_logger
-from qanything_kernel.configs.model_config import (KB_SUFFIX, UPLOAD_ROOT_PATH, LOCAL_EMBED_PATH, LOCAL_RERANK_PATH)
+from qanything_kernel.configs.model_config import (KB_SUFFIX, UPLOAD_ROOT_PATH, LOCAL_RERANK_SERVICE_URL, LOCAL_EMBED_SERVICE_URL)
 from transformers import AutoTokenizer
 import pandas as pd
 import inspect
@@ -32,6 +32,7 @@ import email
 import chardet
 import mimetypes
 from io import BytesIO
+import requests
 
 __all__ = ['isURL', 'get_time', 'get_time_async', 'format_source_documents', 'safe_get', 'truncate_filename',
            'shorten_data', 'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens',
@@ -227,19 +228,22 @@ def num_tokens(text: str, model: str = 'gpt-3.5-turbo-0613') -> int:
     encoding = tiktoken.encoding_for_model(model)
     return len(encoding.encode(text, disallowed_special=()))
 
-
-embedding_tokenizer = AutoTokenizer.from_pretrained(LOCAL_EMBED_PATH, local_files_only=True)
-rerank_tokenizer = AutoTokenizer.from_pretrained(LOCAL_RERANK_PATH, local_files_only=True)
-
-
 def num_tokens_embed(text: str) -> int:
     """Return the number of tokens in a string."""
-    return len(embedding_tokenizer.encode(text, add_special_tokens=True))
+    server_url = f"http://{LOCAL_EMBED_SERVICE_URL}/compute_token_len"
+    response = requests.post(server_url, json={"text": text})
+    if response.status_code == 200:
+        return response.json().get("token_num", 0)
+    raise ValueError("Error occurred while computing token length")
 
 
 def num_tokens_rerank(text: str) -> int:
     """Return the number of tokens in a string."""
-    return len(rerank_tokenizer.encode(text, add_special_tokens=True))
+    server_url = f"http://{LOCAL_RERANK_SERVICE_URL}/compute_token_len"
+    response = requests.post(server_url, json={"text": text})
+    if response.status_code == 200:
+        return response.json().get("token_num", 0)
+    raise ValueError("Error occurred while computing token length")
 
 
 def shorten_data(data):
