@@ -5,7 +5,7 @@ from numpy import ndarray
 import torch
 from torch import Tensor
 from onnxruntime import InferenceSession, SessionOptions, GraphOptimizationLevel
-from qanything_kernel.configs.model_config import LOCAL_EMBED_MODEL_PATH, LOCAL_EMBED_PATH, LOCAL_EMBED_BATCH, LOCAL_RERANK_MAX_LENGTH
+from qanything_kernel.configs.model_config import LOCAL_EMBED_MODEL_PATH, LOCAL_EMBED_PATH, LOCAL_EMBED_BATCH, LOCAL_EMBED_MAX_LENGTH
 from qanything_kernel.utils.custom_log import debug_logger
 from transformers import AutoTokenizer
 from qanything_kernel.dependent_server.embedding_server.embedding_backend import EmbeddingBackend
@@ -16,7 +16,7 @@ class EmbeddingOnnxBackend:
         self._tokenizer = AutoTokenizer.from_pretrained(LOCAL_EMBED_PATH)
         self.return_tensors = "np"
         self.batch_size = LOCAL_EMBED_BATCH
-        self.max_length = LOCAL_RERANK_MAX_LENGTH
+        self.max_length = LOCAL_EMBED_MAX_LENGTH
         sess_options = SessionOptions()
         sess_options.intra_op_num_threads = 0
         sess_options.inter_op_num_threads = 0
