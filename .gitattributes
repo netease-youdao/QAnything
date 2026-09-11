@@ -1,0 +1,8 @@
+# Normalize line endings for scripts used inside Linux containers.
+# Prevents Windows CRLF checkouts from breaking docker entrypoints.
+* text=auto
+*.sh text eol=lf
+*.bash text eol=lf
+Dockerfile text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
