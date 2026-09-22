@@ -7,6 +7,7 @@ from qanything_kernel.configs.model_config import (BOT_DESC, BOT_IMAGE, BOT_PROM
                                                    DEFAULT_PARENT_CHUNK_SIZE, MAX_CHARS, VECTOR_SEARCH_TOP_K,
                                                    UPLOAD_ROOT_PATH, IMAGES_ROOT_PATH)
 from qanything_kernel.utils.general_utils import *
+from qanything_kernel.utils.path_security import safe_join, validate_filename
 from langchain.schema import Document
 from sanic.response import ResponseStream
 from sanic.response import json as sanic_json
@@ -137,6 +138,10 @@ async def upload_weblink(req: request):
     for title in titles:
         debug_logger.info('ori name: %s', title)
         file_name = re.sub(r'[\uFF01-\uFF5E\u3000-\u303F]', '', title)
+        try:
+            validate_filename(file_name)
+        except ValueError:
+            return sanic_json({"code": 2003, "msg": "fail, invalid file name"})
         debug_logger.info('cleaned name: %s', file_name)
         file_name = truncate_filename(file_name, max_length=110)
         file_names.append(file_name)
@@ -226,6 +231,10 @@ async def upload_files(req: request):
         # file_name = re.sub(r'%\w+', '', file_name)
         # 删除掉全角字符
         file_name = re.sub(r'[\uFF01-\uFF5E\u3000-\u303F]', '', file_name)
+        try:
+            validate_filename(file_name)
+        except ValueError:
+            return sanic_json({"code": 2003, "msg": "fail, invalid file name"})
         debug_logger.info('cleaned name: %s', file_name)
         # max_length = 255 - len(construct_qanything_local_file_nos_key_prefix(file_id)) == 188
         file_name = truncate_filename(file_name, max_length=110)
@@ -336,6 +345,10 @@ async def upload_faqs(req: request):
         file_name = f"FAQ_{ques}.faq"
         file_name = file_name.replace("/", "_").replace(":", "_")  # 文件名中的/和：会导致写入时出错
         file_name = simplify_filename(file_name)
+        try:
+            validate_filename(file_name)
+        except ValueError:
+            return sanic_json({"code": 2003, "msg": "fail, invalid file name"})
         file_size = len(ques) + len(faq['answer'])
         # faq_id = local_doc_qa.milvus_summary.get_faq_by_question(ques, kb_id)
         # if faq_id:
@@ -486,8 +499,7 @@ async def delete_knowledge_base(req: request):
 
         # delete kb_id file dir
         try:
-            upload_path = os.path.join(UPLOAD_ROOT_PATH, user_id)
-            file_dir = os.path.join(upload_path, kb_id)
+            file_dir = safe_join(UPLOAD_ROOT_PATH, user_id, kb_id)
             debug_logger.info("delete_knowledge_base file dir : %s", file_dir)
             shutil.rmtree(file_dir)
         except Exception as e:
@@ -552,15 +564,14 @@ async def delete_docs(req: request):
     local_doc_qa.milvus_summary.delete_documents(valid_file_ids)
     local_doc_qa.milvus_summary.delete_faqs(valid_file_ids)
     # list file_ids
-    for file_id in file_ids:
+    for file_id in valid_file_ids:
         try:
-            upload_path = os.path.join(UPLOAD_ROOT_PATH, user_id)
-            file_dir = os.path.join(upload_path, kb_id, file_id)
+            file_dir = safe_join(UPLOAD_ROOT_PATH, user_id, kb_id, file_id)
             debug_logger.info("delete_docs file_dir %s", file_dir)
             # delete file dir
             shutil.rmtree(file_dir)
             # delele images dir
-            images_dir = os.path.join(IMAGES_ROOT_PATH, file_id)
+            images_dir = safe_join(IMAGES_ROOT_PATH, file_id)
             debug_logger.info("delete_docs images_dir %s", images_dir)
             shutil.rmtree(images_dir)
         except Exception as e:

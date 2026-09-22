@@ -6,6 +6,7 @@ from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH, LOCAL_OCR_SE
 from langchain.docstore.document import Document
 from qanything_kernel.utils.loader.my_recursive_url_loader import MyRecursiveUrlLoader
 from qanything_kernel.utils.custom_log import insert_logger
+from qanything_kernel.utils.path_security import safe_join, validate_filename
 from langchain_community.document_loaders import UnstructuredFileLoader, TextLoader
 from langchain_community.document_loaders import UnstructuredWordDocumentLoader
 from langchain_community.document_loaders import UnstructuredEmailLoader
@@ -86,12 +87,17 @@ class LocalFileForInsert:
             self.faq_dict = {'question': question, 'answer': answer, 'nos_keys': nos_keys}
         elif self.file_location == 'URL':
             self.file_url = file_url
-            upload_path = os.path.join(UPLOAD_ROOT_PATH, user_id)
-            file_dir = os.path.join(upload_path, self.kb_id, self.file_id)
+            validate_filename(self.file_name)
+            upload_path = safe_join(UPLOAD_ROOT_PATH, user_id)
+            file_dir = safe_join(upload_path, self.kb_id, self.file_id)
             os.makedirs(file_dir, exist_ok=True)
-            self.file_path = os.path.join(file_dir, self.file_name)
+            self.file_path = safe_join(upload_path, self.kb_id, self.file_id, self.file_name)
         else:
-            self.file_path = self.file_location
+            # Rebuild the expected path from trusted identifiers instead of
+            # trusting a path persisted in the database.
+            validate_filename(self.file_name)
+            upload_path = safe_join(UPLOAD_ROOT_PATH, user_id)
+            self.file_path = safe_join(upload_path, self.kb_id, self.file_id, self.file_name)
         self.event = threading.Event()
 
     @staticmethod
