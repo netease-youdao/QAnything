@@ -2,6 +2,7 @@ from qanything_kernel.utils.custom_log import insert_logger
 from qanything_kernel.connector.database.mysql.mysql_client import KnowledgeBaseManager
 from qanything_kernel.configs.model_config import UPLOAD_ROOT_PATH
 from qanything_kernel.utils.custom_log import debug_logger
+from qanything_kernel.utils.path_security import safe_join, validate_filename
 from langchain_core.documents import Document
 from langchain.storage import InMemoryStore
 from typing import (
@@ -61,9 +62,11 @@ class MysqlStore(InMemoryStore):
                 continue
             # debug_logger.info(f'doc_id: {doc_id} get doc_json: {doc_json}')
             user_id, file_id, file_name, kb_id = doc_json['kwargs']['metadata']['user_id'], doc_json['kwargs']['metadata']['file_id'], doc_json['kwargs']['metadata']['file_name'], doc_json['kwargs']['metadata']['kb_id'] 
+            validate_filename(file_name)
             doc_idx = doc_id.split('_')[-1]
-            upload_path = os.path.join(UPLOAD_ROOT_PATH, user_id)
-            local_path = os.path.join(upload_path, kb_id, file_id, file_name.rsplit('.', 1)[0] + '_' + doc_idx + '.json')
+            upload_path = safe_join(UPLOAD_ROOT_PATH, user_id)
+            local_path = safe_join(upload_path, kb_id, file_id,
+                                   file_name.rsplit('.', 1)[0] + '_' + doc_idx + '.json')
             doc = Document(page_content=doc_json['kwargs']['page_content'], metadata=doc_json['kwargs']['metadata'])
             doc.metadata['doc_id'] = doc_id
             if file_name.endswith('.faq'):
