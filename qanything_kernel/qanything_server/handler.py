@@ -1,6 +1,7 @@
 from qanything_kernel.core.local_file import LocalFile
 from qanything_kernel.core.local_doc_qa import LocalDocQA
 from qanything_kernel.utils.general_utils import *
+from qanything_kernel.utils.path_security import validate_filename
 from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from sanic.response import ResponseStream
 from sanic.response import json as sanic_json
@@ -109,6 +110,10 @@ async def upload_files(req: request):
         # 删除掉全角字符
         file_name = re.sub(r'[\uFF01-\uFF5E\u3000-\u303F]', '', file_name)
         file_name = file_name.replace("/", "_")
+        try:
+            validate_filename(file_name)
+        except ValueError:
+            return sanic_json({"code": 2003, "msg": "fail, invalid file name"})
         debug_logger.info('cleaned name: %s', file_name)
         file_name = truncate_filename(file_name)
         file_names.append(file_name)

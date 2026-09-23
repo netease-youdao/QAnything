@@ -15,6 +15,7 @@ from qanything_kernel.utils.splitter import ChineseTextSplitter
 from qanything_kernel.utils.loader import UnstructuredPaddleImageLoader, UnstructuredPaddlePDFLoader
 from qanything_kernel.utils.splitter import zh_title_enhance
 from sanic.request import File
+from qanything_kernel.utils.path_security import safe_join, validate_filename
 import pandas as pd
 import os
 
@@ -41,18 +42,26 @@ class LocalFile:
             self.file_path = "URL"
             self.file_content = b''
         else:
+            validate_filename(self.file_name)
             if isinstance(file, str):
                 self.file_path = file
                 with open(file, 'rb') as f:
                     self.file_content = f.read()
             else:
-                upload_path = os.path.join(UPLOAD_ROOT_PATH, user_id)
-                file_dir = os.path.join(upload_path, self.file_id)
+                upload_path = safe_join(UPLOAD_ROOT_PATH, user_id)
+                file_dir = safe_join(upload_path, self.file_id)
                 os.makedirs(file_dir, exist_ok=True)
-                self.file_path = os.path.join(file_dir, self.file_name)
+                self.file_path = safe_join(upload_path, self.file_id, self.file_name)
                 self.file_content = file.body
-            with open(self.file_path, "wb+") as f:
-                f.write(self.file_content)
+            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+            flags |= getattr(os, "O_NOFOLLOW", 0)
+            try:
+                fd = os.open(self.file_path, flags, 0o600)
+            except FileExistsError:
+                pass
+            else:
+                with os.fdopen(fd, "wb") as output_file:
+                    output_file.write(self.file_content)
         debug_logger.info(f'success init localfile {self.file_name}')
 
     def split_file_to_docs(self, ocr_engine: Callable, sentence_size=SENTENCE_SIZE,
