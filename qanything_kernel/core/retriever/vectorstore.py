@@ -3,7 +3,8 @@ from functools import partial
 from typing import Optional, List, Any, Iterable, Callable
 from qanything_kernel.utils.custom_log import debug_logger, insert_logger
 from qanything_kernel.configs.model_config import MILVUS_PORT, MILVUS_COLLECTION_NAME, MILVUS_HOST_LOCAL
-from qanything_kernel.connector.embedding.embedding_for_online_client import YouDaoEmbeddings
+from qanything_kernel.connector.embedding.embedding_factory import EmbeddingFactory
+
 from qanything_kernel.utils.general_utils import get_time, get_time_async
 from langchain_community.vectorstores.milvus import Milvus
 from pymilvus.orm.collection import MutationResult
@@ -268,7 +269,7 @@ class VectorStoreMilvusClient:
         self.host = MILVUS_HOST_LOCAL
         self.port = MILVUS_PORT
         self.local_vectorstore: Milvus = SelfMilvus(
-            embedding_function=YouDaoEmbeddings(),
+            embeddings = EmbeddingFactory.create(),
             connection_args={"host": self.host, "port": self.port},
             collection_name=MILVUS_COLLECTION_NAME,
             partition_key_field="kb_id",

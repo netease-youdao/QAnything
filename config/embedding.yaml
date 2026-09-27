@@ -1,0 +1,78 @@
+# QAnything 向量模型配置文件
+# 支持多种 Embedding 模型：本地 ONNX、本地 PyTorch、API 调用
+
+embedding:
+  # 模型类型：local_onnx | local_pytorch | api
+  # - local_onnx: 使用 ONNX 格式的本地模型（默认，最快）
+  # - local_pytorch: 使用 PyTorch 格式的本地模型（最灵活）
+  # - api: 调用外部 API（最方便，需要网络）
+  type: "local_onnx"
+
+  # 本地模型配置（type 为 local_onnx 或 local_pytorch 时使用）
+  local:
+    # 模型名称（用于日志和版本管理）
+    model_name: "bge-base-zh-v1.5"
+
+    # 模型文件路径
+    model_path: "./models/embedding/bge-base-zh-v1.5/onnx/model.onnx"
+
+    # Tokenizer 路径（通常和模型在同一目录）
+    tokenizer_path: "./models/embedding/bge-base-zh-v1.5"
+
+    # 最大输入长度（token 数）
+    max_length: 512
+
+    # 批处理大小（越大越快，但需要更多内存）
+    batch_size: 32
+
+    # 向量维度（必须和模型匹配）
+    # bge-base-zh: 768
+    # m3e-base: 768
+    # text-embedding-3-small: 1536
+    dimension: 768
+
+  # API 配置（type 为 api 时使用）
+  api:
+    # API 提供商：openai | dashscope | ollama
+    provider: "openai"
+
+    # 模型名称
+    # - OpenAI: text-embedding-3-small, text-embedding-3-large
+    # - DashScope: text-embedding-v1, text-embedding-v2
+    # - Ollama: nomic-embed-text, mxbai-embed-large
+    model_name: "text-embedding-3-small"
+
+    # API Key（支持环境变量：${ENV_VAR_NAME}）
+    api_key: "${EMBEDDING_API_KEY}"
+
+    # API Base URL
+    # - OpenAI: https://api.openai.com/v1
+    # - DashScope: https://dashscope.aliyuncs.com/compatible-mode/v1
+    # - Ollama: http://localhost:11434/v1
+    base_url: "https://api.openai.com/v1"
+
+    # 批处理大小（API 通常有速率限制）
+    batch_size: 16
+
+    # 超时时间（秒）
+    timeout: 30
+
+# 高级配置（可选）
+advanced:
+  # 是否启用缓存（避免重复计算）
+  enable_cache: true
+
+  # 缓存目录
+  cache_dir: "./cache/embedding"
+
+  # 缓存过期时间（秒，0 表示永不过期）
+  cache_ttl: 86400  # 24 小时
+
+  # 是否启用重试（API 调用失败时）
+  enable_retry: true
+
+  # 最大重试次数
+  max_retries: 3
+
+  # 重试间隔（秒）
+  retry_delay: 1
