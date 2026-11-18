@@ -360,10 +360,12 @@ If you want to visit API, please refer to the following address:
 - For detailed API documentation, please refer to [QAnything API documentation](docs/API.md)
 
 ### DEBUG
+
+To step through the Python services in an IDE, see [Debugging QAnything with VS Code](docs/debug-with-vscode.md).
 If you want to view the relevant logs, please check the log files in the `QAnything/logs/debug_logs` directory.
 - **debug.log**
   - User request processing log
-- **sanic_api.log**
+- **main_server.log**
   - Backend service running log
 - **llm_embed_rerank_tritonserver.log**(Single card deployment)
   - LLM embedding and rerank tritonserver service startup log
