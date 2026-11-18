@@ -363,6 +363,8 @@ docker load -i qanything_xxx.tar
 - For detailed API documentation, please refer to [QAnything API 文档](docs/API.md)
 
 ### DEBUG
+
+如需在 IDE 中调试 Python 服务，参见[使用 VS Code 调试 QAnything](docs/debug-with-vscode.md)。
 ##### 如果想要查看服务启动相关日志，请查看`QAnything/logs/debug_logs`目录下的日志文件。
 - **debug.log**
   - 用户请求处理日志
